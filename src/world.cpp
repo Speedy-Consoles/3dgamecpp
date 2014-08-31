@@ -57,31 +57,23 @@ int World::shootRay(vec3i64 start, vec3d ray, double maxDist,
 				hit[otherDims[0]] - block[otherDims[0]] * RESOLUTION,
 				hit[otherDims[1]] - block[otherDims[1]] * RESOLUTION
 			};
-			// TODO find better solution than this dirty fix
-			if (diff[0] >= -0.00000001
-					&& diff[0] <= RESOLUTION + 0.00000001
-					&& diff[1] >= -0.00000001
-					&& diff[1] <= RESOLUTION + 0.00000001) {
+			if (diff[0] >= 0
+					&& diff[0] <= RESOLUTION
+					&& diff[1] >= 0
+					&& diff[1] <= RESOLUTION) {
 				double dist = (start - hit).norm();
 				if (dist > maxDist)
 					return 0;
 
 				vec3i dir = DIRS[d];
-				vec3i64 nextBlock(
-					block[0] + dir[0],
-					block[1] + dir[1],
-					block[2] + dir[2]
-				);
+				vec3i64 nextBlock = block + dir;
 				if (getBlock(nextBlock)) {
-					if (outHit != nullptr) {
+					if (outHit != nullptr)
 						*outHit = hit;
-					}
-					if (outFaceDir != nullptr) {
+					if (outFaceDir != nullptr)
 						outFaceDir[blockHitCounter] = (d + 3) % 6;
-					}
-					if (outHitBlock != nullptr) {
+					if (outHitBlock != nullptr)
 						outHitBlock[blockHitCounter] = nextBlock;
-					}
 					blockHitCounter++;
 				} else if (blockHitCounter == 0) {
 					block = nextBlock;
@@ -89,6 +81,7 @@ int World::shootRay(vec3i64 start, vec3d ray, double maxDist,
 			}
 		}
 		if (block == oldBlock && blockHitCounter == 0) {
+			// TODO fix this
 			printf("Oh no!");
 		}
 	}

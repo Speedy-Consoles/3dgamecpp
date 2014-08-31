@@ -201,8 +201,8 @@ void Graphics::makeOrthogonal() {
 				-1);
 	else
 		glOrtho(-START_HEIGHT * currentRatio / 2.0, START_HEIGHT
-				* currentRatio / 2.0, START_HEIGHT / 2.0,
-				-START_HEIGHT / 2.0, 1, -1);
+				* currentRatio / 2.0, -START_HEIGHT / 2.0,
+				START_HEIGHT / 2.0, 1, -1);
 	glGetDoublev(GL_PROJECTION_MATRIX, orthogonalMatrix);
 	glMatrixMode(GL_MODELVIEW);
 }
@@ -280,41 +280,37 @@ void Graphics::render() {
 	glColor4d(0, 0, 0, 0.5);
 	glBegin(GL_QUADS);
 	glVertex2d(-20, -2);
-	glVertex2d(-20, 2);
-	glVertex2d(20, 2);
 	glVertex2d(20, -2);
+	glVertex2d(20, 2);
+	glVertex2d(-20, 2);
 
 	glVertex2d(-2, -20);
-	glVertex2d(-2, 20);
-	glVertex2d(2, 20);
 	glVertex2d(2, -20);
+	glVertex2d(2, 20);
+	glVertex2d(-2, 20);
 	glEnd();
 
-    glPushMatrix();
-	glScalef(1, -1, 1);
-	glColor3f(1.0f, 1.0f, 1.0f);
-	glTranslatef(- drawWidth / 2, + drawHeight / 2, 0);
-	char buffer[1024];
+	vec3d playerVel = localPlayer.getVel();
 
+    glPushMatrix();
+	glColor3f(1.0f, 1.0f, 1.0f);
+	glTranslatef(-drawWidth / 2 + 3, drawHeight / 2, 0);
+	char buffer[1024];
 	#define RENDER_LINE(args...) sprintf(buffer, args);\
 			glTranslatef(0, -16, 0);\
 			font->Render(buffer)
 
-	RENDER_LINE("new quads: %d", lastNewQuads);
+	RENDER_LINE("fps: %d", lastFPS);
+	RENDER_LINE("quads: %d", lastNewQuads);
+	RENDER_LINE("x: %d", playerPos[0]);
+	RENDER_LINE("y: %d", playerPos[1]);
+	RENDER_LINE("z: %d", playerPos[2]);
+	RENDER_LINE("yaw:   %6.1f", localPlayer.getYaw());
+	RENDER_LINE("pitch: %6.1f", localPlayer.getPitch());
+	RENDER_LINE("xvel: %8.1f", playerVel[0]);
+	RENDER_LINE("yvel: %8.1f", playerVel[1]);
+	RENDER_LINE("zvel: %8.1f", playerVel[2]);
     glPopMatrix();
-
-	/*String info[7] = { "fps: " + lastFPS, "newQuads: " + lastNewQuads,
-			"x: " + playerPos[0], "y: " + playerPos[1],
-			"z: " + playerPos[2], "yaw: " + localPlayer.getYaw(),
-			"pitch: " + localPlayer.getPitch() };
-
-	TextureImpl.unbind();
-	for (int i = 0; i < info.length; i++) {
-		font.drawString((float) (-getDrawWidth() / 2 + 10),
-				(float) (-getDrawHeight() / 2 + 10 + i * 20), info[i],
-				Color.white);
-	}
-	*/
 }
 
 void Graphics::renderChunks() {
