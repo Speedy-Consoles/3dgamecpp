@@ -86,24 +86,40 @@ void ChunkLoader::run() {
 
 void ChunkLoader::loadChunk(vec3i64 cc) {
 	uint8 blocks[Chunk::WIDTH * Chunk::WIDTH * Chunk::WIDTH];
-	for (uint x = 0; x < Chunk::WIDTH; x++) {
-		for (uint y = 0; y < Chunk::WIDTH; y++) {
-			double sx = (cc[0] * Chunk::WIDTH + x) / perlinScale;
-			double sy = (cc[1] * Chunk::WIDTH + y) / perlinScale;
-			double ax = (cc[0] * Chunk::WIDTH + x) / perlinAreaScale;
-			double ay = (cc[1] * Chunk::WIDTH + y) / perlinAreaScale;
-			double h = perlin.octavePerlin(sx, sy, 0, 6, 0.5) * perlinScale
-					* perlin.perlin(ax, ay, 0);
-			for (uint z = 0; z < Chunk::WIDTH; z++) {
-				int index = Chunk::getBlockIndex(vec3ui8(x, y, z));
-				long wz = z + cc[2] * Chunk::WIDTH;
+	for (uint ix = 0; ix < Chunk::WIDTH; ix++) {
+		for (uint iy = 0; iy < Chunk::WIDTH; iy++) {
+			long x = round((cc[0] * Chunk::WIDTH + ix) / overAllScale);
+			long y = round((cc[1] * Chunk::WIDTH + iy) / overAllScale);
+			double ax = x / perlinAreaXYScale;
+			double ay = y / perlinAreaXYScale;
+			double ap = perlin.perlin(ax, ay, 0);
+			double mFac = (1 + tanh((ap - perlinAreaMountainThreshold)
+					* perlinAreaSharpness)) / 2;
+			double fFac = 1 - mFac;
+
+			double mx = x / perlinMountainXYScale;
+			double my = y / perlinMountainXYScale;
+			double mh = perlin.octavePerlin(mx, my, 0,
+					perlinMountainOctaves, perlinMountainExp)
+					* perlinMountainMaxHeight;
+
+			double fx = x / perlinFlatlandXYScale;
+			double fy = y / perlinFlatlandXYScale;
+			double fh = perlin.octavePerlin(fx, fy, 0,
+					perlinFlatlandOctaves, perlinFlatlandExp)
+					* perlinFlatLandMaxHeight;
+
+			double h = fh * fFac + mh * mFac;
+			for (uint iz = 0; iz < Chunk::WIDTH; iz++) {
+				int index = Chunk::getBlockIndex(vec3ui8(ix, iy, iz));
+				long wz = iz + cc[2] * Chunk::WIDTH;
 				if (wz > h) {
 					blocks[index] = 0;
 					continue;
 				}
-				double px = (cc[0] * Chunk::WIDTH + x) / perlinCaveScale;
-				double py = (cc[1] * Chunk::WIDTH + y) / perlinCaveScale;
-				double pz = (cc[2] * Chunk::WIDTH + z) / perlinCaveScale;
+				double px = (cc[0] * Chunk::WIDTH + ix) / perlinCaveScale;
+				double py = (cc[1] * Chunk::WIDTH + iy) / perlinCaveScale;
+				double pz = (cc[2] * Chunk::WIDTH + iz) / perlinCaveScale;
 				double v = perlin.octavePerlin(px, py, pz, 6, 0.5);
 				if (v > 0.12 * (3 - 1 / ((floor(h) - wz) / 10 + 1)))
 					blocks[index] = 1;

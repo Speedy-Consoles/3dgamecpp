@@ -145,7 +145,7 @@ vec3i64 Player::getChunkPos() const {
 
 void Player::create(World *world) {
 	this->world = world;
-	pos = vec3i64(0, 0, 200 * RESOLUTION);
+	pos = vec3i64(0, 0, 10 * RESOLUTION);
 	vel = vec3d(0, 0, 0);
 	yaw = 0;
 	pitch = 0;
