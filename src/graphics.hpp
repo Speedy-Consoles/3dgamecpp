@@ -1,9 +1,12 @@
 #ifndef GRAPHICS_HPP
 #define GRAPHICS_HPP
 
+#include <chrono>
+
 #include <SDL2/SDL.h>
 #include <GL/glew.h>
-#include <chrono>
+#include <FTGL/ftgl.h>
+
 #include "world.hpp"
 #include "util.hpp"
 
@@ -34,7 +37,7 @@ private:
 
 	float lightPosition[4] = {3.0, 2.0, 9.0};
 	GLuint blockTexture;
-	//TrueTypeFont font;
+	FTFont *font;
 
 	GLdouble perspectiveMatrix[16];
 	GLdouble orthogonalMatrix[16];

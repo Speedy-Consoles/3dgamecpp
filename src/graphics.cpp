@@ -25,13 +25,15 @@ Graphics::Graphics(World *world, int localClientID)
 	glContext = SDL_GL_CreateContext(window);
 
 	startTimePoint = high_resolution_clock::now();
-	int fu = 0;
-	char *fufu = 0;
-	glutInit(&fu, &fufu);
 	initGL();
+
+	font = new FTGLTextureFont("res/DejaVuSansMono.ttf");
+    font->FaceSize(16);
+    font->CharMap(ft_encoding_unicode);
 }
 
 Graphics::~Graphics() {
+    delete font;
 	SDL_GL_DeleteContext(glContext);
 	SDL_Quit();
 }
@@ -298,10 +300,18 @@ void Graphics::render() {
 	glVertex2d(2, -20);
 	glEnd();
 
-	//char buf[256];
-    //sprintf(buf, "asdf");
+    glPushMatrix();
+	glScalef(1, -1, 1);
+	glColor3f(1.0f, 1.0f, 1.0f);
+	glTranslatef(- getDrawWidth() / 2, + getDrawHeight() / 2, 0);
+	char buffer[1024];
 
-    //glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_10, buf[0]);
+	#define RENDER_LINE(args...) sprintf(buffer, args);\
+			glTranslatef(0, -16, 0);\
+			font->Render(buffer)
+
+	RENDER_LINE("new quads: %d", lastNewQuads);
+    glPopMatrix();
 
 	/*String info[7] = { "fps: " + lastFPS, "newQuads: " + lastNewQuads,
 			"x: " + playerPos[0], "y: " + playerPos[1],
