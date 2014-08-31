@@ -36,6 +36,9 @@ private:
 	GLuint blockTexture;
 	//TrueTypeFont font;
 
+	GLdouble perspectiveMatrix[16];
+	GLdouble orthogonalMatrix[16];
+
 public:
 	Graphics(World *world, int localClientID);
 	~Graphics();
@@ -52,7 +55,9 @@ public:
 private:
 	void initGL();
 
-	//TODO save matrices
+	void makePerspective();
+	void makeOrthogonal();
+
 	void switchToPerspective();
 	void switchToOrthogonal();
 

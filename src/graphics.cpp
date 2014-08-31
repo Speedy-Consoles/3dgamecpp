@@ -53,6 +53,8 @@ void Graphics::resize(int width, int height) {
 	this->width = width;
 	this->height = height;
 	glViewport(0, 0, width, height);
+	makePerspective();
+	makeOrthogonal();
 }
 
 void Graphics::grab() {
@@ -70,6 +72,10 @@ void Graphics::initGL() {
 	glClearDepth(1);
 	glDepthFunc(GL_LEQUAL);
 	glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
+	glMatrixMode(GL_MODELVIEW);
+
+	makePerspective();
+	makeOrthogonal();
 
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -157,8 +163,7 @@ void Graphics::initGL() {
 	//		//		glFogf(GL_FOG_END, (DEFAULT_VIEW_RANGE - 1) * Chunk::X_WIDTH);
 }
 
-// TODO save matrices
-void Graphics::switchToPerspective() {
+void Graphics::makePerspective() {
 	double normalRatio = START_WIDTH / (double) START_HEIGHT;
 	double currentRatio = width / (double) height;
 	double angle;
@@ -174,9 +179,11 @@ void Graphics::switchToPerspective() {
 			+ pow(Chunk::WIDTH * VIEW_RANGE, 2));
 	gluPerspective((float) (angle * 360.0 / TAU),
 			(float) currentRatio, 0.1f, zFar);
+	glGetDoublev(GL_PROJECTION_MATRIX, perspectiveMatrix);
+	glMatrixMode(GL_MODELVIEW);
 }
 
-void Graphics::switchToOrthogonal() {
+void Graphics::makeOrthogonal() {
 	double normalRatio = START_WIDTH / (double) START_HEIGHT;
 	double currentRatio = width / (double) height;
 	glMatrixMode(GL_PROJECTION);
@@ -189,14 +196,27 @@ void Graphics::switchToOrthogonal() {
 		glOrtho(-START_HEIGHT * currentRatio / 2.0, START_HEIGHT
 				* currentRatio / 2.0, START_HEIGHT / 2.0,
 				-START_HEIGHT / 2.0, 1, -1);
+	glGetDoublev(GL_PROJECTION_MATRIX, orthogonalMatrix);
+	glMatrixMode(GL_MODELVIEW);
+}
+
+void Graphics::switchToPerspective() {
+	glMatrixMode(GL_PROJECTION);
+	glLoadMatrixd(perspectiveMatrix);
+	glMatrixMode(GL_MODELVIEW);
+}
+
+void Graphics::switchToOrthogonal() {
+	glMatrixMode(GL_PROJECTION);
+	glLoadMatrixd(orthogonalMatrix);
+	glMatrixMode(GL_MODELVIEW);
 }
 
 double Graphics::getMaxFOV() {
 	if (START_WIDTH <= START_HEIGHT)
 		return YFOV;
-	else {
+	else
 		return atan(START_WIDTH * tan(YFOV / 2) / START_HEIGHT) * 2;
-	}
 }
 
 double Graphics::getDrawWidth() {
@@ -228,7 +248,6 @@ void Graphics::render() {
 	glEnable(GL_LIGHTING);
 	//		glEnable(GL_FOG);
 	glEnable(GL_DEPTH_TEST);
-	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 	// player yaw
 	glRotated(-localPlayer.getPitch(), 1, 0, 0);
@@ -263,7 +282,6 @@ void Graphics::render() {
 	glDisable(GL_LIGHTING);
 	glDisable(GL_FOG);
 	glDisable(GL_DEPTH_TEST);
-	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 
 	// render overlay
@@ -280,10 +298,10 @@ void Graphics::render() {
 	glVertex2d(2, -20);
 	glEnd();
 
-	char buf[256];
-    sprintf(buf, "asdf");
+	//char buf[256];
+    //sprintf(buf, "asdf");
 
-    glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_10, buf[0]);
+    //glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_10, buf[0]);
 
 	/*String info[7] = { "fps: " + lastFPS, "newQuads: " + lastNewQuads,
 			"x: " + playerPos[0], "y: " + playerPos[1],
@@ -304,6 +322,8 @@ void Graphics::renderChunks() {
 	lastNewQuads = 0;
 	Player localPlayer = world->getPlayer(localClientID);
 	vec3i64 pc = localPlayer.getChunkPos();
+	vec3d lookDir = getVectorFromAngles(localPlayer.getYaw(),
+			localPlayer.getPitch());
 
 	vec3i64 tbc;
 	vec3i64 tcc;
@@ -314,7 +334,7 @@ void Graphics::renderChunks() {
 		tcc = bc2cc(tbc);
 		ticc = bc2icc(tbc);
 	}
-printf("start\n");
+
 	//		DoubleBuffer globalMat = BufferUtils.createDoubleBuffer(16);
 	//		glGetDouble(GL_MODELVIEW_MATRIX, globalMat);
 	int length = VIEW_RANGE * 2 + 1;
@@ -351,8 +371,6 @@ printf("start\n");
 		//					* Chunk::WIDTH);
 
 		bool tChunk = target && cc == tcc;
-		vec3d lookDir = getVectorFromAngles(localPlayer.getYaw(),
-				localPlayer.getPitch());
 		if (inFrustum(cc, localPlayer.getPos(), lookDir)) {
 			if (chunkIt != world->getChunks().end() && (tChunk || lid == 0))
 				renderChunk(chunkIt->second, tChunk, ticc, td);
