@@ -267,8 +267,6 @@ void Graphics::render() {
 	// render chunk
 	renderChunks();
 
-	//		System.out.println("faces: " + faces);
-
 	// render players
 	renderPlayers();
 
@@ -358,7 +356,8 @@ void Graphics::renderChunks() {
 			lid = glGenLists(1);
 			if (lid != 0)
 				displayLists.insert({cc, lid});
-		}
+		} else if(listIt != displayLists.end())
+			lid = listIt->second;
 
 		if (chunkIt != world->getChunks().end()
 				&& chunkIt->second.isReady()
