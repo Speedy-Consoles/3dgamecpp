@@ -24,12 +24,19 @@ Graphics::Graphics(World *world, int localClientID)
 	);
 	glContext = SDL_GL_CreateContext(window);
 
-	startTimePoint = high_resolution_clock::now();
 	initGL();
+	resize(START_WIDTH, START_HEIGHT);
+
+	if (START_WIDTH <= START_HEIGHT)
+		maxFOV = YFOV;
+	else
+		maxFOV = atan(START_WIDTH * tan(YFOV / 2) / START_HEIGHT) * 2;
 
 	font = new FTGLTextureFont("res/DejaVuSansMono.ttf");
     font->FaceSize(16);
     font->CharMap(ft_encoding_unicode);
+
+	startTimePoint = high_resolution_clock::now();
 }
 
 Graphics::~Graphics() {
@@ -57,6 +64,7 @@ void Graphics::resize(int width, int height) {
 	glViewport(0, 0, width, height);
 	makePerspective();
 	makeOrthogonal();
+	calcDrawArea();
 }
 
 void Graphics::grab() {
@@ -75,9 +83,6 @@ void Graphics::initGL() {
 	glDepthFunc(GL_LEQUAL);
 	glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
 	glMatrixMode(GL_MODELVIEW);
-
-	makePerspective();
-	makeOrthogonal();
 
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -214,29 +219,16 @@ void Graphics::switchToOrthogonal() {
 	glMatrixMode(GL_MODELVIEW);
 }
 
-double Graphics::getMaxFOV() {
-	if (START_WIDTH <= START_HEIGHT)
-		return YFOV;
-	else
-		return atan(START_WIDTH * tan(YFOV / 2) / START_HEIGHT) * 2;
-}
-
-double Graphics::getDrawWidth() {
-	double normalRatio = START_WIDTH / (double) START_HEIGHT;
-	double currentRatio = width / height;
-	if (currentRatio > normalRatio)
-		return START_WIDTH;
-	else
-		return START_HEIGHT * currentRatio;
-}
-
-double Graphics::getDrawHeight() {
+double Graphics::calcDrawArea() {
 	double normalRatio = START_WIDTH / (double) START_HEIGHT;
 	double currentRatio = width / (double) height;
-	if (currentRatio > normalRatio)
-		return START_WIDTH / currentRatio;
-	else
-		return START_HEIGHT;
+	if (currentRatio > normalRatio) {
+		drawWidth = START_WIDTH;
+		drawHeight = START_WIDTH / currentRatio;
+	} else {
+		drawWidth = START_HEIGHT * currentRatio;
+		drawHeight = START_HEIGHT;
+	}
 }
 
 void Graphics::render() {
@@ -303,7 +295,7 @@ void Graphics::render() {
     glPushMatrix();
 	glScalef(1, -1, 1);
 	glColor3f(1.0f, 1.0f, 1.0f);
-	glTranslatef(- getDrawWidth() / 2, + getDrawHeight() / 2, 0);
+	glTranslatef(- drawWidth / 2, + drawHeight / 2, 0);
 	char buffer[1024];
 
 	#define RENDER_LINE(args...) sprintf(buffer, args);\
@@ -464,7 +456,7 @@ bool Graphics::inFrustum(vec3i64 cc, vec3i64 pos, vec3d lookDir) {
 		return false;
 	vec3d orthoChunkPos = cp - lookDir * chunkLookDist;
 	double orthoChunkDist = std::max(0.0, orthoChunkPos.norm() - chunkDia);
-	return atan(orthoChunkDist / chunkLookDist) <= getMaxFOV() / 2;
+	return atan(orthoChunkDist / chunkLookDist) <= maxFOV / 2;
 }
 
 void Graphics::removeDisplayLists() {

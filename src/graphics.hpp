@@ -17,8 +17,13 @@ private:
 	const double YFOV = TAU / 8;
 	static const int VIEW_RANGE = 16;
 
-	int width = START_WIDTH;
-	int height = START_HEIGHT;
+	int width;
+	int height;
+
+	double drawWidth;
+	double drawHeight;
+
+	double maxFOV;
 
 	SDL_GLContext glContext;
 	SDL_Window *window;
@@ -64,10 +69,7 @@ private:
 	void switchToPerspective();
 	void switchToOrthogonal();
 
-	double getMaxFOV();
-
-	double getDrawWidth();
-	double getDrawHeight();
+	double calcDrawArea();
 
 	void render();
 	void renderChunks();
