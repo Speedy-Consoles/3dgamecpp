@@ -111,52 +111,20 @@ void Graphics::initGL() {
 	glColorMaterial(GL_FRONT, GL_AMBIENT_AND_DIFFUSE); // tell opengl glColor3f effects the ambient and diffuse properties of material
 
 	// textures
-	/*
-	IMG_Init(IMG_INIT_JPG | IMG_INIT_PNG | IMG_INIT_TIF);
 	glEnable(GL_TEXTURE_2D);
+	IMG_Init(IMG_INIT_JPG | IMG_INIT_PNG | IMG_INIT_TIF);
 	SDL_Surface *blockImage = IMG_Load("img/block.png");
-	if (blockImage == nullptr)
-		printf("WHAAAAAAA\n");
-	GLenum textureFormat;
-	switch (blockImage->format->BytesPerPixel) {
-	case 3:
-		if (SDL_BYTEORDER == SDL_BIG_ENDIAN)
-			textureFormat = GL_BGR;
-		else
-			textureFormat = GL_RGB;
-		break;
-	case 4:
-		if (SDL_BYTEORDER == SDL_BIG_ENDIAN)
-			textureFormat = GL_BGRA;
-		else
-			textureFormat = GL_RGBA;
-		break;
-	}
 
 	glGenTextures(1, &blockTexture);
 	glBindTexture(GL_TEXTURE_2D, blockTexture);
-	glTexImage2D(
-		GL_TEXTURE_2D,
-		0, blockImage->format->BytesPerPixel,
-		blockImage->w,
-		blockImage->h,
-		0,
-		textureFormat,
-		GL_UNSIGNED_BYTE,
-		blockImage->pixels
-	);
+	gluBuild2DMipmaps(GL_TEXTURE_2D,4,128,128,GL_RGBA,GL_UNSIGNED_BYTE,blockImage->pixels);
 
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
-			GL_LINEAR_MIPMAP_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER,
-			GL_LINEAR);
+	SDL_FreeSurface(blockImage);
 
-	glGenerateMipmap(GL_TEXTURE_2D);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
 	glBindTexture(GL_TEXTURE_2D, 0);
-	*/
-	// font
-	//Font awtFont = new Font("Arial", Font.BOLD, 24);
-	//font = new TrueTypeFont(awtFont, false);
 
 	// fog
 	//float fogColor[4] = {0.5f, 0.5f, 0.5f, 1.0f};
@@ -382,7 +350,7 @@ void Graphics::renderChunks() {
 void Graphics::renderChunk(Chunk &c, bool targeted, vec3ui8 ticc, int td) {
 	using namespace vec_auto_cast;
 	//render blocks
-	//glBindTexture(GL_TEXTURE_2D, blockTexture);
+	glBindTexture(GL_TEXTURE_2D, blockTexture);
 	glBegin(GL_QUADS);
 
 	const Chunk::FaceSet &faceSet = c.getFaceSet();
@@ -406,7 +374,7 @@ void Graphics::renderChunk(Chunk &c, bool targeted, vec3ui8 ticc, int td) {
 		}
 	}
 	glEnd();
-	//glBindTexture(GL_TEXTURE_2D, 0);
+	glBindTexture(GL_TEXTURE_2D, 0);
 }
 
 void Graphics::renderPlayers() {
