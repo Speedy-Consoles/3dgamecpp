@@ -14,7 +14,8 @@ using namespace std::chrono;
 int main() {
 	FILE *f = fopen("img/block.png", "r");
 	char buffer[1024];
-	fread(buffer, 1, 50, f);
+	size_t ret = fread(buffer, 1, 50, f);
+	buffer[ret] = '\0';
 	printf("%s\n", buffer);
 	fclose(f);
 

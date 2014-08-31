@@ -90,7 +90,7 @@ void Graphics::initGL() {
 	glEnable(GL_CULL_FACE);
 
 	// light
-	float matSpecular[4] = {1.0f, 1.0f, 1.0f, 1.0f};
+	//float matSpecular[4] = {1.0f, 1.0f, 1.0f, 1.0f};
 	float sunLight[4] = {0.5f, 0.5f, 0.4f, 1.0f};
 	float lModelAmbient[4] = {0.5f, 0.5f, 0.5f, 1.0f};
 
@@ -159,7 +159,7 @@ void Graphics::initGL() {
 	//font = new TrueTypeFont(awtFont, false);
 
 	// fog
-	float fogColor[4] = {0.5f, 0.5f, 0.5f, 1.0f};
+	//float fogColor[4] = {0.5f, 0.5f, 0.5f, 1.0f};
 
 	//		glEnable(GL_FOG);
 	//		glFogi(GL_FOG_MODE, GL_EXP2);
@@ -219,7 +219,7 @@ void Graphics::switchToOrthogonal() {
 	glMatrixMode(GL_MODELVIEW);
 }
 
-double Graphics::calcDrawArea() {
+void Graphics::calcDrawArea() {
 	double normalRatio = START_WIDTH / (double) START_HEIGHT;
 	double currentRatio = width / (double) height;
 	if (currentRatio > normalRatio) {

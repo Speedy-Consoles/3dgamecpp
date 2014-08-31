@@ -86,15 +86,15 @@ void ChunkLoader::run() {
 
 void ChunkLoader::loadChunk(vec3i64 cc) {
 	uint8 blocks[Chunk::WIDTH * Chunk::WIDTH * Chunk::WIDTH];
-	for (int x = 0; x < Chunk::WIDTH; x++) {
-		for (int y = 0; y < Chunk::WIDTH; y++) {
+	for (uint x = 0; x < Chunk::WIDTH; x++) {
+		for (uint y = 0; y < Chunk::WIDTH; y++) {
 			double sx = (cc[0] * Chunk::WIDTH + x) / perlinScale;
 			double sy = (cc[1] * Chunk::WIDTH + y) / perlinScale;
 			double ax = (cc[0] * Chunk::WIDTH + x) / perlinAreaScale;
 			double ay = (cc[1] * Chunk::WIDTH + y) / perlinAreaScale;
 			double h = perlin.octavePerlin(sx, sy, 0, 6, 0.5) * perlinScale
 					* perlin.perlin(ax, ay, 0);
-			for (int z = 0; z < Chunk::WIDTH; z++) {
+			for (uint z = 0; z < Chunk::WIDTH; z++) {
 				int index = Chunk::getBlockIndex(vec3ui8(x, y, z));
 				long wz = z + cc[2] * Chunk::WIDTH;
 				if (wz > h) {

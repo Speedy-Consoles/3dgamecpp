@@ -24,16 +24,16 @@ Chunk::Chunk(vec3i64 cc) : cc(cc), faces(0, faceHashFunc) {
 }
 
 void Chunk::init(uint8 blocks[WIDTH * WIDTH * WIDTH]) {
-	for (int i = 0; i < WIDTH * WIDTH * WIDTH; i++) {
+	for (uint i = 0; i < WIDTH * WIDTH * WIDTH; i++) {
 		this->blocks[i] = blocks[i];
 	}
 }
 
 void Chunk::initFaces(World &world) {
 	// TODO only one loop
-	for (int z = 0; z < WIDTH; z++) {
-		for (int y = 0; y < WIDTH; y++) {
-			for (int x = 0; x < WIDTH; x++) {
+	for (uint z = 0; z < WIDTH; z++) {
+		for (uint y = 0; y < WIDTH; y++) {
+			for (uint x = 0; x < WIDTH; x++) {
 				updateBlockFaces(vec3ui8(x, y, z), world);
 			}
 		}

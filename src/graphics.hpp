@@ -69,7 +69,7 @@ private:
 	void switchToPerspective();
 	void switchToOrthogonal();
 
-	double calcDrawArea();
+	void calcDrawArea();
 
 	void render();
 	void renderChunks();
