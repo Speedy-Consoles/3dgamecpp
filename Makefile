@@ -23,7 +23,7 @@ LIBS = SDL2 GL GLU GLEW SDL2_image ftgl
 
 DEBUG ?= 1
 ifeq ($(DEBUG), 1)
-	CXXFLAGS += -g
+	CXXFLAGS += -g -O1
 	OBJ_DIR = obj/debug
 	BIN_DIR = bin/debug
 else
@@ -41,15 +41,22 @@ EXECUTABLE = $(BIN_DIR)/$(EXECUTABLE_NAME)
 
 OBJECTS = $(SOURCE_FILES:%.cpp=$(OBJ_DIR)/%.cpp.o)
 
-all: make_dirs $(EXECUTABLE)
+all: make_dirs depends $(EXECUTABLE)
+
+$(OBJ_DIR)/%.cpp.o : src/%.cpp
+	$(CXX) -MMD -c -o $@ $< $(CXXFLAGS)
+	@cp $(OBJ_DIR)/$*.cpp.d $(OBJ_DIR)/$*.P; \
+	sed -e 's/#.*//' -e 's/^[^:]*: *//' -e 's/ *\\$$//' \
+			-e '/^$$/ d' -e 's/$$/ :/' \
+			< $(OBJ_DIR)/$*.cpp.d >> $(OBJ_DIR)/$*.P; \
+			rm -f $(OBJ_DIR)/$*.cpp.d
+
+-include $(OBJECTS:%.cpp.o=%.P)
 
 $(EXECUTABLE): $(OBJECTS)
 	$(LD) $(LDFLAGS) $(OBJECTS) $(LIBS_LD_FLAGS) -o $@
 
-$(OBJ_DIR)/%.cpp.o: src/%.cpp
-	$(CXX) $(CXXFLAGS) -c -o $@ $^
-
-.PHONY: make_dirs clean all
+.PHONY: make_dirs clean depends all
 
 make_dirs:
 	mkdir -p $(OBJ_DIR)
