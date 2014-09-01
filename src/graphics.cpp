@@ -284,7 +284,7 @@ void Graphics::render() {
 void Graphics::renderChunks() {
 	using namespace vec_auto_cast;
 	lastNewQuads = 0;
-	Player localPlayer = world->getPlayer(localClientID);
+	Player &localPlayer = world->getPlayer(localClientID);
 	vec3i64 pc = localPlayer.getChunkPos();
 	vec3d lookDir = getVectorFromAngles(localPlayer.getYaw(),
 			localPlayer.getPitch());

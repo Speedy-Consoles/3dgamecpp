@@ -2,6 +2,7 @@
 #define PLAYER_HPP
 
 #include "vmath.hpp"
+#include "monitor.hpp"
 
 struct PlayerSnapshot {
 	int tick;
@@ -79,6 +80,8 @@ private:
 	PlayerSnapshot snapshot;
 	bool hasSnapshot = false;
 
+	Monitor validPosMonitor;
+
 public:
 	void tick(int tick, bool isLocalPlayer);
 	void move();
@@ -103,6 +106,8 @@ public:
 
 	void setSnapshot(const PlayerSnapshot &snapshot);
 	PlayerSnapshot makeSnapshot(int tick) const;
+
+	Monitor &getValidPosMonitor();
 
 private:
 	void fly();

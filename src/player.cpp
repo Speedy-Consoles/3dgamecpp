@@ -18,7 +18,9 @@ void Player::tick(int tick, bool isLocalPlayer) {
 
 	// TODO predict
 	if (hasSnapshot) {
+		validPosMonitor.startWrite();
 		pos = snapshot.pos;
+		validPosMonitor.finishWrite();
 		vel = snapshot.vel;
 		if (!isLocalPlayer) {
 			yaw = snapshot.yaw;
@@ -77,10 +79,10 @@ void Player::move() {
 			}
 		}
 		if (numFirstHitFaces == 0) {
-			pos[0] = floor(newPos[0] + remVel[0]);
-			pos[1] = floor(newPos[1] + remVel[1]);
-			pos[2] = floor(newPos[2] + remVel[2]);
-			return;
+			newPos[0] = floor(newPos[0] + remVel[0]);
+			newPos[1] = floor(newPos[1] + remVel[1]);
+			newPos[2] = floor(newPos[2] + remVel[2]);
+			break;;
 		}
 
 		remVel -= firstHitPos - newPos;
@@ -96,7 +98,9 @@ void Player::move() {
 
 		remDist = remVel.norm();
 	}
+	validPosMonitor.startWrite();
 	pos = newPos;
+	validPosMonitor.finishWrite();
 }
 
 void Player::setOrientation(double yaw, double pitch) {
@@ -137,28 +141,32 @@ int Player::getMoveInput() const {
 }
 
 vec3i64 Player::getChunkPos() const {
-	// TODO make thread safe
 	return bc2cc(wc2bc(pos));
 }
 
 void Player::create(World *world) {
 	this->world = world;
-	pos = vec3i64(0, 0, 30 * RESOLUTION);
+
 	vel = vec3d(0, 0, 0);
 	yaw = 0;
 	pitch = 0;
 	isFlying = false;
 	moveInput = 0;
 
+	validPosMonitor.startWrite();
+	pos = vec3i64(0, 0, 30 * RESOLUTION);
 	valid = true;
+	validPosMonitor.finishWrite();
 }
 
 void Player::destroy() {
 	world = nullptr;
+	validPosMonitor.startWrite();
 	valid = false;
+	validPosMonitor.finishWrite();
 }
 
-bool Player::isValid() const{
+bool Player::isValid() const {
 	return valid;
 }
 
@@ -187,6 +195,10 @@ PlayerSnapshot Player::makeSnapshot(int tick) const {
 	return PlayerSnapshot{tick, isFlying, pos, vel, yaw, pitch, moveInput};
 }
 
+Monitor &Player::getValidPosMonitor() {
+	return validPosMonitor;
+}
+
 void Player::fly() {
 	vec3i64 newPos = pos;
 	if ((moveInput & MOVE_INPUT_FLAG_STRAFE_RIGHT) > 0) {
@@ -210,7 +222,10 @@ void Player::fly() {
 		newPos[0] -= cos(yaw * TAU / 360) * FLY_SPEED;
 		newPos[1] -= sin(yaw * TAU / 360) * FLY_SPEED;
 	}
+
+	validPosMonitor.startWrite();
 	pos = newPos;
+	validPosMonitor.finishWrite();
 }
 
 void Player::walk() {
