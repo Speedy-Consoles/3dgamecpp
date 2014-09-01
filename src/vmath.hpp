@@ -6,6 +6,10 @@
 #include "std_types.hpp"
 #include <algorithm>
 
+template <typename T> struct dotp_t_selector { typedef T dotp_t; };
+template <> struct dotp_t_selector<uint8> { typedef uint dotp_t; };
+template <> struct dotp_t_selector<int8> { typedef int dotp_t; };
+
 template <typename T, size_t N>
 class vec {
 public:
@@ -50,11 +54,12 @@ public:
 	vec<T, N>   operator /  (ConstRefT) const;
 
 	// scalar product
-	T           operator *  (vec<T, N> const &rhs) const;
+	typedef typename dotp_t_selector<T>::dotp_t dotp_t;
+	dotp_t      operator *  (vec<T, N> const &rhs) const;
 
 	// query
-	T norm2() const;
-	auto norm() const -> decltype(sqrt(T()));
+	dotp_t norm2() const;
+	auto norm() const -> decltype(sqrt(dotp_t()));
 	auto maxAbs() const -> decltype(abs(T()));
 
 	// cast
@@ -190,8 +195,8 @@ vec<T, N> vec<T, N>::operator / (ConstRefT rhs) const {
 }
 
 template <typename T, size_t N>
-T vec<T, N>::operator * (vec<T, N> const &rhs) const {
-	T result = 0;
+auto vec<T, N>::operator * (vec<T, N> const &rhs) const -> dotp_t {
+	dotp_t result = 0;
 
 	for (size_t i = 0; i < N; ++i)
 		result += this->_t[i] * rhs._t[i];
@@ -200,12 +205,12 @@ T vec<T, N>::operator * (vec<T, N> const &rhs) const {
 }
 
 template <typename T, size_t N>
-T vec<T, N>::norm2() const {
+auto vec<T, N>::norm2() const -> dotp_t {
 	return this->operator*(*this);
 }
 
 template <typename T, size_t N>
-auto vec<T, N>::norm() const -> decltype(sqrt(T())) {
+auto vec<T, N>::norm() const -> decltype(sqrt(dotp_t())) {
 	return sqrt(norm2());
 }
 
