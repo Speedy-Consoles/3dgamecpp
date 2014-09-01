@@ -83,9 +83,7 @@ void Player::move() {
 			return;
 		}
 
-		remVel[0] -= firstHitPos[0] - newPos[0];
-		remVel[1] -= firstHitPos[1] - newPos[1];
-		remVel[2] -= firstHitPos[2] - newPos[2];
+		remVel -= firstHitPos - newPos;
 
 		for (int i = 0; i < numFirstHitFaces; i++) {
 			remVel[DIR_DIMS[firstHitFaceDirs[i]]] = 0;
@@ -145,7 +143,7 @@ vec3i64 Player::getChunkPos() const {
 
 void Player::create(World *world) {
 	this->world = world;
-	pos = vec3i64(0, 0, 10 * RESOLUTION);
+	pos = vec3i64(0, 0, 30 * RESOLUTION);
 	vel = vec3d(0, 0, 0);
 	yaw = 0;
 	pitch = 0;

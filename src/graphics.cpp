@@ -270,9 +270,9 @@ void Graphics::render() {
 
 	RENDER_LINE("fps: %d", lastFPS);
 	RENDER_LINE("quads: %d", lastNewQuads);
-	RENDER_LINE("x: %d", playerPos[0]);
-	RENDER_LINE("y: %d", playerPos[1]);
-	RENDER_LINE("z: %d", playerPos[2]);
+	RENDER_LINE("x: %ld", playerPos[0]);
+	RENDER_LINE("y: %ld", playerPos[1]);
+	RENDER_LINE("z: %ld", playerPos[2]);
 	RENDER_LINE("yaw:   %6.1f", localPlayer.getYaw());
 	RENDER_LINE("pitch: %6.1f", localPlayer.getPitch());
 	RENDER_LINE("xvel: %8.1f", playerVel[0]);
