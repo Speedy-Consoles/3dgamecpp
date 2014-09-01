@@ -2,6 +2,8 @@
 #define WORLD_HPP
 
 #include <unordered_map>
+#include <chrono>
+
 #include "constants.hpp"
 #include "chunk.hpp"
 #include "player.hpp"
@@ -44,6 +46,8 @@ private:
 
 	Player players[MAX_CLIENTS];
 
+	std::chrono::microseconds dur_ticking;
+
 public:
 
 	World();
@@ -66,6 +70,8 @@ public:
 	ChunkMap &getChunks();
 
 	WorldSnapshot makeSnapshot(int tick) const;
+
+	std::chrono::microseconds getTickingTime();
 };
 
 

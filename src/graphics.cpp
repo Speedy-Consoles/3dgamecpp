@@ -47,7 +47,13 @@ Graphics::~Graphics() {
 
 void Graphics::tick() {
 	render();
+
+	auto start = std::chrono::high_resolution_clock::now();
 	SDL_GL_SwapWindow(window);
+	auto stop = std::chrono::high_resolution_clock::now();
+	dur_graphics_flipping += duration_cast<microseconds>(stop - start);
+
+
 	removeDisplayLists();
 	frameCounter++;
 	int64 time = getMicroTimeSince(startTimePoint);
@@ -55,6 +61,29 @@ void Graphics::tick() {
 		lastFPS = frameCounter;
 		lastFPSUpdate += 1000000;
 		frameCounter = 0;
+
+		rel_dur_graphics_clearing = dur_graphics_clearing.count() * 1e-6;
+		rel_dur_graphics_chunks = dur_graphics_chunks.count() * 1e-6;
+		rel_dur_graphics_players = dur_graphics_players.count() * 1e-6;
+		rel_dur_graphics_hud = dur_graphics_hud.count() * 1e-6;
+
+		rel_dur_graphics_flipping = dur_graphics_flipping.count() * 1e-6;
+
+		rel_dur_world_ticking = world->getTickingTime().count() * 1e-6;
+
+		rel_dur_unaccounted_for = 1.0
+				- rel_dur_graphics_clearing
+				- rel_dur_graphics_chunks
+				- rel_dur_graphics_players
+				- rel_dur_graphics_hud
+				- rel_dur_graphics_flipping
+				- rel_dur_world_ticking;
+
+		dur_graphics_clearing = microseconds::zero();
+		dur_graphics_chunks = microseconds::zero();
+		dur_graphics_players = microseconds::zero();
+		dur_graphics_hud = microseconds::zero();
+		dur_graphics_flipping = microseconds::zero();
 	}
 }
 
@@ -204,8 +233,12 @@ void Graphics::render() {
 	if (!localPlayer.isValid())
 		return;
 
+	auto start = std::chrono::high_resolution_clock::now();
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	auto stop = std::chrono::high_resolution_clock::now();
+	dur_graphics_clearing += duration_cast<microseconds>(stop - start);
 
+	start = std::chrono::high_resolution_clock::now();
 	switchToPerspective();
 	glEnable(GL_LIGHTING);
 	//		glEnable(GL_FOG);
@@ -235,8 +268,16 @@ void Graphics::render() {
 	// render chunk
 	renderChunks();
 
+	stop = std::chrono::high_resolution_clock::now();
+	dur_graphics_chunks += duration_cast<microseconds>(stop - start);
+
 	// render players
+	start = std::chrono::high_resolution_clock::now();
 	renderPlayers();
+	stop = std::chrono::high_resolution_clock::now();
+	dur_graphics_players += duration_cast<microseconds>(stop - start);
+
+	start = std::chrono::high_resolution_clock::now();
 
 	switchToOrthogonal();
 	glDisable(GL_LIGHTING);
@@ -260,7 +301,7 @@ void Graphics::render() {
 
 	vec3d playerVel = localPlayer.getVel();
 
-    glPushMatrix();
+	glPushMatrix();
 	glColor3f(1.0f, 1.0f, 1.0f);
 	glTranslatef(-drawWidth / 2 + 3, drawHeight / 2, 0);
 	char buffer[1024];
@@ -278,7 +319,67 @@ void Graphics::render() {
 	RENDER_LINE("xvel: %8.1f", playerVel[0]);
 	RENDER_LINE("yvel: %8.1f", playerVel[1]);
 	RENDER_LINE("zvel: %8.1f", playerVel[2]);
-    glPopMatrix();
+	glPopMatrix();
+
+	glPushMatrix();
+	glTranslatef(+drawWidth / 2.0 - drawWidth * 0.01, -drawHeight / 2, 0);
+	glScalef(drawWidth * 0.01, drawHeight, 1.0);
+	glDisable(GL_TEXTURE_2D);
+	float rel = 0.0;
+	glBegin(GL_QUADS);
+		glColor3f(0.0f, 0.0f, 0.8f);
+		glVertex2f(0, rel);
+		glVertex2f(1, rel);
+		rel += rel_dur_graphics_clearing;
+		glVertex2f(1, rel);
+		glVertex2f(0, rel);
+
+		glColor3f(0.0f, 0.2f, 0.6f);
+		glVertex2f(0, rel);
+		glVertex2f(1, rel);
+		rel += rel_dur_graphics_chunks;
+		glVertex2f(1, rel);
+		glVertex2f(0, rel);
+
+		glColor3f(0.0f, 0.4f, 0.4f);
+		glVertex2f(0, rel);
+		glVertex2f(1, rel);
+		rel += rel_dur_graphics_players;
+		glVertex2f(1, rel);
+		glVertex2f(0, rel);
+
+		glColor3f(0.0f, 0.6f, 0.2f);
+		glVertex2f(0, rel);
+		glVertex2f(1, rel);
+		rel += rel_dur_graphics_hud;
+		glVertex2f(1, rel);
+		glVertex2f(0, rel);
+
+		glColor3f(0.0f, 0.8f, 0.0f);
+		glVertex2f(0, rel);
+		glVertex2f(1, rel);
+		rel += rel_dur_graphics_flipping;
+		glVertex2f(1, rel);
+		glVertex2f(0, rel);
+
+		glColor3f(0.8f, 0.8f, 0.0f);
+		glVertex2f(0, rel);
+		glVertex2f(1, rel);
+		rel += rel_dur_world_ticking;
+		glVertex2f(1, rel);
+		glVertex2f(0, rel);
+
+		glColor3f(0.6f, 0.0f, 0.0f);
+		glVertex2f(0, rel);
+		glVertex2f(1, rel);
+		rel += rel_dur_unaccounted_for;
+		glVertex2f(1, rel);
+		glVertex2f(0, rel);
+	glEnd();
+	glPopMatrix();
+
+	stop = std::chrono::high_resolution_clock::now();
+	dur_graphics_hud += duration_cast<microseconds>(stop - start);
 }
 
 void Graphics::renderChunks() {
@@ -304,6 +405,7 @@ void Graphics::renderChunks() {
 	int length = VIEW_RANGE * 2 + 1;
 	int maxChunks = length * length * length;
 	int chunks = 0;
+	glEnable(GL_TEXTURE_2D);
 	for (uint i = 0; i < LOADING_ORDER.size() && chunks < maxChunks; i++) {
 		vec3i8 cd = LOADING_ORDER[i];
 		if (cd.maxAbs() > VIEW_RANGE)
