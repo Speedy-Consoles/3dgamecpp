@@ -82,7 +82,7 @@ int World::shootRay(vec3i64 start, vec3d ray, double maxDist,
 		}
 		if (block == oldBlock && blockHitCounter == 0) {
 			// TODO fix this
-			printf("Oh no!");
+			printf("Oh no!\n");
 		}
 	}
 	return blockHitCounter;

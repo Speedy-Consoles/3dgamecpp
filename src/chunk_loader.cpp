@@ -2,6 +2,7 @@
 #include "util.hpp"
 #include "constants.hpp"
 #include "chunk.hpp"
+#include "monitor.hpp"
 
 ChunkLoader::ChunkLoader(World *world, uint64 seed, bool updateFaces) : perlin(seed) {
 	this->world = world;
@@ -28,14 +29,20 @@ void ChunkLoader::run() {
 			for (uint8 i = 0; i < MAX_CLIENTS; i++) {
 				//if (Thread.interrupted())
 				//	return;
-				Player player = world->getPlayer(i);
-				if (!player.isValid()) {
+				Player &player = world->getPlayer(i);
+				Monitor &validPosMonitor = player.getValidPosMonitor();
+				int handle = validPosMonitor.startRead();
+				bool valid = player.isValid();
+				vec3i64 pcc = player.getChunkPos();
+				if(!validPosMonitor.finishRead(handle))
+					continue;
+
+				if (!valid) {
 					playerChunkIndex[i] = 0;
 					playerChunksLoaded[i] = 0;
 					continue;
 				}
 
-				vec3i64 pcc = player.getChunkPos();
 				if (oldPcc[i] != pcc) {
 					playerChunkIndex[i] = 0;
 					playerChunksLoaded[i] = 0;

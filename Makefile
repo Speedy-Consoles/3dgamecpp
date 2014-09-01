@@ -8,7 +8,8 @@ SOURCE_FILES = \
 	perlin.cpp\
 	player.cpp\
 	util.cpp\
-	world.cpp
+	world.cpp\
+	monitor.cpp
 
 CXX = g++
 LD = g++
