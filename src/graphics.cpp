@@ -320,9 +320,10 @@ void Graphics::render() {
 
 	RENDER_LINE("fps: %d", lastFPS);
 	RENDER_LINE("quads: %d", lastNewQuads);
-	RENDER_LINE("x: %ld", playerPos[0]);
-	RENDER_LINE("y: %ld", playerPos[1]);
-	RENDER_LINE("z: %ld", playerPos[2]);
+	RENDER_LINE("x: %ld (%ld)", playerPos[0], playerPos[0] / RESOLUTION);
+	RENDER_LINE("y: %ld (%ld)", playerPos[1], playerPos[1] / RESOLUTION);
+	RENDER_LINE("z: %ld (%ld)", playerPos[2],
+			(playerPos[2] - Player::EYE_HEIGHT - 1) / RESOLUTION);
 	RENDER_LINE("yaw:   %6.1f", localPlayer.getYaw());
 	RENDER_LINE("pitch: %6.1f", localPlayer.getPitch());
 	RENDER_LINE("xvel: %8.1f", playerVel[0]);
@@ -330,62 +331,62 @@ void Graphics::render() {
 	RENDER_LINE("zvel: %8.1f", playerVel[2]);
 	glPopMatrix();
 
-	glPushMatrix();
-	glTranslatef(+drawWidth / 2.0 - drawWidth * 0.01, -drawHeight / 2, 0);
-	glScalef(drawWidth * 0.01, drawHeight, 1.0);
-	glDisable(GL_TEXTURE_2D);
+	// begin rendering the relative performance bar here
+	int num_rel_durs = 7;
+
+	const char *rel_names[] = {
+		"CLR", "CHNK", "PLA", "HUD", "FLP", "WORLD", "UAF"
+	};
+
+	float rel_array[] = {
+		rel_dur_graphics_clearing,
+		rel_dur_graphics_chunks,
+		rel_dur_graphics_players,
+		rel_dur_graphics_hud,
+		rel_dur_graphics_flipping,
+		rel_dur_world_ticking,
+		rel_dur_unaccounted_for
+	};
+
+	vec<float, 3> rel_colors[] {
+		{0.0f, 0.0f, 0.8f},
+		{0.0f, 0.2f, 0.6f},
+		{0.0f, 0.4f, 0.4f},
+		{0.0f, 0.6f, 0.2f},
+		{0.0f, 0.8f, 0.0f},
+		{0.8f, 0.8f, 0.0f},
+		{0.6f, 0.0f, 0.0f}
+	};
+
 	float rel = 0.0;
-	glBegin(GL_QUADS);
-		glColor3f(0.0f, 0.0f, 0.8f);
-		glVertex2f(0, rel);
-		glVertex2f(1, rel);
-		rel += rel_dur_graphics_clearing;
-		glVertex2f(1, rel);
-		glVertex2f(0, rel);
 
-		glColor3f(0.0f, 0.2f, 0.6f);
-		glVertex2f(0, rel);
-		glVertex2f(1, rel);
-		rel += rel_dur_graphics_chunks;
-		glVertex2f(1, rel);
-		glVertex2f(0, rel);
-
-		glColor3f(0.0f, 0.4f, 0.4f);
-		glVertex2f(0, rel);
-		glVertex2f(1, rel);
-		rel += rel_dur_graphics_players;
-		glVertex2f(1, rel);
-		glVertex2f(0, rel);
-
-		glColor3f(0.0f, 0.6f, 0.2f);
-		glVertex2f(0, rel);
-		glVertex2f(1, rel);
-		rel += rel_dur_graphics_hud;
-		glVertex2f(1, rel);
-		glVertex2f(0, rel);
-
-		glColor3f(0.0f, 0.8f, 0.0f);
-		glVertex2f(0, rel);
-		glVertex2f(1, rel);
-		rel += rel_dur_graphics_flipping;
-		glVertex2f(1, rel);
-		glVertex2f(0, rel);
-
-		glColor3f(0.8f, 0.8f, 0.0f);
-		glVertex2f(0, rel);
-		glVertex2f(1, rel);
-		rel += rel_dur_world_ticking;
-		glVertex2f(1, rel);
-		glVertex2f(0, rel);
-
-		glColor3f(0.6f, 0.0f, 0.0f);
-		glVertex2f(0, rel);
-		glVertex2f(1, rel);
-		rel += rel_dur_unaccounted_for;
-		glVertex2f(1, rel);
-		glVertex2f(0, rel);
-	glEnd();
+	glPushMatrix();
+	glTranslatef(+drawWidth / 2.0 - 3.0, -drawHeight / 2, 0);
+	glScalef(6.0, drawHeight, 1.0);
+	glDisable(GL_TEXTURE_2D);
+	for (int i = 0; i < num_rel_durs; ++i) {
+		glBegin(GL_QUADS);
+			glColor3f(rel_colors[i][0], rel_colors[i][1], rel_colors[i][2]);
+			glVertex2f(0, rel);
+			glVertex2f(1, rel);
+			rel += rel_array[i];
+			glVertex2f(1, rel);
+			glVertex2f(0, rel);
+		glEnd();
+	}
 	glPopMatrix();
+
+	glPushMatrix();
+	glTranslatef(+drawWidth / 2.0 - 6.0, -drawHeight / 2 + 5, 0);
+	glRotatef(90.0, 0.0, 0.0, 1.0);
+	for (int i = 0; i < num_rel_durs; ++i) {
+		if (rel_array[i] > 0.005) {
+			sprintf(buffer, "%s", rel_names[i]);
+			glColor3f(rel_colors[i][0], rel_colors[i][1], rel_colors[i][2]);
+			font->Render(buffer);
+			glTranslatef(std::max(drawHeight * rel_array[i] * 0.90, 30.0), 0, 0);
+		}
+	}
 
 	stop = std::chrono::high_resolution_clock::now();
 	dur_graphics_hud += duration_cast<microseconds>(stop - start);
