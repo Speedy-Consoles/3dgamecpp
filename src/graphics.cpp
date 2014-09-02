@@ -193,8 +193,8 @@ void Graphics::makeOrthogonal() {
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 	if (currentRatio > normalRatio)
-		glOrtho(-START_WIDTH / 2.0, START_WIDTH / 2.0, START_WIDTH
-				/ currentRatio / 2.0, -START_WIDTH / currentRatio / 2.0, 1,
+		glOrtho(-START_WIDTH / 2.0, START_WIDTH / 2.0, -START_WIDTH
+				/ currentRatio / 2.0, START_WIDTH / currentRatio / 2.0, 1,
 				-1);
 	else
 		glOrtho(-START_HEIGHT * currentRatio / 2.0, START_HEIGHT
