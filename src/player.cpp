@@ -4,6 +4,7 @@
 #include "util.hpp"
 #include "world.hpp"
 #include <algorithm>
+#include <cstring>
 
 using namespace std;
 
@@ -51,10 +52,10 @@ void Player::move() {
 	double remDist = remVel.norm();
 	while (remDist >= 0.5) {
 		vec3d firstHitPos;
-		int *firstHitFaceDirs;
+		int firstHitFaceDirs[3];
 		int numFirstHitFaces = 0;
 		double lowestDist = std::numeric_limits<double>::infinity();
-		for (int i = 0; i < 12; i++) {
+		for (int i = 0; i < 4; i++) {
 			vec3i corner(
 				QUAD_CYCLE_2D[i % 4][0],
 				QUAD_CYCLE_2D[i % 4][1],
@@ -75,7 +76,7 @@ void Player::move() {
 				if (dist < lowestDist) {
 					lowestDist = dist;
 					firstHitPos = hitPos - off;
-					firstHitFaceDirs = faceDirs;
+					memcpy(firstHitFaceDirs, faceDirs, 3 * sizeof(int));
 					numFirstHitFaces = numHitFaces;
 				}
 			}
@@ -84,7 +85,7 @@ void Player::move() {
 			newPos[0] = floor(newPos[0] + remVel[0]);
 			newPos[1] = floor(newPos[1] + remVel[1]);
 			newPos[2] = floor(newPos[2] + remVel[2]);
-			break;;
+			break;
 		}
 
 		remVel -= firstHitPos - newPos;

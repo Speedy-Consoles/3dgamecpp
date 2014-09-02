@@ -118,9 +118,9 @@ void Graphics::initGL() {
 
 	// light
 	//float matSpecular[4] = {1.0f, 1.0f, 1.0f, 1.0f};
-	float sunLight[4] = {0.0f, 0.0f, 0.0f, 1.0f};
+	float sunLight[4] = {0.7f, 0.7f, 0.6f, 1.0f};
 	float playerLight[4] = {4.0f, 4.0f, 2.4f, 1.0f};
-	float lModelAmbient[4] = {0.0f, 0.0f, 0.0f, 1.0f};
+	float lModelAmbient[4] = {0.5f, 0.5f, 0.5f, 1.0f};
 
 	float playerLightPos[4] = {0.0f, 0.0f, -0.4f, 1.0f};
 
