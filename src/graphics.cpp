@@ -12,8 +12,6 @@ Graphics::Graphics(World *world, int localClientID)
 	this->world = world;
 	this->localClientID = localClientID;
 
-	//lightPosition.put(5.0f).put(-3.0f).put(20.0f).put(0.0f).flip();
-
 	SDL_Init(SDL_INIT_VIDEO);
 
 	window = SDL_CreateWindow(
@@ -120,21 +118,32 @@ void Graphics::initGL() {
 
 	// light
 	//float matSpecular[4] = {1.0f, 1.0f, 1.0f, 1.0f};
-	float sunLight[4] = {0.5f, 0.5f, 0.4f, 1.0f};
-	float lModelAmbient[4] = {0.5f, 0.5f, 0.5f, 1.0f};
+	float sunLight[4] = {0.0f, 0.0f, 0.0f, 1.0f};
+	float playerLight[4] = {4.0f, 4.0f, 2.4f, 1.0f};
+	float lModelAmbient[4] = {0.0f, 0.0f, 0.0f, 1.0f};
+
+	float playerLightPos[4] = {0.0f, 0.0f, -0.4f, 1.0f};
 
 	glEnable(GL_LIGHTING); // enables lighting
 	glShadeModel(GL_SMOOTH);
-	//		glMaterial(GL_FRONT, GL_SPECULAR, matSpecular); // sets specular material color
-	//		glMaterialf(GL_FRONT, GL_SHININESS, 1.0f); // sets shininess
+	//glMaterialfv(GL_FRONT, GL_SPECULAR, matSpecular); // sets specular material color
+	//glMaterialf(GL_FRONT, GL_SHININESS, 1.0f); // sets shininess
 
 	glLightModelfv(GL_LIGHT_MODEL_AMBIENT, lModelAmbient); // global ambient light
 
-	//		glLightf(GL_LIGHT0, GL_CONSTANT_ATTENUATION, 0.01f);
-	//		glLightf(GL_LIGHT0, GL_QUADRATIC_ATTENUATION, 0.001f);
-	//		glLight(GL_LIGHT0, GL_SPECULAR, whiteLight); // sets specular light to white
+	//glLightf(GL_LIGHT0, GL_CONSTANT_ATTENUATION, 0.01f);
+	//glLightf(GL_LIGHT0, GL_QUADRATIC_ATTENUATION, 0.001f);
+	//glLight(GL_LIGHT0, GL_SPECULAR, whiteLight); // sets specular light to white
 	glLightfv(GL_LIGHT0, GL_DIFFUSE, sunLight);
+	//glLightfv(GL_LIGHT0, GL_SPECULAR, sunLight);
 	glEnable(GL_LIGHT0);
+
+	glLightfv(GL_LIGHT1, GL_DIFFUSE, playerLight);
+	glLightfv(GL_LIGHT1, GL_POSITION, playerLightPos);
+	glLightf(GL_LIGHT1, GL_CONSTANT_ATTENUATION, 0.0f);
+	glLightf(GL_LIGHT1, GL_LINEAR_ATTENUATION, 0.0f);
+	glLightf(GL_LIGHT1, GL_QUADRATIC_ATTENUATION, 1.f);
+	glEnable(GL_LIGHT1);
 
 	glEnable(GL_COLOR_MATERIAL); // enables opengl to use glColor3f to define material color
 	glColorMaterial(GL_FRONT, GL_AMBIENT_AND_DIFFUSE); // tell opengl glColor3f effects the ambient and diffuse properties of material
@@ -263,7 +272,7 @@ void Graphics::render() {
 	// now we are in world coordinates
 
 	// place light
-	glLightfv(GL_LIGHT0, GL_POSITION, lightPosition);
+	glLightfv(GL_LIGHT0, GL_POSITION, sunLightPosition);
 
 	// render chunk
 	renderChunks();

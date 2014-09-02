@@ -7,7 +7,7 @@
 
 class ChunkLoader {
 private:
-	static const int MAX_LOADS_UNTIL_UNLOAD = 50;
+	static const int MAX_LOADS_UNTIL_UNLOAD = 100;
 
 	Perlin perlin;
 
