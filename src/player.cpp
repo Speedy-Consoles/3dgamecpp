@@ -53,7 +53,7 @@ void Player::move() {
 		vec3d firstHitPos;
 		int *firstHitFaceDirs;
 		int numFirstHitFaces = 0;
-		double lowestXDist = std::numeric_limits<double>::infinity();
+		double lowestDist = std::numeric_limits<double>::infinity();
 		for (int i = 0; i < 12; i++) {
 			vec3i corner(
 				QUAD_CYCLE_2D[i % 4][0],
@@ -70,12 +70,14 @@ void Player::move() {
 			int faceDirs[3];
 			int numHitFaces = world->shootRay(start, remVel, remDist,
 					corner, &hitPos, nullptr, faceDirs);
-			double dist = (hitPos - start).norm();
-			if (numHitFaces > 0 && dist < lowestXDist) {
-				lowestXDist = dist;
-				firstHitPos = hitPos - off;
-				firstHitFaceDirs = faceDirs;
-				numFirstHitFaces = numHitFaces;
+			if (numHitFaces > 0) {
+				double dist = (hitPos - start).norm();
+				if (dist < lowestDist) {
+					lowestDist = dist;
+					firstHitPos = hitPos - off;
+					firstHitFaceDirs = faceDirs;
+					numFirstHitFaces = numHitFaces;
+				}
 			}
 		}
 		if (numFirstHitFaces == 0) {
