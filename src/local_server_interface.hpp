@@ -13,6 +13,8 @@ private:
 public:
 	LocalServerInterface(World *world, uint64 seed);
 
+	virtual ~LocalServerInterface();
+
 	void togglePlayerFly() override;
 
 	void setPlayerMoveInput(int moveInput) override;

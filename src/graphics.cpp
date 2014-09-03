@@ -329,6 +329,7 @@ void Graphics::render() {
 	RENDER_LINE("xvel: %8.1f", playerVel[0]);
 	RENDER_LINE("yvel: %8.1f", playerVel[1]);
 	RENDER_LINE("zvel: %8.1f", playerVel[2]);
+	RENDER_LINE("chunks loaded: %lu", world->getChunks().size());
 	glPopMatrix();
 
 	// begin rendering the relative performance bar here
@@ -436,11 +437,10 @@ void Graphics::renderChunks() {
 			lid = listIt->second;
 
 		if (chunkIt != world->getChunks().end()
-				&& chunkIt->second.isReady()
-				&& chunkIt->second.pollChanged()
+				&& chunkIt->second->pollChanged()
 				&& lid != 0) {
 			glNewList(lid, GL_COMPILE);
-			renderChunk(chunkIt->second, false, vec3ui8(0, 0, 0), 0);
+			renderChunk(*chunkIt->second, false, vec3ui8(0, 0, 0), 0);
 			glEndList();
 		}
 
@@ -450,7 +450,7 @@ void Graphics::renderChunks() {
 		bool tChunk = target && cc == tcc;
 		if (inFrustum(cc, localPlayer.getPos(), lookDir)) {
 			if (chunkIt != world->getChunks().end() && (tChunk || lid == 0))
-				renderChunk(chunkIt->second, tChunk, ticc, td);
+				renderChunk(*chunkIt->second, tChunk, ticc, td);
 			else if (lid != 0)
 				glCallList(lid);
 		}
@@ -459,7 +459,7 @@ void Graphics::renderChunks() {
 	}
 }
 
-void Graphics::renderChunk(Chunk &c, bool targeted, vec3ui8 ticc, int td) {
+void Graphics::renderChunk(const Chunk &c, bool targeted, vec3ui8 ticc, int td) {
 	using namespace vec_auto_cast;
 	//render blocks
 	glBindTexture(GL_TEXTURE_2D, blockTexture);

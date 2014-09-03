@@ -3,9 +3,13 @@
 LocalServerInterface::LocalServerInterface(World *world, uint64 seed)
 		: chunkLoader(world, seed, true) {
 	this->world = world;
-	//chunkLoader.start();
 	world->addPlayer(0);
-	chunkLoader.run();
+	chunkLoader.dispatch();
+}
+
+
+LocalServerInterface::~LocalServerInterface() {
+	// nothing
 }
 
 void LocalServerInterface::togglePlayerFly() {
@@ -25,9 +29,26 @@ void LocalServerInterface::edit(vec3i64 bc, uint8 type) {
 }
 
 void LocalServerInterface::receive(uint64 timeLimit) {
+	Chunk *chunk = nullptr;
+	while ((chunk = chunkLoader.next()) != nullptr) {
+		world->getChunks().insert({chunk->cc, chunk});
+	}
+
+	auto unloadQueries = chunkLoader.getUnloadQueries();
+	while (unloadQueries)
+	{
+		auto iter = world->getChunks().find(unloadQueries->data);
+		Chunk *chunk = iter->second;
+		world->getChunks().erase(iter);
+		delete chunk;
+		auto tmp = unloadQueries->next;
+		delete unloadQueries;
+		unloadQueries = tmp;
+	}
 }
 
 void LocalServerInterface::sendInput() {
+
 }
 
 int LocalServerInterface::getLocalClientID() {
@@ -35,7 +56,7 @@ int LocalServerInterface::getLocalClientID() {
 }
 
 void LocalServerInterface::stop() {
+	chunkLoader.wait();
 	world->deletePlayer(0);
-	//chunkLoader.interrupt();
 }
 

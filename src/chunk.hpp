@@ -23,8 +23,6 @@ public:
 	using FaceSet = std::unordered_set<Face, size_t(*)(Face)>;
 
 private:
-	bool ready = false;
-
 	bool changed = true;
 
 	uint8 blocks[WIDTH * WIDTH * WIDTH];
@@ -40,9 +38,6 @@ public:
 	uint8 getBlock(vec3ui8 icc) const;
 
 	const FaceSet &getFaceSet() const;
-
-	void setReady();
-	bool isReady() const;
 
 	bool pollChanged();
 /*

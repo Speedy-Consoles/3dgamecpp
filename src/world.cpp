@@ -6,6 +6,12 @@
 World::World() : chunks(0, vec3i64HashFunc), dur_ticking(0) {
 }
 
+World::~World() {
+	for (auto iter : chunks) {
+		delete iter.second;
+	}
+}
+
 void World::tick(int tick, uint localPlayerID) {
 	for (uint i = 0; i < MAX_CLIENTS; i++) {
 		if (players[i].isValid())
@@ -110,14 +116,14 @@ uint8 World::getBlock(vec3i64 bc) const {
 	auto it = chunks.find(bc2cc(bc));
 	if (it == chunks.end())
 		return 0;
-	return it->second.getBlock(bc2icc(bc));
+	return it->second->getBlock(bc2icc(bc));
 }
 
 bool World::setBlock(vec3i64 bc, uint8 type, bool updateFaces) {
 	auto it = chunks.find(bc2cc(bc));
 	if (it == chunks.end())
 		return false;
-	return it->second.setBlock(bc2icc(bc), type, *this);
+	return it->second->setBlock(bc2icc(bc), type, *this);
 }
 
 World::ChunkMap &World::getChunks() {

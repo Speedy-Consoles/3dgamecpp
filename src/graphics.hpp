@@ -90,7 +90,7 @@ private:
 
 	void render();
 	void renderChunks();
-	void renderChunk(Chunk &c, bool targeted, vec3ui8 ticc, int td);
+	void renderChunk(const Chunk &c, bool targeted, vec3ui8 ticc, int td);
 	void renderPlayers();
 
 	bool inFrustum(vec3i64 cc, vec3i64 pos, vec3d lookDir);

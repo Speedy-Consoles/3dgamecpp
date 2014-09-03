@@ -2,12 +2,6 @@
 #include "world.hpp"
 #include "util.hpp"
 
-bool operator == (const Face &lhs, const Face &rhs) {
-	if (&lhs == &rhs)
-		return true;
-    return lhs.block == rhs.block && lhs.dir == rhs.dir;
-}
-
 static size_t faceHashFunc(Face f) {
 		static const int prime = 31;
 		int result = 1;
@@ -18,10 +12,19 @@ static size_t faceHashFunc(Face f) {
 		return result;
 }
 
+Chunk::Chunk(vec3i64 cc) :
+		cc(cc), faces(0, faceHashFunc) {
+	// nothing
+}
+
+bool operator == (const Face &lhs, const Face &rhs) {
+	if (&lhs == &rhs)
+		return true;
+    return lhs.block == rhs.block && lhs.dir == rhs.dir;
+}
+
 const double World::GRAVITY = -9.81 * RESOLUTION / 60.0 / 60.0 * 4;
 
-Chunk::Chunk(vec3i64 cc) : cc(cc), faces(0, faceHashFunc) {
-}
 
 void Chunk::init(uint8 blocks[WIDTH * WIDTH * WIDTH]) {
 	for (uint i = 0; i < WIDTH * WIDTH * WIDTH; i++) {
@@ -41,8 +44,6 @@ void Chunk::initFaces(World &world) {
 }
 
 bool Chunk::setBlock(vec3ui8 icc, uint8 type, World &world) {
-	if (!ready)
-		return false;
 	if (getBlock(icc) == type)
 		return true;
 	blocks[getBlockIndex(icc)] = type;
@@ -57,15 +58,6 @@ uint8 Chunk::getBlock(vec3ui8 icc) const {
 
 const Chunk::FaceSet &Chunk::getFaceSet() const {
 	return faces;
-}
-
-void Chunk::setReady() {
-	// TODO make thread safe
-	ready = true;
-}
-
-bool Chunk::isReady() const {
-	return ready;
 }
 
 bool Chunk::pollChanged() {
@@ -129,13 +121,14 @@ void Chunk::updateBlockFaces(vec3ui8 icc, World &world) {
 				||	nIcc[2] < 0 || nIcc[2] >= WIDTH) {
 			nIcc.applyPW(helperFunc);
 			vec3i64 nc = cc + dir;
+			// TODO this is probably not thread safe
 			auto it = world.getChunks().find(nc);
 			if (it == world.getChunks().end())
 				continue;
-			neighborType = it->second.getBlock(nIcc);
+			neighborType = it->second->getBlock(nIcc);
 			if (neighborType != 0)
-				it->second.changed = true;
-			nFaces = &it->second.faces;
+				it->second->changed = true;
+			nFaces = &it->second->faces;
 		} else {
 			neighborType = getBlock(nIcc);
 			nFaces = &faces;

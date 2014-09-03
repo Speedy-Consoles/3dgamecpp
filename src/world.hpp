@@ -39,7 +39,7 @@ class World {
 public:
 	static const double GRAVITY;
 
-	using ChunkMap = std::unordered_map<vec3i64, Chunk, size_t(*)(vec3i64)>;
+	using ChunkMap = std::unordered_map<vec3i64, Chunk *, size_t(*)(vec3i64)>;
 
 private:
 	ChunkMap chunks;
@@ -51,6 +51,7 @@ private:
 public:
 
 	World();
+	~World();
 
 	void tick(int tick, uint localPlayerID);
 

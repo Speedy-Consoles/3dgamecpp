@@ -20,12 +20,6 @@ int main() {
 
 Client::Client() {
 	world = new World();
-	/*Chunk chunk({0, 0, 0});
-	uint8 blocks[Chunk::WIDTH * Chunk::WIDTH * Chunk::WIDTH];
-	blocks[0] = 1;
-	chunk.init(blocks);
-	chunk.initFaces(*world);
-	world->getChunks().insert({{0,0,0}, chunk});*/
 
 	//serverInterface = RemoteServerInterface(args[0], world);
 	serverInterface = new LocalServerInterface(world, 42);

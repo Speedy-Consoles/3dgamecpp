@@ -4,10 +4,15 @@
 #include "perlin.hpp"
 #include "vmath.hpp"
 #include "world.hpp"
+#include "queue.hpp"
+#include "stack.hpp"
+
+#include <atomic>
+#include <future>
 
 class ChunkLoader {
 private:
-	static const int MAX_LOADS_UNTIL_UNLOAD = 50;
+	static const int MAX_LOADS_UNTIL_UNLOAD = 1000;
 
 	Perlin perlin;
 
@@ -33,13 +38,28 @@ private:
 
 	World *world;
 
-public:
-	ChunkLoader(World *world, uint64 seed, bool updateFaces);
+	std::unordered_set<vec3i64, size_t(*)(vec3i64)> isLoaded;
+	std::atomic<bool> shouldHalt;
+	ProducerQueue<Chunk *> queue;
+	ProducerStack<vec3i64> unloadQueries;
 
-	void run();
+	std::future<void> fut;
+
+public:
+	ChunkLoader() = delete;
+	ChunkLoader(World *world, uint64 seed, bool updateFaces);
+	~ChunkLoader();
+
+	void dispatch();
+	void requestTermination();
+	void wait();
+
+	Chunk *next();
+
+	ProducerStack<vec3i64>::Node *getUnloadQueries();
 
 private:
-	void loadChunk(vec3i64 cc);
+	Chunk *loadChunk(vec3i64 cc);
 };
 
 #endif // CHUNK_LOADER_HPP
