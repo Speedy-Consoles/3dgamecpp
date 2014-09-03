@@ -80,7 +80,7 @@ void Chunk::patchBorders(World *world) {
 	}
 }
 
-void Chunk::initBlock(uint8 index, uint8 type) {
+void Chunk::initBlock(size_t index, uint8 type) {
 	blocks[index] = type;
 }
 

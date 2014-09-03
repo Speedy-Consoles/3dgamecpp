@@ -34,7 +34,7 @@ public:
 	void initFaces();
 	void patchBorders(World *world);
 
-	void initBlock(uint8 index, uint8 type);
+	void initBlock(size_t index, uint8 type);
 	bool setBlock(vec3ui8 icc, uint8 type, World *world);
 	uint8 getBlock(vec3ui8 icc) const;
 
