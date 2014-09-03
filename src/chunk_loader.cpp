@@ -92,7 +92,7 @@ void ChunkLoader::dispatch() {
 						Chunk *chunk = loadChunk(cc);
 						// TODO use something better than yield
 						while (!queue.push(chunk))
-							this_thread::yield();
+							this_thread::sleep_for(milliseconds(100));
 					}
 
 					playerChunksLoaded[i]++;
@@ -134,7 +134,7 @@ void ChunkLoader::dispatch() {
 
 			// TODO use something better than yield
 			if (!didSomething)
-				this_thread::yield();
+				this_thread::sleep_for(milliseconds(100));
 		} // while not thread interrupted
 
 	}); // lambda end
