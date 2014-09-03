@@ -25,13 +25,6 @@ bool operator == (const Face &lhs, const Face &rhs) {
 
 const double World::GRAVITY = -9.81 * RESOLUTION / 60.0 / 60.0 * 4;
 
-
-void Chunk::init(uint8 blocks[WIDTH * WIDTH * WIDTH]) {
-	for (uint i = 0; i < WIDTH * WIDTH * WIDTH; i++) {
-		this->blocks[i] = blocks[i];
-	}
-}
-
 void Chunk::initFaces() {
 	// TODO only one loop
 	for (uint z = 0; z < WIDTH; z++) {
@@ -85,6 +78,10 @@ void Chunk::patchBorders(World *world) {
 			}
 		}
 	}
+}
+
+void Chunk::initBlock(uint8 index, uint8 type) {
+	blocks[index] = type;
 }
 
 bool Chunk::setBlock(vec3ui8 icc, uint8 type, World *world) {

@@ -31,10 +31,10 @@ private:
 public:
 	Chunk(vec3i64 cc);
 
-	void init(uint8 blocks[WIDTH * WIDTH * WIDTH]);
 	void initFaces();
 	void patchBorders(World *world);
 
+	void initBlock(uint8 index, uint8 type);
 	bool setBlock(vec3ui8 icc, uint8 type, World *world);
 	uint8 getBlock(vec3ui8 icc) const;
 

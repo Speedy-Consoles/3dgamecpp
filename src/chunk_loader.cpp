@@ -161,7 +161,7 @@ ProducerStack<vec3i64>::Node *ChunkLoader::getUnloadQueries() {
 }
 
 Chunk *ChunkLoader::loadChunk(vec3i64 cc) {
-	uint8 blocks[Chunk::WIDTH * Chunk::WIDTH * Chunk::WIDTH];
+	Chunk *chunk = new Chunk(cc);
 	for (uint ix = 0; ix < Chunk::WIDTH; ix++) {
 		for (uint iy = 0; iy < Chunk::WIDTH; iy++) {
 			long x = round((cc[0] * Chunk::WIDTH + ix) / overAllScale);
@@ -190,7 +190,7 @@ Chunk *ChunkLoader::loadChunk(vec3i64 cc) {
 				int index = Chunk::getBlockIndex(vec3ui8(ix, iy, iz));
 				long wz = iz + cc[2] * Chunk::WIDTH;
 				if (wz > h) {
-					blocks[index] = 0;
+					chunk->initBlock(index, 0);
 					continue;
 				}
 				double px = (cc[0] * Chunk::WIDTH + ix) / perlinCaveScale;
@@ -198,15 +198,12 @@ Chunk *ChunkLoader::loadChunk(vec3i64 cc) {
 				double pz = (cc[2] * Chunk::WIDTH + iz) / perlinCaveScale;
 				double v = perlin.octavePerlin(px, py, pz, 6, 0.5);
 				if (v > 0.12 * (3 - 1 / ((floor(h) - wz) / 10 + 1)))
-					blocks[index] = 1;
+					chunk->initBlock(index, 1);
 				else
-					blocks[index] = 0;
+					chunk->initBlock(index, 0);
 			}
 		}
 	}
-	Chunk *chunk = new Chunk(cc);
-	chunk->init(blocks);
-	// TODO this is not threadsafe
 	if (updateFaces)
 		chunk->initFaces();
 	return chunk;
