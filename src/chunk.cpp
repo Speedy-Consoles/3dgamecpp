@@ -32,18 +32,62 @@ void Chunk::init(uint8 blocks[WIDTH * WIDTH * WIDTH]) {
 	}
 }
 
-void Chunk::initFaces(World &world) {
+void Chunk::initFaces() {
 	// TODO only one loop
 	for (uint z = 0; z < WIDTH; z++) {
 		for (uint y = 0; y < WIDTH; y++) {
 			for (uint x = 0; x < WIDTH; x++) {
-				updateBlockFaces(vec3ui8(x, y, z), world);
+				updateBlockFaces(vec3ui8(x, y, z), nullptr);
 			}
 		}
 	}
 }
 
-bool Chunk::setBlock(vec3ui8 icc, uint8 type, World &world) {
+
+void Chunk::patchBorders(World *world) {
+	using namespace vec_auto_cast;
+	for (uint8 d = 0; d < 6; d++) {
+		uint8 invD = (d + 3) % 6;
+		vec3i dir = DIRS[d];
+		int dim = DIR_DIMS[d];
+		vec3i64 nc = cc + dir;
+		auto it = world->getChunks().find(nc);
+		if (it == world->getChunks().end())
+			continue;
+
+		vec3ui8 icc(0, 0, 0);
+		vec3ui8 nIcc(0, 0, 0);
+		icc[dim] = (1 - d / 3) * (WIDTH - 1);
+		nIcc[dim] = WIDTH - 1 - icc[dim];
+
+		for(uint8 a = 0; a < WIDTH; a++) {
+			for(uint8 b = 0; b < WIDTH; b++) {
+				icc[OTHER_DIR_DIMS[d][0]] = a;
+				nIcc[OTHER_DIR_DIMS[d][0]] = a;
+				icc[OTHER_DIR_DIMS[d][1]] = b;
+				nIcc[OTHER_DIR_DIMS[d][1]] = b;
+
+				uint8 neighborType = it->second->getBlock(nIcc);
+
+				if (neighborType != 0) {
+					if (getBlock(icc) != 0)
+						it->second->faces.erase(Face{nIcc, invD});
+					else
+						it->second->faces.insert(Face{nIcc, invD});
+					it->second->changed = true;
+				} else {
+					if (getBlock(icc) != 0)
+						faces.insert(Face{icc, d});
+					else
+						faces.erase(Face{icc, d});
+					changed = true;
+				}
+			}
+		}
+	}
+}
+
+bool Chunk::setBlock(vec3ui8 icc, uint8 type, World *world) {
 	if (getBlock(icc) == type)
 		return true;
 	blocks[getBlockIndex(icc)] = type;
@@ -108,7 +152,7 @@ static uint8 helperFunc(uint8 t) {
 	return (t + Chunk::WIDTH) % Chunk::WIDTH;
 }
 
-void Chunk::updateBlockFaces(vec3ui8 icc, World &world) {
+void Chunk::updateBlockFaces(vec3ui8 icc, World *world) {
 	using namespace vec_auto_cast;
 	for (uint8 d = 0; d < 6; d++) {
 		uint8 invD = (d + 3) % 6;
@@ -119,11 +163,12 @@ void Chunk::updateBlockFaces(vec3ui8 icc, World &world) {
 		if (		nIcc[0] < 0 || nIcc[0] >= WIDTH
 				||	nIcc[1] < 0 || nIcc[1] >= WIDTH
 				||	nIcc[2] < 0 || nIcc[2] >= WIDTH) {
+			if (world == nullptr)
+				continue;
 			nIcc.applyPW(helperFunc);
 			vec3i64 nc = cc + dir;
-			// TODO this is probably not thread safe
-			auto it = world.getChunks().find(nc);
-			if (it == world.getChunks().end())
+			auto it = world->getChunks().find(nc);
+			if (it == world->getChunks().end())
 				continue;
 			neighborType = it->second->getBlock(nIcc);
 			if (neighborType != 0)

@@ -55,7 +55,7 @@ void Player::move() {
 		int firstHitFaceDirs[3];
 		int numFirstHitFaces = 0;
 		double lowestDist = std::numeric_limits<double>::infinity();
-		for (int i = 0; i < 4; i++) {
+		for (int i = 0; i < 12; i++) {
 			vec3i corner(
 				QUAD_CYCLE_2D[i % 4][0],
 				QUAD_CYCLE_2D[i % 4][1],

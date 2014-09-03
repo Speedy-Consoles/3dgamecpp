@@ -47,6 +47,7 @@ void ChunkLoader::dispatch() {
 		const int maxLoads = length * length * length;
 
 		while (!shouldHalt.load(memory_order_seq_cst)) {
+			bool didSomething = false;
 			int loads = 0;
 			int oldLoads;
 			do {
@@ -89,12 +90,14 @@ void ChunkLoader::dispatch() {
 					if (iter == isLoaded.end()) {
 						isLoaded.insert(cc);
 						Chunk *chunk = loadChunk(cc);
+						// TODO use something better than yield
 						while (!queue.push(chunk))
 							this_thread::yield();
 					}
 
 					playerChunksLoaded[i]++;
 					loads++;
+					didSomething = true;
 				}
 			} while (loads < MAX_LOADS_UNTIL_UNLOAD && loads > oldLoads && !shouldHalt.load(memory_order_seq_cst));
 
@@ -128,6 +131,10 @@ void ChunkLoader::dispatch() {
 				else
 					iter++;
 			}
+
+			// TODO use something better than yield
+			if (!didSomething)
+				this_thread::yield();
 		} // while not thread interrupted
 
 	}); // lambda end
@@ -201,6 +208,6 @@ Chunk *ChunkLoader::loadChunk(vec3i64 cc) {
 	chunk->init(blocks);
 	// TODO this is not threadsafe
 	if (updateFaces)
-		chunk->initFaces(*world);
+		chunk->initFaces();
 	return chunk;
 }

@@ -123,7 +123,7 @@ bool World::setBlock(vec3i64 bc, uint8 type, bool updateFaces) {
 	auto it = chunks.find(bc2cc(bc));
 	if (it == chunks.end())
 		return false;
-	return it->second->setBlock(bc2icc(bc), type, *this);
+	return it->second->setBlock(bc2icc(bc), type, this);
 }
 
 World::ChunkMap &World::getChunks() {

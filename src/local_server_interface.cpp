@@ -31,6 +31,7 @@ void LocalServerInterface::edit(vec3i64 bc, uint8 type) {
 void LocalServerInterface::receive(uint64 timeLimit) {
 	Chunk *chunk = nullptr;
 	while ((chunk = chunkLoader.next()) != nullptr) {
+		chunk->patchBorders(world);
 		world->getChunks().insert({chunk->cc, chunk});
 	}
 

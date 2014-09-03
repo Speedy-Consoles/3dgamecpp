@@ -32,9 +32,10 @@ public:
 	Chunk(vec3i64 cc);
 
 	void init(uint8 blocks[WIDTH * WIDTH * WIDTH]);
-	void initFaces(World &world);
+	void initFaces();
+	void patchBorders(World *world);
 
-	bool setBlock(vec3ui8 icc, uint8 type, World &world);
+	bool setBlock(vec3ui8 icc, uint8 type, World *world);
 	uint8 getBlock(vec3ui8 icc) const;
 
 	const FaceSet &getFaceSet() const;
@@ -47,7 +48,7 @@ public:
 	static int getBlockIndex(vec3ui8 icc);
 
 private:
-	void updateBlockFaces(vec3ui8 icc, World &world);
+	void updateBlockFaces(vec3ui8 icc, World *world);
 };
 
 #endif // CHUNK_HPP
