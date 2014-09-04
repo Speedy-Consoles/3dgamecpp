@@ -31,7 +31,7 @@ void Chunk::initFaces() {
 	for (uint z = 0; z < WIDTH; z++) {
 		for (uint y = 0; y < WIDTH; y++) {
 			for (uint x = 0; x < WIDTH; x++) {
-				updateBlockFaces(vec3ui8(x, y, z), nullptr);
+				updateBlockFaces(vec3ui8(x, y, z), nullptr, false);
 			}
 		}
 	}
@@ -88,7 +88,7 @@ bool Chunk::setBlock(vec3ui8 icc, uint8 type, World *world) {
 	if (getBlock(icc) == type)
 		return true;
 	blocks[getBlockIndex(icc)] = type;
-	updateBlockFaces(icc, world);
+	updateBlockFaces(icc, world, true);
 	changed = true;
 	return true;
 }
@@ -149,7 +149,7 @@ static uint8 helperFunc(uint8 t) {
 	return (t + Chunk::WIDTH) % Chunk::WIDTH;
 }
 
-void Chunk::updateBlockFaces(vec3ui8 icc, World *world) {
+void Chunk::updateBlockFaces(vec3ui8 icc, World *world, bool remove) {
 	using namespace vec_auto_cast;
 	for (uint8 d = 0; d < 6; d++) {
 		uint8 invD = (d + 3) % 6;
@@ -178,14 +178,14 @@ void Chunk::updateBlockFaces(vec3ui8 icc, World *world) {
 
 		// TODO thread safe?
 		if (neighborType != 0) {
-			if (getBlock(icc) != 0)
-				nFaces->erase(Face{nIcc, invD});
-			else
+			if (getBlock(icc) == 0)
 				nFaces->insert(Face{nIcc, invD});
+			else if(remove)
+				nFaces->erase(Face{nIcc, invD});
 		} else {
 			if (getBlock(icc) != 0)
 				faces.insert(Face{icc, d});
-			else
+			else if(remove)
 				faces.erase(Face{icc, d});
 		}
 	}
