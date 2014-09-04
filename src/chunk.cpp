@@ -1,6 +1,7 @@
 #include "chunk.hpp"
 #include "world.hpp"
 #include "util.hpp"
+#include "chunk_loader.hpp"
 
 static size_t faceHashFunc(Face f) {
 		static const int prime = 31;
@@ -12,8 +13,8 @@ static size_t faceHashFunc(Face f) {
 		return result;
 }
 
-Chunk::Chunk(vec3i64 cc) :
-		cc(cc), faces(0, faceHashFunc) {
+Chunk::Chunk(vec3i64 cc, ChunkLoader *chunkLoader) :
+		cc(cc), faces(0, faceHashFunc), chunkLoader(chunkLoader) {
 	// nothing
 }
 
@@ -35,7 +36,6 @@ void Chunk::initFaces() {
 		}
 	}
 }
-
 
 void Chunk::patchBorders(World *world) {
 	using namespace vec_auto_cast;
@@ -189,4 +189,11 @@ void Chunk::updateBlockFaces(vec3ui8 icc, World *world) {
 				faces.erase(Face{icc, d});
 		}
 	}
+}
+
+void Chunk::free() {
+	 if (chunkLoader)
+		 chunkLoader->free(this);
+	 else
+		 delete this;
 }

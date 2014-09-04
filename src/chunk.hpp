@@ -3,7 +3,10 @@
 
 #include "std_types.hpp"
 #include "vmath.hpp"
+
 #include <unordered_set>
+
+class ChunkLoader;
 
 class World;
 
@@ -28,8 +31,10 @@ private:
 	uint8 blocks[WIDTH * WIDTH * WIDTH];
 	FaceSet faces;
 
+	ChunkLoader *chunkLoader;
+
 public:
-	Chunk(vec3i64 cc);
+	Chunk(vec3i64 cc, ChunkLoader *chunkLoader = nullptr);
 
 	void initFaces();
 	void patchBorders(World *world);
@@ -37,10 +42,15 @@ public:
 	void initBlock(size_t index, uint8 type);
 	bool setBlock(vec3ui8 icc, uint8 type, World *world);
 	uint8 getBlock(vec3ui8 icc) const;
+	const uint8 *getBlocks() const { return blocks; }
 
 	const FaceSet &getFaceSet() const;
 
 	bool pollChanged();
+
+	void setChunkLoader(ChunkLoader *cl) { chunkLoader = cl; }
+	void free();
+
 /*
 	void write(ByteBuffer buffer) const;
 	static Chunk readChunk(ByteBuffer buffer);

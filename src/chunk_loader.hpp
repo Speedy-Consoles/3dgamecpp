@@ -6,13 +6,14 @@
 #include "world.hpp"
 #include "queue.hpp"
 #include "stack.hpp"
+#include "archive.hpp"
 
 #include <atomic>
 #include <future>
 
 class ChunkLoader {
 private:
-	static const int MAX_LOADS_UNTIL_UNLOAD = 1000;
+	static const int MAX_LOADS_UNTIL_UNLOAD = 200;
 
 	Perlin perlin;
 
@@ -40,10 +41,14 @@ private:
 
 	std::unordered_set<vec3i64, size_t(*)(vec3i64)> isLoaded;
 	std::atomic<bool> shouldHalt;
+
 	ProducerQueue<Chunk *> queue;
 	ProducerStack<vec3i64> unloadQueries;
+	ProducerStack<Chunk *> deletedChunks;
 
 	std::future<void> fut;
+
+	ChunkArchive chunkArchive;
 
 public:
 	ChunkLoader() = delete;
@@ -55,11 +60,17 @@ public:
 	void wait();
 
 	Chunk *next();
+	void free(Chunk *chunk) { deletedChunks.push(chunk); };
 
 	ProducerStack<vec3i64>::Node *getUnloadQueries();
 
 private:
-	Chunk *loadChunk(vec3i64 cc);
+	void run();
+	Chunk *generateChunk(vec3i64 cc);
+	void storeChunksOnDisk();
+	void sendOffloadQueries();
+
+	vec3i64 oldPcc[MAX_CLIENTS];
 };
 
 #endif // CHUNK_LOADER_HPP

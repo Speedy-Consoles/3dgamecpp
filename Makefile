@@ -1,6 +1,7 @@
 EXECUTABLE_NAME = 3dgame
 
 SOURCE_FILES = \
+	archive.cpp\
 	chunk_loader.cpp\
 	chunk.cpp client.cpp\
 	graphics.cpp\
@@ -24,7 +25,7 @@ LIBS = SDL2 GL GLU GLEW SDL2_image ftgl
 
 DEBUG ?= 1
 ifeq ($(DEBUG), 1)
-	CXXFLAGS += -g -O1
+	CXXFLAGS += -g
 	OBJ_DIR = obj/debug
 	BIN_DIR = bin/debug
 else

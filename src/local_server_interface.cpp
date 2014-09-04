@@ -41,7 +41,7 @@ void LocalServerInterface::receive(uint64 timeLimit) {
 		auto iter = world->getChunks().find(unloadQueries->data);
 		Chunk *chunk = iter->second;
 		world->getChunks().erase(iter);
-		delete chunk;
+		chunk->free();
 		auto tmp = unloadQueries->next;
 		delete unloadQueries;
 		unloadQueries = tmp;

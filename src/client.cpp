@@ -15,6 +15,7 @@ int main() {
 	initUtil();
 	Client client;
 	client.run();
+
 	return 0;
 }
 
@@ -30,9 +31,10 @@ Client::Client() {
 }
 
 Client::~Client() {
-	delete serverInterface;
 	delete graphics;
+	// world must be deleted before server interface
 	delete world;
+	delete serverInterface;
 }
 
 void Client::run() {

@@ -8,7 +8,7 @@ World::World() : chunks(0, vec3i64HashFunc), dur_ticking(0) {
 
 World::~World() {
 	for (auto iter : chunks) {
-		delete iter.second;
+		iter.second->free();
 	}
 }
 
