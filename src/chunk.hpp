@@ -58,7 +58,7 @@ public:
 	static int getBlockIndex(vec3ui8 icc);
 
 private:
-	void updateBlockFaces(vec3ui8 icc, World *world, bool remove);
+	void updateBlockFaces(vec3ui8 icc, World &world);
 };
 
 #endif // CHUNK_HPP

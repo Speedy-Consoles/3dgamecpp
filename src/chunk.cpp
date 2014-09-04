@@ -31,7 +31,25 @@ void Chunk::initFaces() {
 	for (uint z = 0; z < WIDTH; z++) {
 		for (uint y = 0; y < WIDTH; y++) {
 			for (uint x = 0; x < WIDTH; x++) {
-				updateBlockFaces(vec3ui8(x, y, z), nullptr, false);
+				using namespace vec_auto_cast;
+				vec3ui8 icc(x, y, z);
+				for (uint8 d = 0; d < 3; d++) {
+					uint8 invD = (d + 3) % 6;
+					vec3i dir = DIRS[d];
+					vec3ui8 nIcc = (icc + dir).cast<uint8>();
+					if (		nIcc[0] < 0 || nIcc[0] >= WIDTH
+							||	nIcc[1] < 0 || nIcc[1] >= WIDTH
+							||	nIcc[2] < 0 || nIcc[2] >= WIDTH)
+						continue;
+
+					uint8 thisType = getBlock(icc);
+					uint8 thatType = getBlock(nIcc);
+					if(thisType != thatType)
+					if (thisType == 0)
+						faces.insert(Face{nIcc, invD});
+					else
+						faces.insert(Face{icc, d});
+				}
 			}
 		}
 	}
@@ -88,7 +106,7 @@ bool Chunk::setBlock(vec3ui8 icc, uint8 type, World *world) {
 	if (getBlock(icc) == type)
 		return true;
 	blocks[getBlockIndex(icc)] = type;
-	updateBlockFaces(icc, world, true);
+	updateBlockFaces(icc, *world);
 	changed = true;
 	return true;
 }
@@ -149,7 +167,7 @@ static uint8 helperFunc(uint8 t) {
 	return (t + Chunk::WIDTH) % Chunk::WIDTH;
 }
 
-void Chunk::updateBlockFaces(vec3ui8 icc, World *world, bool remove) {
+void Chunk::updateBlockFaces(vec3ui8 icc, World &world) {
 	using namespace vec_auto_cast;
 	for (uint8 d = 0; d < 6; d++) {
 		uint8 invD = (d + 3) % 6;
@@ -160,12 +178,10 @@ void Chunk::updateBlockFaces(vec3ui8 icc, World *world, bool remove) {
 		if (		nIcc[0] < 0 || nIcc[0] >= WIDTH
 				||	nIcc[1] < 0 || nIcc[1] >= WIDTH
 				||	nIcc[2] < 0 || nIcc[2] >= WIDTH) {
-			if (world == nullptr)
-				continue;
 			nIcc.applyPW(helperFunc);
 			vec3i64 nc = cc + dir;
-			auto it = world->getChunks().find(nc);
-			if (it == world->getChunks().end())
+			auto it = world.getChunks().find(nc);
+			if (it == world.getChunks().end())
 				continue;
 			neighborType = it->second->getBlock(nIcc);
 			if (neighborType != 0)
@@ -176,16 +192,15 @@ void Chunk::updateBlockFaces(vec3ui8 icc, World *world, bool remove) {
 			nFaces = &faces;
 		}
 
-		// TODO thread safe?
 		if (neighborType != 0) {
 			if (getBlock(icc) == 0)
 				nFaces->insert(Face{nIcc, invD});
-			else if(remove)
+			else
 				nFaces->erase(Face{nIcc, invD});
 		} else {
 			if (getBlock(icc) != 0)
 				faces.insert(Face{icc, d});
-			else if(remove)
+			else
 				faces.erase(Face{icc, d});
 		}
 	}
