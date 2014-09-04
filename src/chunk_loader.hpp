@@ -69,8 +69,12 @@ private:
 	Chunk *generateChunk(vec3i64 cc);
 	void storeChunksOnDisk();
 	void sendOffloadQueries();
+	bool updatePlayerInfo(uint8, bool wait = true);
 
-	vec3i64 oldPcc[MAX_CLIENTS];
+	vec3i64 lastPcc[MAX_CLIENTS];
+	bool isPlayerValid[MAX_CLIENTS];
+	uint playerChunkIndex[MAX_CLIENTS];
+	uint playerChunksLoaded[MAX_CLIENTS];
 };
 
 #endif // CHUNK_LOADER_HPP

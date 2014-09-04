@@ -8,7 +8,8 @@
 #include <GL/glut.h>
 
 Graphics::Graphics(World *world, int localClientID)
-		: displayLists(0, vec3i64HashFunc) {
+		: displayLists(0, vec3i64HashFunc)
+{
 	this->world = world;
 	this->localClientID = localClientID;
 
@@ -31,8 +32,14 @@ Graphics::Graphics(World *world, int localClientID)
 		maxFOV = atan(START_WIDTH * tan(YFOV / 2) / START_HEIGHT) * 2;
 
 	font = new FTGLTextureFont("res/DejaVuSansMono.ttf");
-    font->FaceSize(16);
-    font->CharMap(ft_encoding_unicode);
+	font->FaceSize(16);
+	font->CharMap(ft_encoding_unicode);
+
+	for (uint i = 0; i < DUR_TYPE_NUM; ++i) {
+		durs[i] = std::chrono::microseconds::zero();
+		rel_durs[i] = 0.0;
+	}
+	rel_durs[DUR_UAF] = 1.0;
 
 	startTimePoint = high_resolution_clock::now();
 }
@@ -49,39 +56,25 @@ void Graphics::tick() {
 	auto start = std::chrono::high_resolution_clock::now();
 	SDL_GL_SwapWindow(window);
 	auto stop = std::chrono::high_resolution_clock::now();
-	dur_graphics_flipping += duration_cast<microseconds>(stop - start);
-
+	durs[DUR_FLP] += duration_cast<microseconds>(stop - start);
 
 	removeDisplayLists();
 	frameCounter++;
 	int64 time = getMicroTimeSince(startTimePoint);
+	last_frame_microseconds = time - last_frame_start_point;
+	last_frame_start_point = time;
 	if (time - lastFPSUpdate > 1000000) {
 		lastFPS = frameCounter;
 		lastFPSUpdate += 1000000;
 		frameCounter = 0;
 
-		rel_dur_graphics_clearing = dur_graphics_clearing.count() * 1e-6;
-		rel_dur_graphics_chunks = dur_graphics_chunks.count() * 1e-6;
-		rel_dur_graphics_players = dur_graphics_players.count() * 1e-6;
-		rel_dur_graphics_hud = dur_graphics_hud.count() * 1e-6;
-
-		rel_dur_graphics_flipping = dur_graphics_flipping.count() * 1e-6;
-
-		rel_dur_world_ticking = world->getTickingTime().count() * 1e-6;
-
-		rel_dur_unaccounted_for = 1.0
-				- rel_dur_graphics_clearing
-				- rel_dur_graphics_chunks
-				- rel_dur_graphics_players
-				- rel_dur_graphics_hud
-				- rel_dur_graphics_flipping
-				- rel_dur_world_ticking;
-
-		dur_graphics_clearing = microseconds::zero();
-		dur_graphics_chunks = microseconds::zero();
-		dur_graphics_players = microseconds::zero();
-		dur_graphics_hud = microseconds::zero();
-		dur_graphics_flipping = microseconds::zero();
+		rel_durs[DUR_UAF] = 1.0;
+		for (uint i = 0; i < DUR_TYPE_NUM; ++i) {
+			float dur = durs[i].count() * 1e-6;
+			rel_durs[i] = dur;
+			rel_durs[DUR_UAF] -= dur;
+			durs[i] = std::chrono::microseconds::zero();
+		}
 	}
 }
 
@@ -245,7 +238,7 @@ void Graphics::render() {
 	auto start = std::chrono::high_resolution_clock::now();
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	auto stop = std::chrono::high_resolution_clock::now();
-	dur_graphics_clearing += duration_cast<microseconds>(stop - start);
+	durs[DUR_CLR] += duration_cast<microseconds>(stop - start);
 
 	start = std::chrono::high_resolution_clock::now();
 	switchToPerspective();
@@ -278,13 +271,13 @@ void Graphics::render() {
 	renderChunks();
 
 	stop = std::chrono::high_resolution_clock::now();
-	dur_graphics_chunks += duration_cast<microseconds>(stop - start);
+	durs[DUR_OCH] += duration_cast<microseconds>(stop - start);
 
 	// render players
 	start = std::chrono::high_resolution_clock::now();
 	renderPlayers();
 	stop = std::chrono::high_resolution_clock::now();
-	dur_graphics_players += duration_cast<microseconds>(stop - start);
+	durs[DUR_PLA] += duration_cast<microseconds>(stop - start);
 
 	start = std::chrono::high_resolution_clock::now();
 
@@ -330,47 +323,61 @@ void Graphics::render() {
 	RENDER_LINE("yvel: %8.1f", playerVel[1]);
 	RENDER_LINE("zvel: %8.1f", playerVel[2]);
 	RENDER_LINE("chunks loaded: %lu", world->getChunks().size());
+
 	glPopMatrix();
 
 	// begin rendering the relative performance bar here
-	int num_rel_durs = 7;
-
 	const char *rel_names[] = {
-		"CLR", "CHNK", "PLA", "HUD", "FLP", "WORLD", "UAF"
-	};
-
-	float rel_array[] = {
-		rel_dur_graphics_clearing,
-		rel_dur_graphics_chunks,
-		rel_dur_graphics_players,
-		rel_dur_graphics_hud,
-		rel_dur_graphics_flipping,
-		rel_dur_world_ticking,
-		rel_dur_unaccounted_for
+		"CLR", "NDL", "DLC", "CHL", "OCH", "PLA", "HUD", "FLP", "TIC", "UAF"
 	};
 
 	vec<float, 3> rel_colors[] {
+		{0.6f, 0.6f, 1.0f},
 		{0.0f, 0.0f, 0.8f},
-		{0.0f, 0.2f, 0.6f},
-		{0.0f, 0.4f, 0.4f},
-		{0.0f, 0.6f, 0.2f},
+		{0.6f, 0.0f, 0.8f},
+		{0.0f, 0.6f, 0.8f},
+		{0.4f, 0.4f, 0.8f},
+		{0.7f, 0.7f, 0.0f},
+		{0.8f, 0.8f, 0.3f},
 		{0.0f, 0.8f, 0.0f},
-		{0.8f, 0.8f, 0.0f},
-		{0.6f, 0.0f, 0.0f}
+		{0.0f, 0.4f, 0.0f},
+		{0.8f, 0.0f, 0.0f},
 	};
 
 	float rel = 0.0;
 
 	glPushMatrix();
-	glTranslatef(+drawWidth / 2.0 - 3.0, -drawHeight / 2, 0);
-	glScalef(6.0, drawHeight, 1.0);
+	glTranslatef(+drawWidth / 2.0, -drawHeight / 2, 0);
+	glScalef(10.0, drawHeight, 1.0);
+	glTranslatef(-1, 0, 0);
 	glDisable(GL_TEXTURE_2D);
-	for (int i = 0; i < num_rel_durs; ++i) {
+
+	float actual_factor = TICK_SPEED * 1e-6 * last_frame_microseconds;
+	float performance_indicator = log(actual_factor) / log(2);
+	float performance_indicator_pos = 0.5 + performance_indicator * 0.25;
+
+	glLineWidth(3.0);
+	glBegin(GL_LINES);
+		glColor3f(1.0, 1.0, 1.0);
+		glVertex2f(0, 0.25);
+		glVertex2f(1, 0.25);
+		glVertex2f(0, 0.5);
+		glVertex2f(1, 0.5);
+		glVertex2f(0, 0.75);
+		glVertex2f(1, 0.75);
+		glColor3f(1.0, 0.0, 0.0);
+		glVertex2f(0, performance_indicator_pos);
+		glVertex2f(1, performance_indicator_pos);
+	glEnd();
+
+	glTranslatef(-1, 0, 0);
+
+	for (uint i = 0; i < DUR_TYPE_NUM + 1; ++i) {
 		glBegin(GL_QUADS);
 			glColor3f(rel_colors[i][0], rel_colors[i][1], rel_colors[i][2]);
 			glVertex2f(0, rel);
 			glVertex2f(1, rel);
-			rel += rel_array[i];
+			rel += rel_durs[i];
 			glVertex2f(1, rel);
 			glVertex2f(0, rel);
 		glEnd();
@@ -378,19 +385,19 @@ void Graphics::render() {
 	glPopMatrix();
 
 	glPushMatrix();
-	glTranslatef(+drawWidth / 2.0 - 6.0, -drawHeight / 2 + 5, 0);
+	glTranslatef(+drawWidth / 2.0 - 22.0, -drawHeight / 2 + 5, 0);
 	glRotatef(90.0, 0.0, 0.0, 1.0);
-	for (int i = 0; i < num_rel_durs; ++i) {
-		if (rel_array[i] > 0.005) {
+	for (uint i = 0; i < DUR_TYPE_NUM + 1; ++i) {
+		if (rel_durs[i] > 0.005) {
 			sprintf(buffer, "%s", rel_names[i]);
 			glColor3f(rel_colors[i][0], rel_colors[i][1], rel_colors[i][2]);
 			font->Render(buffer);
-			glTranslatef(std::max(drawHeight * rel_array[i] * 0.90, 30.0), 0, 0);
+			glTranslatef(std::max(drawHeight * rel_durs[i] * 0.90, 30.0), 0, 0);
 		}
 	}
 
 	stop = std::chrono::high_resolution_clock::now();
-	dur_graphics_hud += duration_cast<microseconds>(stop - start);
+	durs[DUR_HUD] += duration_cast<microseconds>(stop - start);
 }
 
 void Graphics::renderChunks() {
@@ -424,6 +431,7 @@ void Graphics::renderChunks() {
 		chunks++;
 
 		vec3i64 cc = pc + cd;
+		auto start = std::chrono::high_resolution_clock::now();
 		auto chunkIt = world->getChunks().find(cc);
 		if (chunkIt == world->getChunks().end())
 			continue;
@@ -437,24 +445,35 @@ void Graphics::renderChunks() {
 		} else
 			lid = listIt->second;
 
+		auto stop = std::chrono::high_resolution_clock::now();
+		auto dur = duration_cast<microseconds>(stop - start);
+		durs[DUR_CHL] += dur;
+		durs[DUR_OCH] -= dur;
+
 		if (newQuads < MAX_NEW_QUADS && lid != 0 && chunkIt->second->pollChanged()) {
+			auto start = std::chrono::high_resolution_clock::now();
 			glNewList(lid, GL_COMPILE);
 			renderChunk(*chunkIt->second, false, vec3ui8(0, 0, 0), 0);
 			glEndList();
+			auto stop = std::chrono::high_resolution_clock::now();
+			auto dur = duration_cast<microseconds>(stop - start);
+			durs[DUR_NDL] += dur;
+			durs[DUR_OCH] -= dur;
 		}
-
-		//			glTranslated(cc[0] * Chunk::WIDTH, cc[1] * Chunk::WIDTH, cc[2]
-		//					* Chunk::WIDTH);
 
 		bool tChunk = target && cc == tcc;
 		if (inFrustum(cc, localPlayer.getPos(), lookDir)) {
 			if ((tChunk || lid == 0) && newQuads < MAX_NEW_QUADS)
 				renderChunk(*chunkIt->second, tChunk, ticc, td);
-			else if (lid != 0)
+			else if (lid != 0) {
+				auto start = std::chrono::high_resolution_clock::now();
 				glCallList(lid);
+				auto stop = std::chrono::high_resolution_clock::now();
+				auto dur = duration_cast<microseconds>(stop - start);
+				durs[DUR_DLC] += dur;
+				durs[DUR_OCH] -= dur;
+			}
 		}
-
-		//			glLoadMatrix(globalMat);
 	}
 }
 

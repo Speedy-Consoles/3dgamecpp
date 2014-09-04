@@ -57,18 +57,17 @@ ProducerStack<vec3i64>::Node *ChunkLoader::getUnloadQueries() {
 
 void ChunkLoader::run() {
 	using namespace vec_auto_cast;
+	static const int LENGTH = CHUNK_LOAD_RANGE * 2 + 1;
+	static const int MAX_LOADS = LENGTH * LENGTH * LENGTH;
 
-	memset(oldPcc, 0, MAX_CLIENTS * sizeof (vec3i64));
-
-	uint playerChunkIndex[MAX_CLIENTS];
-	int playerChunksLoaded[MAX_CLIENTS];
 	for (uint8 i = 0; i < MAX_CLIENTS; i++) {
 		playerChunkIndex[i] = 0;
 		playerChunksLoaded[i] = 0;
 	}
 
-	const int length = CHUNK_LOAD_RANGE * 2 + 1;
-	const int maxLoads = length * length * length;
+	for (uint8 i = 0; i < MAX_CLIENTS; i++) {
+		updatePlayerInfo(i);
+	}
 
 	while (!shouldHalt.load(memory_order_seq_cst)) {
 		bool didSomething = false;
@@ -77,28 +76,12 @@ void ChunkLoader::run() {
 		do {
 			oldLoads = loads;
 			for (uint8 i = 0; i < MAX_CLIENTS; i++) {
-				Player &player = world->getPlayer(i);
-				Monitor &validPosMonitor = player.getValidPosMonitor();
-				int handle = validPosMonitor.startRead();
-				bool valid = player.isValid();
-				vec3i64 pcc = player.getChunkPos();
-				if(!validPosMonitor.finishRead(handle))
+				// don't wait for the reading-lock to be released
+				if (!updatePlayerInfo(i, false) || !isPlayerValid[i])
 					continue;
-
-				if (!valid) {
-					playerChunkIndex[i] = 0;
-					playerChunksLoaded[i] = 0;
-					continue;
-				}
-
-				if (oldPcc[i] != pcc) {
-					playerChunkIndex[i] = 0;
-					playerChunksLoaded[i] = 0;
-					oldPcc[i] = pcc;
-				}
 
 				if (playerChunkIndex[i] >= LOADING_ORDER.size()
-						|| playerChunksLoaded[i] > maxLoads)
+						|| playerChunksLoaded[i] > MAX_LOADS)
 					continue;
 
 				vec3i8 ccd = LOADING_ORDER[playerChunkIndex[i]++];
@@ -109,7 +92,7 @@ void ChunkLoader::run() {
 				if (playerChunkIndex[i] >= LOADING_ORDER.size())
 					continue;
 
-				vec3i64 cc = ccd + pcc;
+				vec3i64 cc = ccd + lastPcc[i];
 				auto iter = isLoaded.find(cc);
 				if (iter == isLoaded.end()) {
 					isLoaded.insert(cc);
@@ -201,25 +184,17 @@ void ChunkLoader::storeChunksOnDisk() {
 }
 
 void ChunkLoader::sendOffloadQueries() {
-	bool valid[MAX_CLIENTS];
-
 	for (uint8 i = 0; i < MAX_CLIENTS; i++) {
-		Player &player = world->getPlayer(i);
-		Monitor &validPosMonitor = player.getValidPosMonitor();
-		int handle;
-		do {
-			handle = validPosMonitor.startRead();
-			valid[i] = player.isValid();
-		} while (!validPosMonitor.finishRead(handle));
+		updatePlayerInfo(i);
 	}
 
 	for (auto iter = isLoaded.begin(); iter != isLoaded.end();) {
 		vec3i64 cc = *iter;
 		bool inRange = false;
 		for (uint8 i = 0; i < MAX_CLIENTS; i++) {
-			if (!valid[i])
+			if (!isPlayerValid[i])
 				continue;
-			if ((cc - oldPcc[i]).maxAbs() <= CHUNK_UNLOAD_RANGE) {
+			if ((cc - lastPcc[i]).maxAbs() <= CHUNK_UNLOAD_RANGE) {
 				inRange = true;
 				break;
 			}
@@ -227,8 +202,34 @@ void ChunkLoader::sendOffloadQueries() {
 		if (!inRange) {
 			unloadQueries.push(cc);
 			iter = isLoaded.erase(iter);
-		}
-		else
+		} else {
 			iter++;
+		}
 	}
+}
+
+bool ChunkLoader::updatePlayerInfo(uint8 i, bool wait) {
+	int handle;
+	bool valid;
+	vec3i64 pcc;
+	Player &player = world->getPlayer(i);
+	Monitor &validPosMonitor = player.getValidPosMonitor();
+	bool success = false;
+	do {
+		handle = validPosMonitor.startRead();
+		valid = player.isValid();
+		pcc = player.getChunkPos();
+		success = validPosMonitor.finishRead(handle);
+	} while (!success && wait);
+	if (!success)
+		return false;
+
+	if (!valid || lastPcc[i] != pcc) {
+		playerChunkIndex[i] = 0;
+		playerChunksLoaded[i] = 0;
+	}
+
+	lastPcc[i] = pcc;
+	isPlayerValid[i] = valid;
+	return true;
 }

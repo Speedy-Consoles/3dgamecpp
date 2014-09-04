@@ -77,10 +77,9 @@ size_t vec3i64HashFunc(vec3i64 v) {
 	return result;
 }
 
-int64 getMicroTimeSince(
-		time_point<high_resolution_clock> since) {
-	return duration_cast<microseconds>(
-			high_resolution_clock::now() - since).count();
+int64 getMicroTimeSince(time_point<high_resolution_clock> since) {
+	auto dur = high_resolution_clock::now() - since;
+	return duration_cast<microseconds>(dur).count();
 }
 
 void initUtil() {

@@ -49,22 +49,23 @@ private:
 	GLdouble perspectiveMatrix[16];
 	GLdouble orthogonalMatrix[16];
 
-	std::chrono::microseconds dur_graphics_clearing = std::chrono::microseconds::zero();
-	std::chrono::microseconds dur_graphics_chunks = std::chrono::microseconds::zero();
-	std::chrono::microseconds dur_graphics_players = std::chrono::microseconds::zero();
-	std::chrono::microseconds dur_graphics_hud = std::chrono::microseconds::zero();
-
-	std::chrono::microseconds dur_graphics_flipping = std::chrono::microseconds::zero();
-
-	float rel_dur_graphics_clearing = 0.0;
-	float rel_dur_graphics_chunks = 0.0;
-	float rel_dur_graphics_players = 0.0;
-	float rel_dur_graphics_hud = 0.0;
-
-	float rel_dur_graphics_flipping = 0.0;
-
-	float rel_dur_world_ticking = 0.0;
-	float rel_dur_unaccounted_for = 1.0;
+	enum DurationType {
+		DUR_CLR, // clearing
+		DUR_NDL, // new display lists
+		DUR_DLC, // display list calls
+		DUR_CHL, // chunk lookup
+		DUR_OCH, // other chunk
+		DUR_PLA, // player rendering
+		DUR_HUD, // hud rendering
+		DUR_FLP, // flipping
+		DUR_TIC, // world ticking
+		DUR_UAF, // unaccounted for
+	};
+	static const uint DUR_TYPE_NUM = 9;
+	float rel_durs[DUR_TYPE_NUM + 1];
+	std::chrono::microseconds durs[9];
+	float last_frame_microseconds;
+	float last_frame_start_point;
 
 public:
 	Graphics(World *world, int localClientID);
