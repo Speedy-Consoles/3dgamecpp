@@ -48,7 +48,6 @@ void Graphics::tick() {
 	stopwatch->start(CLOCK_FLP);
 	SDL_GL_SwapWindow(window);
 	stopwatch->stop();
-	removeDisplayLists();
 	frameCounter++;
 	int64 time = getMicroTimeSince(startTimePoint);
 	if (time - lastFPSUpdate > 1000000) {
@@ -268,6 +267,156 @@ void Graphics::render() {
 	stopwatch->stop();
 }
 
+void Graphics::renderChunks() {
+	using namespace vec_auto_cast;
+
+	newQuads = 0;
+	Player &localPlayer = world->getPlayer(localClientID);
+	vec3i64 pc = localPlayer.getChunkPos();
+	if(pc != oldPlayerChunk) {
+		currentChunkIndex = 0;
+		loadedChunks = 0;
+		oldPlayerChunk = pc;
+	}
+	vec3d lookDir = getVectorFromAngles(localPlayer.getYaw(),
+			localPlayer.getPitch());
+
+	vec3i64 tbc;
+	vec3i64 tcc;
+	vec3ui8 ticc;
+	int td;
+	bool target = localPlayer.getTargetedFace(&tbc, &td);
+	if (target) {
+		tcc = bc2cc(tbc);
+		ticc = bc2icc(tbc);
+	}
+
+	//		DoubleBuffer globalMat = BufferUtils.createDoubleBuffer(16);
+	//		glGetDouble(GL_MODELVIEW_MATRIX, globalMat);
+	int length = VIEW_RANGE * 2 + 1;
+	uint maxChunks = length * length * length;
+
+	while (currentChunkIndex < LOADING_ORDER.size() && loadedChunks < maxChunks && newQuads < MAX_NEW_QUADS) {
+		vec3i8 cd = LOADING_ORDER[currentChunkIndex];
+		if (cd.maxAbs() > VIEW_RANGE) {
+			currentChunkIndex++;
+			continue;
+		}
+
+		stopwatch->start(CLOCK_CHL);
+		vec3i64 cc = pc + cd;
+		auto chunkIt = world->getChunks().find(cc);
+		if (chunkIt == world->getChunks().end())
+			break;
+
+		auto listIt = displayLists.find(cc);
+		stopwatch->stop();
+		GLuint lid = 0;
+		if (listIt != displayLists.end() && !chunkIt->second->pollChanged()) {
+			loadedChunks++;
+			currentChunkIndex++;
+			continue;
+		}
+
+		if(listIt == displayLists.end()) {
+			lid = glGenLists(1);
+			if (lid == 0)
+				break;
+			displayLists.insert({cc, lid});
+		} else
+			lid = listIt->second;
+
+		stopwatch->start(CLOCK_NDL);
+		glNewList(lid, GL_COMPILE);
+		renderChunk(*chunkIt->second, false, vec3ui8(0, 0, 0), 0);
+		glEndList();
+		stopwatch->stop();
+		currentChunkIndex++;
+		loadedChunks++;
+	}
+
+	// render targeted chunk
+	if (target)
+		renderChunk(*world->getChunks().find(tcc)->second, true, ticc, td);
+
+	// render chunks from list and remove unneeded lists
+	stopwatch->start(CLOCK_DLC);
+	vec3i64 pcc = world->getPlayer(localClientID).getChunkPos();
+	for (auto iter = displayLists.begin(); iter != displayLists.end();) {
+		vec3i64 cc = iter->first;
+		if ((cc - pcc).maxAbs() > VIEW_RANGE) {
+			glDeleteLists(iter->second, 1);
+			iter = displayLists.erase(iter);
+		} else {
+			bool tChunk = target && iter->first == tcc;
+			if (inFrustum(cc, localPlayer.getPos(), lookDir) && !tChunk)
+				glCallList(iter->second);
+			iter++;
+		}
+	}
+	stopwatch->stop();
+}
+
+void Graphics::renderChunk(const Chunk &c, bool targeted, vec3ui8 ticc, int td) {
+	using namespace vec_auto_cast;
+	//render blocks
+	glBindTexture(GL_TEXTURE_2D, blockTexture);
+	glBegin(GL_QUADS);
+
+	const Chunk::FaceSet &faceSet = c.getFaceSet();
+	// TODO thread safe?
+	for (Face f : faceSet) {
+		newQuads++;
+
+		if (targeted && f.block == ticc && f.dir == td)
+			glColor3d(0.8, 0.2, 0.2);
+		else
+			glColor3d(1.0, 1.0, 1.0);
+
+		glNormal3d(DIRS[f.dir][0], DIRS[f.dir][1], DIRS[f.dir][2]);
+		for (int j = 0; j < 4; j++) {
+			glTexCoord2d(QUAD_CYCLE_2D[j][0], QUAD_CYCLE_2D[j][1]);
+			//					glVertex3d(f.x + c3d[j][0], f.y + c3d[j][1], f.z
+			//							+ c3d[j][2]);
+			vec3d vertex = (c.cc * Chunk::WIDTH
+					+ f.block + QUAD_CYCLES_3D[f.dir][j]).cast<double>();
+			glVertex3d(vertex[0], vertex[1], vertex[2]);
+		}
+	}
+	glEnd();
+	glBindTexture(GL_TEXTURE_2D, 0);
+}
+
+void Graphics::renderPlayers() {
+	using namespace vec_auto_cast;
+	glBegin(GL_QUADS);
+	for (uint i = 0; i < MAX_CLIENTS; i++) {
+		if (i == localClientID)
+			continue;
+		Player &player = world->getPlayer(i);
+		if (!player.isValid())
+			continue;
+		vec3i64 pos = player.getPos();
+		for (int d = 0; d < 6; d++) {
+			vec3i8 dir = DIRS[d];
+			glColor3d(0.8, 0.2, 0.2);
+
+			glNormal3d(dir[0], dir[1], dir[2]);
+			for (int j = 0; j < 4; j++) {
+				vec3i off(
+					(QUAD_CYCLES_3D[d][j][0] * 2 - 1) * Player::RADIUS,
+					(QUAD_CYCLES_3D[d][j][1] * 2 - 1) * Player::RADIUS,
+					QUAD_CYCLES_3D[d][j][2] * Player::HEIGHT - Player::EYE_HEIGHT
+				);
+				glTexCoord2d(QUAD_CYCLE_2D[j][0], QUAD_CYCLE_2D[j][1]);
+				vec3d vertex = (pos + off).cast<double>() * (1.0 / RESOLUTION);
+				glVertex3d(vertex[0], vertex[1], vertex[2]);
+			}
+		}
+	}
+	glEnd();
+}
+
 void Graphics::renderHud(const Player &player) {
 	// render overlay
 	glColor4d(0, 0, 0, 0.5);
@@ -411,135 +560,8 @@ void Graphics::renderPerformance() {
 		glPopMatrix();
 	}
 	glPopMatrix();
-}
 
-void Graphics::renderChunks() {
-	using namespace vec_auto_cast;
-
-	newQuads = 0;
-	Player &localPlayer = world->getPlayer(localClientID);
-	vec3i64 pc = localPlayer.getChunkPos();
-	vec3d lookDir = getVectorFromAngles(localPlayer.getYaw(),
-			localPlayer.getPitch());
-
-	vec3i64 tbc;
-	vec3i64 tcc;
-	vec3ui8 ticc;
-	int td;
-	bool target = localPlayer.getTargetedFace(&tbc, &td);
-	if (target) {
-		tcc = bc2cc(tbc);
-		ticc = bc2icc(tbc);
-	}
-
-	//		DoubleBuffer globalMat = BufferUtils.createDoubleBuffer(16);
-	//		glGetDouble(GL_MODELVIEW_MATRIX, globalMat);
-	int length = VIEW_RANGE * 2 + 1;
-	int maxChunks = length * length * length;
-	int chunks = 0;
 	glEnable(GL_TEXTURE_2D);
-
-	for (uint i = 0; i < LOADING_ORDER.size() && chunks < maxChunks; i++) {
-		vec3i8 cd = LOADING_ORDER[i];
-		if (cd.maxAbs() > VIEW_RANGE)
-			continue;
-		chunks++;
-
-		stopwatch->start(CLOCK_CHL);
-		vec3i64 cc = pc + cd;
-		auto chunkIt = world->getChunks().find(cc);
-		if (chunkIt == world->getChunks().end())
-			continue;
-
-		auto listIt = displayLists.find(cc);
-		GLuint lid = 0;
-		if (listIt == displayLists.end()) {
-			lid = glGenLists(1);
-			if (lid != 0)
-				displayLists.insert({cc, lid});
-		} else
-			lid = listIt->second;
-		stopwatch->stop();
-
-		stopwatch->start(CLOCK_NDL);
-		if (newQuads < MAX_NEW_QUADS && lid != 0 && chunkIt->second->pollChanged()) {
-			glNewList(lid, GL_COMPILE);
-			renderChunk(*chunkIt->second, false, vec3ui8(0, 0, 0), 0);
-			glEndList();
-		}
-		stopwatch->stop();
-
-		stopwatch->start(CLOCK_DLC);
-		bool tChunk = target && cc == tcc;
-		if (inFrustum(cc, localPlayer.getPos(), lookDir)) {
-			if ((tChunk || lid == 0) && newQuads < MAX_NEW_QUADS)
-				renderChunk(*chunkIt->second, tChunk, ticc, td);
-			else if (lid != 0) {
-				glCallList(lid);
-			}
-		}
-		stopwatch->stop();
-	}
-}
-
-void Graphics::renderChunk(const Chunk &c, bool targeted, vec3ui8 ticc, int td) {
-	using namespace vec_auto_cast;
-	//render blocks
-	glBindTexture(GL_TEXTURE_2D, blockTexture);
-	glBegin(GL_QUADS);
-
-	const Chunk::FaceSet &faceSet = c.getFaceSet();
-	// TODO thread safe?
-	for (Face f : faceSet) {
-		newQuads++;
-
-		if (targeted && f.block == ticc && f.dir == td)
-			glColor3d(0.8, 0.2, 0.2);
-		else
-			glColor3d(1.0, 1.0, 1.0);
-
-		glNormal3d(DIRS[f.dir][0], DIRS[f.dir][1], DIRS[f.dir][2]);
-		for (int j = 0; j < 4; j++) {
-			glTexCoord2d(QUAD_CYCLE_2D[j][0], QUAD_CYCLE_2D[j][1]);
-			//					glVertex3d(f.x + c3d[j][0], f.y + c3d[j][1], f.z
-			//							+ c3d[j][2]);
-			vec3d vertex = (c.cc * Chunk::WIDTH
-					+ f.block + QUAD_CYCLES_3D[f.dir][j]).cast<double>();
-			glVertex3d(vertex[0], vertex[1], vertex[2]);
-		}
-	}
-	glEnd();
-	glBindTexture(GL_TEXTURE_2D, 0);
-}
-
-void Graphics::renderPlayers() {
-	using namespace vec_auto_cast;
-	glBegin(GL_QUADS);
-	for (uint i = 0; i < MAX_CLIENTS; i++) {
-		if (i == localClientID)
-			continue;
-		Player &player = world->getPlayer(i);
-		if (!player.isValid())
-			continue;
-		vec3i64 pos = player.getPos();
-		for (int d = 0; d < 6; d++) {
-			vec3i8 dir = DIRS[d];
-			glColor3d(0.8, 0.2, 0.2);
-
-			glNormal3d(dir[0], dir[1], dir[2]);
-			for (int j = 0; j < 4; j++) {
-				vec3i off(
-					(QUAD_CYCLES_3D[d][j][0] * 2 - 1) * Player::RADIUS,
-					(QUAD_CYCLES_3D[d][j][1] * 2 - 1) * Player::RADIUS,
-					QUAD_CYCLES_3D[d][j][2] * Player::HEIGHT - Player::EYE_HEIGHT
-				);
-				glTexCoord2d(QUAD_CYCLE_2D[j][0], QUAD_CYCLE_2D[j][1]);
-				vec3d vertex = (pos + off).cast<double>() * (1.0 / RESOLUTION);
-				glVertex3d(vertex[0], vertex[1], vertex[2]);
-			}
-		}
-	}
-	glEnd();
 }
 
 bool Graphics::inFrustum(vec3i64 cc, vec3i64 pos, vec3d lookDir) {
@@ -555,16 +577,4 @@ bool Graphics::inFrustum(vec3i64 cc, vec3i64 pos, vec3d lookDir) {
 	vec3d orthoChunkPos = cp - lookDir * chunkLookDist;
 	double orthoChunkDist = std::max(0.0, orthoChunkPos.norm() - chunkDia);
 	return atan(orthoChunkDist / chunkLookDist) <= maxFOV / 2;
-}
-
-void Graphics::removeDisplayLists() {
-	vec3i64 pcc = world->getPlayer(localClientID).getChunkPos();
-	for (auto iter = displayLists.begin(); iter != displayLists.end();) {
-		vec3i64 cc = iter->first;
-		if ((cc - pcc).maxAbs() > VIEW_RANGE) {
-			glDeleteLists(iter->second, 1);
-			iter = displayLists.erase(iter);
-		} else
-			iter++;
-	}
 }

@@ -18,8 +18,8 @@ private:
 	static const int START_WIDTH = 1600;
 	static const int START_HEIGHT = 900;
 	const double YFOV = TAU / 8;
-	static const int VIEW_RANGE = CHUNK_UNLOAD_RANGE;
-	static const int MAX_NEW_QUADS = 5000;
+	static const int VIEW_RANGE = CHUNK_LOAD_RANGE;
+	static const int MAX_NEW_QUADS = 4000;
 
 	int width;
 	int height;
@@ -40,6 +40,10 @@ private:
 	int64 lastFPSUpdate = 0;
 	int frameCounter = 0;
 	int newQuads = 0;
+
+	uint currentChunkIndex = 0;
+	uint loadedChunks = 0;
+	vec3i64 oldPlayerChunk;
 
 	using DLMap = std::unordered_map<vec3i64, GLuint, size_t (*)(vec3i64 v)>;
 	DLMap displayLists;
@@ -86,8 +90,6 @@ private:
 	void renderPlayers();
 
 	bool inFrustum(vec3i64 cc, vec3i64 pos, vec3d lookDir);
-
-	void removeDisplayLists();
 };
 
 #endif // GRAPHICS_HPP
