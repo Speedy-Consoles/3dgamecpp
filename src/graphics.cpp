@@ -7,9 +7,8 @@
 #include <SDL2/SDL_image.h>
 #include <GL/glut.h>
 
-Graphics::Graphics(World *world, int localClientID)
-		: displayLists(0, vec3i64HashFunc)
-{
+Graphics::Graphics(World *world, int localClientID, Stopwatch *stopwatch)
+		: displayLists(0, vec3i64HashFunc), stopwatch(stopwatch) {
 	this->world = world;
 	this->localClientID = localClientID;
 
@@ -35,12 +34,6 @@ Graphics::Graphics(World *world, int localClientID)
 	font->FaceSize(16);
 	font->CharMap(ft_encoding_unicode);
 
-	for (uint i = 0; i < DUR_TYPE_NUM; ++i) {
-		durs[i] = std::chrono::microseconds::zero();
-		rel_durs[i] = 0.0;
-	}
-	rel_durs[DUR_UAF] = 1.0;
-
 	startTimePoint = high_resolution_clock::now();
 }
 
@@ -52,29 +45,18 @@ Graphics::~Graphics() {
 
 void Graphics::tick() {
 	render();
-
-	auto start = std::chrono::high_resolution_clock::now();
+	stopwatch->start(CLOCK_FLP);
 	SDL_GL_SwapWindow(window);
-	auto stop = std::chrono::high_resolution_clock::now();
-	durs[DUR_FLP] += duration_cast<microseconds>(stop - start);
-
+	stopwatch->stop();
 	removeDisplayLists();
 	frameCounter++;
 	int64 time = getMicroTimeSince(startTimePoint);
-	last_frame_microseconds = time - last_frame_start_point;
-	last_frame_start_point = time;
 	if (time - lastFPSUpdate > 1000000) {
 		lastFPS = frameCounter;
 		lastFPSUpdate += 1000000;
 		frameCounter = 0;
-
-		rel_durs[DUR_UAF] = 1.0;
-		for (uint i = 0; i < DUR_TYPE_NUM; ++i) {
-			float dur = durs[i].count() * 1e-6;
-			rel_durs[i] = dur;
-			rel_durs[DUR_UAF] -= dur;
-			durs[i] = std::chrono::microseconds::zero();
-		}
+		stopwatch->stopAndSave();
+		stopwatch->start(CLOCK_ALL);
 	}
 }
 
@@ -97,7 +79,6 @@ bool Graphics::isGrabbed() {
 }
 
 void Graphics::initGL() {
-
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 	glClearDepth(1);
 	glDepthFunc(GL_LEQUAL);
@@ -235,12 +216,10 @@ void Graphics::render() {
 	if (!localPlayer.isValid())
 		return;
 
-	auto start = std::chrono::high_resolution_clock::now();
+	stopwatch->start(CLOCK_CLR);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	auto stop = std::chrono::high_resolution_clock::now();
-	durs[DUR_CLR] += duration_cast<microseconds>(stop - start);
+	stopwatch->stop();
 
-	start = std::chrono::high_resolution_clock::now();
 	switchToPerspective();
 	glEnable(GL_LIGHTING);
 	//		glEnable(GL_FOG);
@@ -268,18 +247,14 @@ void Graphics::render() {
 	glLightfv(GL_LIGHT0, GL_POSITION, sunLightPosition);
 
 	// render chunk
+	stopwatch->start(CLOCK_CHR);
 	renderChunks();
-
-	stop = std::chrono::high_resolution_clock::now();
-	durs[DUR_OCH] += duration_cast<microseconds>(stop - start);
+	stopwatch->stop();
 
 	// render players
-	start = std::chrono::high_resolution_clock::now();
+	stopwatch->start(CLOCK_PLA);
 	renderPlayers();
-	stop = std::chrono::high_resolution_clock::now();
-	durs[DUR_PLA] += duration_cast<microseconds>(stop - start);
-
-	start = std::chrono::high_resolution_clock::now();
+	stopwatch->stop();
 
 	switchToOrthogonal();
 	glDisable(GL_LIGHTING);
@@ -287,6 +262,13 @@ void Graphics::render() {
 	glDisable(GL_DEPTH_TEST);
 	glLoadIdentity();
 
+	stopwatch->start(CLOCK_HUD);
+	renderHud(localPlayer);
+	renderDebugInfo(localPlayer);
+	stopwatch->stop();
+}
+
+void Graphics::renderHud(const Player &player) {
 	// render overlay
 	glColor4d(0, 0, 0, 0.5);
 	glBegin(GL_QUADS);
@@ -300,8 +282,11 @@ void Graphics::render() {
 	glVertex2d(2, 20);
 	glVertex2d(-2, 20);
 	glEnd();
+}
 
-	vec3d playerVel = localPlayer.getVel();
+void Graphics::renderDebugInfo(const Player &player) {
+	vec3i64 playerPos = player.getPos();
+	vec3d playerVel = player.getVel();
 
 	glPushMatrix();
 	glColor3f(1.0f, 1.0f, 1.0f);
@@ -317,8 +302,8 @@ void Graphics::render() {
 	RENDER_LINE("y: %ld (%ld)", playerPos[1], playerPos[1] / RESOLUTION);
 	RENDER_LINE("z: %ld (%ld)", playerPos[2],
 			(playerPos[2] - Player::EYE_HEIGHT - 1) / RESOLUTION);
-	RENDER_LINE("yaw:   %6.1f", localPlayer.getYaw());
-	RENDER_LINE("pitch: %6.1f", localPlayer.getPitch());
+	RENDER_LINE("yaw:   %6.1f", player.getYaw());
+	RENDER_LINE("pitch: %6.1f", player.getPitch());
 	RENDER_LINE("xvel: %8.1f", playerVel[0]);
 	RENDER_LINE("yvel: %8.1f", playerVel[1]);
 	RENDER_LINE("zvel: %8.1f", playerVel[2]);
@@ -326,9 +311,25 @@ void Graphics::render() {
 
 	glPopMatrix();
 
-	// begin rendering the relative performance bar here
+	if (stopwatch)
+		renderPerformance();
+
+}
+
+void Graphics::renderPerformance() {
 	const char *rel_names[] = {
-		"CLR", "NDL", "DLC", "CHL", "OCH", "PLA", "HUD", "FLP", "TIC", "UAF"
+		"CLR",
+		"NDL",
+		"DLC",
+		"CHL",
+		"CHR",
+		"PLA",
+		"HUD",
+		"FLP",
+		"TIC",
+		"NET",
+		"SYN",
+		"ALL"
 	};
 
 	vec<float, 3> rel_colors[] {
@@ -341,67 +342,80 @@ void Graphics::render() {
 		{0.8f, 0.8f, 0.3f},
 		{0.0f, 0.8f, 0.0f},
 		{0.0f, 0.4f, 0.0f},
+		{0.7f, 0.1f, 0.7f},
+		{0.7f, 0.7f, 0.4f},
 		{0.8f, 0.0f, 0.0f},
 	};
 
 	float rel = 0.0;
+	float cum_rels[CLOCK_ID_NUM + 1];
+	cum_rels[0] = 0;
+	float center_positions[CLOCK_ID_NUM];
 
+	glDisable(GL_TEXTURE_2D);
 	glPushMatrix();
 	glTranslatef(+drawWidth / 2.0, -drawHeight / 2, 0);
 	glScalef(10.0, drawHeight, 1.0);
 	glTranslatef(-1, 0, 0);
-	glDisable(GL_TEXTURE_2D);
-
-	float actual_factor = TICK_SPEED * 1e-6 * last_frame_microseconds;
-	float performance_indicator = log(actual_factor) / log(2);
-	float performance_indicator_pos = 0.5 + performance_indicator * 0.25;
-
-	glLineWidth(3.0);
-	glBegin(GL_LINES);
-		glColor3f(1.0, 1.0, 1.0);
-		glVertex2f(0, 0.25);
-		glVertex2f(1, 0.25);
-		glVertex2f(0, 0.5);
-		glVertex2f(1, 0.5);
-		glVertex2f(0, 0.75);
-		glVertex2f(1, 0.75);
-		glColor3f(1.0, 0.0, 0.0);
-		glVertex2f(0, performance_indicator_pos);
-		glVertex2f(1, performance_indicator_pos);
-	glEnd();
-
-	glTranslatef(-1, 0, 0);
-
-	for (uint i = 0; i < DUR_TYPE_NUM + 1; ++i) {
-		glBegin(GL_QUADS);
-			glColor3f(rel_colors[i][0], rel_colors[i][1], rel_colors[i][2]);
-			glVertex2f(0, rel);
-			glVertex2f(1, rel);
-			rel += rel_durs[i];
-			glVertex2f(1, rel);
-			glVertex2f(0, rel);
-		glEnd();
+	glBegin(GL_QUADS);
+	for (uint i = 0; i < CLOCK_ID_NUM; ++i) {
+		glColor3f(rel_colors[i][0], rel_colors[i][1], rel_colors[i][2]);
+		glVertex2f(0, rel);
+		glVertex2f(1, rel);
+		rel += stopwatch->getRel(i);
+		cum_rels[i + 1] = rel;
+		center_positions[i] = (cum_rels[i] + cum_rels[i + 1]) / 2.0;
+		glVertex2f(1, rel);
+		glVertex2f(0, rel);
 	}
+	glEnd();
 	glPopMatrix();
 
-	glPushMatrix();
-	glTranslatef(+drawWidth / 2.0 - 22.0, -drawHeight / 2 + 5, 0);
-	glRotatef(90.0, 0.0, 0.0, 1.0);
-	for (uint i = 0; i < DUR_TYPE_NUM + 1; ++i) {
-		if (rel_durs[i] > 0.005) {
-			sprintf(buffer, "%s", rel_names[i]);
-			glColor3f(rel_colors[i][0], rel_colors[i][1], rel_colors[i][2]);
-			font->Render(buffer);
-			glTranslatef(std::max(drawHeight * rel_durs[i] * 0.90, 30.0), 0, 0);
-		}
+	static const float REL_THRESHOLD = 0.001;
+	uint labeled_ids[CLOCK_ID_NUM];
+	int num_displayed_labels = 0;
+	for (int i = 0; i < CLOCK_ID_NUM; ++i) {
+		if (stopwatch->getRel(i) > REL_THRESHOLD)
+			labeled_ids[num_displayed_labels++] = i;
 	}
 
-	stop = std::chrono::high_resolution_clock::now();
-	durs[DUR_HUD] += duration_cast<microseconds>(stop - start);
+	float used_positions[CLOCK_ID_NUM + 2];
+	used_positions[0] = 0.0;
+	for (int i = 0; i < num_displayed_labels; ++i) {
+		int id = labeled_ids[i];
+		used_positions[i + 1] = center_positions[id];
+	}
+	used_positions[num_displayed_labels + 1] = 1.0;
+
+	for (int iteration = 0; iteration < 3; ++iteration)
+	for (int i = 1; i < num_displayed_labels + 1; ++i) {
+		float d1 = used_positions[i] - used_positions[i - 1];
+		float d2 = used_positions[i + 1] - used_positions[i];
+		float diff = 2e-4 * (1.0 / d1 - 1.0 / d2);
+		used_positions[i] += std::min(std::max(-0.02, (double) diff), 0.02);
+	}
+
+	glPushMatrix();
+	glTranslatef(+drawWidth / 2.0, -drawHeight / 2, 0);
+	glTranslatef(-15, 0, 0);
+	glRotatef(90.0, 0.0, 0.0, 1.0);
+	for (int i = 0; i < num_displayed_labels; ++i) {
+		int id = labeled_ids[i];
+		glPushMatrix();
+		glTranslatef(used_positions[i + 1] * drawHeight - 14, 0, 0);
+		char buffer[1024];
+		sprintf(buffer, "%s", rel_names[id]);
+		auto color = rel_colors[id];
+		glColor3f(color[0], color[1], color[2]);
+		font->Render(buffer);
+		glPopMatrix();
+	}
+	glPopMatrix();
 }
 
 void Graphics::renderChunks() {
 	using namespace vec_auto_cast;
+
 	newQuads = 0;
 	Player &localPlayer = world->getPlayer(localClientID);
 	vec3i64 pc = localPlayer.getChunkPos();
@@ -424,14 +438,15 @@ void Graphics::renderChunks() {
 	int maxChunks = length * length * length;
 	int chunks = 0;
 	glEnable(GL_TEXTURE_2D);
+
 	for (uint i = 0; i < LOADING_ORDER.size() && chunks < maxChunks; i++) {
 		vec3i8 cd = LOADING_ORDER[i];
 		if (cd.maxAbs() > VIEW_RANGE)
 			continue;
 		chunks++;
 
+		stopwatch->start(CLOCK_CHL);
 		vec3i64 cc = pc + cd;
-		auto start = std::chrono::high_resolution_clock::now();
 		auto chunkIt = world->getChunks().find(cc);
 		if (chunkIt == world->getChunks().end())
 			continue;
@@ -444,36 +459,26 @@ void Graphics::renderChunks() {
 				displayLists.insert({cc, lid});
 		} else
 			lid = listIt->second;
+		stopwatch->stop();
 
-		auto stop = std::chrono::high_resolution_clock::now();
-		auto dur = duration_cast<microseconds>(stop - start);
-		durs[DUR_CHL] += dur;
-		durs[DUR_OCH] -= dur;
-
+		stopwatch->start(CLOCK_NDL);
 		if (newQuads < MAX_NEW_QUADS && lid != 0 && chunkIt->second->pollChanged()) {
-			auto start = std::chrono::high_resolution_clock::now();
 			glNewList(lid, GL_COMPILE);
 			renderChunk(*chunkIt->second, false, vec3ui8(0, 0, 0), 0);
 			glEndList();
-			auto stop = std::chrono::high_resolution_clock::now();
-			auto dur = duration_cast<microseconds>(stop - start);
-			durs[DUR_NDL] += dur;
-			durs[DUR_OCH] -= dur;
 		}
+		stopwatch->stop();
 
+		stopwatch->start(CLOCK_DLC);
 		bool tChunk = target && cc == tcc;
 		if (inFrustum(cc, localPlayer.getPos(), lookDir)) {
 			if ((tChunk || lid == 0) && newQuads < MAX_NEW_QUADS)
 				renderChunk(*chunkIt->second, tChunk, ticc, td);
 			else if (lid != 0) {
-				auto start = std::chrono::high_resolution_clock::now();
 				glCallList(lid);
-				auto stop = std::chrono::high_resolution_clock::now();
-				auto dur = duration_cast<microseconds>(stop - start);
-				durs[DUR_DLC] += dur;
-				durs[DUR_OCH] -= dur;
 			}
 		}
+		stopwatch->stop();
 	}
 }
 

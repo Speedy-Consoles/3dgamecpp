@@ -10,6 +10,8 @@
 #include "world.hpp"
 #include "util.hpp"
 #include "constants.hpp"
+#include "stopwatch.hpp"
+#include "client.hpp"
 
 class Graphics {
 private:
@@ -49,26 +51,10 @@ private:
 	GLdouble perspectiveMatrix[16];
 	GLdouble orthogonalMatrix[16];
 
-	enum DurationType {
-		DUR_CLR, // clearing
-		DUR_NDL, // new display lists
-		DUR_DLC, // display list calls
-		DUR_CHL, // chunk lookup
-		DUR_OCH, // other chunk
-		DUR_PLA, // player rendering
-		DUR_HUD, // hud rendering
-		DUR_FLP, // flipping
-		DUR_TIC, // world ticking
-		DUR_UAF, // unaccounted for
-	};
-	static const uint DUR_TYPE_NUM = 9;
-	float rel_durs[DUR_TYPE_NUM + 1];
-	std::chrono::microseconds durs[9];
-	float last_frame_microseconds;
-	float last_frame_start_point;
+	Stopwatch *stopwatch;
 
 public:
-	Graphics(World *world, int localClientID);
+	Graphics(World *world, int localClientID, Stopwatch *stopwatch = nullptr);
 	~Graphics();
 
 	void tick();
@@ -92,6 +78,9 @@ private:
 	void calcDrawArea();
 
 	void render();
+	void renderHud(const Player &);
+	void renderDebugInfo(const Player &);
+	void renderPerformance();
 	void renderChunks();
 	void renderChunk(const Chunk &c, bool targeted, vec3ui8 ticc, int td);
 	void renderPlayers();

@@ -8,6 +8,7 @@
 #include "constants.hpp"
 #include "client.hpp"
 #include "local_server_interface.hpp"
+#include "graphics.hpp"
 
 using namespace std::chrono;
 
@@ -19,7 +20,10 @@ int main() {
 	return 0;
 }
 
-Client::Client() {
+Client::Client() : stopwatch(nullptr) {
+	stopwatch = new Stopwatch(CLOCK_ID_NUM);
+	stopwatch->start(CLOCK_ALL);
+
 	world = new World();
 
 	//serverInterface = RemoteServerInterface(args[0], world);
@@ -27,7 +31,7 @@ Client::Client() {
 
 	localClientID = serverInterface->getLocalClientID();
 
-	graphics = new Graphics(world, localClientID);
+	graphics = new Graphics(world, localClientID, stopwatch);
 }
 
 Client::~Client() {
@@ -35,6 +39,7 @@ Client::~Client() {
 	// world must be deleted before server interface
 	delete world;
 	delete serverInterface;
+	delete stopwatch;
 }
 
 void Client::run() {
@@ -44,15 +49,21 @@ void Client::run() {
 	while (!closeRequested) {
 		handleInput();
 
+		stopwatch->start(CLOCK_NET);
 		serverInterface->sendInput();
 		serverInterface->receive(time + 200000);
+		stopwatch->stop();
 
+		stopwatch->start(CLOCK_TIC);
 		world->tick(tick, localClientID);
+		stopwatch->stop();
 
 		if (time + 1000000 / TICK_SPEED > getMicroTimeSince(startTimePoint))
 			graphics->tick();
 
+		stopwatch->start(CLOCK_NET);
 		sync(TICK_SPEED);
+		stopwatch->stop();
 		tick++;
 	}
 	serverInterface->stop();

@@ -8,6 +8,7 @@ SOURCE_FILES = \
 	local_server_interface.cpp\
 	perlin.cpp\
 	player.cpp\
+	stopwatch.cpp\
 	util.cpp\
 	world.cpp\
 	monitor.cpp
