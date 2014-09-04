@@ -6,7 +6,7 @@
 
 const double TAU = atan(1) * 8;
 
-const vec3i DIRS[6] = {
+const vec3i8 DIRS[6] = {
 	{ 1, 0, 0 }, { 0, 1, 0 }, { 0, 0, 1 },
 	{-1, 0, 0 }, { 0,-1, 0 }, { 0, 0,-1 }
 };

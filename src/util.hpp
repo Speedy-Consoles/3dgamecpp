@@ -9,7 +9,7 @@ using namespace std::chrono;
 
 extern const double TAU;
 
-extern const vec3i DIRS[6];
+extern const vec3i8 DIRS[6];
 extern const int DIR_DIMS[6];
 extern const int OTHER_DIR_DIMS[6][2];
 

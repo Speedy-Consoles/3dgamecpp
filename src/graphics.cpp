@@ -319,7 +319,7 @@ void Graphics::render() {
 			font->Render(buffer)
 
 	RENDER_LINE("fps: %d", lastFPS);
-	RENDER_LINE("quads: %d", lastNewQuads);
+	RENDER_LINE("quads: %d", newQuads);
 	RENDER_LINE("x: %ld (%ld)", playerPos[0], playerPos[0] / RESOLUTION);
 	RENDER_LINE("y: %ld (%ld)", playerPos[1], playerPos[1] / RESOLUTION);
 	RENDER_LINE("z: %ld (%ld)", playerPos[2],
@@ -395,7 +395,7 @@ void Graphics::render() {
 
 void Graphics::renderChunks() {
 	using namespace vec_auto_cast;
-	lastNewQuads = 0;
+	newQuads = 0;
 	Player &localPlayer = world->getPlayer(localClientID);
 	vec3i64 pc = localPlayer.getChunkPos();
 	vec3d lookDir = getVectorFromAngles(localPlayer.getYaw(),
@@ -424,21 +424,20 @@ void Graphics::renderChunks() {
 		chunks++;
 
 		vec3i64 cc = pc + cd;
-		auto chunkIt= world->getChunks().find(cc);
+		auto chunkIt = world->getChunks().find(cc);
+		if (chunkIt == world->getChunks().end())
+			continue;
 
 		auto listIt = displayLists.find(cc);
 		GLuint lid = 0;
-		if (chunkIt != world->getChunks().end()
-				&& listIt == displayLists.end()) {
+		if (listIt == displayLists.end()) {
 			lid = glGenLists(1);
 			if (lid != 0)
 				displayLists.insert({cc, lid});
-		} else if(listIt != displayLists.end())
+		} else
 			lid = listIt->second;
 
-		if (chunkIt != world->getChunks().end()
-				&& chunkIt->second->pollChanged()
-				&& lid != 0) {
+		if (newQuads < MAX_NEW_QUADS && lid != 0 && chunkIt->second->pollChanged()) {
 			glNewList(lid, GL_COMPILE);
 			renderChunk(*chunkIt->second, false, vec3ui8(0, 0, 0), 0);
 			glEndList();
@@ -449,7 +448,7 @@ void Graphics::renderChunks() {
 
 		bool tChunk = target && cc == tcc;
 		if (inFrustum(cc, localPlayer.getPos(), lookDir)) {
-			if (chunkIt != world->getChunks().end() && (tChunk || lid == 0))
+			if ((tChunk || lid == 0) && newQuads < MAX_NEW_QUADS)
 				renderChunk(*chunkIt->second, tChunk, ticc, td);
 			else if (lid != 0)
 				glCallList(lid);
@@ -468,7 +467,7 @@ void Graphics::renderChunk(const Chunk &c, bool targeted, vec3ui8 ticc, int td) 
 	const Chunk::FaceSet &faceSet = c.getFaceSet();
 	// TODO thread safe?
 	for (Face f : faceSet) {
-		lastNewQuads++;
+		newQuads++;
 
 		if (targeted && f.block == ticc && f.dir == td)
 			glColor3d(0.8, 0.2, 0.2);
@@ -500,7 +499,7 @@ void Graphics::renderPlayers() {
 			continue;
 		vec3i64 pos = player.getPos();
 		for (int d = 0; d < 6; d++) {
-			vec3i dir = DIRS[d];
+			vec3i8 dir = DIRS[d];
 			glColor3d(0.8, 0.2, 0.2);
 
 			glNormal3d(dir[0], dir[1], dir[2]);

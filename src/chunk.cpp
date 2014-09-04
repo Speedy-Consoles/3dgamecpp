@@ -28,28 +28,29 @@ const double World::GRAVITY = -9.81 * RESOLUTION / 60.0 / 60.0 * 4;
 
 void Chunk::initFaces() {
 	// TODO only one loop
+	uint i = 0;
 	for (uint z = 0; z < WIDTH; z++) {
 		for (uint y = 0; y < WIDTH; y++) {
 			for (uint x = 0; x < WIDTH; x++) {
-				using namespace vec_auto_cast;
-				vec3ui8 icc(x, y, z);
 				for (uint8 d = 0; d < 3; d++) {
-					uint8 invD = (d + 3) % 6;
-					vec3i dir = DIRS[d];
-					vec3ui8 nIcc = (icc + dir).cast<uint8>();
-					if (		nIcc[0] < 0 || nIcc[0] >= WIDTH
-							||	nIcc[1] < 0 || nIcc[1] >= WIDTH
-							||	nIcc[2] < 0 || nIcc[2] >= WIDTH)
+					vec3ui8 dir = DIRS[d].cast<uint8>();
+					if ((x == WIDTH - 1 && d==0)
+							|| (y == WIDTH - 1 && d==1)
+							|| (z == WIDTH - 1 && d==2))
 						continue;
 
-					uint8 thisType = getBlock(icc);
-					uint8 thatType = getBlock(nIcc);
-					if(thisType != thatType)
-					if (thisType == 0)
-						faces.insert(Face{nIcc, invD});
-					else
-						faces.insert(Face{icc, d});
+					uint ni = i + getBlockIndex(dir);
+
+					uint8 thisType = blocks[i];
+					uint8 thatType = blocks[ni];
+					if(thisType != thatType) {
+						if (thisType == 0)
+							faces.insert(Face{vec3ui8(x, y, z) + dir, (uint8) (d + 3)});
+						else if(thatType == 0)
+							faces.insert(Face{vec3ui8(x, y, z), d});
+					}
 				}
+				i++;
 			}
 		}
 	}
@@ -59,9 +60,8 @@ void Chunk::patchBorders(World *world) {
 	using namespace vec_auto_cast;
 	for (uint8 d = 0; d < 6; d++) {
 		uint8 invD = (d + 3) % 6;
-		vec3i dir = DIRS[d];
 		int dim = DIR_DIMS[d];
-		vec3i64 nc = cc + dir;
+		vec3i64 nc = cc + DIRS[d];
 		auto it = world->getChunks().find(nc);
 		if (it == world->getChunks().end())
 			continue;
@@ -160,10 +160,10 @@ static Chunk Chunk::readChunk(ByteBuffer buffer) {
 }
 */
 int Chunk::getBlockIndex(vec3ui8 icc) {
-	return icc[2] * WIDTH * WIDTH + icc[1] * WIDTH + icc[0];
+	return (icc[2] * WIDTH + icc[1]) * WIDTH + icc[0];
 }
 
-static uint8 helperFunc(uint8 t) {
+static int8 helperFunc(int8 t) {
 	return (t + Chunk::WIDTH) % Chunk::WIDTH;
 }
 
@@ -171,14 +171,16 @@ void Chunk::updateBlockFaces(vec3ui8 icc, World &world) {
 	using namespace vec_auto_cast;
 	for (uint8 d = 0; d < 6; d++) {
 		uint8 invD = (d + 3) % 6;
-		vec3i dir = DIRS[d];
-		vec3ui8 nIcc = (icc + dir).cast<uint8>();
+		vec3i8 dir = DIRS[d];
+		vec3i8 pnIcc = icc.cast<int8>() + dir;
+		vec3ui8 nIcc;
 		uint8 neighborType;
 		FaceSet *nFaces = nullptr;
-		if (		nIcc[0] < 0 || nIcc[0] >= WIDTH
-				||	nIcc[1] < 0 || nIcc[1] >= WIDTH
-				||	nIcc[2] < 0 || nIcc[2] >= WIDTH) {
-			nIcc.applyPW(helperFunc);
+		if (		pnIcc[0] < 0 || pnIcc[0] >= WIDTH
+				||	pnIcc[1] < 0 || pnIcc[1] >= WIDTH
+				||	pnIcc[2] < 0 || pnIcc[2] >= WIDTH) {
+			pnIcc.applyPW(helperFunc);
+			nIcc = pnIcc.cast<uint8>();
 			vec3i64 nc = cc + dir;
 			auto it = world.getChunks().find(nc);
 			if (it == world.getChunks().end())
@@ -188,6 +190,7 @@ void Chunk::updateBlockFaces(vec3ui8 icc, World &world) {
 				it->second->changed = true;
 			nFaces = &it->second->faces;
 		} else {
+			nIcc = pnIcc.cast<uint8>();
 			neighborType = getBlock(nIcc);
 			nFaces = &faces;
 		}

@@ -19,7 +19,7 @@ bool operator == (const Face &lhs, const Face &rhs);
 
 class Chunk {
 public:
-	static const uint WIDTH = 32;
+	static const uint8 WIDTH = 32;
 
 	const vec3i64 cc;
 

@@ -71,7 +71,7 @@ int World::shootRay(vec3i64 start, vec3d ray, double maxDist,
 				if (dist > maxDist)
 					return 0;
 
-				vec3i dir = DIRS[d];
+				vec3i8 dir = DIRS[d];
 				vec3i64 nextBlock = block + dir;
 				if (getBlock(nextBlock)) {
 					if (outHit != nullptr)
