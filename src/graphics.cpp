@@ -8,7 +8,7 @@
 #include <GL/glut.h>
 
 Graphics::Graphics(World *world, int localClientID, Stopwatch *stopwatch)
-		: displayLists(0, vec3i64HashFunc), stopwatch(stopwatch) {
+		: stopwatch(stopwatch) {
 	this->world = world;
 	this->localClientID = localClientID;
 
@@ -23,8 +23,11 @@ Graphics::Graphics(World *world, int localClientID, Stopwatch *stopwatch)
 	glContext = SDL_GL_CreateContext(window);
 
 	initGL();
-	resize(START_WIDTH, START_HEIGHT);
+	int length = VIEW_RANGE * 2 + 1;
+	firstDL = glGenLists(length * length * length);
+	dlChunks = new vec3i64[length * length * length];
 
+	resize(START_WIDTH, START_HEIGHT);
 	if (START_WIDTH <= START_HEIGHT)
 		maxFOV = YFOV;
 	else
@@ -38,6 +41,9 @@ Graphics::Graphics(World *world, int localClientID, Stopwatch *stopwatch)
 }
 
 Graphics::~Graphics() {
+	int length = VIEW_RANGE * 2 + 1;
+	glDeleteLists(firstDL, length * length * length);
+	delete dlChunks;
     delete font;
 	SDL_GL_DeleteContext(glContext);
 	SDL_Quit();
@@ -78,7 +84,7 @@ bool Graphics::isGrabbed() {
 }
 
 void Graphics::initGL() {
-	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+	glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
 	glClearDepth(1);
 	glDepthFunc(GL_LEQUAL);
 	glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
@@ -140,13 +146,13 @@ void Graphics::initGL() {
 	// fog
 	//float fogColor[4] = {0.5f, 0.5f, 0.5f, 1.0f};
 
-	//		glEnable(GL_FOG);
-	//		glFogi(GL_FOG_MODE, GL_EXP2);
-	//		glFog(GL_FOG_COLOR, fogColor);
-	//		glFogf(GL_FOG_DENSITY, 0.01f);
-	//		glHint(GL_FOG_HINT, GL_NICEST);
-	//		//		glFogf(GL_FOG_START, (DEFAULT_VIEW_RANGE - 2) * Chunk::X_WIDTH);
-	//		//		glFogf(GL_FOG_END, (DEFAULT_VIEW_RANGE - 1) * Chunk::X_WIDTH);
+	/*glEnable(GL_FOG);
+	glFogi(GL_FOG_MODE, GL_EXP2);
+	glFogfv(GL_FOG_COLOR, fogColor);
+	glFogf(GL_FOG_DENSITY, 0.004f);
+	glHint(GL_FOG_HINT, GL_NICEST);
+	//		glFogf(GL_FOG_START, (DEFAULT_VIEW_RANGE - 2) * Chunk::X_WIDTH);
+	//		glFogf(GL_FOG_END, (DEFAULT_VIEW_RANGE - 1) * Chunk::X_WIDTH);*/
 }
 
 void Graphics::makePerspective() {
@@ -221,7 +227,7 @@ void Graphics::render() {
 
 	switchToPerspective();
 	glEnable(GL_LIGHTING);
-	//		glEnable(GL_FOG);
+	//glEnable(GL_FOG);
 	glEnable(GL_DEPTH_TEST);
 	glLoadIdentity();
 	// player yaw
@@ -270,14 +276,8 @@ void Graphics::render() {
 void Graphics::renderChunks() {
 	using namespace vec_auto_cast;
 
-	newQuads = 0;
 	Player &localPlayer = world->getPlayer(localClientID);
 	vec3i64 pc = localPlayer.getChunkPos();
-	if(pc != oldPlayerChunk) {
-		currentChunkIndex = 0;
-		loadedChunks = 0;
-		oldPlayerChunk = pc;
-	}
 	vec3d lookDir = getVectorFromAngles(localPlayer.getYaw(),
 			localPlayer.getPitch());
 
@@ -291,17 +291,15 @@ void Graphics::renderChunks() {
 		ticc = bc2icc(tbc);
 	}
 
-	//		DoubleBuffer globalMat = BufferUtils.createDoubleBuffer(16);
-	//		glGetDouble(GL_MODELVIEW_MATRIX, globalMat);
+	newQuads = 0;
 	int length = VIEW_RANGE * 2 + 1;
 	uint maxChunks = length * length * length;
-
-	while (currentChunkIndex < LOADING_ORDER.size() && loadedChunks < maxChunks && newQuads < MAX_NEW_QUADS) {
-		vec3i8 cd = LOADING_ORDER[currentChunkIndex];
-		if (cd.maxAbs() > VIEW_RANGE) {
-			currentChunkIndex++;
+	uint renderedChunks = 0;
+	for (uint i = 0; i < LOADING_ORDER.size() && renderedChunks < maxChunks; i++) {
+		vec3i8 cd = LOADING_ORDER[i];
+		if (cd.maxAbs() > VIEW_RANGE)
 			continue;
-		}
+		renderedChunks++;
 
 		stopwatch->start(CLOCK_CHL);
 		vec3i64 cc = pc + cd;
@@ -309,52 +307,32 @@ void Graphics::renderChunks() {
 		if (chunkIt == world->getChunks().end())
 			break;
 
-		auto listIt = displayLists.find(cc);
+		uint index = (((cc[2] + length) % length) * length
+				+ ((cc[1] + length) % length)) * length
+				+ ((cc[0] + length) % length);
+		GLuint lid = firstDL + index;
 		stopwatch->stop();
-		GLuint lid = 0;
-		if (listIt != displayLists.end() && !chunkIt->second->pollChanged()) {
-			loadedChunks++;
-			currentChunkIndex++;
-			continue;
+
+		if (newQuads < MAX_NEW_QUADS && chunkIt->second->pollChanged()) {
+			stopwatch->start(CLOCK_NDL);
+			glNewList(lid, GL_COMPILE);
+			renderChunk(*chunkIt->second, false, vec3ui8(0, 0, 0), 0);
+			glEndList();
+			stopwatch->stop();
+			dlChunks[index] = cc;
 		}
 
-		if(listIt == displayLists.end()) {
-			lid = glGenLists(1);
-			if (lid == 0)
-				break;
-			displayLists.insert({cc, lid});
-		} else
-			lid = listIt->second;
-
-		stopwatch->start(CLOCK_NDL);
-		glNewList(lid, GL_COMPILE);
-		renderChunk(*chunkIt->second, false, vec3ui8(0, 0, 0), 0);
-		glEndList();
+		stopwatch->start(CLOCK_DLC);
+		if (lid != 0
+				&& inFrustum(cc, localPlayer.getPos(), lookDir)
+				&& (!target || tcc != cc)
+				&& dlChunks[index] == cc)
+			glCallList(lid);
 		stopwatch->stop();
-		currentChunkIndex++;
-		loadedChunks++;
 	}
 
-	// render targeted chunk
 	if (target)
 		renderChunk(*world->getChunks().find(tcc)->second, true, ticc, td);
-
-	// render chunks from list and remove unneeded lists
-	stopwatch->start(CLOCK_DLC);
-	vec3i64 pcc = world->getPlayer(localClientID).getChunkPos();
-	for (auto iter = displayLists.begin(); iter != displayLists.end();) {
-		vec3i64 cc = iter->first;
-		if ((cc - pcc).maxAbs() > VIEW_RANGE) {
-			glDeleteLists(iter->second, 1);
-			iter = displayLists.erase(iter);
-		} else {
-			bool tChunk = target && iter->first == tcc;
-			if (inFrustum(cc, localPlayer.getPos(), lookDir) && !tChunk)
-				glCallList(iter->second);
-			iter++;
-		}
-	}
-	stopwatch->stop();
 }
 
 void Graphics::renderChunk(const Chunk &c, bool targeted, vec3ui8 ticc, int td) {

@@ -41,12 +41,10 @@ private:
 	int frameCounter = 0;
 	int newQuads = 0;
 
-	uint currentChunkIndex = 0;
-	uint loadedChunks = 0;
 	vec3i64 oldPlayerChunk;
 
-	using DLMap = std::unordered_map<vec3i64, GLuint, size_t (*)(vec3i64 v)>;
-	DLMap displayLists;
+	GLuint firstDL;
+	vec3i64 *dlChunks;
 
 	float sunLightPosition[4] = {3.0, 2.0, 9.0, 0.0};
 	GLuint blockTexture;
