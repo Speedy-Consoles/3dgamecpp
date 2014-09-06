@@ -44,7 +44,7 @@ public:
 
 private:
 	ChunkMap chunks;
-	std::queue<vec3i64> changedChunks;
+	std::deque<vec3i64> changedChunks;
 
 	Player players[MAX_CLIENTS];
 

@@ -128,10 +128,10 @@ bool World::setBlock(vec3i64 bc, uint8 type, bool updateFaces) {
 	if (it->second->setBlock(bc2icc(bc), type, this, chunkChanged)) {
 		for (int d = 0; d < 6; d++) {
 			if(chunkChanged[d])
-				changedChunks.push(it->second->cc + DIRS[d]);
+				changedChunks.push_front(it->second->cc + DIRS[d]);
 		}
 		if(chunkChanged[6])
-			changedChunks.push(it->second->cc);
+			changedChunks.push_front(it->second->cc);
 		return true;
 	}
 	return false;
@@ -152,10 +152,10 @@ void World::insertChunk(Chunk *chunk) {
 	for (int d = 0; d < 6; d++) {
 		if(!chunkChanged[d])
 			continue;
-		changedChunks.push(chunk->cc + DIRS[d]);
+		changedChunks.push_back(chunk->cc + DIRS[d]);
 	}
 	if(chunkChanged[6])
-		changedChunks.push(chunk->cc);
+		changedChunks.push_back(chunk->cc);
 }
 
 Chunk *World::removeChunk(vec3i64 cc) {
@@ -171,7 +171,7 @@ bool World::popChangedChunk(vec3i64 *ccc) {
 	if (changedChunks.empty())
 		return false;
 	*ccc = changedChunks.front();
-	changedChunks.pop();
+	changedChunks.pop_front();
 	return true;
 }
 
