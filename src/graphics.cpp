@@ -293,6 +293,25 @@ void Graphics::renderChunks() {
 
 	newQuads = 0;
 	int length = VIEW_RANGE * 2 + 1;
+
+	stopwatch->start(CLOCK_NDL);
+	vec3i64 ccc;
+	while (newQuads < MAX_NEW_QUADS && world->popChangedChunk(&ccc)) {
+		uint index = ((((ccc[2] % length) + length) % length) * length
+				+ (((ccc[1] % length) + length) % length)) * length
+				+ (((ccc[0] % length) + length) % length);
+		GLuint lid = firstDL + index;
+
+		Chunk *chunk = world->getChunk(ccc);
+		if(chunk && chunk->pollChanged()) {
+			glNewList(lid, GL_COMPILE);
+			renderChunk(*chunk, false, vec3ui8(0, 0, 0), 0);
+			glEndList();
+			dlChunks[index] = ccc;
+		}
+	}
+	stopwatch->stop();
+
 	uint maxChunks = length * length * length;
 	uint renderedChunks = 0;
 	for (uint i = 0; i < LOADING_ORDER.size() && renderedChunks < maxChunks; i++) {
@@ -301,38 +320,25 @@ void Graphics::renderChunks() {
 			continue;
 		renderedChunks++;
 
-		stopwatch->start(CLOCK_CHL);
 		vec3i64 cc = pc + cd;
-		auto chunkIt = world->getChunks().find(cc);
-		if (chunkIt == world->getChunks().end())
-			break;
 
-		uint index = (((cc[2] + length) % length) * length
-				+ ((cc[1] + length) % length)) * length
-				+ ((cc[0] + length) % length);
+		uint index = ((((cc[2] % length) + length) % length) * length
+				+ (((cc[1] % length) + length) % length)) * length
+				+ (((cc[0] % length) + length) % length);
 		GLuint lid = firstDL + index;
-		stopwatch->stop();
 
-		if (newQuads < MAX_NEW_QUADS && chunkIt->second->pollChanged()) {
-			stopwatch->start(CLOCK_NDL);
-			glNewList(lid, GL_COMPILE);
-			renderChunk(*chunkIt->second, false, vec3ui8(0, 0, 0), 0);
-			glEndList();
-			stopwatch->stop();
-			dlChunks[index] = cc;
-		}
-
-		stopwatch->start(CLOCK_DLC);
 		if (lid != 0
 				&& inFrustum(cc, localPlayer.getPos(), lookDir)
 				&& (!target || tcc != cc)
-				&& dlChunks[index] == cc)
+				&& dlChunks[index] == cc) {
+			stopwatch->start(CLOCK_DLC);
 			glCallList(lid);
-		stopwatch->stop();
+			stopwatch->stop();
+		}
 	}
 
 	if (target)
-		renderChunk(*world->getChunks().find(tcc)->second, true, ticc, td);
+		renderChunk(*world->getChunk(tcc), true, ticc, td);
 }
 
 void Graphics::renderChunk(const Chunk &c, bool targeted, vec3ui8 ticc, int td) {
@@ -342,7 +348,6 @@ void Graphics::renderChunk(const Chunk &c, bool targeted, vec3ui8 ticc, int td) 
 	glBegin(GL_QUADS);
 
 	const Chunk::FaceSet &faceSet = c.getFaceSet();
-	// TODO thread safe?
 	for (Face f : faceSet) {
 		newQuads++;
 
@@ -434,7 +439,7 @@ void Graphics::renderDebugInfo(const Player &player) {
 	RENDER_LINE("xvel: %8.1f", playerVel[0]);
 	RENDER_LINE("yvel: %8.1f", playerVel[1]);
 	RENDER_LINE("zvel: %8.1f", playerVel[2]);
-	RENDER_LINE("chunks loaded: %lu", world->getChunks().size());
+	RENDER_LINE("chunks loaded: %lu", world->getNumChunks());
 
 	glPopMatrix();
 

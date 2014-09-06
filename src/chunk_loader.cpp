@@ -202,9 +202,8 @@ void ChunkLoader::sendOffloadQueries() {
 		if (!inRange) {
 			unloadQueries.push(cc);
 			iter = isLoaded.erase(iter);
-		} else {
+		} else
 			iter++;
-		}
 	}
 }
 

@@ -30,17 +30,13 @@ void LocalServerInterface::edit(vec3i64 bc, uint8 type) {
 
 void LocalServerInterface::receive(uint64 timeLimit) {
 	Chunk *chunk = nullptr;
-	while ((chunk = chunkLoader.next()) != nullptr) {
-		chunk->patchBorders(world);
-		world->getChunks().insert({chunk->cc, chunk});
-	}
+	while ((chunk = chunkLoader.next()) != nullptr)
+		world->insertChunk(chunk);
 
 	auto unloadQueries = chunkLoader.getUnloadQueries();
 	while (unloadQueries)
 	{
-		auto iter = world->getChunks().find(unloadQueries->data);
-		Chunk *chunk = iter->second;
-		world->getChunks().erase(iter);
+		Chunk *chunk = world->removeChunk(unloadQueries->data);
 		chunk->free();
 		auto tmp = unloadQueries->next;
 		delete unloadQueries;

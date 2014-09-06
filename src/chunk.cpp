@@ -56,14 +56,16 @@ void Chunk::initFaces() {
 	}
 }
 
-void Chunk::patchBorders(World *world) {
+void Chunk::patchBorders(World *world, bool changedChunks[7]) {
 	using namespace vec_auto_cast;
+	changedChunks[6] = false;
 	for (uint8 d = 0; d < 6; d++) {
+		changedChunks[d] = false;
 		uint8 invD = (d + 3) % 6;
 		int dim = DIR_DIMS[d];
-		vec3i64 nc = cc + DIRS[d];
-		auto it = world->getChunks().find(nc);
-		if (it == world->getChunks().end())
+		vec3i64 ncc = cc + DIRS[d];
+		Chunk *nc = world->getChunk(ncc);
+		if (!nc)
 			continue;
 
 		vec3ui8 icc(0, 0, 0);
@@ -78,19 +80,21 @@ void Chunk::patchBorders(World *world) {
 				icc[OTHER_DIR_DIMS[d][1]] = b;
 				nIcc[OTHER_DIR_DIMS[d][1]] = b;
 
-				uint8 neighborType = it->second->getBlock(nIcc);
+				uint8 neighborType = nc->getBlock(nIcc);
 
 				if (neighborType != 0) {
 					if (getBlock(icc) != 0)
-						it->second->faces.erase(Face{nIcc, invD});
+						nc->faces.erase(Face{nIcc, invD});
 					else
-						it->second->faces.insert(Face{nIcc, invD});
-					it->second->changed = true;
+						nc->faces.insert(Face{nIcc, invD});
+					changedChunks[d] = true;
+					nc->changed = true;
 				} else {
 					if (getBlock(icc) != 0)
 						faces.insert(Face{icc, d});
 					else
 						faces.erase(Face{icc, d});
+					changedChunks[6] = true;
 					changed = true;
 				}
 			}
@@ -102,12 +106,11 @@ void Chunk::initBlock(size_t index, uint8 type) {
 	blocks[index] = type;
 }
 
-bool Chunk::setBlock(vec3ui8 icc, uint8 type, World *world) {
+bool Chunk::setBlock(vec3ui8 icc, uint8 type, World *world, bool changedChunks[7]) {
 	if (getBlock(icc) == type)
 		return true;
 	blocks[getBlockIndex(icc)] = type;
-	updateBlockFaces(icc, *world);
-	changed = true;
+	updateBlockFaces(icc, *world, changedChunks);
 	return true;
 }
 
@@ -119,11 +122,6 @@ const Chunk::FaceSet &Chunk::getFaceSet() const {
 	return faces;
 }
 
-bool Chunk::pollChanged() {
-	bool tmp = changed;
-	changed = false;
-	return tmp;
-}
 /*
 void Chunk::write(ByteBuffer buffer) const {
 	buffer.putLong(cx);
@@ -167,28 +165,29 @@ static int8 helperFunc(int8 t) {
 	return (t + Chunk::WIDTH) % Chunk::WIDTH;
 }
 
-void Chunk::updateBlockFaces(vec3ui8 icc, World &world) {
+void Chunk::updateBlockFaces(vec3ui8 icc, World &world, bool changedChunks[7]) {
 	using namespace vec_auto_cast;
+	changedChunks[6] = false;
 	for (uint8 d = 0; d < 6; d++) {
+		changedChunks[d] = false;
 		uint8 invD = (d + 3) % 6;
 		vec3i8 dir = DIRS[d];
 		vec3i8 pnIcc = icc.cast<int8>() + dir;
 		vec3ui8 nIcc;
 		uint8 neighborType;
 		FaceSet *nFaces = nullptr;
+		Chunk *nc = nullptr;
 		if (		pnIcc[0] < 0 || pnIcc[0] >= WIDTH
 				||	pnIcc[1] < 0 || pnIcc[1] >= WIDTH
 				||	pnIcc[2] < 0 || pnIcc[2] >= WIDTH) {
 			pnIcc.applyPW(helperFunc);
 			nIcc = pnIcc.cast<uint8>();
-			vec3i64 nc = cc + dir;
-			auto it = world.getChunks().find(nc);
-			if (it == world.getChunks().end())
+			vec3i64 ncc = cc + dir;
+			nc = world.getChunk(ncc);
+			if (!nc)
 				continue;
-			neighborType = it->second->getBlock(nIcc);
-			if (neighborType != 0)
-				it->second->changed = true;
-			nFaces = &it->second->faces;
+			neighborType = nc->getBlock(nIcc);
+			nFaces = &nc->faces;
 		} else {
 			nIcc = pnIcc.cast<uint8>();
 			neighborType = getBlock(nIcc);
@@ -200,13 +199,25 @@ void Chunk::updateBlockFaces(vec3ui8 icc, World &world) {
 				nFaces->insert(Face{nIcc, invD});
 			else
 				nFaces->erase(Face{nIcc, invD});
+			if(nc) {
+				changedChunks[d] = true;
+				nc->changed = true;
+			}
 		} else {
 			if (getBlock(icc) != 0)
 				faces.insert(Face{icc, d});
 			else
 				faces.erase(Face{icc, d});
+			changedChunks[6] = true;
+			changed = true;
 		}
 	}
+}
+
+bool Chunk::pollChanged() {
+	bool tmp = changed;
+	changed = false;
+	return tmp;
 }
 
 void Chunk::free() {

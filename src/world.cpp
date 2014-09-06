@@ -120,14 +120,63 @@ uint8 World::getBlock(vec3i64 bc) const {
 }
 
 bool World::setBlock(vec3i64 bc, uint8 type, bool updateFaces) {
+	using namespace vec_auto_cast;
 	auto it = chunks.find(bc2cc(bc));
 	if (it == chunks.end())
 		return false;
-	return it->second->setBlock(bc2icc(bc), type, this);
+	bool chunkChanged[7];
+	if (it->second->setBlock(bc2icc(bc), type, this, chunkChanged)) {
+		for (int d = 0; d < 6; d++) {
+			if(chunkChanged[d])
+				changedChunks.push(it->second->cc + DIRS[d]);
+		}
+		if(chunkChanged[6])
+			changedChunks.push(it->second->cc);
+		return true;
+	}
+	return false;
 }
 
-World::ChunkMap &World::getChunks() {
-	return chunks;
+Chunk *World::getChunk(vec3i64 cc) {
+	auto iter = chunks.find(cc);
+	if (iter == chunks.end())
+		return nullptr;
+	return iter->second;
+}
+
+void World::insertChunk(Chunk *chunk) {
+	using namespace vec_auto_cast;
+	chunks.insert({chunk->cc, chunk});
+	bool chunkChanged[7];
+	chunk->patchBorders(this, chunkChanged);
+	for (int d = 0; d < 6; d++) {
+		if(!chunkChanged[d])
+			continue;
+		changedChunks.push(chunk->cc + DIRS[d]);
+	}
+	if(chunkChanged[6])
+		changedChunks.push(chunk->cc);
+}
+
+Chunk *World::removeChunk(vec3i64 cc) {
+	auto iter = chunks.find(cc);
+	if (iter == chunks.end())
+		return nullptr;
+	Chunk *c = iter->second;
+	chunks.erase(iter);
+	return c;
+}
+
+bool World::popChangedChunk(vec3i64 *ccc) {
+	if (changedChunks.empty())
+		return false;
+	*ccc = changedChunks.front();
+	changedChunks.pop();
+	return true;
+}
+
+size_t World::getNumChunks() {
+	return chunks.size();
 }
 
 Player &World::getPlayer(int playerID) {

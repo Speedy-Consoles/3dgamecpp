@@ -3,6 +3,7 @@
 
 #include <unordered_map>
 #include <chrono>
+#include <queue>
 
 #include "constants.hpp"
 #include "chunk.hpp"
@@ -43,6 +44,7 @@ public:
 
 private:
 	ChunkMap chunks;
+	std::queue<vec3i64> changedChunks;
 
 	Player players[MAX_CLIENTS];
 
@@ -68,7 +70,13 @@ public:
 	void deletePlayer(int playerID);
 
 	Player &getPlayer(int playerID);
-	ChunkMap &getChunks();
+
+	Chunk *getChunk(vec3i64 cc);
+	void insertChunk(Chunk *chunk);
+	Chunk *removeChunk(vec3i64 cc);
+	bool popChangedChunk(vec3i64 *ccc);
+
+	size_t getNumChunks();
 
 	WorldSnapshot makeSnapshot(int tick) const;
 

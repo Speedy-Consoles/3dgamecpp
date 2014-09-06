@@ -36,7 +36,7 @@ void Player::tick(int tick, bool isLocalPlayer) {
 		// player physics
 		vec3i64 cp = getChunkPos();
 		// TODO don't let player enter chunk
-		if (world->getChunks().find(cp) != world->getChunks().end()) {
+		if (world->getChunk(cp)) {
 			walk();
 			move();
 		}
