@@ -8,13 +8,12 @@
 
 using namespace std;
 
-const double Player::FLY_SPEED = 500;
-const double Player::GROUND_SPEED = 100;
-const double Player::GROUND_ACCELERATION = 15;
+const double Player::FLY_ACCELERATION = 3000;
+const double Player::FLY_FRICTION = 0.8;
+const double Player::GROUND_ACCELERATION = 100;
 const double Player::GROUND_FRICTION = 0.5;
-const double Player::AIR_SPEED = 40;
 const double Player::AIR_ACCELERATION = 4;
-const double Player::AIR_FRICTION = 0.005;
+const double Player::AIR_FRICTION = 0.05;
 const double Player::JUMP_SPEED = 200;
 
 void Player::tick(int tick, bool isLocalPlayer) {
@@ -32,22 +31,15 @@ void Player::tick(int tick, bool isLocalPlayer) {
 		}
 	}
 
-	if (isFlying) {
-		fly();
-	} else {
-		// player physics
-		vec3i64 cp = getChunkPos();
-		// TODO don't let player enter chunk
-		if (world->getChunk(cp)) {
-			walk();
-			move();
-		}
+	// TODO don't let player enter unloaded chunk
+	vec3i64 cp = getChunkPos();
+	if (world->getChunk(cp) || isFlying) {
+		calcVel();
+		calcPos();
 	}
-
-	// printf("%f\n", pitch);
 }
 
-void Player::move() {
+void Player::calcPos() {
 	using namespace vec_auto_cast;
 	vec3i64 newPos = pos;
 	vec3d remVel = vel;
@@ -204,92 +196,61 @@ Monitor &Player::getValidPosMonitor() {
 	return validPosMonitor;
 }
 
-void Player::fly() {
-	vec3i64 newPos = pos;
+void Player::calcVel() {
+	vec3d inFac(0.0, 0.0, 0.0);
 	if ((moveInput & MOVE_INPUT_FLAG_STRAFE_RIGHT) > 0) {
-		newPos[0] += sin(yaw * TAU / 360) * FLY_SPEED;
-		newPos[1] -= cos(yaw * TAU / 360) * FLY_SPEED;
+		inFac[0] += sin(yaw * TAU / 360);
+		inFac[1] -= cos(yaw * TAU / 360);
 	} else if ((moveInput & MOVE_INPUT_FLAG_STRAFE_LEFT) > 0) {
-		newPos[0] -= sin(yaw * TAU / 360) * FLY_SPEED;
-		newPos[1] += cos(yaw * TAU / 360) * FLY_SPEED;
-	}
-
-	if ((moveInput & MOVE_INPUT_FLAG_FLY_UP) > 0) {
-		newPos[2] += FLY_SPEED;
-	} else if ((moveInput & MOVE_INPUT_FLAG_FLY_DOWN) > 0) {
-		newPos[2] -= FLY_SPEED;
+		inFac[0] -= sin(yaw * TAU / 360);
+		inFac[1] += cos(yaw * TAU / 360);
 	}
 
 	if ((moveInput & MOVE_INPUT_FLAG_MOVE_FORWARD) > 0) {
-		newPos[0] += cos(yaw * TAU / 360) * FLY_SPEED;
-		newPos[1] += sin(yaw * TAU / 360) * FLY_SPEED;
+		inFac[0] += cos(yaw * TAU / 360);
+		inFac[1] += sin(yaw * TAU / 360);
 	} else if ((moveInput & MOVE_INPUT_FLAG_MOVE_BACKWARD) > 0) {
-		newPos[0] -= cos(yaw * TAU / 360) * FLY_SPEED;
-		newPos[1] -= sin(yaw * TAU / 360) * FLY_SPEED;
+		inFac[0] -= cos(yaw * TAU / 360);
+		inFac[1] -= sin(yaw * TAU / 360);
 	}
 
-	validPosMonitor.startWrite();
-	pos = newPos;
-	validPosMonitor.finishWrite();
-}
-
-void Player::walk() {
-	vec2d walkFac(0.0, 0.0);
-	if ((moveInput & MOVE_INPUT_FLAG_STRAFE_RIGHT) > 0) {
-		walkFac[0] += sin(yaw * TAU / 360);
-		walkFac[1] -= cos(yaw * TAU / 360);
-	} else if ((moveInput & MOVE_INPUT_FLAG_STRAFE_LEFT) > 0) {
-		walkFac[0] -= sin(yaw * TAU / 360);
-		walkFac[1] += cos(yaw * TAU / 360);
+	if (isFlying) {
+		if ((moveInput & MOVE_INPUT_FLAG_FLY_UP) > 0)
+			inFac[2] += 1;
+		else if ((moveInput & MOVE_INPUT_FLAG_FLY_DOWN) > 0)
+			inFac[2] -= 1;
 	}
-
-	if ((moveInput & MOVE_INPUT_FLAG_MOVE_FORWARD) > 0) {
-		walkFac[0] += cos(yaw * TAU / 360);
-		walkFac[1] += sin(yaw * TAU / 360);
-	} else if ((moveInput & MOVE_INPUT_FLAG_MOVE_BACKWARD) > 0) {
-		walkFac[0] -= cos(yaw * TAU / 360);
-		walkFac[1] -= sin(yaw * TAU / 360);
-	}
-
-	double norm = walkFac.norm();
+	double norm = inFac.norm();
 	if (norm > 0) {
-		walkFac /= norm;
+		inFac /= norm;
 	}
 
-	vec2d xyVel(vel[0], vel[1]);
+	vec3d newVel(vel[0], vel[1], vel[2]);
 	vel[2] += World::GRAVITY;
 	bool grounded = isGrounded();
 	double acceleration;
-	double speed;
 	double friction;
 
-	if (grounded) {
-		if ((moveInput & MOVE_INPUT_FLAG_FLY_UP) > 0) {
-			vel[2] = JUMP_SPEED;
-		}
+	if (isFlying) {
+		acceleration = FLY_ACCELERATION;
+		friction = FLY_FRICTION;
+	} else if (grounded) {
 		acceleration = GROUND_ACCELERATION;
-		speed = GROUND_SPEED;
 		friction = GROUND_FRICTION;
 	} else {
 		acceleration = AIR_ACCELERATION;
-		speed = AIR_SPEED;
 		friction = AIR_FRICTION;
 	}
 
-	if (norm > 0) {
-		double lastNorm = xyVel.norm();
-		xyVel += walkFac * acceleration;
-		double newNorm = xyVel.norm();
-		if (newNorm > speed && lastNorm < speed) {
-			xyVel *= speed / newNorm;
-		} else if (newNorm > speed && newNorm > lastNorm) {
-			xyVel *= lastNorm / newNorm;
-		}
-	} else
-		xyVel *= 1 - friction;
+	newVel += inFac * acceleration;
+	newVel *= 1 - friction;
 
-	vel[0] = xyVel[0];
-	vel[1] = xyVel[1];
+	vel[0] = newVel[0];
+	vel[1] = newVel[1];
+	if (isFlying)
+		vel[2] = newVel[2];
+	else if (grounded && (moveInput & MOVE_INPUT_FLAG_FLY_UP) > 0)
+		vel[2] = JUMP_SPEED;
 }
 
 bool Player::isGrounded() const {

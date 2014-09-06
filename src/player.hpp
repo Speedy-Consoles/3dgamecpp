@@ -45,11 +45,10 @@ class World;
 
 class Player {
 public:
-	static const double FLY_SPEED;
-	static const double GROUND_SPEED;
+	static const double FLY_ACCELERATION;
+	static const double FLY_FRICTION;
 	static const double GROUND_ACCELERATION;
 	static const double GROUND_FRICTION;
-	static const double AIR_SPEED;
 	static const double AIR_ACCELERATION;
 	static const double AIR_FRICTION;
 	static const double JUMP_SPEED;
@@ -86,7 +85,6 @@ private:
 
 public:
 	void tick(int tick, bool isLocalPlayer);
-	void move();
 
 	void setOrientation(double yaw, double pitch);
 	void setFly(bool fly);
@@ -112,8 +110,8 @@ public:
 	Monitor &getValidPosMonitor();
 
 private:
-	void fly();
-	void walk();
+	void calcVel();
+	void calcPos();
 
 	bool isGrounded() const;
 };
