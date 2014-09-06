@@ -9,7 +9,9 @@
 using namespace std;
 
 const double Player::FLY_SPEED = 500;
-const double Player::WALK_SPEED = 100;
+const double Player::GROUND_SPEED = 100;
+const double Player::GROUND_ACCELERATION = 15;
+const double Player::GROUND_FRICTION = 0.5;
 const double Player::AIR_SPEED = 40;
 const double Player::AIR_ACCELERATION = 4;
 const double Player::AIR_FRICTION = 0.005;
@@ -257,23 +259,34 @@ void Player::walk() {
 	vec2d xyVel(vel[0], vel[1]);
 	vel[2] += World::GRAVITY;
 	bool grounded = isGrounded();
+	double acceleration;
+	double speed;
+	double friction;
+
 	if (grounded) {
 		if ((moveInput & MOVE_INPUT_FLAG_FLY_UP) > 0) {
 			vel[2] = JUMP_SPEED;
 		}
-		xyVel = walkFac * WALK_SPEED;
-	} else if (norm > 0) {
+		acceleration = GROUND_ACCELERATION;
+		speed = GROUND_SPEED;
+		friction = GROUND_FRICTION;
+	} else {
+		acceleration = AIR_ACCELERATION;
+		speed = AIR_SPEED;
+		friction = AIR_FRICTION;
+	}
+
+	if (norm > 0) {
 		double lastNorm = xyVel.norm();
-		xyVel += walkFac * AIR_ACCELERATION;
+		xyVel += walkFac * acceleration;
 		double newNorm = xyVel.norm();
-		if (newNorm > AIR_SPEED && lastNorm < AIR_SPEED) {
-			xyVel *= AIR_SPEED / newNorm;
-		} else if (newNorm > AIR_SPEED && newNorm > lastNorm) {
+		if (newNorm > speed && lastNorm < speed) {
+			xyVel *= speed / newNorm;
+		} else if (newNorm > speed && newNorm > lastNorm) {
 			xyVel *= lastNorm / newNorm;
 		}
-	} else {
-		xyVel *= 1 - AIR_FRICTION;
-	}
+	} else
+		xyVel *= 1 - friction;
 
 	vel[0] = xyVel[0];
 	vel[1] = xyVel[1];

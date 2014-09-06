@@ -46,7 +46,9 @@ class World;
 class Player {
 public:
 	static const double FLY_SPEED;
-	static const double WALK_SPEED;
+	static const double GROUND_SPEED;
+	static const double GROUND_ACCELERATION;
+	static const double GROUND_FRICTION;
 	static const double AIR_SPEED;
 	static const double AIR_ACCELERATION;
 	static const double AIR_FRICTION;

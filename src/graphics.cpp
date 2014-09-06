@@ -297,13 +297,12 @@ void Graphics::renderChunks() {
 	stopwatch->start(CLOCK_NDL);
 	vec3i64 ccc;
 	while (newQuads < MAX_NEW_QUADS && world->popChangedChunk(&ccc)) {
-		uint index = ((((ccc[2] % length) + length) % length) * length
-				+ (((ccc[1] % length) + length) % length)) * length
-				+ (((ccc[0] % length) + length) % length);
-		GLuint lid = firstDL + index;
-
 		Chunk *chunk = world->getChunk(ccc);
 		if(chunk && chunk->pollChanged()) {
+			uint index = ((((ccc[2] % length) + length) % length) * length
+					+ (((ccc[1] % length) + length) % length)) * length
+					+ (((ccc[0] % length) + length) % length);
+			GLuint lid = firstDL + index;
 			glNewList(lid, GL_COMPILE);
 			renderChunk(*chunk, false, vec3ui8(0, 0, 0), 0);
 			glEndList();
