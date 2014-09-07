@@ -111,7 +111,8 @@ public:
 
 private:
 	void calcVel();
-	void calcPos();
+	void collide();
+	void ghost();
 
 	bool isGrounded() const;
 };

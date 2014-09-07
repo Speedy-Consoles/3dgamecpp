@@ -547,11 +547,8 @@ void Graphics::renderPerformance() {
 }
 
 bool Graphics::inFrustum(vec3i64 cc, vec3i64 pos, vec3d lookDir) {
-	// TODO fix this
-	return true;
 	using namespace vec_auto_cast;
-	double chunkDia = vec3ui8(Chunk::WIDTH, Chunk::WIDTH, Chunk::WIDTH).norm()
-			* RESOLUTION;
+	double chunkDia = sqrt(3) * Chunk::WIDTH * RESOLUTION;
 	vec3d cp = (cc * Chunk::WIDTH * RESOLUTION - pos).cast<double>();
 	double chunkLookDist = lookDir * cp + chunkDia;
 	if (chunkLookDist < 0)

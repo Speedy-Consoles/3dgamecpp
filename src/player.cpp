@@ -35,11 +35,14 @@ void Player::tick(int tick, bool isLocalPlayer) {
 	vec3i64 cp = getChunkPos();
 	if (world->getChunk(cp) || isFlying) {
 		calcVel();
-		calcPos();
+		if(isFlying)
+			ghost();
+		else
+			collide();
 	}
 }
 
-void Player::calcPos() {
+void Player::collide() {
 	using namespace vec_auto_cast;
 	vec3i64 newPos = pos;
 	vec3d remVel = vel;
@@ -76,9 +79,9 @@ void Player::calcPos() {
 			}
 		}
 		if (numFirstHitFaces == 0) {
-			newPos[0] = floor(newPos[0] + remVel[0]);
-			newPos[1] = floor(newPos[1] + remVel[1]);
-			newPos[2] = floor(newPos[2] + remVel[2]);
+			newPos[0] = newPos[0] + floor(remVel[0]);
+			newPos[1] = newPos[1] + floor(remVel[1]);
+			newPos[2] = newPos[2] + floor(remVel[2]);
 			break;
 		}
 
@@ -98,6 +101,12 @@ void Player::calcPos() {
 	validPosMonitor.startWrite();
 	pos = newPos;
 	validPosMonitor.finishWrite();
+}
+
+void Player::ghost() {
+	pos[0] += floor(vel[0]);
+	pos[1] += floor(vel[1]);
+	pos[2] += floor(vel[2]);
 }
 
 void Player::setOrientation(double yaw, double pitch) {
