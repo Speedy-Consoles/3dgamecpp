@@ -19,21 +19,25 @@ private:
 
 	double overAllScale = 1;
 
-	double perlinAreaXYScale = 6000;
-	double perlinAreaMountainThreshold = 0.7;
-	double perlinAreaSharpness = 20;
+	double areaXYScale = 6000;
+	double areaMountainThreshold = 0.7;
+	double areaSharpness = 20;
 
-	double perlinMountainXYScale = 500;
-	double perlinMountainMaxHeight = 800;
-	int perlinMountainOctaves = 8;
-	double perlinMountainExp = 0.5;
+	double mountainXYScale = 500;
+	double mountainMaxHeight = 800;
+	int mountainOctaves = 8;
+	double mountainExp = 0.5;
 
-	double perlinFlatlandXYScale = 800;
-	double perlinFlatLandMaxHeight = 40;
-	int perlinFlatlandOctaves = 6;
-	double perlinFlatlandExp = 0.8;
+	double flatlandXYScale = 800;
+	double flatLandMaxHeight = 40;
+	int flatlandOctaves = 6;
+	double flatlandExp = 0.8;
 
-	double perlinCaveScale = 100;
+	double surfaceScale = 70;
+	double surfaceRelDepth = 0.3;
+	double surfaceExp = 0.4;
+	double surfaceThresholdXScale = 1;
+	double surfaceThresholdYScale;
 
 	bool updateFaces;
 

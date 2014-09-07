@@ -19,6 +19,12 @@ ChunkLoader::ChunkLoader(World *world, uint64 seed, bool updateFaces) :
 {
 	this->world = world;
 	this->updateFaces = updateFaces;
+
+	//double y = perlinSurfaceThresholdGradient;
+	//double tmp = pow((sqrt(3 * (4 * y * y * y + 27)) + 9), 1 / 3.0);
+	//perlinSurfaceThresholdScale = tmp / pow(18, 1 / 3.0) - pow(2 / 3.0, 1 / 3.0) * y / tmp;
+	double s = surfaceThresholdXScale;
+	surfaceThresholdYScale = 1/s + 1/(s*s*s);
 }
 
 ChunkLoader::~ChunkLoader() {
@@ -126,38 +132,44 @@ Chunk *ChunkLoader::generateChunk(vec3i64 cc) {
 		for (uint iy = 0; iy < Chunk::WIDTH; iy++) {
 			long x = round((cc[0] * Chunk::WIDTH + ix) / overAllScale);
 			long y = round((cc[1] * Chunk::WIDTH + iy) / overAllScale);
-			double ax = x / perlinAreaXYScale;
-			double ay = y / perlinAreaXYScale;
+			double ax = x / areaXYScale;
+			double ay = y / areaXYScale;
 			double ap = perlin.perlin(ax, ay, 0);
-			double mFac = (1 + tanh((ap - perlinAreaMountainThreshold)
-					* perlinAreaSharpness)) / 2;
+			double mFac = (1 + tanh((ap - areaMountainThreshold)
+					* areaSharpness)) / 2;
 			double fFac = 1 - mFac;
 
-			double mx = x / perlinMountainXYScale;
-			double my = y / perlinMountainXYScale;
+			double mx = x / mountainXYScale;
+			double my = y / mountainXYScale;
 			double mh = perlin.octavePerlin(mx, my, 0,
-					perlinMountainOctaves, perlinMountainExp)
-					* perlinMountainMaxHeight;
+					mountainOctaves, mountainExp)
+					* mountainMaxHeight;
 
-			double fx = x / perlinFlatlandXYScale;
-			double fy = y / perlinFlatlandXYScale;
+			double fx = x / flatlandXYScale;
+			double fy = y / flatlandXYScale;
 			double fh = perlin.octavePerlin(fx, fy, 0,
-					perlinFlatlandOctaves, perlinFlatlandExp)
-					* perlinFlatLandMaxHeight;
+					flatlandOctaves, flatlandExp)
+					* flatLandMaxHeight;
 
 			double h = fh * fFac + mh * mFac;
 			for (uint iz = 0; iz < Chunk::WIDTH; iz++) {
 				int index = Chunk::getBlockIndex(vec3ui8(ix, iy, iz));
-				long wz = iz + cc[2] * Chunk::WIDTH;
-				if (wz > h) {
+				long z = iz + cc[2] * Chunk::WIDTH;
+				double depth = h - z;
+				if (depth < 0) {
 					chunk->initBlock(index, 0);
 					continue;
+				} else if(depth > (h * surfaceRelDepth)) {
+					chunk->initBlock(index, 1);
+					continue;
 				}
-				double px = (cc[0] * Chunk::WIDTH + ix) / perlinCaveScale;
-				double py = (cc[1] * Chunk::WIDTH + iy) / perlinCaveScale;
-				double pz = (cc[2] * Chunk::WIDTH + iz) / perlinCaveScale;
-				double v = perlin.octavePerlin(px, py, pz, 6, 0.5);
-				if (v > 0.12 * (3 - 1 / ((floor(h) - wz) / 10 + 1)))
+				double funPos = (1 - depth / (h * surfaceRelDepth) - 0.5) * 2 / surfaceThresholdXScale;
+				double threshold = (funPos + funPos * funPos * funPos) / surfaceThresholdYScale + 0.5;
+				double px = x / surfaceScale;
+				double py = y / surfaceScale;
+				double pz = z / surfaceScale;
+				double v = perlin.octavePerlin(px, py, pz, 6, surfaceExp);
+				if (v > threshold)
 					chunk->initBlock(index, 1);
 				else
 					chunk->initBlock(index, 0);
