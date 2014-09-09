@@ -13,6 +13,7 @@ class World;
 struct Face {
 	vec3ui8 block;
 	uint8 dir;
+	uint8 corners;
 };
 
 bool operator == (const Face &lhs, const Face &rhs);

@@ -12,12 +12,20 @@
 
 using namespace std::chrono;
 
-int main() {
+int entryPoint() {
 	initUtil();
 	Client client;
 	client.run();
 
 	return 0;
+}
+
+int main() {
+	return entryPoint();
+}
+
+int WinMain(int argc, char** argv) {
+	return entryPoint();
 }
 
 Client::Client() : stopwatch(nullptr) {

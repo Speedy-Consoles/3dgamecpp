@@ -45,9 +45,9 @@ void Chunk::initFaces() {
 					uint8 thatType = blocks[ni];
 					if(thisType != thatType) {
 						if (thisType == 0)
-							faces.insert(Face{vec3ui8(x, y, z) + dir, (uint8) (d + 3)});
+							faces.insert(Face{vec3ui8(x, y, z) + dir, (uint8) (d + 3), TEST_CORNERS[d+3]});
 						else if(thatType == 0)
-							faces.insert(Face{vec3ui8(x, y, z), d});
+							faces.insert(Face{vec3ui8(x, y, z), d, TEST_CORNERS[d]});
 					}
 				}
 				i++;
@@ -84,16 +84,16 @@ void Chunk::patchBorders(World *world, bool changedChunks[7]) {
 
 				if (neighborType != 0) {
 					if (getBlock(icc) != 0)
-						nc->faces.erase(Face{nIcc, invD});
+						nc->faces.erase(Face{nIcc, invD, 0});
 					else
-						nc->faces.insert(Face{nIcc, invD});
+						nc->faces.insert(Face{nIcc, invD, TEST_CORNERS[invD]});
 					changedChunks[d] = true;
 					nc->changed = true;
 				} else {
 					if (getBlock(icc) != 0)
-						faces.insert(Face{icc, d});
+						faces.insert(Face{icc, d, TEST_CORNERS[d]});
 					else
-						faces.erase(Face{icc, d});
+						faces.erase(Face{icc, d, 0});
 					changedChunks[6] = true;
 					changed = true;
 				}
@@ -196,18 +196,18 @@ void Chunk::updateBlockFaces(vec3ui8 icc, World &world, bool changedChunks[7]) {
 
 		if (neighborType != 0) {
 			if (getBlock(icc) == 0)
-				nFaces->insert(Face{nIcc, invD});
+				nFaces->insert(Face{nIcc, invD, TEST_CORNERS[invD]});
 			else
-				nFaces->erase(Face{nIcc, invD});
+				nFaces->erase(Face{nIcc, invD, 0});
 			if(nc) {
 				changedChunks[d] = true;
 				nc->changed = true;
 			}
 		} else {
 			if (getBlock(icc) != 0)
-				faces.insert(Face{icc, d});
+				faces.insert(Face{icc, d, TEST_CORNERS[d]});
 			else
-				faces.erase(Face{icc, d});
+				faces.erase(Face{icc, d, 0});
 			changedChunks[6] = true;
 			changed = true;
 		}

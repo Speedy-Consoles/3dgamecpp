@@ -5,7 +5,6 @@
 #include <cmath>
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
-#include <GL/glut.h>
 
 Graphics::Graphics(World *world, int localClientID, Stopwatch *stopwatch)
 		: stopwatch(stopwatch) {
@@ -97,9 +96,9 @@ void Graphics::initGL() {
 
 	// light
 	//float matSpecular[4] = {1.0f, 1.0f, 1.0f, 1.0f};
-	float sunLight[4] = {0.7f, 0.7f, 0.6f, 1.0f};
+	float sunLight[4] = {0.5f, 0.5f, 0.4f, 1.0f};
 	float playerLight[4] = {4.0f, 4.0f, 2.4f, 1.0f};
-	float lModelAmbient[4] = {0.5f, 0.5f, 0.5f, 1.0f};
+	float lModelAmbient[4] = {0.6f, 0.6f, 0.6f, 1.0f};
 
 	float playerLightPos[4] = {0.0f, 0.0f, -0.4f, 1.0f};
 
@@ -350,16 +349,19 @@ void Graphics::renderChunk(const Chunk &c, bool targeted, vec3ui8 ticc, int td) 
 	for (Face f : faceSet) {
 		newQuads++;
 
+		vec3d color = {1, 1, 1};
 		if (targeted && f.block == ticc && f.dir == td)
-			glColor3d(0.8, 0.2, 0.2);
-		else
-			glColor3d(1.0, 1.0, 1.0);
+			color = {0.8, 0.2, 0.2};
 
 		glNormal3d(DIRS[f.dir][0], DIRS[f.dir][1], DIRS[f.dir][2]);
 		for (int j = 0; j < 4; j++) {
 			glTexCoord2d(QUAD_CYCLE_2D[j][0], QUAD_CYCLE_2D[j][1]);
-			//					glVertex3d(f.x + c3d[j][0], f.y + c3d[j][1], f.z
-			//							+ c3d[j][2]);
+			double light = 1.0;
+			for (int k = 0; k < 3; k++) {
+				if ((f.corners & FACE_CORNER_MASK[j][k]) > 0)
+					light -= 0.2;
+			}
+			glColor3d(color[0] * light, color[1] * light, color[2] * light);
 			vec3d vertex = (c.cc * Chunk::WIDTH
 					+ f.block + QUAD_CYCLES_3D[f.dir][j]).cast<double>();
 			glVertex3d(vertex[0], vertex[1], vertex[2]);
