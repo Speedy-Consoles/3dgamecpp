@@ -45,10 +45,28 @@ const uint8 FACE_CORNER_MASK[4][3] = {
 	{ 0b00100000, 0b01000000, 0b10000000 }
 };
 
+const vec3ui8 CUBE_CYCLE[27] = {
+	{-1,-1,-1 }, { 0,-1,-1 }, { 1,-1,-1 },
+	{-1, 0,-1 }, { 0, 0,-1 }, { 1, 0,-1 },
+	{-1, 1,-1 }, { 0, 1,-1 }, { 1, 1,-1 },
+	{-1,-1, 0 }, { 0,-1, 0 }, { 1,-1, 0 },
+	{-1, 0, 0 }, { 0, 0, 0 }, { 1, 0, 0 },
+	{-1, 1, 0 }, { 0, 1, 0 }, { 1, 1, 0 },
+	{-1,-1, 1 }, { 0,-1, 1 }, { 1,-1, 1 },
+	{-1, 0, 1 }, { 0, 0, 1 }, { 1, 0, 1 },
+	{-1, 1, 1 }, { 0, 1, 1 }, { 1, 1, 1 }
+};
+
+const size_t DIR_2_CUBE_CYCLE[6] = { 14, 16, 22, 12, 10, 4 };
+
 std::vector<vec3i8> LOADING_ORDER;
 
 int getDir(int dim, int sign) {
 	return dim - 3 * ((sign - 1) / 2);
+}
+
+size_t vec2CubeCycle(vec3ui8 v) {
+	return (v[2] + 1) * 9 + (v[1] + 1) * 3 + v[0] + 1;
 }
 
 vec3d getVectorFromAngles(double yaw, double pitch) {

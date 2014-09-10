@@ -91,12 +91,12 @@ uint8 Chunk::getBlock(vec3ui8 icc) const {
 	return blocks[getBlockIndex(icc)];
 }
 
-void Chunk::insertFace(Face face) {
+void Chunk::addFace(Face face) {
 	faces.insert(face);
 	changed = true;
 }
 
-bool Chunk::eraseFace(Face face) {
+bool Chunk::removeFace(Face face) {
 	auto it = faces.find(face);
 	if(it == faces.end())
 		return false;

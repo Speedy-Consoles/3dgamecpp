@@ -17,6 +17,8 @@ extern const vec3i QUAD_CYCLES_3D[6][4];
 extern const vec2i QUAD_CYCLE_2D[4];
 extern const vec3i EIGHT_CYCLES_3D[6][8];
 extern const uint8 FACE_CORNER_MASK[4][3];
+extern const vec3ui8 CUBE_CYCLE[27];
+extern const size_t DIR_2_CUBE_CYCLE[6];
 
 const uint8  TEST_CORNERS[6] { 0b00000111, 0b11000001, 0, 0b11000001, 0b00000111, 0 };
 
@@ -25,6 +27,7 @@ extern std::vector<vec3i8> LOADING_ORDER;
 template <typename T> int sgn(T val) {return (T(0) < val) - (val < T(0));}
 
 int getDir(int dim, int sign);
+size_t vec2CubeCycle(vec3ui8 v);
 
 vec3d getVectorFromAngles(double yaw, double pitch);
 

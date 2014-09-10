@@ -145,15 +145,15 @@ bool World::setBlock(vec3i64 bc, uint8 type, bool updateFaces) {
 
 			if (nc->getBlock(nicc) != 0) {
 				if (type == 0) {
-					nc->insertFace(Face{nicc, invD, getFaceCorners(ncc * Chunk::WIDTH + nicc, invD)});
+					nc->addFace(Face{nicc, invD, getFaceCorners(ncc * Chunk::WIDTH + nicc, invD)});
 					chunkChanged[d] = true;
-				} else if (nc->eraseFace(Face{nicc, invD, 0}))
+				} else if (nc->removeFace(Face{nicc, invD, 0}))
 					chunkChanged[d] = true;
 			} else {
 				if (type != 0) {
-					c->insertFace(Face{icc, d, getFaceCorners(cc * Chunk::WIDTH + icc, d)});
+					c->addFace(Face{icc, d, getFaceCorners(cc * Chunk::WIDTH + icc, d)});
 					chunkChanged[6] = true;
-				} else if (c->eraseFace(Face{icc, d, 0}))
+				} else if (c->removeFace(Face{icc, d, 0}))
 					chunkChanged[6] = true;
 			}
 		}
@@ -163,6 +163,7 @@ bool World::setBlock(vec3i64 bc, uint8 type, bool updateFaces) {
 		}
 		if(chunkChanged[6])
 			changedChunks.push_front(c->cc);
+
 		return true;
 	}
 	return false;
@@ -222,15 +223,15 @@ void World::patchBorders(Chunk *c) {
 				uint8 type = c->getBlock(icc);
 				if (nc->getBlock(nicc) != 0) {
 					if (type == 0) {
-						nc->insertFace(Face{nicc, invD, TEST_CORNERS[invD]});
+						nc->addFace(Face{nicc, invD, TEST_CORNERS[invD]});
 						chunkChanged[d] = true;
-					} else if (nc->eraseFace(Face{nicc, invD, 0}))
+					} else if (nc->removeFace(Face{nicc, invD, 0}))
 						chunkChanged[d] = true;
 				} else {
 					if (type != 0)
-						c->insertFace(Face{icc, d, TEST_CORNERS[d]});
+						c->addFace(Face{icc, d, TEST_CORNERS[d]});
 					else
-						c->eraseFace(Face{icc, d, 0});
+						c->removeFace(Face{icc, d, 0});
 				}
 			}
 		}
