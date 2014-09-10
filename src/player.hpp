@@ -61,7 +61,7 @@ public:
 	static const int MOVE_INPUT_FLAG_MOVE_BACKWARD = 32;
 
 	static const int EYE_HEIGHT = 1700;
-	static const int RADIUS = 400;
+	static const int RADIUS = 300;
 	static const int HEIGHT = 1800;
 
 private:

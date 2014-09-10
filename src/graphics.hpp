@@ -17,7 +17,7 @@ class Graphics {
 private:
 	static const int START_WIDTH = 1600;
 	static const int START_HEIGHT = 900;
-	const double YFOV = TAU / 8;
+	const double YFOV = TAU / 5;
 	static const int VIEW_RANGE = CHUNK_UNLOAD_RANGE;
 	static const int MAX_NEW_QUADS = 3000;
 

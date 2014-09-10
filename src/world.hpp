@@ -66,6 +66,8 @@ public:
 	bool setBlock(vec3i64 bc, uint8 type, bool updateFaces);
 	uint8 getBlock(vec3i64 bc) const;
 
+	uint8 getFaceCorners(vec3i64 bc, uint8 faceDir) const;
+
 	void addPlayer(int playerID);
 	void deletePlayer(int playerID);
 
@@ -81,6 +83,8 @@ public:
 	WorldSnapshot makeSnapshot(int tick) const;
 
 	std::chrono::microseconds getTickingTime();
+private:
+	void patchBorders(Chunk *c);
 };
 
 

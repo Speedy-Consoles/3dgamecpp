@@ -18,7 +18,7 @@ extern const vec2i QUAD_CYCLE_2D[4];
 extern const vec3i EIGHT_CYCLES_3D[6][8];
 extern const uint8 FACE_CORNER_MASK[4][3];
 
-const int8  TEST_CORNERS[6] { 0b00000111, 0b11000001, 0, 0b11000001, 0b00000111, 0 };
+const uint8  TEST_CORNERS[6] { 0b00000111, 0b11000001, 0, 0b11000001, 0b00000111, 0 };
 
 extern std::vector<vec3i8> LOADING_ORDER;
 
