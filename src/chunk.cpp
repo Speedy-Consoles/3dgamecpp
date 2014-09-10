@@ -28,6 +28,7 @@ const double World::GRAVITY = -9.81 * RESOLUTION / 60.0 / 60.0 * 4;
 
 void Chunk::initFaces() {
 	// TODO only one loop
+	using namespace vec_auto_cast;
 	uint i = 0;
 	for (uint z = 0; z < WIDTH; z++) {
 		for (uint y = 0; y < WIDTH; y++) {
@@ -44,10 +45,30 @@ void Chunk::initFaces() {
 					uint8 thisType = blocks[i];
 					uint8 thatType = blocks[ni];
 					if(thisType != thatType) {
-						if (thisType == 0)
-							faces.insert(Face{vec3ui8(x, y, z) + dir, (uint8) (d + 3), TEST_CORNERS[d+3]});
-						else if(thatType == 0)
-							faces.insert(Face{vec3ui8(x, y, z), d, TEST_CORNERS[d]});
+						vec3ui8 faceBlock;
+						uint8 faceDir;
+						if (thisType == 0) {
+							faceBlock = vec3ui8(x, y, z) + dir;
+							faceDir = (uint8) (d + 3);
+						} else if (thatType == 0){
+							faceBlock = vec3ui8(x, y, z);
+							faceDir = d;
+						} else
+							continue;
+
+						uint8 corners = 0;
+						for (int j = 0; j < 8; ++j) {
+							vec3i v = EIGHT_CYCLES_3D[faceDir][j];
+							vec3i dIcc = faceBlock + v;
+							if (		dIcc[0] < 0 || dIcc[0] >= WIDTH
+									||	dIcc[1] < 0 || dIcc[1] >= WIDTH
+									||	dIcc[2] < 0 || dIcc[2] >= WIDTH)
+								continue;
+							if (getBlock(dIcc.cast<uint8>())) {
+								corners |= 1 << j;
+							}
+						}
+							faces.insert(Face{faceBlock, faceDir, corners});
 					}
 				}
 				i++;
