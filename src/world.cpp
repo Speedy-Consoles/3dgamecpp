@@ -128,44 +128,65 @@ bool World::setBlock(vec3i64 bc, uint8 type, bool updateFaces) {
 	Chunk *c = it->second;
 	vec3ui8 icc = bc2icc(bc);
 	if (c->setBlock(icc, type)) {
-		using namespace vec_auto_cast;
-		bool chunkChanged[7];
-		chunkChanged[6] = false;
+		bool chunkChanged[27];
+		for (int i = 0; i < 27; i++) {
+			chunkChanged[i] = false;
+		}
+
 		for (uint8 d = 0; d < 6; d++) {
-			chunkChanged[d] = false;
 			uint8 invD = (d + 3) % 6;
 			vec3i8 dir = DIRS[d];
 			vec3i64 nbc = bc + dir;
 			vec3i64 ncc = bc2cc(nbc);
-			vec3ui8 nicc = bc2icc(nbc);
+			vec3i8 dcc = (ncc - cc).cast<int8>();
 
-			Chunk *nc = getChunk(ncc);
-			if (!nc)
-				continue;
+			if (updateFace(bc, d))
+				chunkChanged[BASE_CUBE_CYCLE] = true;
+			else if (updateFace(nbc, invD))
+				chunkChanged[vec2CubeCycle(dcc)] = true;
 
-			if (nc->getBlock(nicc) != 0) {
-				if (type == 0) {
-					nc->addFace(Face{nicc, invD, getFaceCorners(ncc * Chunk::WIDTH + nicc, invD)});
-					chunkChanged[d] = true;
-				} else if (nc->removeFace(Face{nicc, invD, 0}))
-					chunkChanged[d] = true;
-			} else {
-				if (type != 0) {
-					c->addFace(Face{icc, d, getFaceCorners(cc * Chunk::WIDTH + icc, d)});
-					chunkChanged[6] = true;
-				} else if (c->removeFace(Face{icc, d, 0}))
-					chunkChanged[6] = true;
+			for (int i = 0; i < 8; i++) {
+				vec3i64 obc = bc + EIGHT_CYCLES_3D[d][i];
+				if (updateFace(obc, invD)) {
+					vec3i64 occ = bc2cc(obc);
+					vec3i8 occd = (occ - cc).cast<int8>();
+					chunkChanged[vec2CubeCycle(occd)] = true;
+				}
 			}
 		}
-		for (int d = 0; d < 6; d++) {
-			if(chunkChanged[d])
-				changedChunks.push_front(c->cc + DIRS[d]);
+
+		for (int i = 0; i < 27; i++) {
+			if(chunkChanged[i])
+				changedChunks.push_front(c->cc + CUBE_CYCLE[i]);
 		}
-		if(chunkChanged[6])
-			changedChunks.push_front(c->cc);
 
 		return true;
 	}
+	return false;
+}
+
+bool World::updateFace(vec3i64 bc, uint8 faceDir) {
+	using namespace vec_auto_cast;
+	vec3i64 cc = bc2cc(bc);
+	vec3ui8 icc = bc2icc(bc);
+	vec3i8 dir = DIRS[faceDir];
+	vec3i64 nbc = bc + dir;
+	vec3i64 ncc = bc2cc(nbc);
+	vec3ui8 nicc = bc2icc(nbc);
+
+	Chunk *c = getChunk(cc);
+	Chunk *nc = getChunk(ncc);
+	if (!c || !nc)
+		return false;
+
+	uint8 thisType = c->getBlock(icc);
+	uint8 thatType = nc->getBlock(nicc);
+
+	if (thisType != 0 && thatType == 0) {
+		return c->addFace(Face{icc, faceDir, getFaceCorners(cc * Chunk::WIDTH + icc, faceDir)});
+	} else if((thisType != 0) == (thatType != 0))
+		return c->removeFace(Face{icc, faceDir, 0});
+
 	return false;
 }
 

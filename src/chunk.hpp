@@ -44,7 +44,7 @@ public:
 	uint8 getBlock(vec3ui8 icc) const;
 	const uint8 *getBlocks() const { return blocks; }
 
-	void addFace(Face face);
+	bool addFace(Face face);
 	bool removeFace(Face face);
 
 	const FaceSet &getFaceSet() const;

@@ -84,6 +84,7 @@ public:
 
 	std::chrono::microseconds getTickingTime();
 private:
+	bool updateFace(vec3i64 bc, uint8 faceDir);
 	void patchBorders(Chunk *c);
 };
 

@@ -357,10 +357,15 @@ void Graphics::renderChunk(const Chunk &c, bool targeted, vec3ui8 ticc, int td) 
 		for (int j = 0; j < 4; j++) {
 			glTexCoord2d(QUAD_CYCLE_2D[j][0], QUAD_CYCLE_2D[j][1]);
 			double light = 1.0;
-			for (int k = 0; k < 3; k++) {
-				if ((f.corners & FACE_CORNER_MASK[j][k]) > 0)
-					light -= 0.2;
-			}
+			bool s1 = (f.corners & FACE_CORNER_MASK[j][0]) > 0;
+			bool s2 = (f.corners & FACE_CORNER_MASK[j][2]) > 0;
+			bool m = (f.corners & FACE_CORNER_MASK[j][1]) > 0;
+			if (s1)
+				light -= 0.2;
+			if (s2)
+				light -= 0.2;
+			if (m && !(s1 && s2))
+				light -= 0.2;
 			glColor3d(color[0] * light, color[1] * light, color[2] * light);
 			vec3d vertex = (c.cc * Chunk::WIDTH
 					+ f.block + QUAD_CYCLES_3D[f.dir][j]).cast<double>();

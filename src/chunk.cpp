@@ -67,7 +67,7 @@ void Chunk::initFaces() {
 								corners |= 1 << j;
 							}
 						}
-							faces.insert(Face{faceBlock, faceDir, corners});
+						faces.insert(Face{faceBlock, faceDir, corners});
 					}
 				}
 				i++;
@@ -91,9 +91,17 @@ uint8 Chunk::getBlock(vec3ui8 icc) const {
 	return blocks[getBlockIndex(icc)];
 }
 
-void Chunk::addFace(Face face) {
-	faces.insert(face);
-	changed = true;
+bool Chunk::addFace(Face face) {
+	auto pair = faces.insert(face);
+	if (pair.second) {
+		changed = true;
+		return true;
+	} else {
+		faces.erase(pair.first);
+		faces.insert(pair.first, face);
+		changed = true;
+		return true;
+	}
 }
 
 bool Chunk::removeFace(Face face) {
