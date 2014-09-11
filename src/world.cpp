@@ -232,7 +232,10 @@ void World::patchBorders(Chunk *c) {
 		if (!nc)
 			continue;
 		for (Face f : nc->getBorderFaces()) {
-			if (updateFace(ncc * Chunk::WIDTH + f.block, f.dir))
+			vec3i64 nbc = ncc * Chunk::WIDTH + f.block;
+			if (bc2cc(nbc - CUBE_CYCLE[i]) != c->cc)
+				continue;
+			if (updateFace(nbc, f.dir))
 				chunkChanged[i] = true;
 		}
 	}
