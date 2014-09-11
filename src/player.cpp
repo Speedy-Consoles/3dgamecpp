@@ -79,9 +79,9 @@ void Player::collide() {
 			}
 		}
 		if (numFirstHitFaces == 0) {
-			newPos[0] = newPos[0] + floor(remVel[0]);
-			newPos[1] = newPos[1] + floor(remVel[1]);
-			newPos[2] = newPos[2] + floor(remVel[2]);
+			newPos[0] = newPos[0] + floor(remVel[0] + 0.5);
+			newPos[1] = newPos[1] + floor(remVel[1] + 0.5);
+			newPos[2] = newPos[2] + floor(remVel[2] + 0.5);
 			break;
 		}
 
@@ -92,9 +92,9 @@ void Player::collide() {
 			vel[DIR_DIMS[firstHitFaceDirs[i]]] = 0;
 		}
 
-		newPos[0] = floor(firstHitPos[0]);
-		newPos[1] = floor(firstHitPos[1]);
-		newPos[2] = floor(firstHitPos[2]);
+		newPos[0] = floor(firstHitPos[0] + 0.5);
+		newPos[1] = floor(firstHitPos[1] + 0.5);
+		newPos[2] = floor(firstHitPos[2] + 0.5);
 
 		remDist = remVel.norm();
 	}
@@ -104,9 +104,9 @@ void Player::collide() {
 }
 
 void Player::ghost() {
-	pos[0] += floor(vel[0]);
-	pos[1] += floor(vel[1]);
-	pos[2] += floor(vel[2]);
+	pos[0] += floor(vel[0] + 0.5);
+	pos[1] += floor(vel[1] + 0.5);
+	pos[2] += floor(vel[2] + 0.5);
 }
 
 void Player::setOrientation(double yaw, double pitch) {
