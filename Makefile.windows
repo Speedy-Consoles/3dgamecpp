@@ -1,4 +1,4 @@
-EXECUTABLE_NAME = 3dgame
+EXECUTABLE_NAME = 3dgame.exe
 
 SOURCE_FILES = \
 	archive.cpp\
@@ -16,23 +16,25 @@ SOURCE_FILES = \
 CXX = x86_64-w64-mingw32-g++
 LD = x86_64-w64-mingw32-g++
 
-CXXFLAGS = -Wall -std=c++11
-LDFLAGS =
+CXXFLAGS = -Wall -std=c++11 -pthread `freetype-config --cflags`
+LDFLAGS = -pthread
 
-INCLUDE_DIRS = /usr/include/freetype2 /usr/x86_64-w64-mingw32/include
-LIB_DIRS = /usr/x86_64-w64-mingw32/libs 
+INCLUDE_DIRS =
+LIB_DIRS =
 
-LIBS = SDL2 opengl32 glu32 glew32 SDL2_image ftgl
+LIBS = mingw32 SDL2main SDL2 SDL2_image ftgl opengl32 glu32 GLEW freetype png bz2 z
 
 DEBUG ?= 1
 ifeq ($(DEBUG), 1)
-	CXXFLAGS += -g
-	OBJ_DIR = obj/debug
-	BIN_DIR = bin/debug
+	CXXFLAGS += -g -O0
+	LDFLAGS += -g -O0
+	OBJ_DIR = obj_win/debug
+	BIN_DIR = bin_win/debug
 else
 	CXXFLAGS += -O2 -s
-	OBJ_DIR = obj/release
-	BIN_DIR = bin/release
+	LDFLAGS += -O2 -s
+	OBJ_DIR = obj_win/release
+	BIN_DIR = bin_win/release
 endif
 
 CXXFLAGS += $(addprefix -I, $(INCLUDE_DIRS))
