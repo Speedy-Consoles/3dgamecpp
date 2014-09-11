@@ -1,0 +1,12 @@
+.cproject
+.project
+.settings
+bin
+obj
+bin_win
+obj_win
+datasrc
+SDL*
+build_windows.sh
+3dgame.zip
+region
