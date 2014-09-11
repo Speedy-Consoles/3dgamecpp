@@ -14,7 +14,7 @@ static size_t faceHashFunc(Face f) {
 }
 
 Chunk::Chunk(vec3i64 cc, ChunkLoader *chunkLoader) :
-		cc(cc), faces(0, faceHashFunc), chunkLoader(chunkLoader) {
+		cc(cc), faces(0, faceHashFunc), borderFaces(0, faceHashFunc), chunkLoader(chunkLoader) {
 	// nothing
 }
 
@@ -68,6 +68,10 @@ void Chunk::initFaces() {
 							}
 						}
 						faces.insert(Face{faceBlock, faceDir, corners});
+						if (		((x == WIDTH - 1 || x == 0) && d % 3 != 0)
+								||	((y == WIDTH - 1 || y == 0) && d % 3 != 1)
+								||	((z == WIDTH - 1 || z == 0) && d % 3 != 2))
+							borderFaces.insert(Face{faceBlock, faceDir, corners});
 					}
 				}
 				i++;
@@ -91,17 +95,20 @@ uint8 Chunk::getBlock(vec3ui8 icc) const {
 	return blocks[getBlockIndex(icc)];
 }
 
-bool Chunk::addFace(Face face) {
+void Chunk::addFace(Face face) {
 	auto pair = faces.insert(face);
-	if (pair.second) {
-		changed = true;
-		return true;
-	} else {
-		faces.erase(pair.first);
-		faces.insert(pair.first, face);
-		changed = true;
-		return true;
+	if (!pair.second) {
+		pair.first->corners = face.corners;
 	}
+	if (		((face.block[0] == WIDTH - 1 || face.block[0] == 0) && face.dir % 3 != 0)
+			||	((face.block[1] == WIDTH - 1 || face.block[1] == 0) && face.dir % 3 != 1)
+			||	((face.block[2] == WIDTH - 1 || face.block[2] == 0) && face.dir % 3 != 2)) {
+		auto bPair = borderFaces.insert(face);
+		if (!bPair.second) {
+			bPair.first->corners = face.corners;
+		}
+	}
+	changed = true;
 }
 
 bool Chunk::removeFace(Face face) {
@@ -109,12 +116,20 @@ bool Chunk::removeFace(Face face) {
 	if(it == faces.end())
 		return false;
 	faces.erase(it);
+	if (		((face.block[0] == WIDTH - 1 || face.block[0] == 0) && face.dir % 3 != 0)
+			||	((face.block[1] == WIDTH - 1 || face.block[1] == 0) && face.dir % 3 != 1)
+			||	((face.block[2] == WIDTH - 1 || face.block[2] == 0) && face.dir % 3 != 2))
+		borderFaces.erase(face);
 	changed = true;
 	return true;
 }
 
-const Chunk::FaceSet &Chunk::getFaceSet() const {
+const Chunk::FaceSet &Chunk::getFaces() const {
 	return faces;
+}
+
+const Chunk::FaceSet &Chunk::getBorderFaces() const {
+	return borderFaces;
 }
 
 /*

@@ -345,7 +345,7 @@ void Graphics::renderChunk(const Chunk &c, bool targeted, vec3ui8 ticc, int td) 
 	glBindTexture(GL_TEXTURE_2D, blockTexture);
 	glBegin(GL_QUADS);
 
-	const Chunk::FaceSet &faceSet = c.getFaceSet();
+	const Chunk::FaceSet &faceSet = c.getFaces();
 	for (Face f : faceSet) {
 		newQuads++;
 

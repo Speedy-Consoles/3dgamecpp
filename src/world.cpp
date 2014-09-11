@@ -183,7 +183,8 @@ bool World::updateFace(vec3i64 bc, uint8 faceDir) {
 	uint8 thatType = nc->getBlock(nicc);
 
 	if (thisType != 0 && thatType == 0) {
-		return c->addFace(Face{icc, faceDir, getFaceCorners(cc * Chunk::WIDTH + icc, faceDir)});
+		c->addFace(Face{icc, faceDir, getFaceCorners(cc * Chunk::WIDTH + icc, faceDir)});
+		return true;
 	} else if((thisType != 0) == (thatType != 0))
 		return c->removeFace(Face{icc, faceDir, 0});
 
@@ -219,9 +220,24 @@ void World::insertChunk(Chunk *chunk) {
 
 void World::patchBorders(Chunk *c) {
 	using namespace vec_auto_cast;
-	bool chunkChanged[6];
+	bool chunkChanged[27];
+	for (int i = 0; i < 27; i++) {
+		chunkChanged[i] = false;
+	}
+
+	// TODO make more efficient
+	for (int i = 0; i < 27; i++) {
+		vec3i64 ncc = c->cc + CUBE_CYCLE[i];
+		Chunk *nc = getChunk(ncc);
+		if (!nc)
+			continue;
+		for (Face f : nc->getBorderFaces()) {
+			if (updateFace(ncc * Chunk::WIDTH + f.block, f.dir))
+				chunkChanged[i] = true;
+		}
+	}
+
 	for (uint8 d = 0; d < 6; d++) {
-		chunkChanged[d] = false;
 		uint8 invD = (d + 3) % 6;
 		int dim = DIR_DIMS[d];
 		vec3i64 ncc = c->cc + DIRS[d];
@@ -244,22 +260,22 @@ void World::patchBorders(Chunk *c) {
 				uint8 type = c->getBlock(icc);
 				if (nc->getBlock(nicc) != 0) {
 					if (type == 0) {
-						nc->addFace(Face{nicc, invD, TEST_CORNERS[invD]});
-						chunkChanged[d] = true;
+						nc->addFace(Face{nicc, invD, getFaceCorners(ncc * Chunk::WIDTH + nicc, invD)});
+						chunkChanged[DIR_2_CUBE_CYCLE[d]] = true;
 					} else if (nc->removeFace(Face{nicc, invD, 0}))
-						chunkChanged[d] = true;
+						chunkChanged[DIR_2_CUBE_CYCLE[d]] = true;
 				} else {
 					if (type != 0)
-						c->addFace(Face{icc, d, TEST_CORNERS[d]});
+						c->addFace(Face{icc, d, getFaceCorners(c->cc * Chunk::WIDTH + icc, d)});
 					else
 						c->removeFace(Face{icc, d, 0});
 				}
 			}
 		}
 	}
-	for (int d = 0; d < 6; d++) {
-		if(chunkChanged[d])
-			changedChunks.push_back(c->cc + DIRS[d]);
+	for (int i = 0; i < 27; i++) {
+		if(chunkChanged[i])
+			changedChunks.push_back(c->cc + CUBE_CYCLE[i]);
 	}
 }
 

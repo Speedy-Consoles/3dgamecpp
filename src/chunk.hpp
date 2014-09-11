@@ -13,7 +13,7 @@ class World;
 struct Face {
 	vec3ui8 block;
 	uint8 dir;
-	uint8 corners;
+	mutable uint8 corners;
 };
 
 bool operator == (const Face &lhs, const Face &rhs);
@@ -31,6 +31,7 @@ private:
 
 	uint8 blocks[WIDTH * WIDTH * WIDTH];
 	FaceSet faces;
+	FaceSet borderFaces;
 
 	ChunkLoader *chunkLoader;
 
@@ -44,10 +45,11 @@ public:
 	uint8 getBlock(vec3ui8 icc) const;
 	const uint8 *getBlocks() const { return blocks; }
 
-	bool addFace(Face face);
+	void addFace(Face face);
 	bool removeFace(Face face);
 
-	const FaceSet &getFaceSet() const;
+	const FaceSet &getFaces() const;
+	const FaceSet &getBorderFaces() const;
 
 	bool pollChanged();
 
