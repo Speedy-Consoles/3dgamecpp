@@ -132,22 +132,36 @@ void Graphics::initGL() {
 
 
 	// textures
-	glEnable(GL_TEXTURE_2D);
 	IMG_Init(IMG_INIT_JPG | IMG_INIT_PNG | IMG_INIT_TIF);
 	SDL_Surface *blockImage = IMG_Load("img/block.png");
 
 	glGenTextures(1, &blockTexture);
 	glBindTexture(GL_TEXTURE_2D, blockTexture);
-	gluBuild2DMipmaps(GL_TEXTURE_2D,4,128,128,GL_RGBA,GL_UNSIGNED_BYTE,blockImage->pixels);
+	gluBuild2DMipmaps(GL_TEXTURE_2D, 4, 128, 128, GL_RGBA, GL_UNSIGNED_BYTE, blockImage->pixels);
 
 	SDL_FreeSurface(blockImage);
 
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-	glBindTexture(GL_TEXTURE_2D, 0);
+	glGenTextures(1, &noTexture);
+	glBindTexture(GL_TEXTURE_2D, noTexture);
+	const uint8 white[4] = {255, 255, 255, 255};
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 1, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, &white);
 
 	// shader
+	makeProgram();
+
+	// fog
+	GLint loc = glGetUniformLocation(program, "fog_color");
+	glUniform3f(loc, 0.5f, 0.5f, 0.5f);
+	loc = glGetUniformLocation(program, "fog_start");
+	glUniform1f(loc, (VIEW_RANGE - 1.5) * Chunk::WIDTH);
+	loc = glGetUniformLocation(program, "fog_end");
+	glUniform1f(loc, (VIEW_RANGE - 2.5) * Chunk::WIDTH);
+}
+
+void Graphics::makeProgram() {
 	const char *frag_source;
 
 	std::stringstream ss;
@@ -159,7 +173,6 @@ void Graphics::initGL() {
 
 	glewInit();
 
-	GLenum program;
 	GLenum fragment_shader;
 
 	// Create Shader And Program Objects
@@ -206,14 +219,6 @@ void Graphics::initGL() {
 				printf("%s\n", infoLog);
 		}
 	}
-
-	// fog
-	GLint loc = glGetUniformLocation(program, "fog_color");
-	glUniform3f(loc, 0.5f, 0.5f, 0.5f);
-	loc = glGetUniformLocation(program, "fog_start");
-	glUniform1f(loc, (VIEW_RANGE - 2) * Chunk::WIDTH);
-	loc = glGetUniformLocation(program, "fog_end");
-	glUniform1f(loc, (VIEW_RANGE - 1) * Chunk::WIDTH);
 }
 
 void Graphics::makePerspective() {
@@ -286,6 +291,7 @@ void Graphics::render() {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	stopwatch->stop();
 
+	glUseProgram(program);
 	switchToPerspective();
 	glEnable(GL_LIGHTING);
 	//glEnable(GL_FOG);
@@ -322,6 +328,7 @@ void Graphics::render() {
 	renderPlayers();
 	stopwatch->stop();
 
+	glUseProgram(0);
 	switchToOrthogonal();
 	glDisable(GL_LIGHTING);
 	glDisable(GL_FOG);
@@ -435,11 +442,11 @@ void Graphics::renderChunk(const Chunk &c, bool targeted, vec3ui8 ticc, int td) 
 		}
 	}
 	glEnd();
-	glBindTexture(GL_TEXTURE_2D, 0);
 }
 
 void Graphics::renderPlayers() {
 	using namespace vec_auto_cast;
+	glBindTexture(GL_TEXTURE_2D, noTexture);
 	glBegin(GL_QUADS);
 	for (uint i = 0; i < MAX_CLIENTS; i++) {
 		if (i == localClientID)
@@ -469,7 +476,6 @@ void Graphics::renderPlayers() {
 }
 
 void Graphics::renderHud(const Player &player) {
-	// render overlay
 	glColor4d(0, 0, 0, 0.5);
 	glBegin(GL_QUADS);
 	glVertex2d(-20, -2);
@@ -552,7 +558,6 @@ void Graphics::renderPerformance() {
 	cum_rels[0] = 0;
 	float center_positions[CLOCK_ID_NUM];
 
-	glDisable(GL_TEXTURE_2D);
 	glPushMatrix();
 	glTranslatef(+drawWidth / 2.0, -drawHeight / 2, 0);
 	glScalef(10.0, drawHeight, 1.0);
@@ -611,8 +616,6 @@ void Graphics::renderPerformance() {
 		glPopMatrix();
 	}
 	glPopMatrix();
-
-	glEnable(GL_TEXTURE_2D);
 }
 
 bool Graphics::inFrustum(vec3i64 cc, vec3i64 pos, vec3d lookDir) {

@@ -48,7 +48,10 @@ private:
 
 	float sunLightPosition[4] = {3.0, 2.0, 9.0, 0.0};
 	GLuint blockTexture;
+	GLuint noTexture;
 	FTFont *font;
+
+	GLenum program;
 
 	GLdouble perspectiveMatrix[16];
 	GLdouble orthogonalMatrix[16];
@@ -70,6 +73,7 @@ public:
 
 private:
 	void initGL();
+	void makeProgram();
 
 	void makePerspective();
 	void makeOrthogonal();
