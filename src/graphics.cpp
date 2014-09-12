@@ -5,6 +5,9 @@
 #include <cmath>
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
+#include <string>
+#include <fstream>
+#include <sstream>
 
 Graphics::Graphics(World *world, int localClientID, Stopwatch *stopwatch)
 		: stopwatch(stopwatch) {
@@ -94,6 +97,7 @@ void Graphics::initGL() {
 
 	glEnable(GL_CULL_FACE);
 
+
 	// light
 	//float matSpecular[4] = {1.0f, 1.0f, 1.0f, 1.0f};
 	float sunLight[4] = {0.5f, 0.5f, 0.4f, 1.0f};
@@ -126,6 +130,7 @@ void Graphics::initGL() {
 	glEnable(GL_COLOR_MATERIAL); // enables opengl to use glColor3f to define material color
 	glColorMaterial(GL_FRONT, GL_AMBIENT_AND_DIFFUSE); // tell opengl glColor3f effects the ambient and diffuse properties of material
 
+
 	// textures
 	glEnable(GL_TEXTURE_2D);
 	IMG_Init(IMG_INIT_JPG | IMG_INIT_PNG | IMG_INIT_TIF);
@@ -152,6 +157,67 @@ void Graphics::initGL() {
 	glHint(GL_FOG_HINT, GL_NICEST);
 	//		glFogf(GL_FOG_START, (DEFAULT_VIEW_RANGE - 2) * Chunk::X_WIDTH);
 	//		glFogf(GL_FOG_END, (DEFAULT_VIEW_RANGE - 1) * Chunk::X_WIDTH);*/
+
+
+	// shader
+	const char *frag_source;
+
+	std::stringstream ss;
+	std::ifstream f("shaders/fragment_shader.frag");
+	ss << f.rdbuf();
+	std::string s = ss.str();
+	frag_source = s.c_str();
+	f.close();
+
+	glewInit();
+
+	GLenum program;
+	GLenum fragment_shader;
+
+	// Create Shader And Program Objects
+	program = glCreateProgramObjectARB();
+	fragment_shader = glCreateShaderObjectARB(GL_FRAGMENT_SHADER_ARB);
+
+	// Load Shader Sources
+	glShaderSourceARB(fragment_shader, 1, &frag_source, NULL);
+
+	// Compile The Shaders
+	glCompileShaderARB(fragment_shader);
+
+	{
+		GLint logSize = 0;
+		glGetProgramiv(fragment_shader, GL_INFO_LOG_LENGTH, &logSize);
+
+		if(logSize > 0) {
+			GLsizei length;
+			GLchar infoLog[logSize];
+			glGetProgramInfoLog(fragment_shader, logSize, &length, infoLog);
+			if (length > 0)
+				printf("%s\n", infoLog);
+		}
+	}
+
+	// Attach The Shader Objects To The Program Object
+	glAttachObjectARB(program, fragment_shader);
+
+	// Link The Program Object
+	glLinkProgramARB(program);
+
+	// Use The Program Object Instead Of Fixed Function OpenGL
+	glUseProgramObjectARB(program);
+
+	{
+		GLint logSize = 0;
+		glGetShaderiv(fragment_shader, GL_INFO_LOG_LENGTH, &logSize);
+
+		if(logSize > 0) {
+			GLsizei length;
+			GLchar infoLog[logSize];
+			glGetShaderInfoLog(fragment_shader, logSize, &length, infoLog);
+			if (length > 0)
+				printf("%s\n", infoLog);
+		}
+	}
 }
 
 void Graphics::makePerspective() {
