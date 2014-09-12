@@ -238,7 +238,7 @@ void Graphics::makeFramebuffer() {
 			GL_TEXTURE_2D_MULTISAMPLE,
 			4, /* number of samples */
 			GL_RGBA8,
-			drawWidth, drawHeight,
+			width, height,
 			false /* fixed sample locations */
 	);
 
@@ -388,8 +388,8 @@ void Graphics::render() {
 		glBindFramebuffer(GL_READ_FRAMEBUFFER, fbo);
 		glDrawBuffer(GL_BACK);
 		glBlitFramebuffer(
-				0, 0, drawWidth, drawHeight,
-				0, 0, drawWidth, drawHeight,
+				0, 0, width, height,
+				0, 0, width, height,
 				GL_COLOR_BUFFER_BIT,
 				GL_NEAREST
 		);
