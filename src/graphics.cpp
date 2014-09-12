@@ -147,18 +147,6 @@ void Graphics::initGL() {
 
 	glBindTexture(GL_TEXTURE_2D, 0);
 
-	// fog
-	//float fogColor[4] = {0.5f, 0.5f, 0.5f, 1.0f};
-
-	/*glEnable(GL_FOG);
-	glFogi(GL_FOG_MODE, GL_EXP2);
-	glFogfv(GL_FOG_COLOR, fogColor);
-	glFogf(GL_FOG_DENSITY, 0.004f);
-	glHint(GL_FOG_HINT, GL_NICEST);
-	//		glFogf(GL_FOG_START, (DEFAULT_VIEW_RANGE - 2) * Chunk::X_WIDTH);
-	//		glFogf(GL_FOG_END, (DEFAULT_VIEW_RANGE - 1) * Chunk::X_WIDTH);*/
-
-
 	// shader
 	const char *frag_source;
 
@@ -218,6 +206,14 @@ void Graphics::initGL() {
 				printf("%s\n", infoLog);
 		}
 	}
+
+	// fog
+	GLint loc = glGetUniformLocation(program, "fog_color");
+	glUniform3f(loc, 0.5f, 0.5f, 0.5f);
+	loc = glGetUniformLocation(program, "fog_start");
+	glUniform1f(loc, (VIEW_RANGE - 2) * Chunk::WIDTH);
+	loc = glGetUniformLocation(program, "fog_end");
+	glUniform1f(loc, (VIEW_RANGE - 1) * Chunk::WIDTH);
 }
 
 void Graphics::makePerspective() {
