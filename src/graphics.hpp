@@ -56,6 +56,10 @@ private:
 	GLdouble perspectiveMatrix[16];
 	GLdouble orthogonalMatrix[16];
 
+	GLuint fbo_tex = 0;
+	GLuint fbo = 0;
+	bool multisampling = false;
+
 	Stopwatch *stopwatch;
 
 public:
@@ -74,6 +78,7 @@ public:
 private:
 	void initGL();
 	void makeProgram();
+	void makeFramebuffer();
 
 	void makePerspective();
 	void makeOrthogonal();

@@ -74,6 +74,10 @@ void Graphics::resize(int width, int height) {
 	makePerspective();
 	makeOrthogonal();
 	calcDrawArea();
+
+	// update framebuffer object
+	if (multisampling)
+		makeFramebuffer();
 }
 
 void Graphics::grab() {
@@ -152,6 +156,9 @@ void Graphics::initGL() {
 	// shader
 	makeProgram();
 
+	// enable multisampling
+	makeFramebuffer();
+
 	// fog
 	GLint loc = glGetUniformLocation(program, "fog_color");
 	glUniform3f(loc, 0.5f, 0.5f, 0.5f);
@@ -221,6 +228,36 @@ void Graphics::makeProgram() {
 	}
 }
 
+void Graphics::makeFramebuffer() {
+	if (fbo_tex) {
+		glDeleteTextures(1, &fbo_tex);
+	}
+	glGenTextures(1, &fbo_tex);
+	glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, fbo_tex);
+	glTexImage2DMultisample(
+			GL_TEXTURE_2D_MULTISAMPLE,
+			4, /* number of samples */
+			GL_RGBA8,
+			drawWidth, drawHeight,
+			false /* fixed sample locations */
+	);
+
+	if (fbo) {
+		glDeleteFramebuffers(1, &fbo);
+	}
+	glGenFramebuffers(1, &fbo);
+	glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+	glFramebufferTexture2D(
+			GL_FRAMEBUFFER,
+			GL_COLOR_ATTACHMENT0,
+			GL_TEXTURE_2D_MULTISAMPLE,
+			fbo_tex,
+			0 /* mipmap level */
+	);
+
+	multisampling = true;
+}
+
 void Graphics::makePerspective() {
 	double normalRatio = START_WIDTH / (double) START_HEIGHT;
 	double currentRatio = width / (double) height;
@@ -287,6 +324,11 @@ void Graphics::render() {
 	if (!localPlayer.isValid())
 		return;
 
+	if (multisampling) {
+		// render to the fbo and not the screen
+		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, fbo);
+	}
+
 	stopwatch->start(CLOCK_CLR);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	stopwatch->stop();
@@ -339,6 +381,19 @@ void Graphics::render() {
 	renderHud(localPlayer);
 	renderDebugInfo(localPlayer);
 	stopwatch->stop();
+
+	if (multisampling) {
+		// copy framebuffer to screen, blend multisampling on the way
+		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+		glBindFramebuffer(GL_READ_FRAMEBUFFER, fbo);
+		glDrawBuffer(GL_BACK);
+		glBlitFramebuffer(
+				0, 0, drawWidth, drawHeight,
+				0, 0, drawWidth, drawHeight,
+				GL_COLOR_BUFFER_BIT,
+				GL_NEAREST
+		);
+	}
 }
 
 void Graphics::renderChunks() {
