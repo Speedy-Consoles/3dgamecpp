@@ -18,6 +18,7 @@ private:
 	static const int START_WIDTH = 1600;
 	static const int START_HEIGHT = 900;
 	const double YFOV = TAU / 5;
+	const double ZNEAR = 0.1f;
 	static const int VIEW_RANGE = CHUNK_UNLOAD_RANGE;
 	static const int MAX_NEW_QUADS = 3000;
 

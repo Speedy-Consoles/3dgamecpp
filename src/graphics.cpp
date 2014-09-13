@@ -103,36 +103,43 @@ void Graphics::initGL() {
 
 
 	// light
-	//float matSpecular[4] = {1.0f, 1.0f, 1.0f, 1.0f};
-	float sunLight[4] = {0.5f, 0.5f, 0.4f, 1.0f};
-	float playerLight[4] = {4.0f, 4.0f, 2.4f, 1.0f};
-	float lModelAmbient[4] = {0.6f, 0.6f, 0.6f, 1.0f};
+	float matAmbient[4] = {1.0f, 1.0f, 1.0f, 1.0f};
+	float matDiffuse[4] = {1.0f, 1.0f, 1.0f, 1.0f};
+	float matSpecular[4] = {1.0f, 1.0f, 1.0f, 1.0f};
+	float sunAmbient[4] = {0.5f, 0.5f, 0.5f, 1.0f};
+	float sunDiffuse[4] = {0.5f, 0.5f, 0.45f, 1.0f};
+	float sunSpecular[4] = {0.8f, 0.8f, 0.7f, 1.0f};
+	//float playerLight[4] = {4.0f, 4.0f, 2.4f, 1.0f};
+	//float lModelAmbient[4] = {0.6f, 0.6f, 0.6f, 1.0f};
 
 	float playerLightPos[4] = {0.0f, 0.0f, -0.4f, 1.0f};
 
-	glEnable(GL_LIGHTING); // enables lighting
-	glShadeModel(GL_SMOOTH);
-	//glMaterialfv(GL_FRONT, GL_SPECULAR, matSpecular); // sets specular material color
-	//glMaterialf(GL_FRONT, GL_SHININESS, 1.0f); // sets shininess
+	//glEnable(GL_LIGHTING); // enables lighting
+	//glShadeModel(GL_SMOOTH);
+	glMaterialfv(GL_FRONT, GL_SPECULAR, matSpecular); // sets specular material color
+	glMaterialfv(GL_FRONT, GL_DIFFUSE, matDiffuse); // sets diffuse material color
+	glMaterialfv(GL_FRONT, GL_AMBIENT, matAmbient); // sets ambient material color
+	glMaterialf(GL_FRONT, GL_SHININESS, 1.0f); // sets shininess
 
-	glLightModelfv(GL_LIGHT_MODEL_AMBIENT, lModelAmbient); // global ambient light
+	//glLightModelfv(GL_LIGHT_MODEL_AMBIENT, lModelAmbient); // global ambient light
 
 	//glLightf(GL_LIGHT0, GL_CONSTANT_ATTENUATION, 0.01f);
 	//glLightf(GL_LIGHT0, GL_QUADRATIC_ATTENUATION, 0.001f);
 	//glLight(GL_LIGHT0, GL_SPECULAR, whiteLight); // sets specular light to white
-	glLightfv(GL_LIGHT0, GL_DIFFUSE, sunLight);
-	//glLightfv(GL_LIGHT0, GL_SPECULAR, sunLight);
-	glEnable(GL_LIGHT0);
+	glLightfv(GL_LIGHT0, GL_AMBIENT, sunAmbient);
+	glLightfv(GL_LIGHT0, GL_DIFFUSE, sunDiffuse);
+	glLightfv(GL_LIGHT0, GL_SPECULAR, sunSpecular);
+	//glEnable(GL_LIGHT0);
 
-	glLightfv(GL_LIGHT1, GL_DIFFUSE, playerLight);
+	/*glLightfv(GL_LIGHT1, GL_DIFFUSE, playerLight);
 	glLightfv(GL_LIGHT1, GL_POSITION, playerLightPos);
 	glLightf(GL_LIGHT1, GL_CONSTANT_ATTENUATION, 0.0f);
 	glLightf(GL_LIGHT1, GL_LINEAR_ATTENUATION, 0.0f);
-	glLightf(GL_LIGHT1, GL_QUADRATIC_ATTENUATION, 1.f);
-	glEnable(GL_LIGHT1);
+	glLightf(GL_LIGHT1, GL_QUADRATIC_ATTENUATION, 1.f);*/
+	//glEnable(GL_LIGHT1);
 
-	glEnable(GL_COLOR_MATERIAL); // enables opengl to use glColor3f to define material color
-	glColorMaterial(GL_FRONT, GL_AMBIENT_AND_DIFFUSE); // tell opengl glColor3f effects the ambient and diffuse properties of material
+	//glEnable(GL_COLOR_MATERIAL); // enables opengl to use glColor3f to define material color
+	//glColorMaterial(GL_FRONT, GL_AMBIENT_AND_DIFFUSE); // tell opengl glColor3f effects the ambient and diffuse properties of material
 
 
 	// textures
@@ -160,37 +167,45 @@ void Graphics::initGL() {
 	makeFramebuffer();
 
 	// fog
-	GLint loc = glGetUniformLocation(program, "fog_color");
-	glUniform3f(loc, 0.5f, 0.5f, 0.5f);
-	loc = glGetUniformLocation(program, "fog_start");
-	glUniform1f(loc, (VIEW_RANGE - 1.5) * Chunk::WIDTH);
-	loc = glGetUniformLocation(program, "fog_end");
-	glUniform1f(loc, (VIEW_RANGE - 2.5) * Chunk::WIDTH);
+	glUniform3f(glGetUniformLocation(program, "fog_color"), 0.5f, 0.5f, 0.5f);
+	glUniform1f(glGetUniformLocation(program, "fog_width"), 192.0f);
 }
 
 void Graphics::makeProgram() {
 	const char *frag_source;
+	const char *vert_source;
 
-	std::stringstream ss;
-	std::ifstream f("shaders/fragment_shader.frag");
-	ss << f.rdbuf();
-	std::string s = ss.str();
-	frag_source = s.c_str();
-	f.close();
+	std::stringstream ss1;
+	std::ifstream f1("shaders/fragment_shader.frag");
+	ss1 << f1.rdbuf();
+	std::string s1 = ss1.str();
+	frag_source = s1.c_str();
+	f1.close();
+
+	std::stringstream ss2;
+	std::ifstream f2("shaders/vertex_shader.vert");
+	ss2 << f2.rdbuf();
+	std::string s2 = ss2.str();
+	vert_source = s2.c_str();
+	f2.close();
 
 	glewInit();
 
 	GLenum fragment_shader;
+	GLenum vertex_shader;
 
 	// Create Shader And Program Objects
 	program = glCreateProgramObjectARB();
 	fragment_shader = glCreateShaderObjectARB(GL_FRAGMENT_SHADER_ARB);
+	vertex_shader = glCreateShaderObjectARB(GL_VERTEX_SHADER_ARB);
 
 	// Load Shader Sources
 	glShaderSourceARB(fragment_shader, 1, &frag_source, NULL);
+	glShaderSourceARB(vertex_shader, 1, &vert_source, NULL);
 
 	// Compile The Shaders
 	glCompileShaderARB(fragment_shader);
+	glCompileShaderARB(vertex_shader);
 
 	{
 		GLint logSize = 0;
@@ -205,8 +220,22 @@ void Graphics::makeProgram() {
 		}
 	}
 
+	{
+		GLint logSize = 0;
+		glGetProgramiv(vertex_shader, GL_INFO_LOG_LENGTH, &logSize);
+
+		if(logSize > 0) {
+			GLsizei length;
+			GLchar infoLog[logSize];
+			glGetProgramInfoLog(vertex_shader, logSize, &length, infoLog);
+			if (length > 0)
+				printf("%s\n", infoLog);
+		}
+	}
+
 	// Attach The Shader Objects To The Program Object
 	glAttachObjectARB(program, fragment_shader);
+	glAttachObjectARB(program, vertex_shader);
 
 	// Link The Program Object
 	glLinkProgramARB(program);
@@ -216,12 +245,12 @@ void Graphics::makeProgram() {
 
 	{
 		GLint logSize = 0;
-		glGetShaderiv(fragment_shader, GL_INFO_LOG_LENGTH, &logSize);
+		glGetProgramiv(program, GL_INFO_LOG_LENGTH, &logSize);
 
 		if(logSize > 0) {
 			GLsizei length;
 			GLchar infoLog[logSize];
-			glGetShaderInfoLog(fragment_shader, logSize, &length, infoLog);
+			glGetProgramInfoLog(program, logSize, &length, infoLog);
 			if (length > 0)
 				printf("%s\n", infoLog);
 		}
@@ -269,13 +298,13 @@ void Graphics::makePerspective() {
 
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
-	float zFar = (float) sqrt(pow(Chunk::WIDTH * VIEW_RANGE, 2)
-			+ pow(Chunk::WIDTH * VIEW_RANGE, 2)
-			+ pow(Chunk::WIDTH * VIEW_RANGE, 2));
+	float zFar = Chunk::WIDTH * VIEW_RANGE - 2.5;
 	gluPerspective((float) (angle * 360.0 / TAU),
 			(float) currentRatio, 0.1f, zFar);
 	glGetDoublev(GL_PROJECTION_MATRIX, perspectiveMatrix);
 	glMatrixMode(GL_MODELVIEW);
+
+	glUniform1f(glGetUniformLocation(program, "fog_end"), zFar - 0.1f);
 }
 
 void Graphics::makeOrthogonal() {
@@ -456,11 +485,9 @@ void Graphics::renderChunks() {
 			stopwatch->start(CLOCK_DLC);
 			glCallList(lid);
 			stopwatch->stop();
-		}
+		} else if (target && tcc == cc)
+			renderChunk(*world->getChunk(cc), true, ticc, td);
 	}
-
-	if (target)
-		renderChunk(*world->getChunk(tcc), true, ticc, td);
 }
 
 void Graphics::renderChunk(const Chunk &c, bool targeted, vec3ui8 ticc, int td) {
