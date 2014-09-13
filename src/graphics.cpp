@@ -8,21 +8,29 @@
 #include <string>
 #include <fstream>
 #include <sstream>
+#include "logging.hpp"
 
 Graphics::Graphics(World *world, int localClientID, Stopwatch *stopwatch)
 		: stopwatch(stopwatch) {
 	this->world = world;
 	this->localClientID = localClientID;
 
-	SDL_Init(SDL_INIT_VIDEO);
+	LOG(INFO) << "Initializing SDL";
+	auto failure = SDL_Init(SDL_INIT_VIDEO);
+	LOG_IF(failure, FATAL) << SDL_GetError();
 
+	LOG(INFO) << "Creating window";
 	window = SDL_CreateWindow(
 		"3dgame",
 		0, 0,
 		START_WIDTH, START_HEIGHT,
-		SDL_WINDOW_OPENGL|SDL_WINDOW_RESIZABLE
+		SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE
 	);
+	LOG_IF(!window, FATAL) << SDL_GetError();
+
+	LOG(INFO) << "Creating Open GL Context";
 	glContext = SDL_GL_CreateContext(window);
+	LOG_IF(!glContext, FATAL) << SDL_GetError();
 
 	initGL();
 	int length = VIEW_RANGE * 2 + 1;
@@ -90,6 +98,21 @@ bool Graphics::isGrabbed() {
 }
 
 void Graphics::initGL() {
+	LOG(INFO) << "Initializing GLEW";
+	GLenum glew_error = glewInit();
+	LOG_IF(glew_error != GLEW_OK, ERROR) << glewGetErrorString(glew_error);
+	if (GLEW_VERSION_4_0) {
+		LOG(INFO) << "OpenGL 4.0 available";
+	} else if (GLEW_VERSION_3_2) {
+		LOG(INFO) << "OpenGL 3.2 available";
+	} else if (GLEW_VERSION_2_1) {
+		LOG(INFO) << "OpenGL 2.1 available";
+	} else if (GLEW_VERSION_1_2) {
+		LOG(INFO) << "OpenGL 1.2 available";
+	} else {
+		LOG(INFO) << "No known OpenGL Version found";
+	}
+
 	glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
 	glClearDepth(1);
 	glDepthFunc(GL_LEQUAL);
@@ -103,6 +126,7 @@ void Graphics::initGL() {
 
 
 	// light
+	LOG(INFO) << "Initializing light";
 	float matAmbient[4] = {1.0f, 1.0f, 1.0f, 1.0f};
 	float matDiffuse[4] = {1.0f, 1.0f, 1.0f, 1.0f};
 	float matSpecular[4] = {1.0f, 1.0f, 1.0f, 1.0f};
@@ -143,17 +167,21 @@ void Graphics::initGL() {
 
 
 	// textures
+	LOG(INFO) << "Initializing textures";
 	IMG_Init(IMG_INIT_JPG | IMG_INIT_PNG | IMG_INIT_TIF);
 	SDL_Surface *blockImage = IMG_Load("img/block.png");
+	LOG_IF(!blockImage, ERROR)  << "Could not open 'block.png'";
 
 	glGenTextures(1, &blockTexture);
 	glBindTexture(GL_TEXTURE_2D, blockTexture);
-	gluBuild2DMipmaps(GL_TEXTURE_2D, 4, 128, 128, GL_RGBA, GL_UNSIGNED_BYTE, blockImage->pixels);
-
-	SDL_FreeSurface(blockImage);
-
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	logOpenGLError();
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_TRUE);
+	glTexImage2D(GL_TEXTURE_2D, 0, 4, 128, 128, 0, GL_RGBA, GL_UNSIGNED_BYTE, blockImage->pixels);
+	//gluBuild2DMipmaps(GL_TEXTURE_2D, 4, 128, 128, GL_RGBA, GL_UNSIGNED_BYTE, blockImage->pixels);
+	SDL_FreeSurface(blockImage);
+	logOpenGLError();
 
 	glGenTextures(1, &noTexture);
 	glBindTexture(GL_TEXTURE_2D, noTexture);
@@ -172,127 +200,125 @@ void Graphics::initGL() {
 }
 
 void Graphics::makeProgram() {
-	const char *frag_source;
-	const char *vert_source;
-
+	// vertex shader
+	LOG(INFO) << "Loading vertex shader source";
+	std::ifstream f1("shaders/vertex_shader.vert");
+	LOG_IF(!f1.good(), ERROR) << "Could not open 'vertex_shader.vert'";
 	std::stringstream ss1;
-	std::ifstream f1("shaders/fragment_shader.frag");
 	ss1 << f1.rdbuf();
 	std::string s1 = ss1.str();
-	frag_source = s1.c_str();
+	const char *vert_source = s1.c_str();
 	f1.close();
 
+	LOG(INFO) << "Compiling vertex shader";
+	GLenum vertex_shader = glCreateShaderObjectARB(GL_VERTEX_SHADER_ARB);
+	LOG_IF(!vertex_shader, ERROR) << "Vertex shader is zero";
+	logOpenGLError();
+	glShaderSourceARB(vertex_shader, 1, &vert_source, NULL);
+	logOpenGLError();
+	glCompileShaderARB(vertex_shader);
+	logOpenGLError();
+
+	// fragment shader
+	LOG(INFO) << "Loading fragment shader source";
+	std::ifstream f2("shaders/fragment_shader.frag");
+	LOG_IF(!f2.good(), ERROR) << "Could not open 'fragment_shader.frag'";
 	std::stringstream ss2;
-	std::ifstream f2("shaders/vertex_shader.vert");
 	ss2 << f2.rdbuf();
 	std::string s2 = ss2.str();
-	vert_source = s2.c_str();
+	const char *frag_source = s2.c_str();
 	f2.close();
 
-	glewInit();
-
-	GLenum fragment_shader;
-	GLenum vertex_shader;
-
-	// Create Shader And Program Objects
-	program = glCreateProgramObjectARB();
-	fragment_shader = glCreateShaderObjectARB(GL_FRAGMENT_SHADER_ARB);
-	vertex_shader = glCreateShaderObjectARB(GL_VERTEX_SHADER_ARB);
-
-	// Load Shader Sources
+	LOG(INFO) << "Compiling fragment shader";
+	GLenum fragment_shader = glCreateShaderObjectARB(GL_FRAGMENT_SHADER_ARB);
+	LOG_IF(!fragment_shader, ERROR) << "Fragment shader is zero";
+	logOpenGLError();
 	glShaderSourceARB(fragment_shader, 1, &frag_source, NULL);
-	glShaderSourceARB(vertex_shader, 1, &vert_source, NULL);
-
-	// Compile The Shaders
+	logOpenGLError();
 	glCompileShaderARB(fragment_shader);
-	glCompileShaderARB(vertex_shader);
+	logOpenGLError();
 
-	{
-		GLint logSize = 0;
-		glGetProgramiv(fragment_shader, GL_INFO_LOG_LENGTH, &logSize);
-
-		if(logSize > 0) {
-			GLsizei length;
-			GLchar infoLog[logSize];
-			glGetProgramInfoLog(fragment_shader, logSize, &length, infoLog);
-			if (length > 0)
-				printf("%s\n", infoLog);
-		}
-	}
-
-	{
-		GLint logSize = 0;
-		glGetProgramiv(vertex_shader, GL_INFO_LOG_LENGTH, &logSize);
-
-		if(logSize > 0) {
-			GLsizei length;
-			GLchar infoLog[logSize];
-			glGetProgramInfoLog(vertex_shader, logSize, &length, infoLog);
-			if (length > 0)
-				printf("%s\n", infoLog);
-		}
-	}
-
-	// Attach The Shader Objects To The Program Object
+	// shader program
+	LOG(INFO) << "Assembling shader program";
+	program = glCreateProgramObjectARB();
+	logOpenGLError();
 	glAttachObjectARB(program, fragment_shader);
+	logOpenGLError();
 	glAttachObjectARB(program, vertex_shader);
-
-	// Link The Program Object
+	logOpenGLError();
 	glLinkProgramARB(program);
+	logOpenGLError();
 
-	// Use The Program Object Instead Of Fixed Function OpenGL
-	glUseProgramObjectARB(program);
+	GLint logSize = 0;
+	glGetProgramiv(program, GL_INFO_LOG_LENGTH, &logSize);
+	logOpenGLError();
 
-	{
-		GLint logSize = 0;
-		glGetProgramiv(program, GL_INFO_LOG_LENGTH, &logSize);
-
-		if(logSize > 0) {
-			GLsizei length;
-			GLchar infoLog[logSize];
-			glGetProgramInfoLog(program, logSize, &length, infoLog);
-			if (length > 0)
-				printf("%s\n", infoLog);
-		}
+	if(logSize > 0) {
+		GLsizei length;
+		GLchar infoLog[logSize];
+		glGetProgramInfoLog(program, logSize, &length, infoLog);
+		logOpenGLError();
+		if (length > 0)
+			LOG(INFO) << "Shader program log: " << (char *) infoLog;
 	}
+
+	glUseProgramObjectARB(program);
+	logOpenGLError();
 }
 
 void Graphics::enableMultisampling(uint samples) {
 	if (multisampling)
 		disableMultisampling();
 
+	LOG(INFO) << "Enabling multisampling with " << samples << " samples";
+
 	glGenFramebuffers(1, &fbo);
+	logOpenGLError();
 	glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+	logOpenGLError();
 
 	// Color buffer
 	glGenRenderbuffers(1, &fbo_color_buffer);
+	logOpenGLError();
 	glBindRenderbuffer(GL_RENDERBUFFER, fbo_color_buffer);
+	logOpenGLError();
 	glRenderbufferStorageMultisample(
 			GL_RENDERBUFFER, samples, GL_RGB, width, height
 	);
+	logOpenGLError();
 	glFramebufferRenderbuffer(
 			GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
 			GL_RENDERBUFFER, fbo_color_buffer
 	);
+	logOpenGLError();
 
 	// Depth buffer
 	glGenRenderbuffers(1, &fbo_depth_buffer);
+	logOpenGLError();
 	glBindRenderbuffer(GL_RENDERBUFFER, fbo_depth_buffer);
+	logOpenGLError();
 	glRenderbufferStorageMultisample(
 			GL_RENDERBUFFER, samples, GL_DEPTH_COMPONENT24, width, height
 	);
+	logOpenGLError();
 	glFramebufferRenderbuffer(
 			GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,
 			GL_RENDERBUFFER, fbo_depth_buffer
 	);
+	logOpenGLError();
 
 	multisampling = samples;
 }
 
 void Graphics::disableMultisampling() {
+	LOG(INFO) << "Disabling multisampling";
+
 	glDeleteFramebuffers(1, &fbo);
-	glDeleteFramebuffers(1, &fbo_color_buffer);
-	glDeleteFramebuffers(1, &fbo_depth_buffer);
+	logOpenGLError();
+	glDeleteRenderbuffers(1, &fbo_color_buffer);
+	logOpenGLError();
+	glDeleteRenderbuffers(1, &fbo_depth_buffer);
+	logOpenGLError();
 	fbo = fbo_color_buffer = fbo_depth_buffer = 0;
 	multisampling = 0;
 }
@@ -421,7 +447,7 @@ void Graphics::render() {
 	renderDebugInfo(localPlayer);
 	stopwatch->stop();
 
-	if (multisampling) {
+	if (multisampling > 0) {
 		// copy framebuffer to screen, blend multisampling on the way
 		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
 		glBindFramebuffer(GL_READ_FRAMEBUFFER, fbo);

@@ -12,7 +12,21 @@
 
 using namespace std::chrono;
 
+#include "logging.hpp"
+
+_INITIALIZE_EASYLOGGINGPP
+
 int main(int argc, char *argv[]) {
+	//_START_EASYLOGGINGPP(0, (const char **) nullptr);
+	el::Configurations loggingConf;
+	loggingConf.setGlobally(el::ConfigurationType::Format,
+			"%datetime{%Y-%M-%d %h:%m:%s,%g} %levshort: %msg");
+	loggingConf.set(el::Level::Error, el::ConfigurationType::Format,
+			"%datetime{%Y-%M-%d %h:%m:%s,%g} %levshort (%loc): %msg");
+	el::Loggers::reconfigureLogger("default", loggingConf);
+
+	LOG(INFO) << "Starting program";
+
 	initUtil();
 	Client client;
 	client.run();
@@ -28,7 +42,6 @@ Client::Client() : stopwatch(nullptr) {
 
 	//serverInterface = RemoteServerInterface(args[0], world);
 	serverInterface = new LocalServerInterface(world, 42);
-
 	localClientID = serverInterface->getLocalClientID();
 
 	graphics = new Graphics(world, localClientID, stopwatch);
@@ -43,6 +56,7 @@ Client::~Client() {
 }
 
 void Client::run() {
+	LOG(INFO) << "Running client";
 	startTimePoint = high_resolution_clock::now();
 	time = 0;
 	int tick = 0;
