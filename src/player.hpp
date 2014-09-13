@@ -46,8 +46,10 @@ class World;
 class Player {
 public:
 	static const double FLY_ACCELERATION;
+	static const double FLY_SPRINT_ACCELERATION;
 	static const double FLY_FRICTION;
 	static const double GROUND_ACCELERATION;
+	static const double GROUND_SPRINT_ACCELERATION;
 	static const double GROUND_FRICTION;
 	static const double AIR_ACCELERATION;
 	static const double AIR_FRICTION;
@@ -59,6 +61,7 @@ public:
 	static const int MOVE_INPUT_FLAG_FLY_DOWN = 8;
 	static const int MOVE_INPUT_FLAG_MOVE_FORWARD = 16;
 	static const int MOVE_INPUT_FLAG_MOVE_BACKWARD = 32;
+	static const int MOVE_INPUT_FLAG_SPRINT = 64;
 
 	static const int EYE_HEIGHT = 1700;
 	static const int RADIUS = 300;

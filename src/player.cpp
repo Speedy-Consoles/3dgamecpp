@@ -9,11 +9,13 @@
 using namespace std;
 
 const double Player::FLY_ACCELERATION = 3000;
+const double Player::FLY_SPRINT_ACCELERATION = 10000;
 const double Player::FLY_FRICTION = 0.8;
 const double Player::GROUND_ACCELERATION = 100;
+const double Player::GROUND_SPRINT_ACCELERATION = 300;
 const double Player::GROUND_FRICTION = 0.5;
 const double Player::AIR_ACCELERATION = 4;
-const double Player::AIR_FRICTION = 0.05;
+const double Player::AIR_FRICTION = 0.025;
 const double Player::JUMP_SPEED = 200;
 
 void Player::tick(int tick, bool isLocalPlayer) {
@@ -207,26 +209,34 @@ Monitor &Player::getValidPosMonitor() {
 
 void Player::calcVel() {
 	vec3d inFac(0.0, 0.0, 0.0);
-	if ((moveInput & MOVE_INPUT_FLAG_STRAFE_RIGHT) > 0) {
+	bool right = (moveInput & MOVE_INPUT_FLAG_STRAFE_RIGHT) > 0;
+	bool left = (moveInput & MOVE_INPUT_FLAG_STRAFE_LEFT) > 0;
+	bool forward = (moveInput & MOVE_INPUT_FLAG_MOVE_FORWARD) > 0;
+	bool backward = (moveInput & MOVE_INPUT_FLAG_MOVE_BACKWARD) > 0;
+	bool up = (moveInput & MOVE_INPUT_FLAG_FLY_UP) > 0;
+	bool down = (moveInput & MOVE_INPUT_FLAG_FLY_DOWN) > 0;
+	bool sprint = (moveInput & MOVE_INPUT_FLAG_SPRINT) > 0;
+
+	if (right && !left) {
 		inFac[0] += sin(yaw * TAU / 360);
 		inFac[1] -= cos(yaw * TAU / 360);
-	} else if ((moveInput & MOVE_INPUT_FLAG_STRAFE_LEFT) > 0) {
+	} else if (left && !right) {
 		inFac[0] -= sin(yaw * TAU / 360);
 		inFac[1] += cos(yaw * TAU / 360);
 	}
 
-	if ((moveInput & MOVE_INPUT_FLAG_MOVE_FORWARD) > 0) {
+	if (forward && !backward) {
 		inFac[0] += cos(yaw * TAU / 360);
 		inFac[1] += sin(yaw * TAU / 360);
-	} else if ((moveInput & MOVE_INPUT_FLAG_MOVE_BACKWARD) > 0) {
+	} else if (backward && !forward) {
 		inFac[0] -= cos(yaw * TAU / 360);
 		inFac[1] -= sin(yaw * TAU / 360);
 	}
 
 	if (isFlying) {
-		if ((moveInput & MOVE_INPUT_FLAG_FLY_UP) > 0)
+		if (up && !down)
 			inFac[2] += 1;
-		else if ((moveInput & MOVE_INPUT_FLAG_FLY_DOWN) > 0)
+		else if (down && !up)
 			inFac[2] -= 1;
 	}
 	double norm = inFac.norm();
@@ -241,10 +251,16 @@ void Player::calcVel() {
 	double friction;
 
 	if (isFlying) {
-		acceleration = FLY_ACCELERATION;
+		if (sprint)
+			acceleration = FLY_SPRINT_ACCELERATION;
+		else
+			acceleration = FLY_ACCELERATION;
 		friction = FLY_FRICTION;
 	} else if (grounded) {
-		acceleration = GROUND_ACCELERATION;
+		if (sprint)
+			acceleration = GROUND_SPRINT_ACCELERATION;
+		else
+			acceleration = GROUND_ACCELERATION;
 		friction = GROUND_FRICTION;
 	} else {
 		acceleration = AIR_ACCELERATION;

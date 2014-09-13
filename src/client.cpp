@@ -154,20 +154,23 @@ void Client::handleInput() {
 
 	const uint8 *keyboard = SDL_GetKeyboardState(nullptr);
 
-	if (keyboard[SDL_SCANCODE_D] && !keyboard[SDL_SCANCODE_A])
+	if (keyboard[SDL_SCANCODE_D])
 		moveInput |= Player::MOVE_INPUT_FLAG_STRAFE_RIGHT;
-	else if (keyboard[SDL_SCANCODE_A] && !keyboard[SDL_SCANCODE_D])
+	if (keyboard[SDL_SCANCODE_A])
 		moveInput |= Player::MOVE_INPUT_FLAG_STRAFE_LEFT;
 
-	if (keyboard[SDL_SCANCODE_SPACE] && !keyboard[SDL_SCANCODE_LCTRL])
+	if (keyboard[SDL_SCANCODE_SPACE])
 		moveInput |= Player::MOVE_INPUT_FLAG_FLY_UP;
-	else if (keyboard[SDL_SCANCODE_LCTRL] && !keyboard[SDL_SCANCODE_SPACE])
+	if (keyboard[SDL_SCANCODE_LCTRL])
 		moveInput |= Player::MOVE_INPUT_FLAG_FLY_DOWN;
 
-	if (keyboard[SDL_SCANCODE_W] && !keyboard[SDL_SCANCODE_S])
+	if (keyboard[SDL_SCANCODE_W])
 		moveInput |= Player::MOVE_INPUT_FLAG_MOVE_FORWARD;
-	else if (keyboard[SDL_SCANCODE_S] && !keyboard[SDL_SCANCODE_W])
+	if (keyboard[SDL_SCANCODE_S])
 		moveInput |= Player::MOVE_INPUT_FLAG_MOVE_BACKWARD;
+
+	if (keyboard[SDL_SCANCODE_LSHIFT])
+		moveInput |= Player::MOVE_INPUT_FLAG_SPRINT;
 
 	serverInterface->setPlayerMoveInput(moveInput);
 

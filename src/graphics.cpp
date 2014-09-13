@@ -112,7 +112,7 @@ void Graphics::initGL() {
 	//float playerLight[4] = {4.0f, 4.0f, 2.4f, 1.0f};
 	//float lModelAmbient[4] = {0.6f, 0.6f, 0.6f, 1.0f};
 
-	float playerLightPos[4] = {0.0f, 0.0f, -0.4f, 1.0f};
+	//float playerLightPos[4] = {0.0f, 0.0f, -0.4f, 1.0f};
 
 	//glEnable(GL_LIGHTING); // enables lighting
 	//glShadeModel(GL_SMOOTH);
