@@ -8,14 +8,14 @@
 
 using namespace std;
 
-const double Player::FLY_ACCELERATION = 3000;
-const double Player::FLY_SPRINT_ACCELERATION = 10000;
+const double Player::FLY_ACCELERATION = 1000;
+const double Player::FLY_SPRINT_ACCELERATION = 5000;
 const double Player::FLY_FRICTION = 0.8;
-const double Player::GROUND_ACCELERATION = 100;
-const double Player::GROUND_SPRINT_ACCELERATION = 300;
-const double Player::GROUND_FRICTION = 0.5;
-const double Player::AIR_ACCELERATION = 4;
-const double Player::AIR_FRICTION = 0.025;
+const double Player::GROUND_ACCELERATION = 25;
+const double Player::GROUND_SPRINT_ACCELERATION = 50;
+const double Player::GROUND_FRICTION = 0.25;
+const double Player::AIR_ACCELERATION = 1.5;
+const double Player::AIR_FRICTION = 0.02;
 const double Player::JUMP_SPEED = 200;
 
 void Player::tick(int tick, bool isLocalPlayer) {
@@ -267,8 +267,7 @@ void Player::calcVel() {
 		friction = AIR_FRICTION;
 	}
 
-	newVel += inFac * acceleration;
-	newVel *= 1 - friction;
+	newVel += inFac * acceleration - newVel * friction;
 
 	vel[0] = newVel[0];
 	vel[1] = newVel[1];
