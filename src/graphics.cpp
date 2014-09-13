@@ -164,7 +164,7 @@ void Graphics::initGL() {
 	makeProgram();
 
 	// enable multisampling
-	makeFramebuffer();
+	//makeFramebuffer();
 
 	// fog
 	glUniform3f(glGetUniformLocation(program, "fog_color"), 0.5f, 0.5f, 0.5f);
