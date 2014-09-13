@@ -107,6 +107,15 @@ void Client::handleInput() {
 			case SDL_SCANCODE_F:
 				serverInterface->togglePlayerFly();
 				break;
+			case SDL_SCANCODE_M:
+				switch (graphics->getMultisampling()) {
+				case 0: graphics->enableMultisampling(2); break;
+				case 2: graphics->enableMultisampling(4); break;
+				case 4: graphics->enableMultisampling(8); break;
+				case 8: graphics->enableMultisampling(16); break;
+				case 16: graphics->disableMultisampling(); break;
+				}
+				break;
 			default:
 				//printf("unknown key: ", event.key.keysym);
 				break;

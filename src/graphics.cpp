@@ -77,7 +77,7 @@ void Graphics::resize(int width, int height) {
 
 	// update framebuffer object
 	if (multisampling)
-		makeFramebuffer();
+		enableMultisampling(multisampling);
 }
 
 void Graphics::grab() {
@@ -164,7 +164,7 @@ void Graphics::initGL() {
 	makeProgram();
 
 	// enable multisampling
-	//makeFramebuffer();
+	enableMultisampling();
 
 	// fog
 	glUniform3f(glGetUniformLocation(program, "fog_color"), 0.5f, 0.5f, 0.5f);
@@ -257,34 +257,44 @@ void Graphics::makeProgram() {
 	}
 }
 
-void Graphics::makeFramebuffer() {
-	if (fbo_tex) {
-		glDeleteTextures(1, &fbo_tex);
-	}
-	glGenTextures(1, &fbo_tex);
-	glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, fbo_tex);
-	glTexImage2DMultisample(
-			GL_TEXTURE_2D_MULTISAMPLE,
-			4, /* number of samples */
-			GL_RGBA8,
-			width, height,
-			false /* fixed sample locations */
-	);
+void Graphics::enableMultisampling(uint samples) {
+	if (multisampling)
+		disableMultisampling();
 
-	if (fbo) {
-		glDeleteFramebuffers(1, &fbo);
-	}
 	glGenFramebuffers(1, &fbo);
 	glBindFramebuffer(GL_FRAMEBUFFER, fbo);
-	glFramebufferTexture2D(
-			GL_FRAMEBUFFER,
-			GL_COLOR_ATTACHMENT0,
-			GL_TEXTURE_2D_MULTISAMPLE,
-			fbo_tex,
-			0 /* mipmap level */
+
+	// Color buffer
+	glGenRenderbuffers(1, &fbo_color_buffer);
+	glBindRenderbuffer(GL_RENDERBUFFER, fbo_color_buffer);
+	glRenderbufferStorageMultisample(
+			GL_RENDERBUFFER, samples, GL_RGB, width, height
+	);
+	glFramebufferRenderbuffer(
+			GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
+			GL_RENDERBUFFER, fbo_color_buffer
 	);
 
-	multisampling = true;
+	// Depth buffer
+	glGenRenderbuffers(1, &fbo_depth_buffer);
+	glBindRenderbuffer(GL_RENDERBUFFER, fbo_depth_buffer);
+	glRenderbufferStorageMultisample(
+			GL_RENDERBUFFER, samples, GL_DEPTH_COMPONENT24, width, height
+	);
+	glFramebufferRenderbuffer(
+			GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,
+			GL_RENDERBUFFER, fbo_depth_buffer
+	);
+
+	multisampling = samples;
+}
+
+void Graphics::disableMultisampling() {
+	glDeleteFramebuffers(1, &fbo);
+	glDeleteFramebuffers(1, &fbo_color_buffer);
+	glDeleteFramebuffers(1, &fbo_depth_buffer);
+	fbo = fbo_color_buffer = fbo_depth_buffer = 0;
+	multisampling = 0;
 }
 
 void Graphics::makePerspective() {
@@ -596,6 +606,7 @@ void Graphics::renderDebugInfo(const Player &player) {
 	RENDER_LINE("yvel: %8.1f", playerVel[1]);
 	RENDER_LINE("zvel: %8.1f", playerVel[2]);
 	RENDER_LINE("chunks loaded: %lu", world->getNumChunks());
+	RENDER_LINE("MSAA: %u", multisampling);
 
 	glPopMatrix();
 

@@ -57,9 +57,10 @@ private:
 	GLdouble perspectiveMatrix[16];
 	GLdouble orthogonalMatrix[16];
 
-	GLuint fbo_tex = 0;
 	GLuint fbo = 0;
-	bool multisampling = false;
+	GLuint fbo_color_buffer = 0;
+	GLuint fbo_depth_buffer = 0;
+	uint multisampling = 0;
 
 	Stopwatch *stopwatch;
 
@@ -76,10 +77,13 @@ public:
 
 	bool getCloseRequested();
 
+	void enableMultisampling(uint samples = 4);
+	void disableMultisampling();
+	uint getMultisampling() const { return multisampling; }
+
 private:
 	void initGL();
 	void makeProgram();
-	void makeFramebuffer();
 
 	void makePerspective();
 	void makeOrthogonal();
