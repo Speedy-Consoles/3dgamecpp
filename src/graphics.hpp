@@ -52,15 +52,19 @@ private:
 	GLuint noTexture;
 	FTFont *font;
 
-	GLenum program;
+	GLuint program = 0;
+	GLuint program_postproc = 0;
 
 	GLdouble perspectiveMatrix[16];
 	GLdouble orthogonalMatrix[16];
 
 	GLuint fbo = 0;
 	GLuint fbo_color_buffer = 0;
+	GLuint fbo_texture = 0;
 	GLuint fbo_depth_buffer = 0;
-	uint multisampling = 0;
+	uint msaa = 0;
+
+	bool fxaa = false;
 
 	Stopwatch *stopwatch;
 
@@ -77,13 +81,21 @@ public:
 
 	bool getCloseRequested();
 
-	void enableMultisampling(uint samples = 4);
-	void disableMultisampling();
-	uint getMultisampling() const { return multisampling; }
+	void enableMSAA(uint samples = 4);
+	void disableMSAA();
+	uint getMSAA() const { return msaa; }
+	void enableFXAA();
+	void disableFXAA();
+	bool getFXAA() const { return fxaa; }
 
 private:
 	void initGL();
-	void makeProgram();
+
+	GLuint loadShader(const char *, GLenum);
+	GLuint loadProgram(const char *, const char *);
+
+	void createFBO();
+	void destroyFBO();
 
 	void makePerspective();
 	void makeOrthogonal();
@@ -94,6 +106,7 @@ private:
 	void calcDrawArea();
 
 	void render();
+	void renderScene(const Player &);
 	void renderHud(const Player &);
 	void renderDebugInfo(const Player &);
 	void renderPerformance();

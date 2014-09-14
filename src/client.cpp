@@ -78,8 +78,9 @@ void Client::run() {
 		world->tick(tick, localClientID);
 		stopwatch->stop(CLOCK_TIC);
 
-		if (time + 1000000 / TICK_SPEED > getMicroTimeSince(startTimePoint))
+		if (time + 1000000 / TICK_SPEED > getMicroTimeSince(startTimePoint)) {
 			graphics->tick();
+		}
 
 		stopwatch->start(CLOCK_SYN);
 		sync(TICK_SPEED);
@@ -128,12 +129,18 @@ void Client::handleInput() {
 				serverInterface->togglePlayerFly();
 				break;
 			case SDL_SCANCODE_M:
-				switch (graphics->getMultisampling()) {
-				case 0: graphics->enableMultisampling(2); break;
-				case 2: graphics->enableMultisampling(4); break;
-				case 4: graphics->enableMultisampling(8); break;
-				case 8: graphics->enableMultisampling(16); break;
-				case 16: graphics->disableMultisampling(); break;
+				switch (graphics->getMSAA()) {
+				case 0: graphics->enableMSAA(2); break;
+				case 2: graphics->enableMSAA(4); break;
+				case 4: graphics->enableMSAA(8); break;
+				case 8: graphics->enableMSAA(16); break;
+				case 16: graphics->disableMSAA(); break;
+				}
+				break;
+			case SDL_SCANCODE_N:
+				switch (graphics->getFXAA()) {
+				case true: graphics->disableFXAA(); break;
+				case false: graphics->enableFXAA(); break;
 				}
 				break;
 			case SDL_SCANCODE_Q:

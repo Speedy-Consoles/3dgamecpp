@@ -12,6 +12,7 @@
 
 Graphics::Graphics(World *world, int localClientID, Stopwatch *stopwatch)
 		: stopwatch(stopwatch) {
+	LOG(INFO) << "Constructing Graphics";
 	this->world = world;
 	this->localClientID = localClientID;
 
@@ -54,16 +55,23 @@ Graphics::Graphics(World *world, int localClientID, Stopwatch *stopwatch)
 }
 
 Graphics::~Graphics() {
+	LOG(INFO) << "Destroying Graphics";
+
 	int length = VIEW_RANGE * 2 + 1;
 	glDeleteLists(firstDL, length * length * length);
 	delete dlChunks;
-    delete font;
+	delete font;
+
+	glDeleteProgram(program);
+	glDeleteProgram(program_postproc);
+
 	SDL_GL_DeleteContext(glContext);
 	SDL_Quit();
 }
 
 void Graphics::tick() {
 	render();
+
 	stopwatch->start(CLOCK_FLP);
 	SDL_GL_SwapWindow(window);
 	stopwatch->stop(CLOCK_FLP);
@@ -80,6 +88,7 @@ void Graphics::tick() {
 }
 
 void Graphics::resize(int width, int height) {
+	LOG(INFO) << "Resize to " << width << "x" << height;
 	this->width = width;
 	this->height = height;
 	glViewport(0, 0, width, height);
@@ -88,8 +97,10 @@ void Graphics::resize(int width, int height) {
 	calcDrawArea();
 
 	// update framebuffer object
-	if (multisampling)
-		enableMultisampling(multisampling);
+	if (msaa || fxaa) {
+		destroyFBO();
+		createFBO();
+	}
 }
 
 void Graphics::grab() {
@@ -193,65 +204,61 @@ void Graphics::initGL() {
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 1, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, &white);
 
 	// shader
-	makeProgram();
-
-	// enable multisampling
-	enableMultisampling();
+	program = loadProgram(
+			"shaders/vertex_shader.vert", "shaders/fragment_shader.frag");
+	program_postproc = loadProgram(
+			"shaders/postproc.vert", "shaders/postproc.frag");
 
 	// fog
-	glUniform3f(glGetUniformLocation(program, "fog_color"), 0.5f, 0.5f, 0.5f);
-	glUniform1f(glGetUniformLocation(program, "fog_width"), 192.0f);
+	glUseProgram(program);
+
+	GLuint fog_color_loc = glGetUniformLocation(program, "fog_color");
+	logOpenGLError();
+	glUniform3f(fog_color_loc, 0.5f, 0.5f, 0.5f);
+	logOpenGLError();
+
+	GLuint fog_width_loc = glGetUniformLocation(program, "fog_width");
+	logOpenGLError();
+	glUniform1f(fog_width_loc, 192.0f);
+	logOpenGLError();
+
+	// enable multisampling
+	//createFBO();
 }
 
-void Graphics::makeProgram() {
-	// vertex shader
-	LOG(INFO) << "Loading vertex shader source";
-	std::ifstream f1("shaders/vertex_shader.vert");
-	LOG_IF(!f1.good(), ERROR) << "Could not open 'vertex_shader.vert'";
-	std::stringstream ss1;
-	ss1 << f1.rdbuf();
-	std::string s1 = ss1.str();
-	const char *vert_source = s1.c_str();
-	f1.close();
+GLuint Graphics::loadShader(const char *path, GLenum type) {
+	LOG(INFO) << "Loading shader source '" << path << "'";
+	std::ifstream f(path);
+	LOG_IF(!f.good(), ERROR) << "Could not open '" << path << "'";
+	std::stringstream ss;
+	ss << f.rdbuf();
+	std::string s = ss.str();
+	const char *source = s.c_str();
+	f.close();
+	LOG(INFO) << "Compiling '" << path << "'";
+	GLenum shader = glCreateShaderObjectARB(type);
+	logOpenGLError();
+	glShaderSourceARB(shader, 1, &source, NULL);
+	logOpenGLError();
+	glCompileShaderARB(shader);
+	logOpenGLError();
+	return shader;
+}
 
-	LOG(INFO) << "Compiling vertex shader";
-	GLenum vertex_shader = glCreateShaderObjectARB(GL_VERTEX_SHADER_ARB);
-	LOG_IF(!vertex_shader, ERROR) << "Vertex shader is zero";
-	logOpenGLError();
-	glShaderSourceARB(vertex_shader, 1, &vert_source, NULL);
-	logOpenGLError();
-	glCompileShaderARB(vertex_shader);
-	logOpenGLError();
+GLuint Graphics::loadProgram(const char *vert_src, const char *frag_src) {
+	GLuint vertex_shader = loadShader(vert_src, GL_VERTEX_SHADER_ARB);
+	GLuint fragment_shader = loadShader(frag_src, GL_FRAGMENT_SHADER_ARB);
 
-	// fragment shader
-	LOG(INFO) << "Loading fragment shader source";
-	std::ifstream f2("shaders/fragment_shader.frag");
-	LOG_IF(!f2.good(), ERROR) << "Could not open 'fragment_shader.frag'";
-	std::stringstream ss2;
-	ss2 << f2.rdbuf();
-	std::string s2 = ss2.str();
-	const char *frag_source = s2.c_str();
-	f2.close();
-
-	LOG(INFO) << "Compiling fragment shader";
-	GLenum fragment_shader = glCreateShaderObjectARB(GL_FRAGMENT_SHADER_ARB);
-	LOG_IF(!fragment_shader, ERROR) << "Fragment shader is zero";
-	logOpenGLError();
-	glShaderSourceARB(fragment_shader, 1, &frag_source, NULL);
-	logOpenGLError();
-	glCompileShaderARB(fragment_shader);
-	logOpenGLError();
-
-	// shader program
 	LOG(INFO) << "Assembling shader program";
-	program = glCreateProgramObjectARB();
-	logOpenGLError();
-	glAttachObjectARB(program, fragment_shader);
+	GLuint program = glCreateProgramObjectARB();
 	logOpenGLError();
 	glAttachObjectARB(program, vertex_shader);
 	logOpenGLError();
+	glAttachObjectARB(program, fragment_shader);
+	logOpenGLError();
 	glLinkProgramARB(program);
 	logOpenGLError();
+	glValidateProgram(program);
 
 	GLint logSize = 0;
 	glGetProgramiv(program, GL_INFO_LOG_LENGTH, &logSize);
@@ -263,47 +270,107 @@ void Graphics::makeProgram() {
 		glGetProgramInfoLog(program, logSize, &length, infoLog);
 		logOpenGLError();
 		if (length > 0)
-			LOG(INFO) << "Shader program log: " << (char *) infoLog;
+			LOG(WARNING) << "Shader program log: " << (char *) infoLog;
 	}
 
-	glUseProgramObjectARB(program);
+	int validate_ok;
+	glGetProgramiv(program, GL_VALIDATE_STATUS, &validate_ok);
+	if (!validate_ok) {
+		LOG(WARNING) << "Shader program failed validation";
+	}
 	logOpenGLError();
+
+	return program;
 }
 
-void Graphics::enableMultisampling(uint samples) {
-	if (multisampling)
-		disableMultisampling();
+void Graphics::enableMSAA(uint samples) {
+	destroyFBO();
+	msaa = samples;
+	fxaa = false;
+	createFBO();
+}
 
-	LOG(INFO) << "Enabling multisampling with " << samples << " samples";
+void Graphics::disableMSAA() {
+	destroyFBO();
+	msaa = 0;
+	fxaa = false;
+}
 
-	glGenFramebuffers(1, &fbo);
-	logOpenGLError();
-	glBindFramebuffer(GL_FRAMEBUFFER, fbo);
-	logOpenGLError();
+void Graphics::enableFXAA() {
+	destroyFBO();
+	msaa = 0;
+	fxaa = true;
+	createFBO();
+}
 
-	// Color buffer
-	glGenRenderbuffers(1, &fbo_color_buffer);
-	logOpenGLError();
-	glBindRenderbuffer(GL_RENDERBUFFER, fbo_color_buffer);
-	logOpenGLError();
-	glRenderbufferStorageMultisample(
-			GL_RENDERBUFFER, samples, GL_RGB, width, height
-	);
-	logOpenGLError();
-	glFramebufferRenderbuffer(
-			GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
-			GL_RENDERBUFFER, fbo_color_buffer
-	);
-	logOpenGLError();
+void Graphics::disableFXAA() {
+	destroyFBO();
+	msaa = 0;
+	fxaa = false;
+}
+
+void Graphics::createFBO() {
+	LOG(INFO) << "Creating framebuffer with MSAA=" << msaa
+			<< " and fxaa " << (fxaa ? "enabled" : "disabled");
+	bool needs_render_to_texture = false;
+	if (fxaa)
+		needs_render_to_texture = true;
+
+	if (needs_render_to_texture) {
+		glActiveTexture(GL_TEXTURE0);
+		logOpenGLError();
+		glGenTextures(1, &fbo_texture);
+		glBindTexture(GL_TEXTURE_2D, fbo_texture);
+		logOpenGLError();
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		logOpenGLError();
+		glTexImage2D(GL_TEXTURE_2D, 0, 4, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+		logOpenGLError();
+		glBindTexture(GL_TEXTURE_2D, 0);
+		logOpenGLError();
+	} else {
+		glGenRenderbuffers(1, &fbo_color_buffer);
+		glBindRenderbuffer(GL_RENDERBUFFER, fbo_color_buffer);
+		logOpenGLError();
+		glRenderbufferStorageMultisample(
+				GL_RENDERBUFFER, msaa, GL_RGB, width, height
+		);
+		logOpenGLError();
+	}
 
 	// Depth buffer
 	glGenRenderbuffers(1, &fbo_depth_buffer);
-	logOpenGLError();
 	glBindRenderbuffer(GL_RENDERBUFFER, fbo_depth_buffer);
 	logOpenGLError();
-	glRenderbufferStorageMultisample(
-			GL_RENDERBUFFER, samples, GL_DEPTH_COMPONENT24, width, height
-	);
+	if (msaa) {
+		glRenderbufferStorageMultisample(
+				GL_RENDERBUFFER, msaa, GL_DEPTH_COMPONENT24, width, height
+		);
+	} else {
+		glRenderbufferStorage(
+				GL_RENDERBUFFER, GL_DEPTH_COMPONENT24,
+				width, height
+		);
+	}
+	logOpenGLError();
+
+	glGenFramebuffers(1, &fbo);
+	glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+	logOpenGLError();
+	if (needs_render_to_texture) {
+		glFramebufferTexture2D(
+				GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
+				GL_TEXTURE_2D, fbo_texture, 0
+		);
+	} else {
+		glFramebufferRenderbuffer(
+				GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
+				GL_RENDERBUFFER, fbo_color_buffer
+		);
+	}
 	logOpenGLError();
 	glFramebufferRenderbuffer(
 			GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,
@@ -311,20 +378,38 @@ void Graphics::enableMultisampling(uint samples) {
 	);
 	logOpenGLError();
 
-	multisampling = samples;
+	GLuint status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+	if (status != GL_FRAMEBUFFER_COMPLETE) {
+		const char *msg = 0;
+		switch (status) {
+		case GL_FRAMEBUFFER_UNDEFINED:
+			msg = "framebuffer undefined"; break;
+		case GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT:
+			msg = "incomplete attachment"; break;
+		case GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT:
+			msg = "missind attachment"; break;
+		case GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER:
+			msg = "incomplete draw buffer"; break;
+		case GL_FRAMEBUFFER_INCOMPLETE_READ_BUFFER:
+			msg = "incomplete read buffer"; break;
+		case GL_FRAMEBUFFER_UNSUPPORTED:
+			msg = "unsupported"; break;
+		case GL_FRAMEBUFFER_INCOMPLETE_MULTISAMPLE:
+			msg = "incomplete multisampling"; break;
+		case GL_FRAMEBUFFER_INCOMPLETE_LAYER_TARGETS:
+			msg = "incomplete layer targets"; break;
+		}
+		LOG(ERROR) << "Framebuffer creation failed: " << msg;
+	}
+	logOpenGLError();
 }
 
-void Graphics::disableMultisampling() {
-	LOG(INFO) << "Disabling multisampling";
-
-	glDeleteFramebuffers(1, &fbo);
-	logOpenGLError();
+void Graphics::destroyFBO() {
+	glDeleteTextures(1, &fbo_texture);
 	glDeleteRenderbuffers(1, &fbo_color_buffer);
-	logOpenGLError();
 	glDeleteRenderbuffers(1, &fbo_depth_buffer);
-	logOpenGLError();
-	fbo = fbo_color_buffer = fbo_depth_buffer = 0;
-	multisampling = 0;
+	glDeleteFramebuffers(1, &fbo);
+	fbo = fbo_color_buffer = fbo_depth_buffer = fbo_texture = 0;
 }
 
 void Graphics::makePerspective() {
@@ -344,7 +429,9 @@ void Graphics::makePerspective() {
 	glGetDoublev(GL_PROJECTION_MATRIX, perspectiveMatrix);
 	glMatrixMode(GL_MODELVIEW);
 
-	glUniform1f(glGetUniformLocation(program, "fog_end"), zFar - 0.1f);
+	glUseProgram(program);
+	GLuint fog_end_loc = glGetUniformLocation(program, "fog_end");
+	glUniform1f(fog_end_loc, zFar - 0.1f);
 }
 
 void Graphics::makeOrthogonal() {
@@ -393,33 +480,89 @@ void Graphics::render() {
 	if (!localPlayer.isValid())
 		return;
 
-	if (multisampling) {
+	logOpenGLError();
+	if (msaa || fxaa) {
 		// render to the fbo and not the screen
-		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, fbo);
+		glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+		logOpenGLError();
 	} else {
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		logOpenGLError();
 		glDrawBuffer(GL_BACK);
+		logOpenGLError();
 	}
 
 	stopwatch->start(CLOCK_CLR);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	logOpenGLError();
 	stopwatch->stop(CLOCK_CLR);
 
+	renderScene(localPlayer);
+	logOpenGLError();
+
+	if (msaa || fxaa) {
+		// copy framebuffer to screen, blend multisampling on the way
+		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+		glBindFramebuffer(GL_READ_FRAMEBUFFER, fbo);
+		glDrawBuffer(GL_BACK);
+		if (fxaa) {
+			glMatrixMode(GL_PROJECTION);
+			glLoadIdentity();
+			glMatrixMode(GL_MODELVIEW);
+			glLoadIdentity();
+
+			glDisable(GL_DEPTH_TEST);
+			glDisable(GL_LIGHTING);
+			glDisable(GL_FOG);
+			glEnable(GL_TEXTURE_2D);
+			glColor3f(1.0f, 1.0f, 1.0f);
+
+			glBindTexture(GL_TEXTURE_2D, fbo_texture);
+			glUseProgram(program_postproc);
+			glBegin(GL_QUADS);
+				glTexCoord2f(0.0f, 0.0f); glVertex2f(-1.0f, -1.0f);
+				glTexCoord2f(1.0f, 0.0f); glVertex2f(+1.0f, -1.0f);
+				glTexCoord2f(1.0f, 1.0f); glVertex2f(+1.0f, +1.0f);
+				glTexCoord2f(0.0f, 1.0f); glVertex2f(-1.0f, +1.0f);
+			glEnd();
+		} else {
+			glBlitFramebuffer(
+					0, 0, width, height,
+					0, 0, width, height,
+					GL_COLOR_BUFFER_BIT,
+					GL_NEAREST
+			);
+		}
+		logOpenGLError();
+	}
+
+	stopwatch->start(CLOCK_HUD);
+	renderHud(localPlayer);
+	renderDebugInfo(localPlayer);
+	stopwatch->stop(CLOCK_HUD);
+}
+
+void Graphics::renderScene(const Player &player) {
+	glDisable(GL_DEPTH_TEST);
+	glEnable(GL_TEXTURE_2D);
 	glUseProgram(program);
+	logOpenGLError();
 	switchToPerspective();
+	logOpenGLError();
 	glEnable(GL_LIGHTING);
 	//glEnable(GL_FOG);
 	glEnable(GL_DEPTH_TEST);
 	glLoadIdentity();
 	// player yaw
-	glRotated(-localPlayer.getPitch(), 1, 0, 0);
+	glRotated(-player.getPitch(), 1, 0, 0);
 	// player pitch
-	glRotated(-localPlayer.getYaw(), 0, 1, 0);
+	glRotated(-player.getYaw(), 0, 1, 0);
 	// tilt coordinate system so z points up
 	glRotated(-90, 1, 0, 0);
 	// tilt coordinate system so we look into x direction
 	glRotated(90, 0, 0, 1);
 	//player position
-	vec3i64 playerPos = localPlayer.getPos();
+	vec3i64 playerPos = player.getPos();
 	glTranslated(
 		-playerPos[0] / (double) RESOLUTION,
 		-playerPos[1] / (double) RESOLUTION,
@@ -430,41 +573,19 @@ void Graphics::render() {
 
 	// place light
 	glLightfv(GL_LIGHT0, GL_POSITION, sunLightPosition);
+	logOpenGLError();
 
 	// render chunk
 	stopwatch->start(CLOCK_CHR);
 	renderChunks();
+	logOpenGLError();
 	stopwatch->stop(CLOCK_CHR);
 
 	// render players
 	stopwatch->start(CLOCK_PLA);
 	renderPlayers();
+	logOpenGLError();
 	stopwatch->stop(CLOCK_PLA);
-
-	glUseProgram(0);
-	switchToOrthogonal();
-	glDisable(GL_LIGHTING);
-	glDisable(GL_FOG);
-	glDisable(GL_DEPTH_TEST);
-	glLoadIdentity();
-
-	stopwatch->start(CLOCK_HUD);
-	renderHud(localPlayer);
-	renderDebugInfo(localPlayer);
-	stopwatch->stop(CLOCK_HUD);
-
-	if (multisampling > 0) {
-		// copy framebuffer to screen, blend multisampling on the way
-		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
-		glBindFramebuffer(GL_READ_FRAMEBUFFER, fbo);
-		glDrawBuffer(GL_BACK);
-		glBlitFramebuffer(
-				0, 0, width, height,
-				0, 0, width, height,
-				GL_COLOR_BUFFER_BIT,
-				GL_NEAREST
-		);
-	}
 }
 
 void Graphics::renderChunks() {
@@ -600,6 +721,14 @@ void Graphics::renderPlayers() {
 }
 
 void Graphics::renderHud(const Player &player) {
+	glUseProgram(0);
+	switchToOrthogonal();
+	glDisable(GL_LIGHTING);
+	glDisable(GL_FOG);
+	glDisable(GL_DEPTH_TEST);
+	glDisable(GL_TEXTURE_2D);
+	glLoadIdentity();
+
 	glColor4d(0, 0, 0, 0.5);
 	glBegin(GL_QUADS);
 	glVertex2d(-20, -2);
@@ -612,6 +741,8 @@ void Graphics::renderHud(const Player &player) {
 	glVertex2d(2, 20);
 	glVertex2d(-2, 20);
 	glEnd();
+
+	renderDebugInfo(player);
 }
 
 void Graphics::renderDebugInfo(const Player &player) {
@@ -638,7 +769,8 @@ void Graphics::renderDebugInfo(const Player &player) {
 	RENDER_LINE("yvel: %8.1f", playerVel[1]);
 	RENDER_LINE("zvel: %8.1f", playerVel[2]);
 	RENDER_LINE("chunks loaded: %lu", world->getNumChunks());
-	RENDER_LINE("MSAA: %u", multisampling);
+	RENDER_LINE("MSAA: %u", msaa);
+	RENDER_LINE("FXAA: %s", fxaa ? "on" : "off");
 
 	glPopMatrix();
 
