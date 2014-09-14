@@ -14,9 +14,10 @@ const double Player::FLY_FRICTION = 0.8;
 const double Player::GROUND_ACCELERATION = 25;
 const double Player::GROUND_SPRINT_ACCELERATION = 50;
 const double Player::GROUND_FRICTION = 0.25;
-const double Player::AIR_ACCELERATION = 1.5;
-const double Player::AIR_FRICTION = 0.02;
-const double Player::JUMP_SPEED = 200;
+const double Player::AIR_ACCELERATION = 2;
+const double Player::AIR_FRICTION = 0.005;
+const double Player::AIR_ACCELERATION_PENALTY = 0.01;
+const double Player::JUMP_SPEED = 260;
 
 void Player::tick(int tick, bool isLocalPlayer) {
 
@@ -239,13 +240,12 @@ void Player::calcVel() {
 		else if (down && !up)
 			inFac[2] -= 1;
 	}
+
 	double norm = inFac.norm();
 	if (norm > 0) {
 		inFac /= norm;
 	}
 
-	vec3d newVel(vel[0], vel[1], vel[2]);
-	vel[2] += World::GRAVITY;
 	bool grounded = isGrounded();
 	double acceleration;
 	double friction;
@@ -263,18 +263,17 @@ void Player::calcVel() {
 			acceleration = GROUND_ACCELERATION;
 		friction = GROUND_FRICTION;
 	} else {
-		acceleration = AIR_ACCELERATION;
+		acceleration = AIR_ACCELERATION * (1 - max(0.0, min(1.0, vec2d(inFac[0], inFac[1]) * vec2d(vel[0], vel[1]) * AIR_ACCELERATION_PENALTY)));
 		friction = AIR_FRICTION;
 	}
 
-	newVel += inFac * acceleration - newVel * friction;
+	if(!isFlying) {
+		vel[2] += World::GRAVITY;
+		if (grounded && (moveInput & MOVE_INPUT_FLAG_FLY_UP) > 0)
+			vel[2] = JUMP_SPEED;
+	}
 
-	vel[0] = newVel[0];
-	vel[1] = newVel[1];
-	if (isFlying)
-		vel[2] = newVel[2];
-	else if (grounded && (moveInput & MOVE_INPUT_FLAG_FLY_UP) > 0)
-		vel[2] = JUMP_SPEED;
+	vel += inFac * acceleration - vel * friction;
 }
 
 bool Player::isGrounded() const {

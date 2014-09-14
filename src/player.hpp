@@ -53,6 +53,7 @@ public:
 	static const double GROUND_FRICTION;
 	static const double AIR_ACCELERATION;
 	static const double AIR_FRICTION;
+	static const double AIR_ACCELERATION_PENALTY;
 	static const double JUMP_SPEED;
 
 	static const int MOVE_INPUT_FLAG_STRAFE_RIGHT = 1;
