@@ -101,6 +101,12 @@ void Graphics::resize(int width, int height) {
 		destroyFBO();
 		createFBO();
 	}
+
+	glUseProgram(program_postproc);
+	GLuint pixel_size_loc = glGetUniformLocation(program_postproc, "pixel_size");
+	logOpenGLError();
+	glUniform2f(pixel_size_loc, 1.0 / width, 1.0 / height);
+	logOpenGLError();
 }
 
 void Graphics::grab() {
@@ -214,12 +220,30 @@ void Graphics::initGL() {
 
 	GLuint fog_color_loc = glGetUniformLocation(program, "fog_color");
 	logOpenGLError();
-	glUniform3f(fog_color_loc, 0.5f, 0.5f, 0.5f);
+	glUniform3f(fog_color_loc, 0.5, 0.5, 0.5);
 	logOpenGLError();
 
 	GLuint fog_width_loc = glGetUniformLocation(program, "fog_width");
 	logOpenGLError();
-	glUniform1f(fog_width_loc, 192.0f);
+	glUniform1f(fog_width_loc, 192.0);
+	logOpenGLError();
+
+	// fxaa
+	glUseProgram(program_postproc);
+
+	GLuint fxaa_span_max_loc = glGetUniformLocation(program_postproc, "fxaa_span_max");
+	logOpenGLError();
+	glUniform1f(fxaa_span_max_loc, 8.0);
+	logOpenGLError();
+
+	GLuint fxaa_reduce_mul_loc = glGetUniformLocation(program_postproc, "fxaa_reduce_mul");
+	logOpenGLError();
+	glUniform1f(fxaa_reduce_mul_loc, 1.0/8.0);
+	logOpenGLError();
+
+	GLuint fxaa_reduce_min_loc = glGetUniformLocation(program_postproc, "fxaa_reduce_min");
+	logOpenGLError();
+	glUniform1f(fxaa_reduce_min_loc, 1.0/128.0);
 	logOpenGLError();
 
 	// enable multisampling
@@ -242,6 +266,20 @@ GLuint Graphics::loadShader(const char *path, GLenum type) {
 	logOpenGLError();
 	glCompileShaderARB(shader);
 	logOpenGLError();
+
+	GLint logSize = 0;
+	glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &logSize);
+	logOpenGLError();
+
+	if(logSize > 0) {
+		GLsizei length;
+		GLchar infoLog[logSize];
+		glGetShaderInfoLog(shader, logSize, &length, infoLog);
+		logOpenGLError();
+		if (length > 0)
+			LOG(WARNING) << "Shader log: " << (char *) infoLog;
+	}
+
 	return shader;
 }
 
@@ -276,7 +314,7 @@ GLuint Graphics::loadProgram(const char *vert_src, const char *frag_src) {
 	int validate_ok;
 	glGetProgramiv(program, GL_VALIDATE_STATUS, &validate_ok);
 	if (!validate_ok) {
-		LOG(WARNING) << "Shader program failed validation";
+		LOG(ERROR) << "Shader program failed validation";
 	}
 	logOpenGLError();
 
