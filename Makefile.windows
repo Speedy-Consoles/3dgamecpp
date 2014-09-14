@@ -22,7 +22,7 @@ LDFLAGS = -pthread
 INCLUDE_DIRS =
 LIB_DIRS =
 
-LIBS = mingw32 SDL2main SDL2 SDL2_image ftgl opengl32 glu32 GLEW freetype png bz2 z
+LIBS = mingw32 opengl32 glu32 GLEW ftgl SDL2main SDL2 SDL2_image freetype png bz2 z
 
 DEBUG ?= 1
 ifeq ($(DEBUG), 1)
@@ -59,7 +59,7 @@ $(OBJ_DIR)/%.cpp.o : src/%.cpp
 -include $(OBJECTS:%.cpp.o=%.P)
 
 $(EXECUTABLE): $(OBJECTS)
-	$(LD) $(LDFLAGS) $(OBJECTS) $(LIBS_LD_FLAGS) -o $@
+	$(LD) $(OBJECTS) $(LDFLAGS) $(LIBS_LD_FLAGS) -o $@
 
 .PHONY: make_dirs clean depends all
 
