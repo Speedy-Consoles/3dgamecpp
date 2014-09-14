@@ -20,6 +20,7 @@ Graphics::Graphics(World *world, int localClientID, Stopwatch *stopwatch)
 	LOG_IF(failure, FATAL) << SDL_GetError();
 
 	LOG(INFO) << "Creating window";
+	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
 	window = SDL_CreateWindow(
 		"3dgame",
 		0, 0,
@@ -31,6 +32,8 @@ Graphics::Graphics(World *world, int localClientID, Stopwatch *stopwatch)
 	LOG(INFO) << "Creating Open GL Context";
 	glContext = SDL_GL_CreateContext(window);
 	LOG_IF(!glContext, FATAL) << SDL_GetError();
+	failure = SDL_GL_SetSwapInterval(0);
+	LOG_IF(failure, WARNING) << SDL_GetError();
 
 	initGL();
 	int length = VIEW_RANGE * 2 + 1;
@@ -63,14 +66,15 @@ void Graphics::tick() {
 	render();
 	stopwatch->start(CLOCK_FLP);
 	SDL_GL_SwapWindow(window);
-	stopwatch->stop();
+	stopwatch->stop(CLOCK_FLP);
 	frameCounter++;
 	int64 time = getMicroTimeSince(startTimePoint);
 	if (time - lastFPSUpdate > 1000000) {
 		lastFPS = frameCounter;
 		lastFPSUpdate += 1000000;
 		frameCounter = 0;
-		stopwatch->stopAndSave();
+		stopwatch->stop(CLOCK_ALL);
+		stopwatch->save();
 		stopwatch->start(CLOCK_ALL);
 	}
 }
@@ -392,11 +396,13 @@ void Graphics::render() {
 	if (multisampling) {
 		// render to the fbo and not the screen
 		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, fbo);
+	} else {
+		glDrawBuffer(GL_BACK);
 	}
 
 	stopwatch->start(CLOCK_CLR);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	stopwatch->stop();
+	stopwatch->stop(CLOCK_CLR);
 
 	glUseProgram(program);
 	switchToPerspective();
@@ -428,12 +434,12 @@ void Graphics::render() {
 	// render chunk
 	stopwatch->start(CLOCK_CHR);
 	renderChunks();
-	stopwatch->stop();
+	stopwatch->stop(CLOCK_CHR);
 
 	// render players
 	stopwatch->start(CLOCK_PLA);
 	renderPlayers();
-	stopwatch->stop();
+	stopwatch->stop(CLOCK_PLA);
 
 	glUseProgram(0);
 	switchToOrthogonal();
@@ -445,7 +451,7 @@ void Graphics::render() {
 	stopwatch->start(CLOCK_HUD);
 	renderHud(localPlayer);
 	renderDebugInfo(localPlayer);
-	stopwatch->stop();
+	stopwatch->stop(CLOCK_HUD);
 
 	if (multisampling > 0) {
 		// copy framebuffer to screen, blend multisampling on the way
@@ -497,7 +503,7 @@ void Graphics::renderChunks() {
 			dlChunks[index] = ccc;
 		}
 	}
-	stopwatch->stop();
+	stopwatch->stop(CLOCK_NDL);
 
 	uint maxChunks = length * length * length;
 	uint renderedChunks = 0;
@@ -520,7 +526,7 @@ void Graphics::renderChunks() {
 				&& dlChunks[index] == cc) {
 			stopwatch->start(CLOCK_DLC);
 			glCallList(lid);
-			stopwatch->stop();
+			stopwatch->stop(CLOCK_DLC);
 		} else if (target && tcc == cc)
 			renderChunk(*world->getChunk(cc), true, ticc, td);
 	}

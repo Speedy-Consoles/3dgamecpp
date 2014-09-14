@@ -15,13 +15,13 @@ public:
 	Stopwatch(size_t size);
 
 	void start(uint);
-	void stop();
+	void stop(uint id = -1);
 
 	dur_type get(uint);
 	dur_type getTotal();
 	float getRel(uint);
 
-	void stopAndSave();
+	void save();
 
 private:
 

@@ -1,4 +1,5 @@
 #include "stopwatch.hpp"
+#include "logging.hpp"
 
 using namespace std::chrono;
 
@@ -24,7 +25,18 @@ void Stopwatch::start(uint id) {
 	_stack.push(id);
 }
 
-void Stopwatch::stop() {
+void Stopwatch::stop(uint id) {
+	if (_stack.empty()) {
+		LOG_N_TIMES(10, WARNING) << "No clock to stop";
+		return;
+	}
+	if (id == (uint) -1) {
+		LOG_N_TIMES(10, WARNING) << "Stopped clock " << _stack.top()
+				<< " without explicit id given";
+	} else if (id != _stack.top()) {
+		LOG_N_TIMES(10, WARNING) << "Stopped clock " << _stack.top()
+				<< " but " << id << " given";
+	}
 	auto now = high_resolution_clock::now();
 	EntryType &entry = _clocks[_stack.top()];
 	entry.dur += now - entry.start;
@@ -48,9 +60,12 @@ float Stopwatch::getRel(uint id) {
 	return _clocks[id].rel;
 }
 
-void Stopwatch::stopAndSave() {
-	while (!_stack.empty())
+void Stopwatch::save() {
+	while (!_stack.empty()) {
+		LOG_N_TIMES(10, WARNING)
+				<< "stopped clock " << _stack.top() << " unnessessarily",
 		stop();
+	}
 
 	for (auto &clock: _clocks) {
 		clock.rel = (double) clock.dur.count() / _total.count();

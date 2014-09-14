@@ -17,11 +17,17 @@ using namespace std::chrono;
 _INITIALIZE_EASYLOGGINGPP
 
 int main(int argc, char *argv[]) {
-	//_START_EASYLOGGINGPP(0, (const char **) nullptr);
+	const char *el_argv[] = {
+//		"--v=2",
+	};
+	size_t el_argc = sizeof (el_argv) / sizeof (const char *);
+	_START_EASYLOGGINGPP(el_argc, el_argv);
 	el::Configurations loggingConf;
 	loggingConf.setGlobally(el::ConfigurationType::Format,
 			"%datetime{%Y-%M-%d %h:%m:%s,%g} %levshort: %msg");
 	loggingConf.set(el::Level::Error, el::ConfigurationType::Format,
+			"%datetime{%Y-%M-%d %h:%m:%s,%g} %levshort (%loc): %msg");
+	loggingConf.set(el::Level::Warning, el::ConfigurationType::Format,
 			"%datetime{%Y-%M-%d %h:%m:%s,%g} %levshort (%loc): %msg");
 	el::Loggers::reconfigureLogger("default", loggingConf);
 
@@ -66,18 +72,18 @@ void Client::run() {
 		stopwatch->start(CLOCK_NET);
 		serverInterface->sendInput();
 		serverInterface->receive(time + 200000);
-		stopwatch->stop();
+		stopwatch->stop(CLOCK_NET);
 
 		stopwatch->start(CLOCK_TIC);
 		world->tick(tick, localClientID);
-		stopwatch->stop();
+		stopwatch->stop(CLOCK_TIC);
 
 		if (time + 1000000 / TICK_SPEED > getMicroTimeSince(startTimePoint))
 			graphics->tick();
 
-		stopwatch->start(CLOCK_NET);
+		stopwatch->start(CLOCK_SYN);
 		sync(TICK_SPEED);
-		stopwatch->stop();
+		stopwatch->stop(CLOCK_SYN);
 		tick++;
 	}
 	serverInterface->stop();
@@ -129,6 +135,10 @@ void Client::handleInput() {
 				case 8: graphics->enableMultisampling(16); break;
 				case 16: graphics->disableMultisampling(); break;
 				}
+				break;
+			case SDL_SCANCODE_Q:
+				if (SDL_GetModState() & KMOD_LCTRL)
+					closeRequested = true;
 				break;
 			default:
 				//printf("unknown key: ", event.key.keysym);
