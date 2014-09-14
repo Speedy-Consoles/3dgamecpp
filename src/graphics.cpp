@@ -119,6 +119,8 @@ bool Graphics::isGrabbed() {
 }
 
 void Graphics::initGL() {
+	LOG(INFO) << "OpenGL Version: " << glGetString(GL_VERSION);
+	LOG(INFO) << "GLSL Version: " << glGetString(GL_SHADING_LANGUAGE_VERSION);
 	LOG(INFO) << "Initializing GLEW";
 	GLenum glew_error = glewInit();
 	LOG_IF(glew_error != GLEW_OK, ERROR) << glewGetErrorString(glew_error);
@@ -314,7 +316,7 @@ GLuint Graphics::loadProgram(const char *vert_src, const char *frag_src) {
 	int validate_ok;
 	glGetProgramiv(program, GL_VALIDATE_STATUS, &validate_ok);
 	if (!validate_ok) {
-		LOG(ERROR) << "Shader program failed validation";
+		LOG(FATAL) << "Shader program failed validation";
 	}
 	logOpenGLError();
 

@@ -1,3 +1,5 @@
+#version 120
+
 uniform float fxaa_span_max;
 uniform float fxaa_reduce_mul;
 uniform float fxaa_reduce_min;

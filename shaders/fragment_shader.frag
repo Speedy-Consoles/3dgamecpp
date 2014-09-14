@@ -1,3 +1,5 @@
+#version 120
+
 uniform sampler2D colorMap;
 uniform vec3 fog_color;
 uniform float fog_end;

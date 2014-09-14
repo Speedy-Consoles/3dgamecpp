@@ -1,3 +1,5 @@
+#version 120
+
 attribute vec3 gl_Vertex;
 attribute vec3 gl_Normal;
 attribute vec4 gl_Color;
