@@ -4,7 +4,6 @@
 #include <chrono>
 
 #include <SDL2/SDL.h>
-#include <GL/glew.h>
 #include <FTGL/ftgl.h>
 
 #include "world.hpp"
@@ -12,14 +11,16 @@
 #include "constants.hpp"
 #include "stopwatch.hpp"
 #include "client.hpp"
+#include <GL/glew.h>
 
 class Graphics {
 private:
 	static const int START_WIDTH = 1600;
 	static const int START_HEIGHT = 900;
+	static const int VIEW_RANGE = CHUNK_UNLOAD_RANGE;
 	const double YFOV = TAU / 5;
 	const double ZNEAR = 0.1f;
-	static const int VIEW_RANGE = CHUNK_UNLOAD_RANGE;
+	const double ZFAR = Chunk::WIDTH * VIEW_RANGE - 2.5;
 	static const int MAX_NEW_QUADS = 3000;
 
 	int width;
@@ -52,19 +53,19 @@ private:
 	GLuint noTexture;
 	FTFont *font;
 
-	GLuint program = 0;
-	GLuint program_postproc = 0;
+//	GLuint program = 0;
+//	GLuint program_postproc = 0;
 
 	GLdouble perspectiveMatrix[16];
 	GLdouble orthogonalMatrix[16];
 
 	GLuint fbo = 0;
 	GLuint fbo_color_buffer = 0;
-	GLuint fbo_texture = 0;
+//	GLuint fbo_texture = 0;
 	GLuint fbo_depth_buffer = 0;
 	uint msaa = 0;
-
-	bool fxaa = false;
+//
+//	bool fxaa = false;
 
 	Stopwatch *stopwatch;
 
@@ -84,16 +85,16 @@ public:
 	void enableMSAA(uint samples = 4);
 	void disableMSAA();
 	uint getMSAA() const { return msaa; }
-	void enableFXAA();
-	void disableFXAA();
-	bool getFXAA() const { return fxaa; }
+//	void enableFXAA();
+//	void disableFXAA();
+//	bool getFXAA() const { return fxaa; }
 
 private:
 	void initGL();
 
-	GLuint loadShader(const char *, GLenum);
-	GLuint loadProgram(const char *, const char *);
-
+//	GLuint loadShader(const char *, GLenum);
+//	GLuint loadProgram(const char *, const char *);
+//
 	void createFBO();
 	void destroyFBO();
 

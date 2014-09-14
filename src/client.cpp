@@ -137,12 +137,12 @@ void Client::handleInput() {
 				case 16: graphics->disableMSAA(); break;
 				}
 				break;
-			case SDL_SCANCODE_N:
-				switch (graphics->getFXAA()) {
-				case true: graphics->disableFXAA(); break;
-				case false: graphics->enableFXAA(); break;
-				}
-				break;
+//			case SDL_SCANCODE_N:
+//				switch (graphics->getFXAA()) {
+//				case true: graphics->disableFXAA(); break;
+//				case false: graphics->enableFXAA(); break;
+//				}
+//				break;
 			case SDL_SCANCODE_Q:
 				if (SDL_GetModState() & KMOD_LCTRL)
 					closeRequested = true;

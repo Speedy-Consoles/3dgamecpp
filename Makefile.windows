@@ -6,12 +6,13 @@ SOURCE_FILES = \
 	chunk.cpp client.cpp\
 	graphics.cpp\
 	local_server_interface.cpp\
+	monitor.cpp\
 	perlin.cpp\
 	player.cpp\
+	render.cpp\
 	stopwatch.cpp\
 	util.cpp\
-	world.cpp\
-	monitor.cpp
+	world.cpp
 
 CXX = x86_64-w64-mingw32-g++
 LD = x86_64-w64-mingw32-g++
