@@ -212,9 +212,8 @@ void Client::handleInput() {
 
 	serverInterface->setPlayerMoveInput(moveInput);
 
-	if (player.isValid()) {
+	if (player.isValid())
 		player.setMoveInput(moveInput);
-	}
 
 	serverInterface->sendInput();
 }
