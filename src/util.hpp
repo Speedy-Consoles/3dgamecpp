@@ -41,6 +41,16 @@ size_t vec3i64HashFunc(vec3i64 v);
 
 int64 getMicroTimeSince(time_point<high_resolution_clock>);
 
+template<typename T> T clamp(T v, T min, T max) {
+	if (v != v)
+		return v;
+	if (v < min)
+		return min;
+	if (v > max)
+		return max;
+	return v;
+}
+
 void initUtil();
 
 #endif // UTIL_HPP

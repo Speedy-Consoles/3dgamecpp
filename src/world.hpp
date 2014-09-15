@@ -48,7 +48,7 @@ private:
 
 	Player players[MAX_CLIENTS];
 
-	bool pause = false;
+	bool pause = true;
 
 	std::chrono::microseconds dur_ticking;
 

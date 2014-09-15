@@ -71,6 +71,8 @@ private:
 //	bool fxaa = false;
 
 	bool menu = true;
+	double oldRelMouseX = 0.5;
+	double oldRelMouseY = 0.5;
 
 	Stopwatch *stopwatch;
 
@@ -92,6 +94,9 @@ public:
 //	void enableFXAA();
 //	void disableFXAA();
 //	bool getFXAA() const { return fxaa; }
+
+	int getHeight();
+	int getWidth();
 
 private:
 	void initGL();

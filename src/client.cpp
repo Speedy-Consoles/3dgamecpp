@@ -154,7 +154,7 @@ void Client::handleInput() {
 			}
 			break;
 		case SDL_MOUSEMOTION:
-			if (graphics->isMenu() && player.isValid()) {
+			if (!graphics->isMenu() && player.isValid()) {
 				double yaw = player.getYaw();
 				double pitch = player.getPitch();
 				yaw -= event.motion.xrel / 10.0;

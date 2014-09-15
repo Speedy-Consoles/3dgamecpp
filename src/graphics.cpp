@@ -287,9 +287,18 @@ void Graphics::calcDrawArea() {
 }
 
 void Graphics::setMenu(bool menu) {
-	SDL_SetWindowGrab(window, (SDL_bool) menu);
-	SDL_SetRelativeMouseMode((SDL_bool) menu);
+	SDL_SetWindowGrab(window, (SDL_bool) !menu);
+	SDL_SetRelativeMouseMode((SDL_bool) !menu);
 	this->menu = menu;
+	if (menu) {
+		SDL_WarpMouseInWindow(window, (int) (oldRelMouseX * width), (int) (oldRelMouseY * height));
+	} else {
+		int x = width / 2;
+		int y = height / 2;
+		SDL_GetMouseState(&x, &y);
+		oldRelMouseX = x / (double) width;
+		oldRelMouseY = y / (double) height;
+	}
 }
 
 bool Graphics::isMenu() {
@@ -496,7 +505,16 @@ void Graphics::destroyFBO() {
 	fbo = fbo_color_buffer = fbo_depth_buffer = /*fbo_texture = */0;
 }
 
+int Graphics::getWidth() {
+	return width;
+}
+
+int Graphics::getHeight() {
+	return width;
+}
+
 void Graphics::tick() {
+
 	render();
 
 	stopwatch->start(CLOCK_FLP);
