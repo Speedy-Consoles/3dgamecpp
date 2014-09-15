@@ -326,7 +326,7 @@ void Graphics::renderDebugInfo(const Player &player) {
 	RENDER_LINE("yvel: %8.1f", playerVel[1]);
 	RENDER_LINE("zvel: %8.1f", playerVel[2]);
 	RENDER_LINE("chunks loaded: %lu", world->getNumChunks());
-	RENDER_LINE("MSAA: %u", msaa);
+	RENDER_LINE("MSAA: %u", getMSAA());
 //	RENDER_LINE("FXAA: %s", fxaa ? "on" : "off");
 
 	glPopMatrix();

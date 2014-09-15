@@ -13,6 +13,7 @@
 #include "constants.hpp"
 #include "stopwatch.hpp"
 #include "client.hpp"
+#include "config.hpp"
 
 class Graphics {
 private:
@@ -23,6 +24,8 @@ private:
 	const double ZNEAR = 0.1f;
 	const double ZFAR = Chunk::WIDTH * VIEW_RANGE - 2.5;
 	static const int MAX_NEW_QUADS = 3000;
+
+	GraphicsConf conf;
 
 	int width;
 	int height;
@@ -66,7 +69,6 @@ private:
 	GLuint fbo_color_buffer = 0;
 //	GLuint fbo_texture = 0;
 	GLuint fbo_depth_buffer = 0;
-	uint msaa = 0;
 
 //	bool fxaa = false;
 
@@ -77,7 +79,7 @@ private:
 	Stopwatch *stopwatch;
 
 public:
-	Graphics(World *world, int localClientID, Stopwatch *stopwatch = nullptr);
+	Graphics(World *world, int localClientID, const GraphicsConf &conf, Stopwatch *stopwatch = nullptr);
 	~Graphics();
 
 	void tick();
@@ -90,10 +92,13 @@ public:
 
 	void enableMSAA(uint samples = 4);
 	void disableMSAA();
-	uint getMSAA() const { return msaa; }
+	uint getMSAA() const;
 //	void enableFXAA();
 //	void disableFXAA();
 //	bool getFXAA() const { return fxaa; }
+
+	const GraphicsConf &getConf() const { return conf; }
+	void setConf(const GraphicsConf &);
 
 	int getHeight();
 	int getWidth();

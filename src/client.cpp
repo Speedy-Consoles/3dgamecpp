@@ -1,14 +1,15 @@
 #include <iostream>
-#include <SDL2/SDL.h>
 #include <thread>
 #include <chrono>
 #include <cmath>
 #include <cstdio>
+
 #include "util.hpp"
 #include "constants.hpp"
 #include "client.hpp"
 #include "local_server_interface.hpp"
 #include "graphics.hpp"
+#include "config.hpp"
 
 using namespace std::chrono;
 
@@ -50,11 +51,16 @@ Client::Client() : stopwatch(nullptr) {
 	serverInterface = new LocalServerInterface(world, 42);
 	localClientID = serverInterface->getLocalClientID();
 
-	graphics = new Graphics(world, localClientID, stopwatch);
+	GraphicsConf conf;
+	load("graphics-default.profile", &conf);
+	graphics = new Graphics(world, localClientID, conf, stopwatch);
 }
 
 Client::~Client() {
+	auto conf = graphics->getConf();
+	store("graphics-default.profile", conf);
 	delete graphics;
+
 	// world must be deleted before server interface
 	delete world;
 	delete serverInterface;

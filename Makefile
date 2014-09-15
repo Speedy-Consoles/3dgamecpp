@@ -4,6 +4,7 @@ SOURCE_FILES = \
 	archive.cpp\
 	chunk_loader.cpp\
 	chunk.cpp client.cpp\
+	config.cpp\
 	graphics.cpp\
 	local_server_interface.cpp\
 	monitor.cpp\

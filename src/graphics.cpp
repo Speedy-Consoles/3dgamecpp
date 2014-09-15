@@ -9,11 +9,16 @@
 #include <fstream>
 #include <sstream>
 
-Graphics::Graphics(World *world, int localClientID, Stopwatch *stopwatch)
-		: stopwatch(stopwatch) {
+Graphics::Graphics(
+		World *world,
+		int localClientID,
+		const GraphicsConf &conf,
+		Stopwatch *stopwatch) :
+		conf(conf),
+		world(world),
+		localClientID(localClientID),
+		stopwatch(stopwatch) {
 	LOG(INFO) << "Constructing Graphics";
-	this->world = world;
-	this->localClientID = localClientID;
 
 	LOG(INFO) << "Initializing SDL";
 	auto failure = SDL_Init(SDL_INIT_VIDEO);
@@ -27,7 +32,7 @@ Graphics::Graphics(World *world, int localClientID, Stopwatch *stopwatch)
 	window = SDL_CreateWindow(
 		"3dgame",
 		0, 0,
-		START_WIDTH, START_HEIGHT,
+		conf.windowed_res[0], conf.windowed_res[1],
 		SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE
 	);
 	LOG_IF(!window, FATAL) << SDL_GetError();
@@ -48,8 +53,8 @@ Graphics::Graphics(World *world, int localClientID, Stopwatch *stopwatch)
 	}
 
 	initGL();
+	resize(conf.windowed_res[0], conf.windowed_res[1]);
 
-	resize(START_WIDTH, START_HEIGHT);
 	if (START_WIDTH <= START_HEIGHT)
 		maxFOV = YFOV;
 	else
@@ -84,7 +89,6 @@ void Graphics::initGL() {
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	glEnable(GL_CULL_FACE);
-
 
 	// light
 	LOG(INFO) << "Initializing light";
@@ -213,9 +217,6 @@ void Graphics::initGL() {
 	int length = VIEW_RANGE * 2 + 1;
 	firstDL = glGenLists(length * length * length);
 	dlChunks = new vec3i64[length * length * length];
-
-//	enable multisampling
-//	createFBO();
 }
 
 void Graphics::resize(int width, int height) {
@@ -228,10 +229,10 @@ void Graphics::resize(int width, int height) {
 	calcDrawArea();
 
 	// update framebuffer object
-	if (fbo) {
+	if (fbo)
 		destroyFBO();
+	if (getMSAA())
 		createFBO();
-	}
 
 //	glUseProgram(program_postproc);
 //	GLuint pixel_size_loc = glGetUniformLocation(program_postproc, "pixel_size");
@@ -375,20 +376,44 @@ bool Graphics::isMenu() {
 //
 //	return program;
 //}
-//
+
+static uint getMSAA(AntiAliasing aa) {
+	switch (aa) {
+		case AntiAliasing::NONE:    return 0;
+		case AntiAliasing::MSAA_2:  return 2;
+		case AntiAliasing::MSAA_4:  return 4;
+		case AntiAliasing::MSAA_8:  return 8;
+		case AntiAliasing::MSAA_16: return 16;
+		default:                    return 0;
+	}
+}
+
+static AntiAliasing getAA(uint msaa) {
+	switch (msaa) {
+		case 0:  return AntiAliasing::NONE;
+		case 2:  return AntiAliasing::MSAA_2;
+		case 4:  return AntiAliasing::MSAA_4;
+		case 8:  return AntiAliasing::MSAA_8;
+		case 16: return AntiAliasing::MSAA_16;
+		default: return AntiAliasing::NONE;
+	}
+}
+
 void Graphics::enableMSAA(uint samples) {
 	destroyFBO();
-	msaa = samples;
-//	fxaa = false;
+	conf.aa = getAA(samples);
 	createFBO();
 }
-//
+
 void Graphics::disableMSAA() {
 	destroyFBO();
-	msaa = 0;
-//	fxaa = false;
+	conf.aa = AntiAliasing::NONE;
 }
-//
+
+uint Graphics::getMSAA() const {
+	return ::getMSAA(conf.aa);
+}
+
 //void Graphics::enableFXAA() {
 //	destroyFBO();
 //	msaa = 0;
@@ -429,7 +454,7 @@ void Graphics::createFBO() {
 	glBindRenderbuffer(GL_RENDERBUFFER, fbo_color_buffer);
 	logOpenGLError();
 	glRenderbufferStorageMultisample(
-			GL_RENDERBUFFER, msaa, GL_RGB, width, height
+			GL_RENDERBUFFER, getMSAA(), GL_RGB, width, height
 	);
 	logOpenGLError();
 //	}
@@ -438,9 +463,9 @@ void Graphics::createFBO() {
 	glGenRenderbuffers(1, &fbo_depth_buffer);
 	glBindRenderbuffer(GL_RENDERBUFFER, fbo_depth_buffer);
 	logOpenGLError();
-	if (msaa) {
+	if (getMSAA()) {
 		glRenderbufferStorageMultisample(
-				GL_RENDERBUFFER, msaa, GL_DEPTH_COMPONENT24, width, height
+				GL_RENDERBUFFER, getMSAA(), GL_DEPTH_COMPONENT24, width, height
 		);
 	} else {
 		glRenderbufferStorage(
