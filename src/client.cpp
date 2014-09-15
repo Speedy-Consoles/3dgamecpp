@@ -123,7 +123,8 @@ void Client::handleInput() {
 		case SDL_KEYDOWN:
 			switch (event.key.keysym.scancode) {
 			case SDL_SCANCODE_ESCAPE:
-				graphics->grab();
+				graphics->setMenu(!graphics->isMenu());
+				world->setPause(!world->isPaused());
 				break;
 			case SDL_SCANCODE_F:
 				serverInterface->togglePlayerFly();
@@ -153,7 +154,7 @@ void Client::handleInput() {
 			}
 			break;
 		case SDL_MOUSEMOTION:
-			if (graphics->isGrabbed() && player.isValid()) {
+			if (graphics->isMenu() && player.isValid()) {
 				double yaw = player.getYaw();
 				double pitch = player.getPitch();
 				yaw -= event.motion.xrel / 10.0;

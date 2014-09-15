@@ -13,10 +13,20 @@ World::~World() {
 }
 
 void World::tick(int tick, uint localPlayerID) {
+	if (pause)
+		return;
 	for (uint i = 0; i < MAX_CLIENTS; i++) {
 		if (players[i].isValid())
 			players[i].tick(tick, i == localPlayerID);
 	}
+}
+
+void World::setPause(bool pause) {
+	this->pause = pause;
+}
+
+bool World::isPaused() {
+	return pause;
 }
 
 // TODO make precision position-independent

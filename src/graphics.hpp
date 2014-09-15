@@ -70,6 +70,8 @@ private:
 
 //	bool fxaa = false;
 
+	bool menu = true;
+
 	Stopwatch *stopwatch;
 
 public:
@@ -79,9 +81,8 @@ public:
 	void tick();
 
 	void resize(int width, int height);
-	void grab();
-
-	bool isGrabbed();
+	void setMenu(bool menu);
+	bool isMenu();
 
 	bool getCloseRequested();
 

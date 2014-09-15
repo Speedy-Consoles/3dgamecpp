@@ -286,13 +286,14 @@ void Graphics::calcDrawArea() {
 	}
 }
 
-void Graphics::grab() {
-	SDL_SetWindowGrab(window, (SDL_bool) !SDL_GetWindowGrab(window));
-	SDL_SetRelativeMouseMode((SDL_bool) !SDL_GetRelativeMouseMode());
+void Graphics::setMenu(bool menu) {
+	SDL_SetWindowGrab(window, (SDL_bool) menu);
+	SDL_SetRelativeMouseMode((SDL_bool) menu);
+	this->menu = menu;
 }
 
-bool Graphics::isGrabbed() {
-	return SDL_GetWindowGrab(window);
+bool Graphics::isMenu() {
+	return menu;
 }
 
 //GLuint Graphics::loadShader(const char *path, GLenum type) {
