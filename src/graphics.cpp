@@ -74,7 +74,7 @@ Graphics::~Graphics() {
 }
 
 void Graphics::initGL() {
-	glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
+	glClearColor(fogColor[0], fogColor[1], fogColor[2], 1.0);
 	glClearDepth(1);
 	glDepthFunc(GL_LEQUAL);
 	glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
@@ -170,7 +170,6 @@ void Graphics::initGL() {
 	else
 		LOG(INFO) << "GL_NV_fog_distance not available, falling back to z fog";
 
-	float fogColor[4] = {0.5, 0.5, 0.5, 1.0};
 	glFogi(GL_FOG_MODE, GL_LINEAR);
 	glFogf(GL_FOG_START, ZFAR - 0.1f - 192.0);
 	glFogf(GL_FOG_END, ZFAR - 0.1f);

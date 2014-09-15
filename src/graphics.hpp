@@ -49,6 +49,8 @@ private:
 	GLuint firstDL;
 	vec3i64 *dlChunks;
 
+	float fogColor[3] = {0.6, 0.6, 0.8};
+	float skyColor[3] = {0.15, 0.15, 0.9};
 	float sunLightPosition[4] = {3.0, 2.0, 9.0, 0.0};
 	GLuint blockTexture;
 	GLuint noTexture;

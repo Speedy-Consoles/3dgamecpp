@@ -84,15 +84,40 @@ void Graphics::render() {
 
 void Graphics::renderScene(const Player &player) {
 	//glUseProgram(program);
+	switchToPerspective();
+	glDisable(GL_DEPTH_TEST);
+	glDisable(GL_TEXTURE_2D);
+	glDisable(GL_LIGHTING);
+	glDisable(GL_FOG);
+	glLoadIdentity();
+	// player pitch
+	glRotated(-player.getPitch(), 1, 0, 0);
+
+	// sky
+	glDepthMask(false);
+	glBegin(GL_QUADS);
+
+	glColor3fv(fogColor);
+	glVertex3d(-2, -2, -1);
+	glVertex3d(2, -2, -1);
+	glVertex3d(2, 0.3, -1);
+	glVertex3d(-2, 0.3, -1);
+
+	glVertex3d(-2, 0.3, -1);
+	glVertex3d(2, 0.3, -1);
+	glColor3fv(skyColor);
+	glVertex3d(2, 2, 2);
+	glVertex3d(-2, 2, 2);
+
+	glEnd();
+	glDepthMask(true);
+
+	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_TEXTURE_2D);
 	glEnable(GL_LIGHTING);
 	glEnable(GL_FOG);
-	glEnable(GL_DEPTH_TEST);
-	switchToPerspective();
-	glLoadIdentity();
+
 	// player yaw
-	glRotated(-player.getPitch(), 1, 0, 0);
-	// player pitch
 	glRotated(-player.getYaw(), 0, 1, 0);
 	// tilt coordinate system so z points up
 	glRotated(-90, 1, 0, 0);
