@@ -30,7 +30,7 @@ void Graphics::render() {
 	}
 
 	stopwatch->start(CLOCK_CLR);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glClear(GL_DEPTH_BUFFER_BIT);
 	logOpenGLError();
 	stopwatch->stop(CLOCK_CLR);
 
@@ -98,8 +98,8 @@ void Graphics::renderScene(const Player &player) {
 	glBegin(GL_QUADS);
 
 	glColor3fv(fogColor);
-	glVertex3d(-2, -2, -1);
-	glVertex3d(2, -2, -1);
+	glVertex3d(-2, -2, 2);
+	glVertex3d(2, -2, 2);
 	glVertex3d(2, 0.3, -1);
 	glVertex3d(-2, 0.3, -1);
 
