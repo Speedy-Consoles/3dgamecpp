@@ -55,10 +55,10 @@ Graphics::Graphics(
 	initGL();
 	resize(conf.windowed_res[0], conf.windowed_res[1]);
 
-	if (START_WIDTH <= START_HEIGHT)
+	if (DEFAULT_WINDOWED_RES[1] <= DEFAULT_WINDOWED_RES[0])
 		maxFOV = YFOV;
 	else
-		maxFOV = atan(START_WIDTH * tan(YFOV / 2) / START_HEIGHT) * 2;
+		maxFOV = atan(DEFAULT_WINDOWED_RES[0] * tan(YFOV / 2) / DEFAULT_WINDOWED_RES[1]) * 2;
 
 	startTimePoint = high_resolution_clock::now();
 }
@@ -242,7 +242,7 @@ void Graphics::resize(int width, int height) {
 }
 
 void Graphics::makePerspective() {
-	double normalRatio = START_WIDTH / (double) START_HEIGHT;
+	double normalRatio = DEFAULT_WINDOWED_RES[0] / (double) DEFAULT_WINDOWED_RES[1];
 	double currentRatio = width / (double) height;
 	double angle;
 	if (currentRatio > normalRatio)
@@ -259,31 +259,31 @@ void Graphics::makePerspective() {
 }
 
 void Graphics::makeOrthogonal() {
-	double normalRatio = START_WIDTH / (double) START_HEIGHT;
+	double normalRatio = DEFAULT_WINDOWED_RES[0] / (double) DEFAULT_WINDOWED_RES[1];
 	double currentRatio = width / (double) height;
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 	if (currentRatio > normalRatio)
-		glOrtho(-START_WIDTH / 2.0, START_WIDTH / 2.0, -START_WIDTH
-				/ currentRatio / 2.0, START_WIDTH / currentRatio / 2.0, 1,
+		glOrtho(-DEFAULT_WINDOWED_RES[0] / 2.0, DEFAULT_WINDOWED_RES[0] / 2.0, -DEFAULT_WINDOWED_RES[0]
+				/ currentRatio / 2.0, DEFAULT_WINDOWED_RES[0] / currentRatio / 2.0, 1,
 				-1);
 	else
-		glOrtho(-START_HEIGHT * currentRatio / 2.0, START_HEIGHT
-				* currentRatio / 2.0, -START_HEIGHT / 2.0,
-				START_HEIGHT / 2.0, 1, -1);
+		glOrtho(-DEFAULT_WINDOWED_RES[1] * currentRatio / 2.0, DEFAULT_WINDOWED_RES[1]
+				* currentRatio / 2.0, -DEFAULT_WINDOWED_RES[1] / 2.0,
+				DEFAULT_WINDOWED_RES[1] / 2.0, 1, -1);
 	glGetDoublev(GL_PROJECTION_MATRIX, orthogonalMatrix);
 	glMatrixMode(GL_MODELVIEW);
 }
 
 void Graphics::calcDrawArea() {
-	double normalRatio = START_WIDTH / (double) START_HEIGHT;
+	double normalRatio = DEFAULT_WINDOWED_RES[0] / (double) DEFAULT_WINDOWED_RES[1];
 	double currentRatio = width / (double) height;
 	if (currentRatio > normalRatio) {
-		drawWidth = START_WIDTH;
-		drawHeight = START_WIDTH / currentRatio;
+		drawWidth = DEFAULT_WINDOWED_RES[0];
+		drawHeight = DEFAULT_WINDOWED_RES[0] / currentRatio;
 	} else {
-		drawWidth = START_HEIGHT * currentRatio;
-		drawHeight = START_HEIGHT;
+		drawWidth = DEFAULT_WINDOWED_RES[1] * currentRatio;
+		drawHeight = DEFAULT_WINDOWED_RES[1];
 	}
 }
 
