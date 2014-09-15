@@ -3,7 +3,9 @@
 
 //#define _ELPP_UNICODE
 #define _ELPP_NO_DEFAULT_LOG_FILE
-#define _ELPP_STACKTRACE_ON_CRASH
+#ifdef _MSC_VER
+	#define _ELPP_STACKTRACE_ON_CRASH
+#endif
 #define _ELPP_THREAD_SAFE
 //#define _ELPP_FORCE_USE_STD_THREAD
 

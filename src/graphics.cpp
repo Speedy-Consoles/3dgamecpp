@@ -5,9 +5,6 @@
 #include "logging.hpp"
 
 #include <cmath>
-#include <SDL2/SDL.h>
-#include <SDL2/SDL_image.h>
-#include <GL/glew.h>
 #include <string>
 #include <fstream>
 #include <sstream>
@@ -236,7 +233,7 @@ void Graphics::resize(int width, int height) {
 		destroyFBO();
 		createFBO();
 	}
-//
+
 //	glUseProgram(program_postproc);
 //	GLuint pixel_size_loc = glGetUniformLocation(program_postproc, "pixel_size");
 //	logOpenGLError();

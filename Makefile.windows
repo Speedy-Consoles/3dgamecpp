@@ -17,13 +17,13 @@ SOURCE_FILES = \
 CXX = x86_64-w64-mingw32-g++
 LD = x86_64-w64-mingw32-g++
 
-CXXFLAGS = -Wall -std=c++11 -pthread `freetype-config --cflags`
-LDFLAGS = -pthread
+CXXFLAGS = -Wall -std=c++11 -pthread `freetype-config --cflags` -DGLEW_STATIC -mwindows
+LDFLAGS = -pthread -mwindows
 
 INCLUDE_DIRS =
 LIB_DIRS =
 
-LIBS = mingw32 opengl32 glu32 GLEW ftgl SDL2main SDL2 SDL2_image freetype png bz2 z
+LIBS = mingw32 SDL2main SDL2 glu32 ftgl SDL2_image freetype glew32s opengl32 png z bz2
 
 DEBUG ?= 1
 ifeq ($(DEBUG), 1)

@@ -3,7 +3,9 @@
 
 #include <chrono>
 
+#include <GL/glew.h>
 #include <SDL2/SDL.h>
+#include <SDL2/SDL_image.h>
 #include <FTGL/ftgl.h>
 
 #include "world.hpp"
@@ -11,7 +13,6 @@
 #include "constants.hpp"
 #include "stopwatch.hpp"
 #include "client.hpp"
-#include <GL/glew.h>
 
 class Graphics {
 private:
@@ -64,7 +65,7 @@ private:
 //	GLuint fbo_texture = 0;
 	GLuint fbo_depth_buffer = 0;
 	uint msaa = 0;
-//
+
 //	bool fxaa = false;
 
 	Stopwatch *stopwatch;

@@ -253,7 +253,7 @@ void Graphics::renderPlayers() {
 }
 
 void Graphics::renderHud(const Player &player) {
-	glUseProgram(0);
+	//glUseProgram(0);
 	switchToOrthogonal();
 	glDisable(GL_LIGHTING);
 	glDisable(GL_FOG);
