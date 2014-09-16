@@ -29,6 +29,7 @@ Graphics::Graphics(
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
 	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
+	SDL_SetHint("SDL_VIDEO_MINIMIZE_ON_FOCUS_LOSS", "0");
 	window = SDL_CreateWindow(
 		"3dgame",
 		0, 0,
@@ -55,7 +56,7 @@ Graphics::Graphics(
 	initGL();
 	resize(conf.windowed_res[0], conf.windowed_res[1]);
 
-	if (DEFAULT_WINDOWED_RES[1] <= DEFAULT_WINDOWED_RES[0])
+	if (DEFAULT_WINDOWED_RES[0] <= DEFAULT_WINDOWED_RES[1])
 		maxFOV = YFOV;
 	else
 		maxFOV = atan(DEFAULT_WINDOWED_RES[0] * tan(YFOV / 2) / DEFAULT_WINDOWED_RES[1]) * 2;
@@ -304,6 +305,18 @@ void Graphics::setMenu(bool menu) {
 
 bool Graphics::isMenu() {
 	return menu;
+}
+
+void Graphics::setFullscreen(bool fullscreen) {
+	if (fullscreen)
+		SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN);
+	else
+		SDL_SetWindowFullscreen(window, 0);
+	this->fullscreen = fullscreen;
+}
+
+bool Graphics::isFullscreen() {
+	return fullscreen;
 }
 
 //GLuint Graphics::loadShader(const char *path, GLenum type) {

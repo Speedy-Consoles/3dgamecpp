@@ -305,6 +305,7 @@ void Graphics::renderHud(const Player &player) {
 void Graphics::renderDebugInfo(const Player &player) {
 	vec3i64 playerPos = player.getPos();
 	vec3d playerVel = player.getVel();
+	uint32 windowFlags = SDL_GetWindowFlags(window);
 
 	glPushMatrix();
 	glColor3f(1.0f, 1.0f, 1.0f);
@@ -328,6 +329,85 @@ void Graphics::renderDebugInfo(const Player &player) {
 	RENDER_LINE("chunks loaded: %lu", world->getNumChunks());
 	RENDER_LINE("MSAA: %u", getMSAA());
 //	RENDER_LINE("FXAA: %s", fxaa ? "on" : "off");
+	if ((SDL_WINDOW_FULLSCREEN & windowFlags) > 0)
+		glColor3f(1.0f, 0.0f, 0.0f);
+	else
+		glColor3f(1.0f, 1.0f, 1.0f);
+	if ((SDL_WINDOW_FULLSCREEN & windowFlags) > 0)
+		glColor3f(1.0f, 0.0f, 0.0f);
+	else
+		glColor3f(1.0f, 1.0f, 1.0f);
+	RENDER_LINE("SDL_WINDOW_FULLSCREEN");
+	if ((SDL_WINDOW_FULLSCREEN_DESKTOP & windowFlags) > 0)
+		glColor3f(1.0f, 0.0f, 0.0f);
+	else
+		glColor3f(1.0f, 1.0f, 1.0f);
+	RENDER_LINE("SDL_WINDOW_FULLSCREEN_DESKTOP");
+	if ((SDL_WINDOW_OPENGL & windowFlags) > 0)
+		glColor3f(1.0f, 0.0f, 0.0f);
+	else
+		glColor3f(1.0f, 1.0f, 1.0f);
+	RENDER_LINE("SDL_WINDOW_OPENGL");
+	if ((SDL_WINDOW_SHOWN & windowFlags) > 0)
+		glColor3f(1.0f, 0.0f, 0.0f);
+	else
+		glColor3f(1.0f, 1.0f, 1.0f);
+	RENDER_LINE("SDL_WINDOW_SHOWN");
+	if ((SDL_WINDOW_HIDDEN & windowFlags) > 0)
+		glColor3f(1.0f, 0.0f, 0.0f);
+	else
+		glColor3f(1.0f, 1.0f, 1.0f);
+	RENDER_LINE("SDL_WINDOW_HIDDEN");
+	if ((SDL_WINDOW_BORDERLESS & windowFlags) > 0)
+		glColor3f(1.0f, 0.0f, 0.0f);
+	else
+		glColor3f(1.0f, 1.0f, 1.0f);
+	RENDER_LINE("SDL_WINDOW_BORDERLESS");
+	if ((SDL_WINDOW_RESIZABLE & windowFlags) > 0)
+		glColor3f(1.0f, 0.0f, 0.0f);
+	else
+		glColor3f(1.0f, 1.0f, 1.0f);
+	RENDER_LINE("SDL_WINDOW_RESIZABLE");
+	if ((SDL_WINDOW_MINIMIZED & windowFlags) > 0)
+		glColor3f(1.0f, 0.0f, 0.0f);
+	else
+		glColor3f(1.0f, 1.0f, 1.0f);
+	RENDER_LINE("SDL_WINDOW_MINIMIZED");
+	if ((SDL_WINDOW_MAXIMIZED & windowFlags) > 0)
+		glColor3f(1.0f, 0.0f, 0.0f);
+	else
+		glColor3f(1.0f, 1.0f, 1.0f);
+	RENDER_LINE("SDL_WINDOW_MAXIMIZED");
+	if ((SDL_WINDOW_INPUT_GRABBED & windowFlags) > 0)
+		glColor3f(1.0f, 0.0f, 0.0f);
+	else
+		glColor3f(1.0f, 1.0f, 1.0f);
+	RENDER_LINE("SDL_WINDOW_INPUT_GRABBED");
+	if ((SDL_WINDOW_INPUT_FOCUS & windowFlags) > 0)
+		glColor3f(1.0f, 0.0f, 0.0f);
+	else
+		glColor3f(1.0f, 1.0f, 1.0f);
+	RENDER_LINE("SDL_WINDOW_INPUT_FOCUS");
+	if ((SDL_WINDOW_MOUSE_FOCUS & windowFlags) > 0)
+		glColor3f(1.0f, 0.0f, 0.0f);
+	else
+		glColor3f(1.0f, 1.0f, 1.0f);
+	RENDER_LINE("SDL_WINDOW_MOUSE_FOCUS");
+	if ((SDL_WINDOW_FOREIGN & windowFlags) > 0)
+		glColor3f(1.0f, 0.0f, 0.0f);
+	else
+		glColor3f(1.0f, 1.0f, 1.0f);
+	RENDER_LINE("SDL_WINDOW_FOREIGN");
+	if ((SDL_WINDOW_ALLOW_HIGHDPI & windowFlags) > 0)
+		glColor3f(1.0f, 0.0f, 0.0f);
+	else
+		glColor3f(1.0f, 1.0f, 1.0f);
+	RENDER_LINE("SDL_WINDOW_ALLOW_HIGHDPI");
+//	if ((SDL_WINDOW_MOUSE_CAPTURE & windowFlags) > 0)
+//		glColor3f(1.0f, 0.0f, 0.0f);
+//	else
+//		glColor3f(1.0f, 1.0f, 1.0f);
+//	RENDER_LINE("SDL_WINDOW_MOUSE_CAPTURE");
 
 	glPopMatrix();
 

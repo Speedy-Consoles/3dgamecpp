@@ -116,7 +116,7 @@ void Client::handleInput() {
 			case SDL_WINDOWEVENT_CLOSE:
 				closeRequested = true;
 				break;
-			case SDL_WINDOWEVENT_RESIZED:
+			case SDL_WINDOWEVENT_SIZE_CHANGED:
 				graphics->resize(
 					event.window.data1,
 					event.window.data2
@@ -153,6 +153,9 @@ void Client::handleInput() {
 			case SDL_SCANCODE_Q:
 				if (SDL_GetModState() & KMOD_LCTRL)
 					closeRequested = true;
+				break;
+			case SDL_SCANCODE_F11:
+				graphics->setFullscreen(!graphics->isFullscreen());
 				break;
 			default:
 				//printf("unknown key: ", event.key.keysym);

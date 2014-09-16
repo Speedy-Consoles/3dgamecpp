@@ -73,6 +73,7 @@ private:
 	bool menu = true;
 	double oldRelMouseX = 0.5;
 	double oldRelMouseY = 0.5;
+	bool fullscreen = false;
 
 	Stopwatch *stopwatch;
 
@@ -85,6 +86,8 @@ public:
 	void resize(int width, int height);
 	void setMenu(bool menu);
 	bool isMenu();
+	void setFullscreen(bool fullscreen);
+	bool isFullscreen();
 
 	bool getCloseRequested();
 
