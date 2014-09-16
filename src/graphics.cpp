@@ -50,7 +50,7 @@ Graphics::Graphics(
 	LOG(info) << "Initializing GLEW";
 	GLenum glew_error = glewInit();
 	if (glew_error != GLEW_OK) LOG(fatal) << glewGetErrorString(glew_error);
-	if (!!GLEW_VERSION_2_0) LOG(fatal) << "OpenGL version 2.0 not available";
+	if (!GLEW_VERSION_2_0) LOG(fatal) << "OpenGL version 2.0 not available";
 	if (GLEW_VERSION_3_0) {
 		// TODO fancy stuff
 	}
