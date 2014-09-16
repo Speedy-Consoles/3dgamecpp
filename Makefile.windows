@@ -7,10 +7,12 @@ SOURCE_FILES = \
 	config.cpp\
 	graphics.cpp\
 	local_server_interface.cpp\
+	menu.cpp\
 	monitor.cpp\
 	perlin.cpp\
 	player.cpp\
 	render.cpp\
+	render_menu.cpp\
 	stopwatch.cpp\
 	util.cpp\
 	world.cpp
