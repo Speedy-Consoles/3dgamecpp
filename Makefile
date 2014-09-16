@@ -20,13 +20,14 @@ SOURCE_FILES = \
 CXX = g++
 LD = g++
 
-CXXFLAGS = -Wall -std=c++11
-LDFLAGS =
+CXXFLAGS = -Wall -std=c++11 -pthread
+LDFLAGS = -pthread
 
 INCLUDE_DIRS = /usr/include/freetype2
 LIB_DIRS = 
 
-LIBS = SDL2 GL GLU GLEW SDL2_image ftgl
+LIBS_LD_FLAGS  = -Wl,-Bstatic -lboost_log -lboost_thread -lboost_system
+LIBS_LD_FLAGS += -Wl,-Bdynamic -lGL -lGLU -lGLEW -lftgl -lSDL2 -lSDL2_image
 
 DEBUG ?= 1
 ifeq ($(DEBUG), 1)
@@ -41,8 +42,6 @@ endif
 
 CXXFLAGS += $(addprefix -I, $(INCLUDE_DIRS))
 LDFLAGS += $(addprefix -L, $(LIB_DIRS))
-
-LIBS_LD_FLAGS = $(addprefix -l, $(LIBS))
 
 EXECUTABLE = $(BIN_DIR)/$(EXECUTABLE_NAME)
 

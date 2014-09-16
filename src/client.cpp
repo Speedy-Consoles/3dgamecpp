@@ -21,22 +21,7 @@ std::ofstream cnull;
 //_INITIALIZE_EASYLOGGINGPP
 
 int main(int argc, char *argv[]) {
-	cnull.open("/dev/null");
-	const char *el_argv[] = {
-//		"--v=2",
-	};
-	size_t el_argc = sizeof (el_argv) / sizeof (const char *);
-//	_START_EASYLOGGINGPP(el_argc, el_argv);
-//	el::Configurations loggingConf;
-//	loggingConf.setGlobally(el::ConfigurationType::Format,
-//			"%datetime{%Y-%M-%d %h:%m:%s,%g} %levshort: %msg");
-//	loggingConf.set(el::Level::Error, el::ConfigurationType::Format,
-//			"%datetime{%Y-%M-%d %h:%m:%s,%g} %levshort (%loc): %msg");
-//	loggingConf.set(el::Level::Warning, el::ConfigurationType::Format,
-//			"%datetime{%Y-%M-%d %h:%m:%s,%g} %levshort (%loc): %msg");
-//	el::Loggers::reconfigureLogger("default", loggingConf);
-
-	LOG(INFO) << "Starting program";
+	LOG(info) << "Starting program";
 
 	initUtil();
 	Client client;
@@ -74,7 +59,7 @@ Client::~Client() {
 }
 
 void Client::run() {
-	LOG(INFO) << "Running client";
+	LOG(info) << "Running client";
 	startTimePoint = high_resolution_clock::now();
 	time = 0;
 	int tick = 0;

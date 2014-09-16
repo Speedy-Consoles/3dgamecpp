@@ -130,7 +130,7 @@ void load(const char *filename, GraphicsConf *conf) {
 	try {
 		read_info(filename, pt);
 	} catch (...) {
-		LOG(WARNING) << "'" << filename << "' could not be opened";
+		LOG(warning) << "'" << filename << "' could not be opened";
 		success = false;
 	}
 
@@ -154,7 +154,7 @@ void load(const char *filename, GraphicsConf *conf) {
 		conf->render_distance = pt.get(
 				"graphics.render_distance", DEFAULT_RENDER_DISTANCE);
 	} catch (...) {
-		LOG(WARNING) << "'" << filename << "' was corrupted";
+		LOG(warning) << "'" << filename << "' was corrupted";
 		success = false;
 	}
 

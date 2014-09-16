@@ -20,13 +20,13 @@ Graphics::Graphics(
 		menu(menu),
 		localClientID(localClientID),
 		stopwatch(stopwatch) {
-	LOG(INFO) << "Constructing Graphics";
+	LOG(info) << "Constructing Graphics";
 
-	LOG(INFO) << "Initializing SDL";
+	LOG(info) << "Initializing SDL";
 	auto failure = SDL_Init(SDL_INIT_VIDEO);
-	LOG_IF(failure, FATAL) << SDL_GetError();
+	if (failure) LOG(fatal) << SDL_GetError();
 
-	LOG(INFO) << "Creating window";
+	LOG(info) << "Creating window";
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
@@ -38,19 +38,19 @@ Graphics::Graphics(
 		conf.windowed_res[0], conf.windowed_res[1],
 		SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE
 	);
-	LOG_IF(!window, FATAL) << SDL_GetError();
+	if (!window) LOG(fatal) << SDL_GetError();
 
-	LOG(INFO) << "Creating Open GL Context";
+	LOG(info) << "Creating Open GL Context";
 	glContext = SDL_GL_CreateContext(window);
-	LOG_IF(!glContext, FATAL) << SDL_GetError();
+	if (!glContext) LOG(fatal) << SDL_GetError();
 
-	LOG(INFO) << "OpenGL Version: " << glGetString(GL_VERSION);
-	LOG(INFO) << "GLSL Version: " << glGetString(GL_SHADING_LANGUAGE_VERSION);
+	LOG(info) << "OpenGL Version: " << glGetString(GL_VERSION);
+	LOG(info) << "GLSL Version: " << glGetString(GL_SHADING_LANGUAGE_VERSION);
 
-	LOG(INFO) << "Initializing GLEW";
+	LOG(info) << "Initializing GLEW";
 	GLenum glew_error = glewInit();
-	LOG_IF(glew_error != GLEW_OK, FATAL) << glewGetErrorString(glew_error);
-	LOG_IF(!GLEW_VERSION_2_0, FATAL) << "OpenGL version 2.0 not available";
+	if (glew_error != GLEW_OK) LOG(fatal) << glewGetErrorString(glew_error);
+	if (!!GLEW_VERSION_2_0) LOG(fatal) << "OpenGL version 2.0 not available";
 	if (GLEW_VERSION_3_0) {
 		// TODO fancy stuff
 	}
@@ -67,7 +67,7 @@ Graphics::Graphics(
 }
 
 Graphics::~Graphics() {
-	LOG(INFO) << "Destroying Graphics";
+	LOG(info) << "Destroying Graphics";
 
 	int length = VIEW_RANGE * 2 + 1;
 	glDeleteLists(firstDL, length * length * length);
@@ -93,7 +93,7 @@ void Graphics::initGL() {
 	glEnable(GL_CULL_FACE);
 
 	// light
-	LOG(INFO) << "Initializing light";
+	LOG(info) << "Initializing light";
 	//float playerLight[4] = {4.0f, 4.0f, 2.4f, 1.0f};
 	float lModelAmbient[4] = {0.0f, 0.0f, 0.0f, 1.0f};
 
@@ -131,17 +131,17 @@ void Graphics::initGL() {
 	glColorMaterial(GL_FRONT, GL_AMBIENT_AND_DIFFUSE); // tell opengl glColor3f effects the ambient and diffuse properties of material
 
 	// font
-	LOG(INFO) << "Initializing font";
+	LOG(info) << "Initializing font";
 	font = new FTGLTextureFont("res/DejaVuSansMono.ttf");
 	if (font) {
 		font->FaceSize(16);
 		font->CharMap(ft_encoding_unicode);
 	} else {
-		LOG(ERROR)  << "Could not open 'res/DejaVuSansMono.ttf'";
+		LOG(error)  << "Could not open 'res/DejaVuSansMono.ttf'";
 	}
 
 	// textures
-	LOG(INFO) << "Initializing textures";
+	LOG(info) << "Initializing textures";
 	IMG_Init(IMG_INIT_JPG | IMG_INIT_PNG | IMG_INIT_TIF);
 	SDL_Surface *blockImage = IMG_Load("img/block.png");
 	if (blockImage) {
@@ -155,7 +155,7 @@ void Graphics::initGL() {
 		SDL_FreeSurface(blockImage);
 		logOpenGLError();
 	} else {
-		LOG(ERROR)  << "Could not open 'block.png'";
+		LOG(error)  << "Could not open 'block.png'";
 	}
 
 //	glGenTextures(1, &noTexture);
@@ -174,7 +174,7 @@ void Graphics::initGL() {
 	if (GLEW_NV_fog_distance)
 		glFogi(GL_FOG_DISTANCE_MODE_NV, GL_EYE_RADIAL_NV);
 	else
-		LOG(INFO) << "GL_NV_fog_distance not available, falling back to z fog";
+		LOG(info) << "GL_NV_fog_distance not available, falling back to z fog";
 
 	glFogi(GL_FOG_MODE, GL_LINEAR);
 	glFogf(GL_FOG_START, ZFAR - 0.1f - 192.0);
@@ -222,7 +222,7 @@ void Graphics::initGL() {
 }
 
 void Graphics::resize(int width, int height) {
-	LOG(INFO) << "Resize to " << width << "x" << height;
+	LOG(info) << "Resize to " << width << "x" << height;
 	this->width = width;
 	this->height = height;
 	glViewport(0, 0, width, height);
@@ -319,7 +319,7 @@ bool Graphics::isDebug() {
 //GLuint Graphics::loadShader(const char *path, GLenum type) {
 //	LOG(INFO) << "Loading shader source '" << path << "'";
 //	std::ifstream f(path);
-//	LOG_IF(!f.good(), ERROR) << "Could not open '" << path << "'";
+//	LOG_IF(!f.good(), error) << "Could not open '" << path << "'";
 //	std::stringstream ss;
 //	ss << f.rdbuf();
 //	std::string s = ss.str();
@@ -505,7 +505,7 @@ void Graphics::createFBO() {
 		case GL_FRAMEBUFFER_INCOMPLETE_LAYER_TARGETS:
 			msg = "incomplete layer targets"; break;
 		}
-		LOG(ERROR) << "Framebuffer creation failed: " << msg;
+		LOG(error) << "Framebuffer creation failed: " << msg;
 	}
 	logOpenGLError();
 }
