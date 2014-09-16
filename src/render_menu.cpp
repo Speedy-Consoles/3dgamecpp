@@ -1,5 +1,5 @@
 /*
- * render_menu.cpp
+ * render_menu->cpp
  *
  *  Created on: 16.09.2014
  *      Author: lars
@@ -31,11 +31,11 @@ void Graphics::renderMenu() {
 
 	glColor3f(1.0f, 1.0f, 1.0f);
 
-	for (uint i = 0; i < menu.getEntryCount(); ++i) {
-		std::string name = menu.getEntryName(i);
-		std::string value = menu.getEntryValue(i);
+	for (uint i = 0; i < menu->getEntryCount(); ++i) {
+		std::string name = menu->getEntryName(i);
+		std::string value = menu->getEntryValue(i);
 
-		bool is_highlighted = i == menu.getCursor();
+		bool is_highlighted = i == menu->getCursor();
 
 		if (is_highlighted)
 			glColor3f(1.0f, 1.0f, 0.0f);

@@ -24,8 +24,6 @@ private:
 	const double ZFAR = Chunk::WIDTH * VIEW_RANGE - 2.5;
 	static const int MAX_NEW_QUADS = 3000;
 
-	GraphicsConf conf;
-
 	int width;
 	int height;
 
@@ -37,10 +35,10 @@ private:
 	SDL_GLContext glContext;
 	SDL_Window *window;
 
+	GraphicsConf conf;
 	World *world;
+	Menu *menu;
 	uint localClientID;
-
-	Menu menu;
 
 	std::chrono::time_point<std::chrono::high_resolution_clock> startTimePoint;
 	int lastFPS = 0;
@@ -80,30 +78,17 @@ private:
 	Stopwatch *stopwatch;
 
 public:
-	Graphics(World *world, int localClientID, const GraphicsConf &conf, Stopwatch *stopwatch = nullptr);
+	Graphics(World *world, Menu *menu, int localClientID, const GraphicsConf &conf, Stopwatch *stopwatch = nullptr);
 	~Graphics();
 
 	void tick();
 
 	void resize(int width, int height);
+
 	void setMenu(bool menu);
 	bool isMenu();
-	void setFullscreen(bool fullscreen);
-	bool isFullscreen();
 
 	bool getCloseRequested();
-
-	void enableMSAA(uint samples = 4);
-	void disableMSAA();
-	uint getMSAA() const;
-//	void enableFXAA();
-//	void disableFXAA();
-//	bool getFXAA() const { return fxaa; }
-
-	void menuUp() { menu.navigateUp(); }
-	void menuDown() { menu.navigateDown(); }
-	void menuLeft() { menu.navigateLeft(); }
-	void menuRight() { menu.navigateRight(); }
 
 	const GraphicsConf &getConf() const { return conf; }
 	void setConf(const GraphicsConf &);

@@ -11,13 +11,14 @@
 
 Graphics::Graphics(
 		World *world,
+		Menu *menu,
 		int localClientID,
 		const GraphicsConf &conf,
 		Stopwatch *stopwatch) :
 		conf(conf),
 		world(world),
+		menu(menu),
 		localClientID(localClientID),
-		menu(this),
 		stopwatch(stopwatch) {
 	LOG(INFO) << "Constructing Graphics";
 
@@ -61,8 +62,6 @@ Graphics::Graphics(
 		maxFOV = YFOV;
 	else
 		maxFOV = atan(DEFAULT_WINDOWED_RES[0] * tan(YFOV / 2) / DEFAULT_WINDOWED_RES[1]) * 2;
-
-	menu.reload();
 
 	startTimePoint = high_resolution_clock::now();
 }
@@ -234,7 +233,7 @@ void Graphics::resize(int width, int height) {
 	// update framebuffer object
 	if (fbo)
 		destroyFBO();
-	if (getMSAA())
+	if (conf.aa != AntiAliasing::NONE)
 		createFBO();
 
 //	glUseProgram(program_postproc);
@@ -296,9 +295,7 @@ void Graphics::setMenu(bool is_menu) {
 	this->is_menu = is_menu;
 	if (is_menu) {
 		SDL_WarpMouseInWindow(window, (int) (oldRelMouseX * width), (int) (oldRelMouseY * height));
-		menu.reload();
 	} else {
-		menu.flush();
 		int x = width / 2;
 		int y = height / 2;
 		SDL_GetMouseState(&x, &y);
@@ -309,18 +306,6 @@ void Graphics::setMenu(bool is_menu) {
 
 bool Graphics::isMenu() {
 	return is_menu;
-}
-
-void Graphics::setFullscreen(bool fullscreen) {
-	if (fullscreen)
-		SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN);
-	else
-		SDL_SetWindowFullscreen(window, 0);
-	conf.fullscreen = fullscreen;
-}
-
-bool Graphics::isFullscreen() {
-	return conf.fullscreen;
 }
 
 //GLuint Graphics::loadShader(const char *path, GLenum type) {
@@ -394,7 +379,7 @@ bool Graphics::isFullscreen() {
 //	return program;
 //}
 
-static uint getMSAA(AntiAliasing aa) {
+static uint getMSLevelFromAA(AntiAliasing aa) {
 	switch (aa) {
 		case AntiAliasing::NONE:    return 0;
 		case AntiAliasing::MSAA_2:  return 2;
@@ -405,45 +390,6 @@ static uint getMSAA(AntiAliasing aa) {
 	}
 }
 
-static AntiAliasing getAA(uint msaa) {
-	switch (msaa) {
-		case 0:  return AntiAliasing::NONE;
-		case 2:  return AntiAliasing::MSAA_2;
-		case 4:  return AntiAliasing::MSAA_4;
-		case 8:  return AntiAliasing::MSAA_8;
-		case 16: return AntiAliasing::MSAA_16;
-		default: return AntiAliasing::NONE;
-	}
-}
-
-void Graphics::enableMSAA(uint samples) {
-	destroyFBO();
-	conf.aa = getAA(samples);
-	createFBO();
-}
-
-void Graphics::disableMSAA() {
-	destroyFBO();
-	conf.aa = AntiAliasing::NONE;
-}
-
-uint Graphics::getMSAA() const {
-	return ::getMSAA(conf.aa);
-}
-
-//void Graphics::enableFXAA() {
-//	destroyFBO();
-//	msaa = 0;
-//	fxaa = true;
-//	createFBO();
-//}
-//
-//void Graphics::disableFXAA() {
-//	destroyFBO();
-//	msaa = 0;
-//	fxaa = false;
-//}
-
 void Graphics::setConf(const GraphicsConf &conf) {
 	GraphicsConf old_conf = this->conf;
 	this->conf = conf;
@@ -451,16 +397,17 @@ void Graphics::setConf(const GraphicsConf &conf) {
 	if (conf.aa != old_conf.aa) {
 		if (fbo)
 			destroyFBO();
-		if (getMSAA())
+		if (conf.aa != AntiAliasing::NONE)
 			createFBO();
 	}
 
 	if (conf.fullscreen != old_conf.fullscreen) {
-		setFullscreen(conf.fullscreen);
+		SDL_SetWindowFullscreen(window, conf.fullscreen ? SDL_WINDOW_FULLSCREEN : 0);
 	}
 }
 
 void Graphics::createFBO() {
+	uint msLevel = getMSLevelFromAA(conf.aa);
 //	LOG(INFO) << "Creating framebuffer with MSAA=" << msaa
 //			<< " and fxaa " << (fxaa ? "enabled" : "disabled");
 //	bool needs_render_to_texture = false;
@@ -487,7 +434,7 @@ void Graphics::createFBO() {
 	glBindRenderbuffer(GL_RENDERBUFFER, fbo_color_buffer);
 	logOpenGLError();
 	glRenderbufferStorageMultisample(
-			GL_RENDERBUFFER, getMSAA(), GL_RGB, width, height
+			GL_RENDERBUFFER, msLevel, GL_RGB, width, height
 	);
 	logOpenGLError();
 //	}
@@ -496,9 +443,9 @@ void Graphics::createFBO() {
 	glGenRenderbuffers(1, &fbo_depth_buffer);
 	glBindRenderbuffer(GL_RENDERBUFFER, fbo_depth_buffer);
 	logOpenGLError();
-	if (getMSAA()) {
+	if (conf.aa != AntiAliasing::NONE) {
 		glRenderbufferStorageMultisample(
-				GL_RENDERBUFFER, getMSAA(), GL_DEPTH_COMPONENT24, width, height
+				GL_RENDERBUFFER, msLevel, GL_DEPTH_COMPONENT24, width, height
 		);
 	} else {
 		glRenderbufferStorage(

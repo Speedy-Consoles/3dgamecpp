@@ -16,22 +16,25 @@ using namespace std::chrono;
 
 #include "logging.hpp"
 
-_INITIALIZE_EASYLOGGINGPP
+std::ofstream cnull;
+
+//_INITIALIZE_EASYLOGGINGPP
 
 int main(int argc, char *argv[]) {
+	cnull.open("/dev/null");
 	const char *el_argv[] = {
 //		"--v=2",
 	};
 	size_t el_argc = sizeof (el_argv) / sizeof (const char *);
-	_START_EASYLOGGINGPP(el_argc, el_argv);
-	el::Configurations loggingConf;
-	loggingConf.setGlobally(el::ConfigurationType::Format,
-			"%datetime{%Y-%M-%d %h:%m:%s,%g} %levshort: %msg");
-	loggingConf.set(el::Level::Error, el::ConfigurationType::Format,
-			"%datetime{%Y-%M-%d %h:%m:%s,%g} %levshort (%loc): %msg");
-	loggingConf.set(el::Level::Warning, el::ConfigurationType::Format,
-			"%datetime{%Y-%M-%d %h:%m:%s,%g} %levshort (%loc): %msg");
-	el::Loggers::reconfigureLogger("default", loggingConf);
+//	_START_EASYLOGGINGPP(el_argc, el_argv);
+//	el::Configurations loggingConf;
+//	loggingConf.setGlobally(el::ConfigurationType::Format,
+//			"%datetime{%Y-%M-%d %h:%m:%s,%g} %levshort: %msg");
+//	loggingConf.set(el::Level::Error, el::ConfigurationType::Format,
+//			"%datetime{%Y-%M-%d %h:%m:%s,%g} %levshort (%loc): %msg");
+//	loggingConf.set(el::Level::Warning, el::ConfigurationType::Format,
+//			"%datetime{%Y-%M-%d %h:%m:%s,%g} %levshort (%loc): %msg");
+//	el::Loggers::reconfigureLogger("default", loggingConf);
 
 	LOG(INFO) << "Starting program";
 
@@ -42,7 +45,7 @@ int main(int argc, char *argv[]) {
 	return 0;
 }
 
-Client::Client() : stopwatch(nullptr) {
+Client::Client(){
 	stopwatch = new Stopwatch(CLOCK_ID_NUM);
 	stopwatch->start(CLOCK_ALL);
 
@@ -52,15 +55,17 @@ Client::Client() : stopwatch(nullptr) {
 	serverInterface = new LocalServerInterface(world, 42);
 	localClientID = serverInterface->getLocalClientID();
 
-	GraphicsConf conf;
-	load("graphics-default.profile", &conf);
-	graphics = new Graphics(world, localClientID, conf, stopwatch);
+	conf = new GraphicsConf();
+	load("graphics-default.profile", conf);
+	menu = new Menu(conf);
+	graphics = new Graphics(world, menu, localClientID, *conf, stopwatch);
 }
 
 Client::~Client() {
-	const auto &conf = graphics->getConf();
-	store("graphics-default.profile", conf);
+	store("graphics-default.profile", *conf);
 	delete graphics;
+	delete menu;
+	delete conf;
 
 	// world must be deleted before server interface
 	delete world;
@@ -126,7 +131,7 @@ void Client::handleInput() {
 			}
 			break;
 		case SDL_KEYDOWN:
-			if (!world->isPaused()) {
+			if (!graphics->isMenu()) {
 				switch (event.key.keysym.scancode) {
 				case SDL_SCANCODE_ESCAPE:
 					graphics->setMenu(true);
@@ -136,13 +141,14 @@ void Client::handleInput() {
 					serverInterface->togglePlayerFly();
 					break;
 				case SDL_SCANCODE_M:
-					switch (graphics->getMSAA()) {
-					case 0: graphics->enableMSAA(2); break;
-					case 2: graphics->enableMSAA(4); break;
-					case 4: graphics->enableMSAA(8); break;
-					case 8: graphics->enableMSAA(16); break;
-					case 16: graphics->disableMSAA(); break;
+					switch (conf->aa) {
+					case AntiAliasing::NONE:    conf->aa = AntiAliasing::MSAA_2; break;
+					case AntiAliasing::MSAA_2:  conf->aa = AntiAliasing::MSAA_4; break;
+					case AntiAliasing::MSAA_4:  conf->aa = AntiAliasing::MSAA_8; break;
+					case AntiAliasing::MSAA_8:  conf->aa = AntiAliasing::MSAA_16; break;
+					case AntiAliasing::MSAA_16: conf->aa = AntiAliasing::NONE; break;
 					}
+					graphics->setConf(*conf);
 					break;
 //				case SDL_SCANCODE_N:
 //					switch (graphics->getFXAA()) {
@@ -155,18 +161,20 @@ void Client::handleInput() {
 						closeRequested = true;
 					break;
 				case SDL_SCANCODE_F11:
-					graphics->setFullscreen(!graphics->isFullscreen());
+					conf->fullscreen = !conf->fullscreen;
+					graphics->setConf(*conf);
 					break;
 				default:
 					break;
 				} // switch scancode
-			} else { // if world is paused
+			} else { // if we are in menu
 				switch (event.key.keysym.scancode) {
-				case SDL_SCANCODE_W: graphics->menuUp(); break;
-				case SDL_SCANCODE_S: graphics->menuDown(); break;
-				case SDL_SCANCODE_A: graphics->menuLeft(); break;
-				case SDL_SCANCODE_D: graphics->menuRight(); break;
+				case SDL_SCANCODE_W: menu->navigateUp(); break;
+				case SDL_SCANCODE_S: menu->navigateDown(); break;
+				case SDL_SCANCODE_A: menu->navigateLeft(); break;
+				case SDL_SCANCODE_D: menu->navigateRight(); break;
 				case SDL_SCANCODE_ESCAPE:
+					graphics->setConf(*conf);
 					graphics->setMenu(false);
 					world->setPause(false);
 					break;

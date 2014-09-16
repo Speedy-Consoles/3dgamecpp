@@ -28,10 +28,12 @@ enum ClockId {
 
 class Client {
 private:
-	ServerInterface *serverInterface;
-	World *world;
-	Menu *menu;
-	Graphics *graphics;
+	ServerInterface *serverInterface = nullptr;
+	World *world = nullptr;
+	Menu *menu = nullptr;
+	Graphics *graphics = nullptr;
+	GraphicsConf *conf = nullptr;
+	Stopwatch *stopwatch = nullptr;
 
 	int localClientID;
 
@@ -39,11 +41,10 @@ private:
 
 	int64 time;
 
-	Stopwatch *stopwatch;
-
 	bool closeRequested = false;
 
 public:
+	Client(const Client &) = delete;
 	Client();
 	~Client();
 

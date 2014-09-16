@@ -10,14 +10,12 @@
 
 #include "config.hpp"
 
-class Graphics;
-
 #include <string>
 
 class Menu {
 public:
 	Menu() = delete;
-	Menu(Graphics *);
+	Menu(GraphicsConf *);
 
 	uint getCursor() const { return cursor; }
 
@@ -26,18 +24,14 @@ public:
 	void navigateRight();
 	void navigateLeft();
 
-	void reload();
-	void flush();
-
 	uint getEntryCount();
 	std::string getEntryName(uint);
 	std::string getEntryValue(uint);
 
 private:
-	Graphics *graphics = nullptr;
 	uint cursor = 0;
 
-	GraphicsConf conf;
+	GraphicsConf *conf;
 };
 
 #endif // MENU_HPP_
