@@ -32,9 +32,7 @@ Menu::Menu(Graphics *graphics) : graphics(graphics) {
 }
 
 void Menu::navigateUp() {
-	--cursor;
-	while (cursor < 0)
-		cursor += getEntryCount();
+	cursor = (cursor + getEntryCount() - 1) % getEntryCount();
 }
 
 void Menu::navigateDown() {
