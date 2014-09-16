@@ -79,7 +79,7 @@ void Menu::navigateLeft() {
 		break;
 
 	case IS_FULLSCREEN:
-		conf.is_fullscreen |= true;
+		conf.is_fullscreen ^= true;
 		break;
 
 	case ANTI_ALIASING:
