@@ -20,10 +20,9 @@ SOURCE_FILES = \
 CXX = g++
 LD = g++
 
-CXXFLAGS = -Wall -std=c++11 -pthread
+CXXFLAGS = -Wall -std=c++11 `freetype-config --cflags` -pthread
 LDFLAGS = -pthread
 
-INCLUDE_DIRS = /usr/include/freetype2
 LIB_DIRS = 
 
 LIBS_LD_FLAGS  = -Wl,-Bstatic -lboost_log -lboost_thread -lboost_system
