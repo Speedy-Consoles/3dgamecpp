@@ -8,6 +8,9 @@
 #include "graphics.hpp"
 
 void Graphics::renderMenu() {
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	glDrawBuffer(GL_BACK);
+
 	glClearColor(0.2f, 0.1f, 0.1f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT);
 
