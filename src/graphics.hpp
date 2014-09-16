@@ -76,7 +76,6 @@ private:
 	bool is_menu = true;
 	double oldRelMouseX = 0.5;
 	double oldRelMouseY = 0.5;
-	bool fullscreen = false;
 
 	Stopwatch *stopwatch;
 

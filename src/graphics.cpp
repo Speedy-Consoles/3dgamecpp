@@ -256,7 +256,7 @@ void Graphics::makePerspective() {
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 	gluPerspective((float) (angle * 360.0 / TAU),
-			(float) currentRatio, 0.1f, ZFAR);
+			(float) currentRatio, 0.1f, sqrt(3 * ZFAR * ZFAR));
 	glGetDoublev(GL_PROJECTION_MATRIX, perspectiveMatrix);
 	glMatrixMode(GL_MODELVIEW);
 }
@@ -316,11 +316,11 @@ void Graphics::setFullscreen(bool fullscreen) {
 		SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN);
 	else
 		SDL_SetWindowFullscreen(window, 0);
-	this->fullscreen = fullscreen;
+	conf.fullscreen = fullscreen;
 }
 
 bool Graphics::isFullscreen() {
-	return fullscreen;
+	return conf.fullscreen;
 }
 
 //GLuint Graphics::loadShader(const char *path, GLenum type) {
@@ -448,11 +448,15 @@ void Graphics::setConf(const GraphicsConf &conf) {
 	GraphicsConf old_conf = this->conf;
 	this->conf = conf;
 
-	if (old_conf.aa != conf.aa) {
+	if (conf.aa != old_conf.aa) {
 		if (fbo)
 			destroyFBO();
 		if (getMSAA())
 			createFBO();
+	}
+
+	if (conf.fullscreen != old_conf.fullscreen) {
+		setFullscreen(conf.fullscreen);
 	}
 }
 

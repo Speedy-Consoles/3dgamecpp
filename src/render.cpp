@@ -337,10 +337,6 @@ void Graphics::renderDebugInfo(const Player &player) {
 		glColor3f(1.0f, 0.0f, 0.0f);
 	else
 		glColor3f(1.0f, 1.0f, 1.0f);
-	if ((SDL_WINDOW_FULLSCREEN & windowFlags) > 0)
-		glColor3f(1.0f, 0.0f, 0.0f);
-	else
-		glColor3f(1.0f, 1.0f, 1.0f);
 	RENDER_LINE("SDL_WINDOW_FULLSCREEN");
 	if ((SDL_WINDOW_FULLSCREEN_DESKTOP & windowFlags) > 0)
 		glColor3f(1.0f, 0.0f, 0.0f);

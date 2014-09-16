@@ -1,7 +1,7 @@
 #include "config.hpp"
 
 RenderBackend DEFAULT_RENDER_BACKEND  = RenderBackend::OGL_2;
-bool          DEFAULT_IS_FULLSCREEN   = false;
+bool          DEFAULT_FULLSCREEN   = false;
 vec2i         DEFAULT_WINDOWED_RES    = vec2i{1600, 900};
 vec2i         DEFAULT_FULLSCREEN_RES  = vec2i{0, 0};
 AntiAliasing  DEFAULT_ANTI_ALIASING   = AntiAliasing::NONE;
@@ -137,8 +137,8 @@ void load(const char *filename, GraphicsConf *conf) {
 	if (success) try {
 		conf->render_backend = pt.get(
 				"graphics.render_backend", DEFAULT_RENDER_BACKEND);
-		conf->is_fullscreen = pt.get(
-				"graphics.is_fullscreen", DEFAULT_IS_FULLSCREEN);
+		conf->fullscreen = pt.get(
+				"graphics.is_fullscreen", DEFAULT_FULLSCREEN);
 		conf->windowed_res[0] = pt.get(
 				"graphics.windowed_res.w", DEFAULT_WINDOWED_RES[0]);
 		conf->windowed_res[1] = pt.get(
@@ -160,7 +160,7 @@ void load(const char *filename, GraphicsConf *conf) {
 
 	if (!success) {
 		conf->render_backend = DEFAULT_RENDER_BACKEND;
-		conf->is_fullscreen = DEFAULT_IS_FULLSCREEN;
+		conf->fullscreen = DEFAULT_FULLSCREEN;
 		conf->windowed_res = DEFAULT_WINDOWED_RES;
 		conf->fullscreen_res = DEFAULT_FULLSCREEN_RES;
 		conf->aa = DEFAULT_ANTI_ALIASING;

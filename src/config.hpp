@@ -23,7 +23,7 @@ enum class Fog {
 };
 
 extern RenderBackend DEFAULT_RENDER_BACKEND;
-extern bool          DEFAULT_IS_FULLSCREEN;
+extern bool          DEFAULT_FULLSCREEN;
 extern vec2i         DEFAULT_WINDOWED_RES;
 extern vec2i         DEFAULT_FULLSCREEN_RES;
 extern AntiAliasing  DEFAULT_ANTI_ALIASING;
@@ -32,7 +32,7 @@ extern uint          DEFAULT_RENDER_DISTANCE;
 
 struct GraphicsConf {
 	RenderBackend render_backend;
-	bool is_fullscreen;
+	bool fullscreen;
 	vec2i windowed_res;
 	vec2i fullscreen_res;
 	AntiAliasing aa;

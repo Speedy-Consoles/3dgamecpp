@@ -129,8 +129,8 @@ void Client::handleInput() {
 			if (!world->isPaused()) {
 				switch (event.key.keysym.scancode) {
 				case SDL_SCANCODE_ESCAPE:
-					graphics->setMenu(!graphics->isMenu());
-					world->setPause(!world->isPaused());
+					graphics->setMenu(true);
+					world->setPause(true);
 					break;
 				case SDL_SCANCODE_F:
 					serverInterface->togglePlayerFly();
@@ -167,8 +167,8 @@ void Client::handleInput() {
 				case SDL_SCANCODE_A: graphics->menuLeft(); break;
 				case SDL_SCANCODE_D: graphics->menuRight(); break;
 				case SDL_SCANCODE_ESCAPE:
-					graphics->setMenu(!graphics->isMenu());
-					world->setPause(!world->isPaused());
+					graphics->setMenu(false);
+					world->setPause(false);
 					break;
 				default: break;
 				}

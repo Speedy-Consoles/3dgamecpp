@@ -15,7 +15,7 @@ using namespace std;
 
 enum Entry {
 	RENDER_BACKEND,
-	IS_FULLSCREEN,
+	FULLSCREEN,
 
 	//WINDOWED_RES,
 	//FULLSCREEN_RES,
@@ -44,8 +44,8 @@ void Menu::navigateRight() {
 	case RENDER_BACKEND:
 		break;
 
-	case IS_FULLSCREEN:
-		conf.is_fullscreen ^= true;
+	case FULLSCREEN:
+		conf.fullscreen ^= true;
 		break;
 
 	case ANTI_ALIASING:
@@ -76,8 +76,8 @@ void Menu::navigateLeft() {
 	case RENDER_BACKEND:
 		break;
 
-	case IS_FULLSCREEN:
-		conf.is_fullscreen ^= true;
+	case FULLSCREEN:
+		conf.fullscreen ^= true;
 		break;
 
 	case ANTI_ALIASING:
@@ -118,7 +118,7 @@ void Menu::flush() {
 std::string Menu::getEntryName(uint i) {
 	switch (i) {
 		case RENDER_BACKEND: return "Render backend";
-		case IS_FULLSCREEN: return "Fullscreen";
+		case FULLSCREEN: return "Fullscreen";
 
 		//case WINDOWED_RES:
 		//case FULLSCREEN_RES:
@@ -164,7 +164,7 @@ std::string Menu::getEntryValue(uint i) {
 
 	switch (i) {
 		case RENDER_BACKEND: ss << conf.render_backend; break;
-		case IS_FULLSCREEN: ss << (conf.is_fullscreen ? "On" : "Off"); break;
+		case FULLSCREEN: ss << (conf.fullscreen ? "On" : "Off"); break;
 
 		//case WINDOWED_RES:
 		//case FULLSCREEN_RES:
