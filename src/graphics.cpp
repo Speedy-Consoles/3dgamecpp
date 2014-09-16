@@ -289,11 +289,11 @@ void Graphics::calcDrawArea() {
 	}
 }
 
-void Graphics::setMenu(bool is_menu) {
-	SDL_SetWindowGrab(window, (SDL_bool) !is_menu);
-	SDL_SetRelativeMouseMode((SDL_bool) !is_menu);
-	this->is_menu = is_menu;
-	if (is_menu) {
+void Graphics::setMenu(bool menuActive) {
+	SDL_SetWindowGrab(window, (SDL_bool) !menuActive);
+	SDL_SetRelativeMouseMode((SDL_bool) !menuActive);
+	this->menuActive = menuActive;
+	if (menuActive) {
 		SDL_WarpMouseInWindow(window, (int) (oldRelMouseX * width), (int) (oldRelMouseY * height));
 	} else {
 		int x = width / 2;
@@ -305,7 +305,15 @@ void Graphics::setMenu(bool is_menu) {
 }
 
 bool Graphics::isMenu() {
-	return is_menu;
+	return menuActive;
+}
+
+void Graphics::setDebug(bool debugActive) {
+	this->debugActive = debugActive;
+}
+
+bool Graphics::isDebug() {
+	return debugActive;
 }
 
 //GLuint Graphics::loadShader(const char *path, GLenum type) {

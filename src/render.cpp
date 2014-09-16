@@ -14,76 +14,77 @@ void Graphics::switchToOrthogonal() {
 }
 
 void Graphics::render() {
-	if (is_menu) {
-		renderMenu();
+	Player &localPlayer = world->getPlayer(localClientID);
+	if (!localPlayer.isValid())
+		return;
+
+	if (fbo) {
+		// render to the fbo and not the screen
+		glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+		logOpenGLError();
 	} else {
-		Player &localPlayer = world->getPlayer(localClientID);
-		if (!localPlayer.isValid())
-			return;
-
-		if (fbo) {
-			// render to the fbo and not the screen
-			glBindFramebuffer(GL_FRAMEBUFFER, fbo);
-			logOpenGLError();
-		} else {
-			glBindFramebuffer(GL_FRAMEBUFFER, 0);
-			logOpenGLError();
-			glDrawBuffer(GL_BACK);
-			logOpenGLError();
-		}
-
-		stopwatch->start(CLOCK_CLR);
-		glClear(GL_DEPTH_BUFFER_BIT);
-		logOpenGLError();
-		stopwatch->stop(CLOCK_CLR);
-
-		renderScene(localPlayer);
-		logOpenGLError();
-
-		if (fbo) {
-			// copy framebuffer to screen, blend multisampling on the way
-			glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
-			glBindFramebuffer(GL_READ_FRAMEBUFFER, fbo);
-			glDrawBuffer(GL_BACK);
-	//		if (fxaa) {
-	//			glMatrixMode(GL_PROJECTION);
-	//			glLoadIdentity();
-	//			glMatrixMode(GL_MODELVIEW);
-	//			glLoadIdentity();
-	//
-	//			glDisable(GL_DEPTH_TEST);
-	//			glDisable(GL_LIGHTING);
-	//			glDisable(GL_FOG);
-	//			glEnable(GL_TEXTURE_2D);
-	//			glColor3f(1.0f, 1.0f, 1.0f);
-	//
-	//			glBindTexture(GL_TEXTURE_2D, fbo_texture);
-	//			glUseProgram(program_postproc);
-	//			glBegin(GL_QUADS);
-	//				glTexCoord2f(0.0f, 0.0f); glVertex2f(-1.0f, -1.0f);
-	//				glTexCoord2f(1.0f, 0.0f); glVertex2f(+1.0f, -1.0f);
-	//				glTexCoord2f(1.0f, 1.0f); glVertex2f(+1.0f, +1.0f);
-	//				glTexCoord2f(0.0f, 1.0f); glVertex2f(-1.0f, +1.0f);
-	//			glEnd();
-	//		} else {
-			glBlitFramebuffer(
-					0, 0, width, height,
-					0, 0, width, height,
-					GL_COLOR_BUFFER_BIT,
-					GL_NEAREST
-			);
-	//		}
-			logOpenGLError();
-		}
-
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		logOpenGLError();
 		glDrawBuffer(GL_BACK);
+		logOpenGLError();
+	}
 
+	stopwatch->start(CLOCK_CLR);
+	glClear(GL_DEPTH_BUFFER_BIT);
+	logOpenGLError();
+	stopwatch->stop(CLOCK_CLR);
+
+	renderScene(localPlayer);
+	logOpenGLError();
+
+	if (fbo) {
+		// copy framebuffer to screen, blend multisampling on the way
+		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+		glBindFramebuffer(GL_READ_FRAMEBUFFER, fbo);
+		glDrawBuffer(GL_BACK);
+//		if (fxaa) {
+//			glMatrixMode(GL_PROJECTION);
+//			glLoadIdentity();
+//			glMatrixMode(GL_MODELVIEW);
+//			glLoadIdentity();
+//
+//			glDisable(GL_DEPTH_TEST);
+//			glDisable(GL_LIGHTING);
+//			glDisable(GL_FOG);
+//			glEnable(GL_TEXTURE_2D);
+//			glColor3f(1.0f, 1.0f, 1.0f);
+//
+//			glBindTexture(GL_TEXTURE_2D, fbo_texture);
+//			glUseProgram(program_postproc);
+//			glBegin(GL_QUADS);
+//				glTexCoord2f(0.0f, 0.0f); glVertex2f(-1.0f, -1.0f);
+//				glTexCoord2f(1.0f, 0.0f); glVertex2f(+1.0f, -1.0f);
+//				glTexCoord2f(1.0f, 1.0f); glVertex2f(+1.0f, +1.0f);
+//				glTexCoord2f(0.0f, 1.0f); glVertex2f(-1.0f, +1.0f);
+//			glEnd();
+//		} else {
+		glBlitFramebuffer(
+				0, 0, width, height,
+				0, 0, width, height,
+				GL_COLOR_BUFFER_BIT,
+				GL_NEAREST
+		);
+//		}
+		logOpenGLError();
+	}
+
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	glDrawBuffer(GL_BACK);
+
+	if (!menuActive) {
 		stopwatch->start(CLOCK_HUD);
 		renderHud(localPlayer);
-		renderDebugInfo(localPlayer);
+		if (debugActive)
+			renderDebugInfo(localPlayer);
 		stopwatch->stop(CLOCK_HUD);
-	} // if not in menu
+	} else {
+		renderMenu();
+	}
 }
 
 void Graphics::renderScene(const Player &player) {
@@ -302,8 +303,6 @@ void Graphics::renderHud(const Player &player) {
 	glVertex2d(2, 20);
 	glVertex2d(-2, 20);
 	glEnd();
-
-	renderDebugInfo(player);
 }
 
 void Graphics::renderDebugInfo(const Player &player) {

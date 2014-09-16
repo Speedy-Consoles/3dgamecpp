@@ -164,6 +164,9 @@ void Client::handleInput() {
 					conf->fullscreen = !conf->fullscreen;
 					graphics->setConf(*conf);
 					break;
+				case SDL_SCANCODE_F3:
+					graphics->setDebug(!graphics->isDebug());
+					break;
 				default:
 					break;
 				} // switch scancode

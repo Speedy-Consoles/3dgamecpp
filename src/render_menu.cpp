@@ -11,9 +11,6 @@ void Graphics::renderMenu() {
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	glDrawBuffer(GL_BACK);
 
-	glClearColor(0.2f, 0.1f, 0.1f, 1.0f);
-	glClear(GL_COLOR_BUFFER_BIT);
-
 	switchToOrthogonal();
 	glDisable(GL_LIGHTING);
 	glDisable(GL_FOG);
@@ -22,7 +19,16 @@ void Graphics::renderMenu() {
 
 	glPushMatrix();
 	glLoadIdentity();
-	glTranslatef(-drawWidth / 2 + 3, drawHeight / 2, 0);
+	glTranslatef(-drawWidth / 2, drawHeight / 2, 0);
+	glBegin(GL_QUADS);
+	glColor4f(0.0f, 0.0f, 0.0f, 0.4f);
+	glVertex2d(0.0f, 0.0f);
+	glVertex2d(0.0f, -drawHeight);
+	glVertex2d(drawWidth, -drawHeight);
+	glVertex2d(drawWidth, 0.0f);
+	glEnd();
+
+	glTranslatef(3, 0, 0);
 
 	char buffer[1024];
 	#define RENDER_LINE(args...) sprintf(buffer, args);\

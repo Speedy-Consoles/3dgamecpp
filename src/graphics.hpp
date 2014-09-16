@@ -71,7 +71,8 @@ private:
 
 //	bool fxaa = false;
 
-	bool is_menu = true;
+	bool menuActive = true;
+	bool debugActive = false;
 	double oldRelMouseX = 0.5;
 	double oldRelMouseY = 0.5;
 
@@ -85,8 +86,11 @@ public:
 
 	void resize(int width, int height);
 
-	void setMenu(bool menu);
+	void setMenu(bool menuActive);
 	bool isMenu();
+
+	void setDebug(bool debugActive);
+	bool isDebug();
 
 	bool getCloseRequested();
 
