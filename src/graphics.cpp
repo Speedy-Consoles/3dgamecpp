@@ -17,6 +17,7 @@ Graphics::Graphics(
 		conf(conf),
 		world(world),
 		localClientID(localClientID),
+		menu(this),
 		stopwatch(stopwatch) {
 	LOG(INFO) << "Constructing Graphics";
 
@@ -61,6 +62,8 @@ Graphics::Graphics(
 	else
 		maxFOV = atan(DEFAULT_WINDOWED_RES[0] * tan(YFOV / 2) / DEFAULT_WINDOWED_RES[1]) * 2;
 
+	menu.reload();
+
 	startTimePoint = high_resolution_clock::now();
 }
 
@@ -80,7 +83,6 @@ Graphics::~Graphics() {
 }
 
 void Graphics::initGL() {
-	glClearColor(fogColor[0], fogColor[1], fogColor[2], 1.0);
 	glClearDepth(1);
 	glDepthFunc(GL_LEQUAL);
 	glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
@@ -288,13 +290,15 @@ void Graphics::calcDrawArea() {
 	}
 }
 
-void Graphics::setMenu(bool menu) {
-	SDL_SetWindowGrab(window, (SDL_bool) !menu);
-	SDL_SetRelativeMouseMode((SDL_bool) !menu);
-	this->menu = menu;
-	if (menu) {
+void Graphics::setMenu(bool is_menu) {
+	SDL_SetWindowGrab(window, (SDL_bool) !is_menu);
+	SDL_SetRelativeMouseMode((SDL_bool) !is_menu);
+	this->is_menu = is_menu;
+	if (is_menu) {
 		SDL_WarpMouseInWindow(window, (int) (oldRelMouseX * width), (int) (oldRelMouseY * height));
+		menu.reload();
 	} else {
+		menu.flush();
 		int x = width / 2;
 		int y = height / 2;
 		SDL_GetMouseState(&x, &y);
@@ -304,7 +308,7 @@ void Graphics::setMenu(bool menu) {
 }
 
 bool Graphics::isMenu() {
-	return menu;
+	return is_menu;
 }
 
 void Graphics::setFullscreen(bool fullscreen) {
@@ -439,7 +443,19 @@ uint Graphics::getMSAA() const {
 //	msaa = 0;
 //	fxaa = false;
 //}
-//
+
+void Graphics::setConf(const GraphicsConf &conf) {
+	GraphicsConf old_conf = this->conf;
+	this->conf = conf;
+
+	if (old_conf.aa != conf.aa) {
+		if (fbo)
+			destroyFBO();
+		if (getMSAA())
+			createFBO();
+	}
+}
+
 void Graphics::createFBO() {
 //	LOG(INFO) << "Creating framebuffer with MSAA=" << msaa
 //			<< " and fxaa " << (fxaa ? "enabled" : "disabled");

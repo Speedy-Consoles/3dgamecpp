@@ -5,6 +5,7 @@
 #include "server_interface.hpp"
 #include "world.hpp"
 #include "stopwatch.hpp"
+#include "menu.hpp"
 
 class Graphics;
 
@@ -29,6 +30,7 @@ class Client {
 private:
 	ServerInterface *serverInterface;
 	World *world;
+	Menu *menu;
 	Graphics *graphics;
 
 	int localClientID;

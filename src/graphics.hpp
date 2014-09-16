@@ -14,6 +14,7 @@
 #include "stopwatch.hpp"
 #include "client.hpp"
 #include "config.hpp"
+#include "menu.hpp"
 
 class Graphics {
 private:
@@ -38,6 +39,8 @@ private:
 
 	World *world;
 	uint localClientID;
+
+	Menu menu;
 
 	std::chrono::time_point<std::chrono::high_resolution_clock> startTimePoint;
 	int lastFPS = 0;
@@ -70,7 +73,7 @@ private:
 
 //	bool fxaa = false;
 
-	bool menu = true;
+	bool is_menu = true;
 	double oldRelMouseX = 0.5;
 	double oldRelMouseY = 0.5;
 	bool fullscreen = false;
@@ -98,6 +101,11 @@ public:
 //	void disableFXAA();
 //	bool getFXAA() const { return fxaa; }
 
+	void menuUp() { menu.navigateUp(); }
+	void menuDown() { menu.navigateDown(); }
+	void menuLeft() { menu.navigateLeft(); }
+	void menuRight() { menu.navigateRight(); }
+
 	const GraphicsConf &getConf() const { return conf; }
 	void setConf(const GraphicsConf &);
 
@@ -122,6 +130,9 @@ private:
 	void calcDrawArea();
 
 	void render();
+
+	void renderMenu();
+
 	void renderScene(const Player &);
 	void renderHud(const Player &);
 	void renderDebugInfo(const Player &);

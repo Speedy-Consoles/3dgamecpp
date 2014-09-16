@@ -10,6 +10,7 @@
 #include "local_server_interface.hpp"
 #include "graphics.hpp"
 #include "config.hpp"
+#include "menu.hpp"
 
 using namespace std::chrono;
 
@@ -57,7 +58,7 @@ Client::Client() : stopwatch(nullptr) {
 }
 
 Client::~Client() {
-	auto conf = graphics->getConf();
+	const auto &conf = graphics->getConf();
 	store("graphics-default.profile", conf);
 	delete graphics;
 
@@ -104,8 +105,6 @@ void Client::sync(int perSecond) {
 }
 
 void Client::handleInput() {
-	int moveInput = 0;
-
 	Player &player = world->getPlayer(localClientID);
 
     SDL_Event event;
@@ -127,39 +126,52 @@ void Client::handleInput() {
 			}
 			break;
 		case SDL_KEYDOWN:
-			switch (event.key.keysym.scancode) {
-			case SDL_SCANCODE_ESCAPE:
-				graphics->setMenu(!graphics->isMenu());
-				world->setPause(!world->isPaused());
-				break;
-			case SDL_SCANCODE_F:
-				serverInterface->togglePlayerFly();
-				break;
-			case SDL_SCANCODE_M:
-				switch (graphics->getMSAA()) {
-				case 0: graphics->enableMSAA(2); break;
-				case 2: graphics->enableMSAA(4); break;
-				case 4: graphics->enableMSAA(8); break;
-				case 8: graphics->enableMSAA(16); break;
-				case 16: graphics->disableMSAA(); break;
+			if (!world->isPaused()) {
+				switch (event.key.keysym.scancode) {
+				case SDL_SCANCODE_ESCAPE:
+					graphics->setMenu(!graphics->isMenu());
+					world->setPause(!world->isPaused());
+					break;
+				case SDL_SCANCODE_F:
+					serverInterface->togglePlayerFly();
+					break;
+				case SDL_SCANCODE_M:
+					switch (graphics->getMSAA()) {
+					case 0: graphics->enableMSAA(2); break;
+					case 2: graphics->enableMSAA(4); break;
+					case 4: graphics->enableMSAA(8); break;
+					case 8: graphics->enableMSAA(16); break;
+					case 16: graphics->disableMSAA(); break;
+					}
+					break;
+//				case SDL_SCANCODE_N:
+//					switch (graphics->getFXAA()) {
+//					case true: graphics->disableFXAA(); break;
+//					case false: graphics->enableFXAA(); break;
+//					}
+//					break;
+				case SDL_SCANCODE_Q:
+					if (SDL_GetModState() & KMOD_LCTRL)
+						closeRequested = true;
+					break;
+				case SDL_SCANCODE_F11:
+					graphics->setFullscreen(!graphics->isFullscreen());
+					break;
+				default:
+					break;
+				} // switch scancode
+			} else { // if world is paused
+				switch (event.key.keysym.scancode) {
+				case SDL_SCANCODE_W: graphics->menuUp(); break;
+				case SDL_SCANCODE_S: graphics->menuDown(); break;
+				case SDL_SCANCODE_A: graphics->menuLeft(); break;
+				case SDL_SCANCODE_D: graphics->menuRight(); break;
+				case SDL_SCANCODE_ESCAPE:
+					graphics->setMenu(!graphics->isMenu());
+					world->setPause(!world->isPaused());
+					break;
+				default: break;
 				}
-				break;
-//			case SDL_SCANCODE_N:
-//				switch (graphics->getFXAA()) {
-//				case true: graphics->disableFXAA(); break;
-//				case false: graphics->enableFXAA(); break;
-//				}
-//				break;
-			case SDL_SCANCODE_Q:
-				if (SDL_GetModState() & KMOD_LCTRL)
-					closeRequested = true;
-				break;
-			case SDL_SCANCODE_F11:
-				graphics->setFullscreen(!graphics->isFullscreen());
-				break;
-			default:
-				//printf("unknown key: ", event.key.keysym);
-				break;
 			}
 			break;
 		case SDL_MOUSEMOTION:
@@ -195,23 +207,26 @@ void Client::handleInput() {
 
 	const uint8 *keyboard = SDL_GetKeyboardState(nullptr);
 
-	if (keyboard[SDL_SCANCODE_D])
-		moveInput |= Player::MOVE_INPUT_FLAG_STRAFE_RIGHT;
-	if (keyboard[SDL_SCANCODE_A])
-		moveInput |= Player::MOVE_INPUT_FLAG_STRAFE_LEFT;
+	int moveInput = 0;
+	if (!world->isPaused()) {
+		if (keyboard[SDL_SCANCODE_D])
+			moveInput |= Player::MOVE_INPUT_FLAG_STRAFE_RIGHT;
+		if (keyboard[SDL_SCANCODE_A])
+			moveInput |= Player::MOVE_INPUT_FLAG_STRAFE_LEFT;
 
-	if (keyboard[SDL_SCANCODE_SPACE])
-		moveInput |= Player::MOVE_INPUT_FLAG_FLY_UP;
-	if (keyboard[SDL_SCANCODE_LCTRL])
-		moveInput |= Player::MOVE_INPUT_FLAG_FLY_DOWN;
+		if (keyboard[SDL_SCANCODE_SPACE])
+			moveInput |= Player::MOVE_INPUT_FLAG_FLY_UP;
+		if (keyboard[SDL_SCANCODE_LCTRL])
+			moveInput |= Player::MOVE_INPUT_FLAG_FLY_DOWN;
 
-	if (keyboard[SDL_SCANCODE_W])
-		moveInput |= Player::MOVE_INPUT_FLAG_MOVE_FORWARD;
-	if (keyboard[SDL_SCANCODE_S])
-		moveInput |= Player::MOVE_INPUT_FLAG_MOVE_BACKWARD;
+		if (keyboard[SDL_SCANCODE_W])
+			moveInput |= Player::MOVE_INPUT_FLAG_MOVE_FORWARD;
+		if (keyboard[SDL_SCANCODE_S])
+			moveInput |= Player::MOVE_INPUT_FLAG_MOVE_BACKWARD;
 
-	if (keyboard[SDL_SCANCODE_LSHIFT])
-		moveInput |= Player::MOVE_INPUT_FLAG_SPRINT;
+		if (keyboard[SDL_SCANCODE_LSHIFT])
+			moveInput |= Player::MOVE_INPUT_FLAG_SPRINT;
+	}
 
 	serverInterface->setPlayerMoveInput(moveInput);
 
