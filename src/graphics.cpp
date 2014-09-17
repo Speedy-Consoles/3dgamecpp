@@ -56,13 +56,16 @@ Graphics::Graphics(
 		// TODO fancy stuff
 	}
 
-	initGL();
 	resize(conf.windowed_res[0], conf.windowed_res[1]);
 
 	if (DEFAULT_WINDOWED_RES[0] <= DEFAULT_WINDOWED_RES[1])
 		maxFOV = YFOV;
 	else
 		maxFOV = atan(DEFAULT_WINDOWED_RES[0] * tan(YFOV / 2) / DEFAULT_WINDOWED_RES[1]) * 2;
+
+	zfar = Chunk::WIDTH * (conf.render_distance - 2.5);
+
+	initGL();
 
 	startTimePoint = high_resolution_clock::now();
 }
@@ -178,10 +181,9 @@ void Graphics::initGL() {
 	else
 		LOG(info) << "GL_NV_fog_distance not available, falling back to z fog";
 
-	zfar = Chunk::WIDTH * conf.render_distance - 2.5;
 	glFogi(GL_FOG_MODE, GL_LINEAR);
-	glFogf(GL_FOG_START, zfar - 0.1f - 192.0);
-	glFogf(GL_FOG_END, zfar - 0.1f);
+	glFogf(GL_FOG_START, zfar - znear - zfar / 3.0);
+	glFogf(GL_FOG_END, zfar - znear);
 	glFogfv(GL_FOG_COLOR, fogColor);
 
 //	glUseProgram(program);
@@ -193,7 +195,7 @@ void Graphics::initGL() {
 //
 //	glUseProgram(program);
 //	GLuint fog_end_loc = glGetUniformLocation(program, "fog_end");
-//	glUniform1f(fog_end_loc, ZFAR - 0.1f);
+//	glUniform1f(fog_end_loc, zfar - znear);
 //
 //	GLuint fog_width_loc = glGetUniformLocation(program, "fog_width");
 //	logOpenGLError();
@@ -263,7 +265,7 @@ void Graphics::makePerspective() {
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 	gluPerspective((float) (angle * 360.0 / TAU),
-			(float) currentRatio, 0.1f, sqrt(3 * zfar * zfar));
+			(float) currentRatio, znear, sqrt(3 * zfar * zfar));
 	glGetDoublev(GL_PROJECTION_MATRIX, perspectiveMatrix);
 	glMatrixMode(GL_MODELVIEW);
 }
@@ -435,9 +437,10 @@ void Graphics::setConf(const GraphicsConf &conf) {
 	}
 
 	if (conf.render_distance != old_conf.render_distance) {
-		zfar = Chunk::WIDTH * conf.render_distance - 2.5;
-		glFogf(GL_FOG_START, zfar - 0.1f - 192.0);
-		glFogf(GL_FOG_END, zfar - 0.1f);
+		zfar = Chunk::WIDTH * (conf.render_distance - 2.5);
+		makePerspective();
+		glFogf(GL_FOG_START, zfar - znear - zfar / 3.0);
+		glFogf(GL_FOG_END, zfar - znear);
 
 		int length = old_conf.render_distance * 2 + 1;
 		glDeleteLists(firstDL, length * length * length);

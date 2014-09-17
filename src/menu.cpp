@@ -100,7 +100,8 @@ void Menu::navigateLeft() {
 		break;
 
 	case RENDER_DISTANCE:
-		--conf->render_distance;
+		if (conf->render_distance > 0)
+			--conf->render_distance;
 		break;
 	}
 }
