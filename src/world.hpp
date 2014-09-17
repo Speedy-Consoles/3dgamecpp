@@ -81,7 +81,9 @@ public:
 	Chunk *getChunk(vec3i64 cc);
 	void insertChunk(Chunk *chunk);
 	Chunk *removeChunk(vec3i64 cc);
+
 	bool popChangedChunk(vec3i64 *ccc);
+	void clearChunks();
 
 	size_t getNumChunks();
 

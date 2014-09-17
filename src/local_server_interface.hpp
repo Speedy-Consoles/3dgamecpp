@@ -9,9 +9,10 @@ class LocalServerInterface : public ServerInterface {
 private:
 	World *world;
 	ChunkLoader chunkLoader;
+	GraphicsConf conf;
 
 public:
-	LocalServerInterface(World *world, uint64 seed);
+	LocalServerInterface(World *world, GraphicsConf &conf, uint64 seed);
 
 	virtual ~LocalServerInterface();
 
@@ -26,6 +27,8 @@ public:
 	void receive(uint64 timeLimit) override;
 
 	void sendInput() override;
+
+	void setConf(const GraphicsConf &) override;
 
 	int getLocalClientID() override;
 

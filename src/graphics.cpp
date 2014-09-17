@@ -73,6 +73,7 @@ Graphics::~Graphics() {
 	int length = VIEW_RANGE * 2 + 1;
 	glDeleteLists(firstDL, length * length * length);
 	delete dlChunks;
+	delete dlHasChunk;
 	delete font;
 
 //	glDeleteProgram(program);
@@ -218,8 +219,13 @@ void Graphics::initGL() {
 
 	// display lists
 	int length = VIEW_RANGE * 2 + 1;
-	firstDL = glGenLists(length * length * length);
-	dlChunks = new vec3i64[length * length * length];
+	int n = length * length * length;
+	firstDL = glGenLists(n);
+	dlChunks = new vec3i64[n];
+	dlHasChunk = new bool[n];
+	for (int i = 0; i < n; i++) {
+		dlHasChunk[i] = false;
+	}
 }
 
 void Graphics::resize(int width, int height) {
@@ -425,6 +431,21 @@ void Graphics::setConf(const GraphicsConf &conf) {
 
 	if (conf.fullscreen != old_conf.fullscreen) {
 		SDL_SetWindowFullscreen(window, conf.fullscreen ? SDL_WINDOW_FULLSCREEN : 0);
+	}
+
+	if (conf.render_distance != old_conf.render_distance) {
+		int length = old_conf.render_distance * 2 + 1;
+		glDeleteLists(firstDL, length * length * length);
+		delete dlChunks;
+		delete dlHasChunk;
+		length = conf.render_distance * 2 + 1;
+		int n = length * length * length;
+		firstDL = glGenLists(n);
+		dlChunks = new vec3i64[n];
+		dlHasChunk = new bool[n];
+		for (int i = 0; i < n; i++) {
+			dlHasChunk[i] = false;
+		}
 	}
 }
 

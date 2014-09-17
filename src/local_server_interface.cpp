@@ -1,8 +1,7 @@
 #include "local_server_interface.hpp"
 
 LocalServerInterface::LocalServerInterface(World *world, uint64 seed)
-		: chunkLoader(world, seed, true) {
-	this->world = world;
+		: world(world), chunkLoader(world, seed, true), conf(conf) {
 	world->addPlayer(0);
 	chunkLoader.setRenderDistance(CHUNK_LOAD_RANGE);
 	chunkLoader.dispatch();
@@ -51,6 +50,16 @@ void LocalServerInterface::receive(uint64 timeLimit) {
 
 void LocalServerInterface::sendInput() {
 
+}
+
+void LocalServerInterface::setConf(const GraphicsConf &conf) {
+	GraphicsConf old_conf = this->conf;
+	this->conf = conf;
+
+	if (conf.render_distance != old_conf.render_distance) {
+		world->clearChunks();
+		chunkLoader.setClientRenderDistance(0, conf.render_distance);
+	}
 }
 
 int LocalServerInterface::getLocalClientID() {

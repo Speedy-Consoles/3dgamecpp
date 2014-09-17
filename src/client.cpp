@@ -170,6 +170,7 @@ void Client::handleInput() {
 				case SDL_SCANCODE_ESCAPE:
 					graphics->setConf(*conf);
 					graphics->setMenu(false);
+					serverInterface->setConf(*conf);
 					world->setPause(false);
 					break;
 				default: break;

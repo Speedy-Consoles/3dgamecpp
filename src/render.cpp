@@ -174,15 +174,18 @@ void Graphics::renderChunks() {
 	vec3i64 ccc;
 	while (newQuads < MAX_NEW_QUADS && world->popChangedChunk(&ccc)) {
 		Chunk *chunk = world->getChunk(ccc);
-		if(chunk && chunk->pollChanged()) {
+		if(chunk) {
 			uint index = ((((ccc[2] % length) + length) % length) * length
 					+ (((ccc[1] % length) + length) % length)) * length
 					+ (((ccc[0] % length) + length) % length);
-			GLuint lid = firstDL + index;
-			glNewList(lid, GL_COMPILE);
-			renderChunk(*chunk, false, vec3ui8(0, 0, 0), 0);
-			glEndList();
-			dlChunks[index] = ccc;
+			if (chunk->pollChanged() || !dlHasChunk[index] || dlChunks[index] != ccc) {
+				GLuint lid = firstDL + index;
+				glNewList(lid, GL_COMPILE);
+				renderChunk(*chunk, false, vec3ui8(0, 0, 0), 0);
+				glEndList();
+				dlChunks[index] = ccc;
+				dlHasChunk[index] = true;
+			}
 		}
 	}
 	stopwatch->stop(CLOCK_NDL);
@@ -205,6 +208,7 @@ void Graphics::renderChunks() {
 		if (lid != 0
 				&& inFrustum(cc, localPlayer.getPos(), lookDir)
 				&& (!target || tcc != cc)
+				&& dlHasChunk[index]
 				&& dlChunks[index] == cc) {
 			stopwatch->start(CLOCK_DLC);
 			glCallList(lid);

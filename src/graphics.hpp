@@ -50,6 +50,7 @@ private:
 
 	GLuint firstDL;
 	vec3i64 *dlChunks;
+	bool *dlHasChunk;
 
 	float fogColor[3] = {0.6, 0.6, 0.8};
 	float skyColor[3] = {0.15, 0.15, 0.9};

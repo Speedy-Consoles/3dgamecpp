@@ -19,6 +19,8 @@ public:
 
 	virtual void sendInput() = 0;
 
+	virtual void setConf(const GraphicsConf &) = 0;
+
 	virtual int getLocalClientID() = 0;
 
 	virtual void stop() = 0;
