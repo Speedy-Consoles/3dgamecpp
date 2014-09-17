@@ -8,11 +8,12 @@
 class LocalServerInterface : public ServerInterface {
 private:
 	World *world;
-	ChunkLoader chunkLoader;
+	ChunkLoader *chunkLoader;
+
 	GraphicsConf conf;
 
 public:
-	LocalServerInterface(World *world, GraphicsConf &conf, uint64 seed);
+	LocalServerInterface(World *world, uint64 seed, const GraphicsConf &conf);
 
 	virtual ~LocalServerInterface();
 

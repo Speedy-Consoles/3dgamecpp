@@ -2,6 +2,7 @@
 #define SERVER_INTERFACE_HPP
 
 #include "vmath.hpp"
+#include "config.hpp"
 
 class ServerInterface {
 public:

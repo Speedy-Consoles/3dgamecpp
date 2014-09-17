@@ -34,14 +34,15 @@ Client::Client(){
 	stopwatch = new Stopwatch(CLOCK_ID_NUM);
 	stopwatch->start(CLOCK_ALL);
 
+	conf = new GraphicsConf();
+	load("graphics-default.profile", conf);
+
 	world = new World();
 
 	//serverInterface = RemoteServerInterface(args[0], world);
-	serverInterface = new LocalServerInterface(world, 42);
+	serverInterface = new LocalServerInterface(world, 42, *conf);
 	localClientID = serverInterface->getLocalClientID();
 
-	conf = new GraphicsConf();
-	load("graphics-default.profile", conf);
 	menu = new Menu(conf);
 	graphics = new Graphics(world, menu, localClientID, *conf, stopwatch);
 }

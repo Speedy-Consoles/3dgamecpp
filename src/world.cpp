@@ -311,7 +311,11 @@ bool World::popChangedChunk(vec3i64 *ccc) {
 
 void World::clearChunks() {
 	changedChunks.clear();
-	// TODO unload all the chunks!
+	for (auto iter : chunks) {
+		Chunk *c = iter.second;
+		c->free();
+	}
+	chunks.clear();
 }
 
 size_t World::getNumChunks() {

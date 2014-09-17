@@ -7,6 +7,7 @@
 #include "queue.hpp"
 #include "stack.hpp"
 #include "archive.hpp"
+#include "world_generator.hpp"
 
 #include <atomic>
 #include <future>
@@ -15,33 +16,12 @@ class ChunkLoader {
 private:
 	static const int MAX_LOADS_UNTIL_UNLOAD = 200;
 
-	Perlin perlin;
-
-	double overAllScale = 1;
-
-	double areaXYScale = 6000;
-	double areaMountainThreshold = 0.7;
-	double areaSharpness = 20;
-
-	double mountainXYScale = 500;
-	double mountainMaxHeight = 800;
-	int mountainOctaves = 8;
-	double mountainExp = 0.5;
-
-	double flatlandXYScale = 800;
-	double flatLandMaxHeight = 40;
-	int flatlandOctaves = 6;
-	double flatlandExp = 0.8;
-
-	double surfaceScale = 70;
-	double surfaceRelDepth = 0.3;
-	double surfaceExp = 0.4;
-	double surfaceThresholdXScale = 1;
-	double surfaceThresholdYScale;
-
 	bool updateFaces;
+	uint localPlayer;
 
-	World *world;
+	WorldGenerator *gen = nullptr;
+
+	World *world = nullptr;
 
 	std::unordered_set<vec3i64, size_t(*)(vec3i64)> isLoaded;
 	std::atomic<bool> shouldHalt;
@@ -56,35 +36,46 @@ private:
 
 public:
 	ChunkLoader() = delete;
-	ChunkLoader(World *world, uint64 seed, bool updateFaces);
+	ChunkLoader(World *world, uint64 seed, uint localPlayer);
 	~ChunkLoader();
 
+	// start and stop the asynchronous chunk loader
 	void dispatch();
 	void requestTermination();
 	void wait();
 
+	// these two are used by the client to retrieve data in a threadsafe way
+	Chunk *getNextLoadedChunk();
+	ProducerStack<vec3i64>::Node *getUnloadQueries();
+
+	// chunks call this themselves, when they are free()-ed.
+	void free(Chunk *chunk) { deletedChunks.push(chunk); };
+
 	void setRenderDistance(uint i);
 	uint getRenderDistance() { return renderDistance; };
 
-	Chunk *next();
-	void free(Chunk *chunk) { deletedChunks.push(chunk); };
-
-	ProducerStack<vec3i64>::Node *getUnloadQueries();
 
 private:
 	void run();
-	Chunk *generateChunk(vec3i64 cc);
+
+	void updateRenderDistance();
+
 	void storeChunksOnDisk();
 	void sendOffloadQueries();
-	bool updatePlayerInfo(uint8, bool wait = true);
+
+
+	bool loadNextChunk();
+	vec3i64 getNextChunkToLoad();
+	void tryToLoadChunk(vec3i64);
+	bool updatePlayerInfo(bool wait = true);
 
 	std::atomic<uint> renderDistance;
-	std::atomic<bool> isRenderDistanceDirty;
+	std::atomic<uint> newRenderDistance;
 
-	vec3i64 lastPcc[MAX_CLIENTS];
-	bool isPlayerValid[MAX_CLIENTS];
-	uint playerChunkIndex[MAX_CLIENTS];
-	uint playerChunksLoaded[MAX_CLIENTS];
+	vec3i64 lastPcc;
+	bool isPlayerValid;
+	uint playerChunkIndex;
+	uint playerChunksLoaded;
 };
 
 #endif // CHUNK_LOADER_HPP

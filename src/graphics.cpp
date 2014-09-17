@@ -70,7 +70,7 @@ Graphics::Graphics(
 Graphics::~Graphics() {
 	LOG(info) << "Destroying Graphics";
 
-	int length = VIEW_RANGE * 2 + 1;
+	int length = conf.render_distance * 2 + 1;
 	glDeleteLists(firstDL, length * length * length);
 	delete dlChunks;
 	delete dlHasChunk;
@@ -178,9 +178,10 @@ void Graphics::initGL() {
 	else
 		LOG(info) << "GL_NV_fog_distance not available, falling back to z fog";
 
+	zfar = Chunk::WIDTH * conf.render_distance - 2.5;
 	glFogi(GL_FOG_MODE, GL_LINEAR);
-	glFogf(GL_FOG_START, ZFAR - 0.1f - 192.0);
-	glFogf(GL_FOG_END, ZFAR - 0.1f);
+	glFogf(GL_FOG_START, zfar - 0.1f - 192.0);
+	glFogf(GL_FOG_END, zfar - 0.1f);
 	glFogfv(GL_FOG_COLOR, fogColor);
 
 //	glUseProgram(program);
@@ -218,7 +219,7 @@ void Graphics::initGL() {
 //	logOpenGLError();
 
 	// display lists
-	int length = VIEW_RANGE * 2 + 1;
+	int length = conf.render_distance * 2 + 1;
 	int n = length * length * length;
 	firstDL = glGenLists(n);
 	dlChunks = new vec3i64[n];
@@ -262,7 +263,7 @@ void Graphics::makePerspective() {
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 	gluPerspective((float) (angle * 360.0 / TAU),
-			(float) currentRatio, 0.1f, sqrt(3 * ZFAR * ZFAR));
+			(float) currentRatio, 0.1f, sqrt(3 * zfar * zfar));
 	glGetDoublev(GL_PROJECTION_MATRIX, perspectiveMatrix);
 	glMatrixMode(GL_MODELVIEW);
 }
@@ -434,6 +435,10 @@ void Graphics::setConf(const GraphicsConf &conf) {
 	}
 
 	if (conf.render_distance != old_conf.render_distance) {
+		zfar = Chunk::WIDTH * conf.render_distance - 2.5;
+		glFogf(GL_FOG_START, zfar - 0.1f - 192.0);
+		glFogf(GL_FOG_END, zfar - 0.1f);
+
 		int length = old_conf.render_distance * 2 + 1;
 		glDeleteLists(firstDL, length * length * length);
 		delete dlChunks;

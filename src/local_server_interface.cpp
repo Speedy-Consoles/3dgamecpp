@@ -1,10 +1,16 @@
 #include "local_server_interface.hpp"
 
-LocalServerInterface::LocalServerInterface(World *world, uint64 seed)
-		: world(world), chunkLoader(world, seed, true), conf(conf) {
-	world->addPlayer(0);
-	chunkLoader.setRenderDistance(CHUNK_LOAD_RANGE);
-	chunkLoader.dispatch();
+#include <thread>
+
+#include "logging.hpp"
+
+LocalServerInterface::LocalServerInterface(World *world, uint64 seed, const GraphicsConf &conf)
+		: conf(conf) {
+	this->world = world;
+	this->world->addPlayer(0);
+	chunkLoader = new ChunkLoader(world, seed, getLocalClientID());
+	chunkLoader->setRenderDistance(conf.render_distance);
+	chunkLoader->dispatch();
 }
 
 
@@ -34,10 +40,11 @@ void LocalServerInterface::edit(vec3i64 bc, uint8 type) {
 
 void LocalServerInterface::receive(uint64 timeLimit) {
 	Chunk *chunk = nullptr;
-	while ((chunk = chunkLoader.next()) != nullptr)
+	while ((chunk = chunkLoader->getNextLoadedChunk()) != nullptr) {
 		world->insertChunk(chunk);
+	}
 
-	auto unloadQueries = chunkLoader.getUnloadQueries();
+	auto unloadQueries = chunkLoader->getUnloadQueries();
 	while (unloadQueries)
 	{
 		Chunk *chunk = world->removeChunk(unloadQueries->data);
@@ -57,8 +64,11 @@ void LocalServerInterface::setConf(const GraphicsConf &conf) {
 	this->conf = conf;
 
 	if (conf.render_distance != old_conf.render_distance) {
+		chunkLoader->setRenderDistance(conf.render_distance);
 		world->clearChunks();
-		chunkLoader.setClientRenderDistance(0, conf.render_distance);
+		while (chunkLoader->getRenderDistance() != conf.render_distance)
+			std::this_thread::yield();
+		LOG(info) << "render distance was set by chunk loader";
 	}
 }
 
@@ -67,7 +77,7 @@ int LocalServerInterface::getLocalClientID() {
 }
 
 void LocalServerInterface::stop() {
-	chunkLoader.wait();
+	chunkLoader->wait();
 	world->deletePlayer(0);
 }
 

@@ -13,27 +13,26 @@
 
 using namespace std;
 
-ChunkLoader::ChunkLoader(World *world, uint64 seed, bool updateFaces) :
-	perlin(seed), isLoaded(0, vec3i64HashFunc), queue(1000),
+ChunkLoader::ChunkLoader(World *world, uint64 seed, uint localPlayer) :
+	isLoaded(0, vec3i64HashFunc), queue(1000),
 	chunkArchive("./region/")
 {
+	this->gen = new WorldGenerator(seed);
 	this->world = world;
-	this->updateFaces = updateFaces;
-
-	//double y = perlinSurfaceThresholdGradient;
-	//double tmp = pow((sqrt(3 * (4 * y * y * y + 27)) + 9), 1 / 3.0);
-	//perlinSurfaceThresholdScale = tmp / pow(18, 1 / 3.0) - pow(2 / 3.0, 1 / 3.0) * y / tmp;
-	double s = surfaceThresholdXScale;
-	surfaceThresholdYScale = 1/s + 1/(s*s*s);
+	this->updateFaces = true;
+	this->localPlayer = localPlayer;
 }
 
 ChunkLoader::~ChunkLoader() {
+	wait();
 	storeChunksOnDisk();
 
 	Chunk *chunk = nullptr;
-	while ((chunk = next()) != nullptr) {
+	while ((chunk = getNextLoadedChunk()) != nullptr) {
 		delete chunk;
 	}
+
+	delete this->gen;
 }
 
 void ChunkLoader::dispatch() {
@@ -45,18 +44,13 @@ void ChunkLoader::requestTermination() {
 	 shouldHalt.store(true, memory_order_relaxed);
 }
 
-
 void ChunkLoader::wait() {
 	requestTermination();
-	fut.get();
+	if (fut.valid())
+		fut.get();
 }
 
-void ChunkLoader::setRenderDistance(uint dist) {
-	renderDistance = dist;
-	isRenderDistanceDirty = true;
-}
-
-Chunk *ChunkLoader::next() {
+Chunk *ChunkLoader::getNextLoadedChunk() {
 	Chunk *chunk;
 	bool result = queue.pop(chunk);
 	return result ? chunk : nullptr;
@@ -66,186 +60,6 @@ ProducerStack<vec3i64>::Node *ChunkLoader::getUnloadQueries() {
 	return unloadQueries.consumeAll();
 }
 
-void ChunkLoader::run() {
-	using namespace vec_auto_cast;
-	static const int LENGTH = CHUNK_LOAD_RANGE * 2 + 1;
-	static const int MAX_LOADS = LENGTH * LENGTH * LENGTH;
-
-	for (uint8 i = 0; i < MAX_CLIENTS; i++) {
-		playerChunkIndex[i] = 0;
-		playerChunksLoaded[i] = 0;
-	}
-
-	for (uint8 i = 0; i < MAX_CLIENTS; i++) {
-		updatePlayerInfo(i);
-	}
-
-	while (!shouldHalt.load(memory_order_seq_cst)) {
-		bool didSomething = false;
-		int loads = 0;
-		int oldLoads;
-		do {
-			oldLoads = loads;
-			for (uint8 i = 0; i < MAX_CLIENTS; i++) {
-				// don't wait for the reading-lock to be released
-				if (!updatePlayerInfo(i, false) || !isPlayerValid[i])
-					continue;
-
-				if (playerChunkIndex[i] >= LOADING_ORDER.size()
-						|| playerChunksLoaded[i] > MAX_LOADS)
-					continue;
-
-				vec3i8 ccd = LOADING_ORDER[playerChunkIndex[i]++];
-				while (ccd.maxAbs() > (int) renderDistance
-						&& playerChunkIndex[i] < LOADING_ORDER.size())
-					ccd = LOADING_ORDER[playerChunkIndex[i]++];
-
-				if (playerChunkIndex[i] >= LOADING_ORDER.size())
-					continue;
-
-				vec3i64 cc = ccd + lastPcc[i];
-				auto iter = isLoaded.find(cc);
-				if (iter == isLoaded.end()) {
-					isLoaded.insert(cc);
-					Chunk *chunk = chunkArchive.loadChunk(cc);
-					if (!chunk)
-						chunk = generateChunk(cc);
-					chunk->setChunkLoader(this);
-					if (updateFaces)
-						chunk->initFaces();
-					while (!queue.push(chunk))
-						this_thread::sleep_for(milliseconds(100));
-				}
-
-				playerChunksLoaded[i]++;
-				loads++;
-				didSomething = true;
-			}
-		} while (loads < MAX_LOADS_UNTIL_UNLOAD && loads > oldLoads && !shouldHalt.load(memory_order_seq_cst));
-
-		sendOffloadQueries();
-		storeChunksOnDisk();
-
-		if (!didSomething)
-			this_thread::sleep_for(milliseconds(100));
-	} // while not thread interrupted
-}
-
-Chunk *ChunkLoader::generateChunk(vec3i64 cc) {
-	Chunk *chunk = new Chunk(cc);
-	for (uint ix = 0; ix < Chunk::WIDTH; ix++) {
-		for (uint iy = 0; iy < Chunk::WIDTH; iy++) {
-			long x = round((cc[0] * Chunk::WIDTH + ix) / overAllScale);
-			long y = round((cc[1] * Chunk::WIDTH + iy) / overAllScale);
-			double ax = x / areaXYScale;
-			double ay = y / areaXYScale;
-			double ap = perlin.perlin(ax, ay, 0);
-			double mFac = (1 + tanh((ap - areaMountainThreshold)
-					* areaSharpness)) / 2;
-			double fFac = 1 - mFac;
-
-			double mx = x / mountainXYScale;
-			double my = y / mountainXYScale;
-			double mh = perlin.octavePerlin(mx, my, 0,
-					mountainOctaves, mountainExp)
-					* mountainMaxHeight;
-
-			double fx = x / flatlandXYScale;
-			double fy = y / flatlandXYScale;
-			double fh = perlin.octavePerlin(fx, fy, 0,
-					flatlandOctaves, flatlandExp)
-					* flatLandMaxHeight;
-
-			double h = fh * fFac + mh * mFac;
-			for (uint iz = 0; iz < Chunk::WIDTH; iz++) {
-				int index = Chunk::getBlockIndex(vec3ui8(ix, iy, iz));
-				long z = iz + cc[2] * Chunk::WIDTH;
-				double depth = h - z;
-				if (depth < 0) {
-					chunk->initBlock(index, 0);
-					continue;
-				} else if(depth > (h * surfaceRelDepth)) {
-					chunk->initBlock(index, 1);
-					continue;
-				}
-				double funPos = (1 - depth / (h * surfaceRelDepth) - 0.5) * 2 / surfaceThresholdXScale;
-				double threshold = (funPos + funPos * funPos * funPos) / surfaceThresholdYScale + 0.5;
-				double px = x / surfaceScale;
-				double py = y / surfaceScale;
-				double pz = z / surfaceScale;
-				double v = perlin.octavePerlin(px, py, pz, 6, surfaceExp);
-				if (v > threshold)
-					chunk->initBlock(index, 1);
-				else
-					chunk->initBlock(index, 0);
-			}
-		}
-	}
-	return chunk;
-}
-
-void ChunkLoader::storeChunksOnDisk() {
-	int counter = 0;
-	auto deletedChunksList = deletedChunks.consumeAll();
-	while (deletedChunksList)
-	{
-		Chunk *chunk = deletedChunksList->data;
-		chunkArchive.storeChunk(*chunk);
-		delete chunk;
-
-		auto tmp = deletedChunksList->next;
-		delete deletedChunksList;
-		deletedChunksList = tmp;
-		counter++;
-	}
-}
-
-void ChunkLoader::sendOffloadQueries() {
-	for (uint8 i = 0; i < MAX_CLIENTS; i++) {
-		updatePlayerInfo(i);
-	}
-
-	for (auto iter = isLoaded.begin(); iter != isLoaded.end();) {
-		vec3i64 cc = *iter;
-		bool inRange = false;
-		for (uint8 i = 0; i < MAX_CLIENTS; i++) {
-			if (!isPlayerValid[i])
-				continue;
-			if ((cc - lastPcc[i]).maxAbs() <= (int) renderDistance + 1) {
-				inRange = true;
-				break;
-			}
-		}
-		if (!inRange) {
-			unloadQueries.push(cc);
-			iter = isLoaded.erase(iter);
-		} else
-			iter++;
-	}
-}
-
-bool ChunkLoader::updatePlayerInfo(uint8 i, bool wait) {
-	int handle;
-	bool valid;
-	vec3i64 pcc;
-	Player &player = world->getPlayer(i);
-	Monitor &validPosMonitor = player.getValidPosMonitor();
-	bool success = false;
-	do {
-		handle = validPosMonitor.startRead();
-		valid = player.isValid();
-		pcc = player.getChunkPos();
-		success = validPosMonitor.finishRead(handle);
-	} while (!success && wait);
-	if (!success)
-		return false;
-
-	if (!valid || lastPcc[i] != pcc) {
-		playerChunkIndex[i] = 0;
-		playerChunksLoaded[i] = 0;
-	}
-
-	lastPcc[i] = pcc;
-	isPlayerValid[i] = valid;
-	return true;
+void ChunkLoader::setRenderDistance(uint dist) {
+	newRenderDistance = dist;
 }

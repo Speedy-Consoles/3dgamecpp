@@ -168,7 +168,7 @@ void Graphics::renderChunks() {
 	}
 
 	newQuads = 0;
-	int length = VIEW_RANGE * 2 + 1;
+	int length = conf.render_distance * 2 + 1;
 
 	stopwatch->start(CLOCK_NDL);
 	vec3i64 ccc;
@@ -194,7 +194,7 @@ void Graphics::renderChunks() {
 	uint renderedChunks = 0;
 	for (uint i = 0; i < LOADING_ORDER.size() && renderedChunks < maxChunks; i++) {
 		vec3i8 cd = LOADING_ORDER[i];
-		if (cd.maxAbs() > VIEW_RANGE)
+		if (cd.maxAbs() > (int) conf.render_distance)
 			continue;
 		renderedChunks++;
 

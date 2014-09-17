@@ -3,7 +3,9 @@ EXECUTABLE_NAME = 3dgame
 SOURCE_FILES = \
 	archive.cpp\
 	chunk_loader.cpp\
-	chunk.cpp client.cpp\
+	chunk_loader_internals.cpp\
+	chunk.cpp\
+	client.cpp\
 	config.cpp\
 	graphics.cpp\
 	local_server_interface.cpp\
@@ -15,7 +17,8 @@ SOURCE_FILES = \
 	render_menu.cpp\
 	stopwatch.cpp\
 	util.cpp\
-	world.cpp
+	world.cpp\
+	world_generator.cpp
 
 CXX = g++
 LD = g++
