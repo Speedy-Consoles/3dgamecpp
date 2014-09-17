@@ -40,7 +40,8 @@ private:
 
 	std::chrono::time_point<std::chrono::high_resolution_clock> startTimePoint;
 
-	int64 time;
+	int64 time = 0;
+	int64 timeShift = 0;
 
 	bool closeRequested = false;
 

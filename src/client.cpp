@@ -68,16 +68,18 @@ void Client::run() {
 
 		stopwatch->start(CLOCK_NET);
 		serverInterface->sendInput();
-		serverInterface->receive(time + 200000);
 		stopwatch->stop(CLOCK_NET);
 
 		stopwatch->start(CLOCK_TIC);
 		world->tick(tick, localClientID);
 		stopwatch->stop(CLOCK_TIC);
 
-		if (time + 1000000 / TICK_SPEED > getMicroTimeSince(startTimePoint)) {
+		if (time + timeShift + 1000000 / TICK_SPEED > getMicroTimeSince(startTimePoint))
 			graphics->tick();
-		}
+
+		stopwatch->start(CLOCK_NET);
+		serverInterface->receive(time + 200000);
+		stopwatch->stop(CLOCK_NET);
 
 		stopwatch->start(CLOCK_SYN);
 		sync(TICK_SPEED);
@@ -90,7 +92,7 @@ void Client::run() {
 void Client::sync(int perSecond) {
 	time = time + 1000000 / perSecond;
 	microseconds duration(std::max(0,
-			(int) (time - getMicroTimeSince(startTimePoint))));
+			(int) (time + timeShift - getMicroTimeSince(startTimePoint))));
 	std::this_thread::sleep_for(duration);
 }
 
@@ -116,6 +118,10 @@ void Client::handleInput() {
 			}
 			break;
 		case SDL_KEYDOWN:
+			if (event.key.keysym.scancode == SDL_SCANCODE_O)
+				printf("timeShift: %d\n", timeShift = (timeShift + 100000) % 1000000);
+			else if (event.key.keysym.scancode == SDL_SCANCODE_P)
+				printf("timeShift: %d\n", timeShift = (timeShift + 900000) % 1000000);
 			if (!graphics->isMenu()) {
 				switch (event.key.keysym.scancode) {
 				case SDL_SCANCODE_ESCAPE:
