@@ -5,7 +5,7 @@ bool          DEFAULT_FULLSCREEN   = false;
 vec2i         DEFAULT_WINDOWED_RES    = vec2i{1600, 900};
 vec2i         DEFAULT_FULLSCREEN_RES  = vec2i{0, 0};
 AntiAliasing  DEFAULT_ANTI_ALIASING   = AntiAliasing::NONE;
-Fog           DEFAULT_FOG             = Fog::SIMPLE;
+Fog           DEFAULT_FOG             = Fog::FANCY;
 uint          DEFAULT_RENDER_DISTANCE = 8;
 
 #include <boost/property_tree/ptree.hpp>
@@ -89,7 +89,8 @@ struct translator_between<basic_string<Ch, Traits, Alloc>, Fog> {
 		optional<external_type> get_value(const internal_type &i) {
 			external_type e;
 			if      (i == "none")   e = Fog::NONE;
-			else if (i == "simple") e = Fog::SIMPLE;
+			else if (i == "ugly")   e = Fog::UGLY;
+			else if (i == "fancy")  e = Fog::FANCY;
 			else                    e = DEFAULT_FOG;
 			return optional<external_type>(e);
 		}
@@ -98,7 +99,8 @@ struct translator_between<basic_string<Ch, Traits, Alloc>, Fog> {
 			internal_type i;
 			switch (e) {
 				case Fog::NONE:   i = "none"; break;
-				case Fog::SIMPLE: i = "simple"; break;
+				case Fog::UGLY:   i = "ugly"; break;
+				case Fog::FANCY:  i = "fancy"; break;
 				default:          i = "none"; break;
 			}
 			return optional<internal_type>(i);

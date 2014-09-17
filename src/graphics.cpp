@@ -402,6 +402,19 @@ void Graphics::setConf(const GraphicsConf &conf) {
 	GraphicsConf old_conf = this->conf;
 	this->conf = conf;
 
+	if (GLEW_NV_fog_distance) {
+		switch (conf.fog) {
+		default:
+			break;
+		case Fog::UGLY:
+			glFogi(GL_FOG_DISTANCE_MODE_NV, GL_EYE_PLANE_ABSOLUTE_NV);
+			break;
+		case Fog::FANCY:
+			glFogi(GL_FOG_DISTANCE_MODE_NV, GL_EYE_RADIAL_NV);
+			break;
+		}
+	}
+
 	if (conf.aa != old_conf.aa) {
 		if (fbo)
 			destroyFBO();
