@@ -19,7 +19,7 @@ enum class AntiAliasing {
 
 enum class Fog {
 	NONE,
-	UGLY,
+	FAST,
 	FANCY,
 };
 

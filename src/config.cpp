@@ -89,7 +89,7 @@ struct translator_between<basic_string<Ch, Traits, Alloc>, Fog> {
 		optional<external_type> get_value(const internal_type &i) {
 			external_type e;
 			if      (i == "none")   e = Fog::NONE;
-			else if (i == "ugly")   e = Fog::UGLY;
+			else if (i == "fast")   e = Fog::FAST;
 			else if (i == "fancy")  e = Fog::FANCY;
 			else                    e = DEFAULT_FOG;
 			return optional<external_type>(e);
@@ -99,7 +99,7 @@ struct translator_between<basic_string<Ch, Traits, Alloc>, Fog> {
 			internal_type i;
 			switch (e) {
 				case Fog::NONE:   i = "none"; break;
-				case Fog::UGLY:   i = "ugly"; break;
+				case Fog::FAST:   i = "fast"; break;
 				case Fog::FANCY:  i = "fancy"; break;
 				default:          i = "none"; break;
 			}

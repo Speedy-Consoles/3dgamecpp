@@ -406,7 +406,7 @@ void Graphics::setConf(const GraphicsConf &conf) {
 		switch (conf.fog) {
 		default:
 			break;
-		case Fog::UGLY:
+		case Fog::FAST:
 			glFogi(GL_FOG_DISTANCE_MODE_NV, GL_EYE_PLANE_ABSOLUTE_NV);
 			break;
 		case Fog::FANCY:
