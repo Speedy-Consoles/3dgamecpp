@@ -4,6 +4,7 @@ LocalServerInterface::LocalServerInterface(World *world, uint64 seed)
 		: chunkLoader(world, seed, true) {
 	this->world = world;
 	world->addPlayer(0);
+	chunkLoader.setRenderDistance(CHUNK_LOAD_RANGE);
 	chunkLoader.dispatch();
 }
 

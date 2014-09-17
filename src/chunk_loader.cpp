@@ -51,6 +51,11 @@ void ChunkLoader::wait() {
 	fut.get();
 }
 
+void ChunkLoader::setRenderDistance(uint dist) {
+	renderDistance = dist;
+	isRenderDistanceDirty = true;
+}
+
 Chunk *ChunkLoader::next() {
 	Chunk *chunk;
 	bool result = queue.pop(chunk);
@@ -91,7 +96,7 @@ void ChunkLoader::run() {
 					continue;
 
 				vec3i8 ccd = LOADING_ORDER[playerChunkIndex[i]++];
-				while (ccd.maxAbs() > CHUNK_LOAD_RANGE
+				while (ccd.maxAbs() > (int) renderDistance
 						&& playerChunkIndex[i] < LOADING_ORDER.size())
 					ccd = LOADING_ORDER[playerChunkIndex[i]++];
 
@@ -206,7 +211,7 @@ void ChunkLoader::sendOffloadQueries() {
 		for (uint8 i = 0; i < MAX_CLIENTS; i++) {
 			if (!isPlayerValid[i])
 				continue;
-			if ((cc - lastPcc[i]).maxAbs() <= CHUNK_UNLOAD_RANGE) {
+			if ((cc - lastPcc[i]).maxAbs() <= (int) renderDistance + 1) {
 				inRange = true;
 				break;
 			}

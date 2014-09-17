@@ -18,7 +18,7 @@
 
 class Graphics {
 private:
-	static const int VIEW_RANGE = CHUNK_UNLOAD_RANGE;
+	static const int VIEW_RANGE = CHUNK_LOAD_RANGE;
 	const double YFOV = TAU / 5;
 	const double ZNEAR = 0.1f;
 	const double ZFAR = Chunk::WIDTH * VIEW_RANGE - 2.5;

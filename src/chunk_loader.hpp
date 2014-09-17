@@ -63,6 +63,9 @@ public:
 	void requestTermination();
 	void wait();
 
+	void setRenderDistance(uint i);
+	uint getRenderDistance() { return renderDistance; };
+
 	Chunk *next();
 	void free(Chunk *chunk) { deletedChunks.push(chunk); };
 
@@ -74,6 +77,9 @@ private:
 	void storeChunksOnDisk();
 	void sendOffloadQueries();
 	bool updatePlayerInfo(uint8, bool wait = true);
+
+	std::atomic<uint> renderDistance;
+	std::atomic<bool> isRenderDistanceDirty;
 
 	vec3i64 lastPcc[MAX_CLIENTS];
 	bool isPlayerValid[MAX_CLIENTS];
