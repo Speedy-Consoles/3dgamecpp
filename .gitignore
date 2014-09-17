@@ -10,4 +10,5 @@ SDL*
 build_windows.sh
 3dgame.zip
 region
-graphics-default.profile
+<<<<<<< HEAD
+*.profile

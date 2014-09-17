@@ -60,8 +60,9 @@ void Menu::navigateRight() {
 
 	case FOG:
 		switch (conf->fog) {
-		case Fog::NONE:   conf->fog = Fog::SIMPLE; break;
-		case Fog::SIMPLE: conf->fog = Fog::NONE; break;
+		case Fog::NONE:   conf->fog = Fog::FAST; break;
+		case Fog::FAST:   conf->fog = Fog::FANCY; break;
+		case Fog::FANCY:  conf->fog = Fog::NONE; break;
 		}
 		break;
 
@@ -92,8 +93,9 @@ void Menu::navigateLeft() {
 
 	case FOG:
 		switch (conf->fog) {
-		case Fog::NONE:   conf->fog = Fog::SIMPLE; break;
-		case Fog::SIMPLE: conf->fog = Fog::NONE; break;
+		case Fog::NONE:   conf->fog = Fog::FANCY; break;
+		case Fog::FAST:   conf->fog = Fog::NONE; break;
+		case Fog::FANCY:  conf->fog = Fog::FAST; break;
 		}
 		break;
 
@@ -146,7 +148,8 @@ stringstream &operator << (stringstream &ss, AntiAliasing aa) {
 stringstream &operator << (stringstream &ss, Fog fog) {
 	switch (fog) {
 		case Fog::NONE: ss << "Off"; break;
-		case Fog::SIMPLE: ss << "On"; break;
+		case Fog::FAST: ss << "Fast"; break;
+		case Fog::FANCY: ss << "Fancy"; break;
 	}
 	return ss;
 }

@@ -19,7 +19,8 @@ enum class AntiAliasing {
 
 enum class Fog {
 	NONE,
-	SIMPLE,
+	FAST,
+	FANCY,
 };
 
 extern RenderBackend DEFAULT_RENDER_BACKEND;
