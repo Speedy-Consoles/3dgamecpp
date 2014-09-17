@@ -530,6 +530,10 @@ void Graphics::tick() {
 
 	render();
 
+	stopwatch->start(CLOCK_FSH);
+	glFinish();
+	stopwatch->stop(CLOCK_FSH);
+
 	stopwatch->start(CLOCK_FLP);
 	SDL_GL_SwapWindow(window);
 	stopwatch->stop(CLOCK_FLP);
