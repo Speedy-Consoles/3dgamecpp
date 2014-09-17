@@ -128,45 +128,28 @@ void store(const char *filename, const GraphicsConf &conf) {
 
 void load(const char *filename, GraphicsConf *conf) {
 	property_tree::ptree pt;
-	bool success = true;
 	try {
 		read_info(filename, pt);
 	} catch (...) {
 		LOG(warning) << "'" << filename << "' could not be opened";
-		success = false;
 	}
 
-	if (success) try {
-		conf->render_backend = pt.get(
-				"graphics.render_backend", DEFAULT_RENDER_BACKEND);
-		conf->fullscreen = pt.get(
-				"graphics.is_fullscreen", DEFAULT_FULLSCREEN);
-		conf->windowed_res[0] = pt.get(
-				"graphics.windowed_res.w", DEFAULT_WINDOWED_RES[0]);
-		conf->windowed_res[1] = pt.get(
-				"graphics.windowed_res.h", DEFAULT_WINDOWED_RES[1]);
-		conf->fullscreen_res[0] = pt.get(
-				"graphics.fullscreen_res.w", DEFAULT_FULLSCREEN_RES[0]);
-		conf->fullscreen_res[1] = pt.get(
-				"graphics.fullscreen_res.h", DEFAULT_FULLSCREEN_RES[1]);
-		conf->aa = pt.get(
-				"graphics.aa", DEFAULT_ANTI_ALIASING);
-		conf->fog = pt.get(
-				"graphics.fog", DEFAULT_FOG);
-		conf->render_distance = pt.get(
-				"graphics.render_distance", DEFAULT_RENDER_DISTANCE);
-	} catch (...) {
-		LOG(warning) << "'" << filename << "' was corrupted";
-		success = false;
-	}
-
-	if (!success) {
-		conf->render_backend = DEFAULT_RENDER_BACKEND;
-		conf->fullscreen = DEFAULT_FULLSCREEN;
-		conf->windowed_res = DEFAULT_WINDOWED_RES;
-		conf->fullscreen_res = DEFAULT_FULLSCREEN_RES;
-		conf->aa = DEFAULT_ANTI_ALIASING;
-		conf->fog = DEFAULT_FOG;
-		conf->render_distance = DEFAULT_RENDER_DISTANCE;
-	}
+	conf->render_backend = pt.get("graphics.render_backend",
+			DEFAULT_RENDER_BACKEND);
+	conf->fullscreen = pt.get("graphics.is_fullscreen",
+			DEFAULT_FULLSCREEN);
+	conf->windowed_res[0] = pt.get("graphics.windowed_res.w",
+			DEFAULT_WINDOWED_RES[0]);
+	conf->windowed_res[1] = pt.get("graphics.windowed_res.h",
+			DEFAULT_WINDOWED_RES[1]);
+	conf->fullscreen_res[0] = pt.get("graphics.fullscreen_res.w",
+			DEFAULT_FULLSCREEN_RES[0]);
+	conf->fullscreen_res[1] = pt.get("graphics.fullscreen_res.h",
+			DEFAULT_FULLSCREEN_RES[1]);
+	conf->aa = pt.get("graphics.aa",
+			DEFAULT_ANTI_ALIASING);
+	conf->fog = pt.get("graphics.fog",
+			DEFAULT_FOG);
+	conf->render_distance = pt.get("graphics.render_distance",
+			DEFAULT_RENDER_DISTANCE);
 }
