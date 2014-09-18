@@ -20,13 +20,13 @@ Graphics::Graphics(
 		menu(menu),
 		localClientID(localClientID),
 		stopwatch(stopwatch) {
-	LOG(info) << "Constructing Graphics";
+	LOG(DEBUG, "Constructing Graphics");
 
-	LOG(info) << "Initializing SDL";
+	LOG(DEBUG, "Initializing SDL");
 	auto failure = SDL_Init(SDL_INIT_VIDEO);
-	if (failure) LOG(fatal) << SDL_GetError();
+	if (failure) LOG(FATAL, SDL_GetError());
 
-	LOG(info) << "Creating window";
+	LOG(DEBUG, "Creating window");
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
@@ -39,19 +39,21 @@ Graphics::Graphics(
 		conf.windowed_res[0], conf.windowed_res[1],
 		SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE
 	);
-	if (!window) LOG(fatal) << SDL_GetError();
+	if (!window) LOG(FATAL, SDL_GetError());
 
-	LOG(info) << "Creating Open GL Context";
+	LOG(DEBUG, "Creating Open GL Context");
 	glContext = SDL_GL_CreateContext(window);
-	if (!glContext) LOG(fatal) << SDL_GetError();
+	if (!glContext) LOG(FATAL, SDL_GetError());
 
-	LOG(info) << "OpenGL Version: " << glGetString(GL_VERSION);
-	LOG(info) << "GLSL Version: " << glGetString(GL_SHADING_LANGUAGE_VERSION);
+	LOG(INFO, "OpenGL Version: " << glGetString(GL_VERSION));
+	LOG(INFO, "GLSL Version: " << glGetString(GL_SHADING_LANGUAGE_VERSION));
 
-	LOG(info) << "Initializing GLEW";
+	LOG(DEBUG, "Initializing GLEW");
 	GLenum glew_error = glewInit();
-	if (glew_error != GLEW_OK) LOG(fatal) << glewGetErrorString(glew_error);
-	if (!GLEW_VERSION_2_0) LOG(fatal) << "OpenGL version 2.0 not available";
+	if (glew_error != GLEW_OK)
+		LOG(FATAL, glewGetErrorString(glew_error));
+	if (!GLEW_VERSION_2_0)
+		LOG(FATAL, "OpenGL version 2.0 not available");
 	if (GLEW_VERSION_3_0) {
 		// TODO fancy stuff
 	}
@@ -71,7 +73,7 @@ Graphics::Graphics(
 }
 
 Graphics::~Graphics() {
-	LOG(info) << "Destroying Graphics";
+	LOG(DEBUG, "Destroying Graphics");
 
 	int length = conf.render_distance * 2 + 1;
 	glDeleteLists(firstDL, length * length * length);
@@ -98,7 +100,7 @@ void Graphics::initGL() {
 	glEnable(GL_CULL_FACE);
 
 	// light
-	LOG(info) << "Initializing light";
+	LOG(DEBUG, "Initializing light");
 	//float playerLight[4] = {4.0f, 4.0f, 2.4f, 1.0f};
 	float lModelAmbient[4] = {0.0f, 0.0f, 0.0f, 1.0f};
 
@@ -136,17 +138,17 @@ void Graphics::initGL() {
 	glColorMaterial(GL_FRONT, GL_AMBIENT_AND_DIFFUSE); // tell opengl glColor3f effects the ambient and diffuse properties of material
 
 	// font
-	LOG(info) << "Initializing font";
+	LOG(DEBUG, "Initializing font");
 	font = new FTGLTextureFont("res/DejaVuSansMono.ttf");
 	if (font) {
 		font->FaceSize(16);
 		font->CharMap(ft_encoding_unicode);
 	} else {
-		LOG(error)  << "Could not open 'res/DejaVuSansMono.ttf'";
+		LOG(ERROR, "Could not open 'res/DejaVuSansMono.ttf'");
 	}
 
 	// textures
-	LOG(info) << "Initializing textures";
+	LOG(INFO, "Initializing textures");
 	IMG_Init(IMG_INIT_JPG | IMG_INIT_PNG | IMG_INIT_TIF);
 	SDL_Surface *blockImage = IMG_Load("img/block.png");
 	if (blockImage) {
@@ -160,7 +162,7 @@ void Graphics::initGL() {
 		SDL_FreeSurface(blockImage);
 		logOpenGLError();
 	} else {
-		LOG(error)  << "Could not open 'block.png'";
+		LOG(ERROR, "Could not open 'block.png'");
 	}
 
 //	glGenTextures(1, &noTexture);
@@ -179,7 +181,7 @@ void Graphics::initGL() {
 	if (GLEW_NV_fog_distance)
 		glFogi(GL_FOG_DISTANCE_MODE_NV, GL_EYE_RADIAL_NV);
 	else
-		LOG(info) << "GL_NV_fog_distance not available, falling back to z fog";
+		LOG(INFO, "GL_NV_fog_distance not available, falling back to z fog");
 
 	glFogfv(GL_FOG_COLOR, fogColor);
 	glFogi(GL_FOG_MODE, GL_LINEAR);
@@ -231,7 +233,7 @@ void Graphics::initGL() {
 }
 
 void Graphics::resize(int width, int height) {
-	LOG(info) << "Resize to " << width << "x" << height;
+	LOG(INFO, "Resize to " << width << "x" << height);
 	this->width = width;
 	this->height = height;
 	glViewport(0, 0, width, height);
@@ -558,7 +560,7 @@ void Graphics::createFBO() {
 		case GL_FRAMEBUFFER_INCOMPLETE_LAYER_TARGETS:
 			msg = "incomplete layer targets"; break;
 		}
-		LOG(error) << "Framebuffer creation failed: " << msg;
+		LOG(ERROR, "Framebuffer creation failed: " << msg);
 	}
 	logOpenGLError();
 }

@@ -68,7 +68,7 @@ void LocalServerInterface::setConf(const GraphicsConf &conf) {
 		world->clearChunks();
 		while (chunkLoader->getRenderDistance() != conf.render_distance)
 			std::this_thread::yield();
-		LOG(info) << "render distance was set by chunk loader";
+		LOG(INFO, "render distance was set by chunk loader");
 	}
 }
 

@@ -11,7 +11,7 @@
 using namespace std;
 
 void ChunkLoader::run() {
-	LOG(info) << "ChunkLoader thread dispatched";
+	LOG(INFO, "ChunkLoader thread dispatched");
 
 	playerChunkIndex = 0;
 	playerChunksLoaded = 0;
@@ -25,7 +25,7 @@ void ChunkLoader::run() {
 		storeChunksOnDisk();
 	} // while not thread interrupted
 
-	LOG(info) << "ChunkLoader thread terminating";
+	LOG(INFO,"ChunkLoader thread terminating");
 }
 
 void ChunkLoader::updateRenderDistance() {
@@ -34,7 +34,7 @@ void ChunkLoader::updateRenderDistance() {
 	if (newRenderDistance == renderDistance)
 		return;
 
-	LOG(info) << "ChunkLoader thread render distance " << newRenderDistance;
+	LOG(INFO, "ChunkLoader thread render distance " << newRenderDistance);
 
 	Chunk *chunk = nullptr;
 	while ((chunk = getNextLoadedChunk()) != nullptr)

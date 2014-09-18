@@ -27,15 +27,15 @@ void Stopwatch::start(uint id) {
 
 void Stopwatch::stop(uint id) {
 	if (_stack.empty()) {
-		LOG(debug) << "No clock to stop";
+		LOG(DEBUG, "No clock to stop");
 		return;
 	}
 	if (id == (uint) -1) {
-		LOG(debug) << "Stopped clock " << _stack.top()
-				<< " without explicit id given";
+		LOG(DEBUG, "Stopped clock " << _stack.top()
+				<< " without explicit id given");
 	} else if (id != _stack.top()) {
-		LOG(debug) << "Stopped clock " << _stack.top()
-				<< " but " << id << " given";
+		LOG(DEBUG, "Stopped clock " << _stack.top()
+				<< " but " << id << " given");
 	}
 	auto now = high_resolution_clock::now();
 	EntryType &entry = _clocks[_stack.top()];
@@ -62,7 +62,7 @@ float Stopwatch::getRel(uint id) {
 
 void Stopwatch::save() {
 	while (!_stack.empty()) {
-		LOG(debug) << "stopped clock " << _stack.top() << " unnessessarily";
+		LOG(DEBUG, "stopped clock " << _stack.top() << " unnessessarily");
 		stop();
 	}
 

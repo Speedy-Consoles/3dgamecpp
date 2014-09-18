@@ -9,6 +9,7 @@ SOURCE_FILES = \
 	config.cpp\
 	graphics.cpp\
 	local_server_interface.cpp\
+	logging.cpp\
 	menu.cpp\
 	monitor.cpp\
 	perlin.cpp\
@@ -28,8 +29,8 @@ LDFLAGS = -pthread
 
 LIB_DIRS = 
 
-LIBS_LD_FLAGS  = -Wl,-Bstatic -lboost_log -lboost_thread -lboost_system
-LIBS_LD_FLAGS += -Wl,-Bdynamic -lGL -lGLU -lGLEW -lftgl -lSDL2 -lSDL2_image
+LIBS_LD_FLAGS  = -Wl,-Bstatic 
+LIBS_LD_FLAGS += -Wl,-Bdynamic -llog4cxx -lGL -lGLU -lGLEW -lftgl -lSDL2 -lSDL2_image
 
 DEBUG ?= 1
 ifeq ($(DEBUG), 1)

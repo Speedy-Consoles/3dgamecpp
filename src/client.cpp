@@ -15,13 +15,13 @@
 using namespace std::chrono;
 
 #include "logging.hpp"
-
-std::ofstream cnull;
-
-//_INITIALIZE_EASYLOGGINGPP
+#undef DEFAULT_LOGGER
+#define DEFAULT_LOGGER NAMED_LOGGER("client")
 
 int main(int argc, char *argv[]) {
-	LOG(info) << "Starting program";
+	initLogging("logging.conf");
+
+	LOG(INFO, "Starting program");
 
 	initUtil();
 	Client client;
@@ -60,7 +60,7 @@ Client::~Client() {
 }
 
 void Client::run() {
-	LOG(info) << "Running client";
+	LOG(INFO, "Running client");
 	startTimePoint = high_resolution_clock::now();
 	time = 0;
 	int tick = 0;
@@ -122,11 +122,11 @@ void Client::handleInput() {
 			if (event.key.keysym.scancode == SDL_SCANCODE_O) {
 				char buf[128];
 				sprintf(buf, "timeShift: %ld\n", timeShift = (timeShift + 100000) % 1000000);
-				LOG(info) << buf;
+				LOG(INFO, "" << buf);
 			} else if (event.key.keysym.scancode == SDL_SCANCODE_P) {
 				char buf[128];
 				sprintf(buf, "timeShift: %ld\n", timeShift = (timeShift + 900000) % 1000000);
-				LOG(info) << buf;
+				LOG(INFO, "" << buf);
 			}
 			if (!graphics->isMenu()) {
 				switch (event.key.keysym.scancode) {

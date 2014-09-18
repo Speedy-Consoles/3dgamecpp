@@ -133,7 +133,7 @@ void load(const char *filename, GraphicsConf *conf) {
 	try {
 		read_info(filename, pt);
 	} catch (...) {
-		LOG(warning) << "'" << filename << "' could not be opened";
+		LOG(WARNING, "'" << filename << "' could not be opened");
 	}
 
 	conf->render_backend = pt.get("graphics.render_backend",
