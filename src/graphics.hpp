@@ -112,6 +112,7 @@ private:
 	void makeOrthogonal();
 
 	void makeFog();
+	void makeMaxFOV();
 
 	void switchToPerspective();
 	void switchToOrthogonal();
