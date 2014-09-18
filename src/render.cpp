@@ -168,7 +168,7 @@ void Graphics::renderChunks() {
 	}
 
 	newQuads = 0;
-	int length = conf.render_distance * 2 + 1;
+	int length = conf.render_distance * 2 + 3;
 
 	stopwatch->start(CLOCK_NDL);
 	vec3i64 ccc;
