@@ -42,13 +42,15 @@ private:
 	int lastFPS = 0;
 	int64 lastFPSUpdate = 0;
 	int frameCounter = 0;
-	int newQuads = 0;
+	int newFaces = 0;
+	int faces = 0;
 
 	vec3i64 oldPlayerChunk;
 
 	GLuint firstDL;
 	vec3i64 *dlChunks;
 	bool *dlHasChunk;
+	int *dlFaces;
 
 	float fogColor[3] = {0.6, 0.6, 0.8};
 	float skyColor[3] = {0.15, 0.15, 0.9};
@@ -128,7 +130,7 @@ private:
 	void renderDebugInfo(const Player &);
 	void renderPerformance();
 	void renderChunks();
-	void renderChunk(const Chunk &c, bool targeted, vec3ui8 ticc, int td);
+	int renderChunk(const Chunk &c, bool targeted, vec3ui8 ticc, int td);
 	void renderPlayers();
 
 	bool inFrustum(vec3i64 cc, vec3i64 pos, vec3d lookDir);

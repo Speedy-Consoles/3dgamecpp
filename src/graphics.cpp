@@ -74,6 +74,8 @@ Graphics::~Graphics() {
 	glDeleteLists(firstDL, length * length * length);
 	delete dlChunks;
 	delete dlHasChunk;
+	delete dlFaces;
+
 	delete font;
 
 //	glDeleteProgram(program);
@@ -222,8 +224,10 @@ void Graphics::initGL() {
 	firstDL = glGenLists(n);
 	dlChunks = new vec3i64[n];
 	dlHasChunk = new bool[n];
+	dlFaces = new int[n];
 	for (int i = 0; i < n; i++) {
 		dlHasChunk[i] = false;
+		dlFaces[i] = 0;
 	}
 }
 
@@ -463,9 +467,12 @@ void Graphics::setConf(const GraphicsConf &conf) {
 		firstDL = glGenLists(n);
 		dlChunks = new vec3i64[n];
 		dlHasChunk = new bool[n];
+		dlFaces = new int[n];
 		for (int i = 0; i < n; i++) {
 			dlHasChunk[i] = false;
+			dlFaces[i] = 0;
 		}
+		faces = 0;
 	}
 
 	if (conf.fov != old_conf.fov) {

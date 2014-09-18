@@ -167,12 +167,12 @@ void Graphics::renderChunks() {
 		ticc = bc2icc(tbc);
 	}
 
-	newQuads = 0;
+	newFaces = 0;
 	int length = conf.render_distance * 2 + 3;
 
 	stopwatch->start(CLOCK_NDL);
 	vec3i64 ccc;
-	while (newQuads < MAX_NEW_QUADS && world->popChangedChunk(&ccc)) {
+	while (newFaces < MAX_NEW_QUADS && world->popChangedChunk(&ccc)) {
 		Chunk *chunk = world->getChunk(ccc);
 		if(chunk) {
 			uint index = ((((ccc[2] % length) + length) % length) * length
@@ -180,11 +180,14 @@ void Graphics::renderChunks() {
 					+ (((ccc[0] % length) + length) % length);
 			if (chunk->pollChanged() || !dlHasChunk[index] || dlChunks[index] != ccc) {
 				GLuint lid = firstDL + index;
+				faces -= dlFaces[index];
 				glNewList(lid, GL_COMPILE);
-				renderChunk(*chunk, false, vec3ui8(0, 0, 0), 0);
+				dlFaces[index] = renderChunk(*chunk, false, vec3ui8(0, 0, 0), 0);
 				glEndList();
 				dlChunks[index] = ccc;
 				dlHasChunk[index] = true;
+				faces += dlFaces[index];
+				newFaces += dlFaces[index];
 			}
 		}
 	}
@@ -206,6 +209,7 @@ void Graphics::renderChunks() {
 		GLuint lid = firstDL + index;
 
 		if (lid != 0
+				&& dlFaces[index] > 0
 				&& inFrustum(cc, localPlayer.getPos(), lookDir)
 				&& (!target || tcc != cc)
 				&& dlHasChunk[index]
@@ -218,16 +222,14 @@ void Graphics::renderChunks() {
 	}
 }
 
-void Graphics::renderChunk(const Chunk &c, bool targeted, vec3ui8 ticc, int td) {
+int Graphics::renderChunk(const Chunk &c, bool targeted, vec3ui8 ticc, int td) {
 	using namespace vec_auto_cast;
-	//render blocks
+	int faces = 0;
 	glBindTexture(GL_TEXTURE_2D, blockTexture);
 	glBegin(GL_QUADS);
 
 	const Chunk::FaceSet &faceSet = c.getFaces();
 	for (Face f : faceSet) {
-		newQuads++;
-
 		vec3d color = {1.0, 1.0, 1.0};
 		if (targeted && f.block == ticc && f.dir == td)
 			color = {0.8, 0.2, 0.2};
@@ -250,8 +252,10 @@ void Graphics::renderChunk(const Chunk &c, bool targeted, vec3ui8 ticc, int td) 
 					+ f.block + QUAD_CYCLES_3D[f.dir][j]).cast<double>();
 			glVertex3d(vertex[0], vertex[1], vertex[2]);
 		}
+		faces++;
 	}
 	glEnd();
+	return faces;
 }
 
 void Graphics::renderPlayers() {
@@ -323,7 +327,8 @@ void Graphics::renderDebugInfo(const Player &player) {
 			font->Render(buffer)
 
 	RENDER_LINE("fps: %d", lastFPS);
-	RENDER_LINE("quads: %d", newQuads);
+	RENDER_LINE("new faces: %d", newFaces);
+	RENDER_LINE("faces: %d", faces);
 	RENDER_LINE("x: %ld (%ld)", playerPos[0], playerPos[0] / RESOLUTION);
 	RENDER_LINE("y: %ld (%ld)", playerPos[1], playerPos[1] / RESOLUTION);
 	RENDER_LINE("z: %ld (%ld)", playerPos[2],
