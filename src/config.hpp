@@ -30,6 +30,7 @@ extern vec2i         DEFAULT_FULLSCREEN_RES;
 extern AntiAliasing  DEFAULT_ANTI_ALIASING;
 extern Fog           DEFAULT_FOG;
 extern uint          DEFAULT_RENDER_DISTANCE;
+extern float         DEFAULT_FOV;
 
 struct GraphicsConf {
 	RenderBackend render_backend;
@@ -39,6 +40,7 @@ struct GraphicsConf {
 	AntiAliasing aa;
 	Fog fog;
 	uint render_distance;
+	float fov;
 };
 
 void store(const char *filename, const GraphicsConf &conf);

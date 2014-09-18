@@ -58,10 +58,12 @@ Graphics::Graphics(
 
 	resize(conf.windowed_res[0], conf.windowed_res[1]);
 
-	if (DEFAULT_WINDOWED_RES[0] <= DEFAULT_WINDOWED_RES[1])
-		maxFOV = YFOV;
+	float ratio = (float) DEFAULT_WINDOWED_RES[0] / DEFAULT_WINDOWED_RES[1];
+	float yfov = conf.fov / ratio * TAU / 360.0;
+	if (ratio < 1.0)
+		maxFOV = yfov;
 	else
-		maxFOV = atan(DEFAULT_WINDOWED_RES[0] * tan(YFOV / 2) / DEFAULT_WINDOWED_RES[1]) * 2;
+		maxFOV = atan(ratio * tan(yfov / 2)) * 2;
 
 	initGL();
 
@@ -254,10 +256,12 @@ void Graphics::makePerspective() {
 	double normalRatio = DEFAULT_WINDOWED_RES[0] / (double) DEFAULT_WINDOWED_RES[1];
 	double currentRatio = width / (double) height;
 	double angle;
+
+	float yfov = conf.fov / normalRatio * TAU / 360.0;
 	if (currentRatio > normalRatio)
-		angle = atan(tan(YFOV / 2) * normalRatio / currentRatio) * 2;
+		angle = atan(tan(yfov / 2) * normalRatio / currentRatio) * 2;
 	else
-		angle = YFOV;
+		angle = yfov;
 
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
@@ -456,6 +460,10 @@ void Graphics::setConf(const GraphicsConf &conf) {
 		for (int i = 0; i < n; i++) {
 			dlHasChunk[i] = false;
 		}
+	}
+
+	if (conf.fov != old_conf.fov) {
+		makePerspective();
 	}
 }
 

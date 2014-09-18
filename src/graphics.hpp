@@ -18,9 +18,6 @@
 
 class Graphics {
 private:
-	//static const int VIEW_RANGE = CHUNK_LOAD_RANGE;
-	const double YFOV = TAU / 5;
-
 	double ZNEAR = 0.1f;
 
 	static const int MAX_NEW_QUADS = 3000;

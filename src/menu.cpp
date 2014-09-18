@@ -8,6 +8,7 @@
 #include "menu.hpp"
 
 #include "graphics.hpp"
+#include "util.hpp"
 
 #include <sstream>
 
@@ -23,6 +24,7 @@ enum Entry {
 	ANTI_ALIASING,
 	FOG,
 	RENDER_DISTANCE,
+	FOV,
 
 	NUM_ENTRIES,
 };
@@ -72,6 +74,10 @@ bool Menu::navigateRight() {
 	case RENDER_DISTANCE:
 		++renderDistanceBuf;
 		return false;
+
+	case FOV:
+		conf->fov = clamp(conf->fov + 0.5f, 10.f, 175.f);
+		return true;
 	}
 
 	return false;
@@ -108,6 +114,10 @@ bool Menu::navigateLeft() {
 		if (renderDistanceBuf > 0)
 			--renderDistanceBuf;
 		return false;
+
+	case FOV:
+		conf->fov = clamp(conf->fov - 0.5f, 10.f, 175.f);
+		return true;
 	}
 
 	return false;
@@ -143,6 +153,7 @@ std::string Menu::getEntryName(uint i) {
 		case ANTI_ALIASING: return "Anti-aliasing";
 		case FOG: return "Fog";
 		case RENDER_DISTANCE: return "Renderdistance";
+		case FOV: return "Field of view";
 
 		default: return "???";
 	}
@@ -190,6 +201,7 @@ std::string Menu::getEntryValue(uint i) {
 		case ANTI_ALIASING: ss << aaBuf; break;
 		case FOG: ss << conf->fog; break;
 		case RENDER_DISTANCE: ss << renderDistanceBuf; break;
+		case FOV: ss << conf->fov; break;
 	}
 
 	return ss.str();

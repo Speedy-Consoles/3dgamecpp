@@ -7,6 +7,7 @@ vec2i         DEFAULT_FULLSCREEN_RES  = vec2i{0, 0};
 AntiAliasing  DEFAULT_ANTI_ALIASING   = AntiAliasing::NONE;
 Fog           DEFAULT_FOG             = Fog::FANCY;
 uint          DEFAULT_RENDER_DISTANCE = 8;
+float         DEFAULT_FOV = 120;
 
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/info_parser.hpp>
@@ -122,6 +123,7 @@ void store(const char *filename, const GraphicsConf &conf) {
 	pt.put("graphics.aa", conf.aa);
 	pt.put("graphics.fog", conf.fog);
 	pt.put("graphics.render_distance", conf.render_distance);
+	pt.put("graphics.fov", conf.fov);
 
 	write_info(filename, pt);
 }
@@ -152,4 +154,6 @@ void load(const char *filename, GraphicsConf *conf) {
 			DEFAULT_FOG);
 	conf->render_distance = pt.get("graphics.render_distance",
 			DEFAULT_RENDER_DISTANCE);
+	conf->fov = pt.get("graphics.fov",
+			DEFAULT_FOV);
 }
