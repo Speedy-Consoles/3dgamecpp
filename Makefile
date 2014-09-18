@@ -27,6 +27,8 @@ LD = g++
 CXXFLAGS = -Wall -std=c++11 `freetype-config --cflags` -pthread
 LDFLAGS = -pthread
 
+#CXXFLAGS += -DNO_GRAPHICS
+
 LIB_DIRS = 
 
 LIBS_LD_FLAGS  = -Wl,-Bstatic 
@@ -34,7 +36,7 @@ LIBS_LD_FLAGS += -Wl,-Bdynamic -llog4cxx -lGL -lGLU -lGLEW -lftgl -lSDL2 -lSDL2_
 
 DEBUG ?= 1
 ifeq ($(DEBUG), 1)
-	CXXFLAGS += -g
+	CXXFLAGS += -g -O1
 	OBJ_DIR = obj/debug
 	BIN_DIR = bin/debug
 else

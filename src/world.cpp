@@ -2,6 +2,8 @@
 #include <cstdio>
 #include "constants.hpp"
 #include "util.hpp"
+#include "logging.hpp"
+
 
 World::World() : chunks(0, vec3i64HashFunc), dur_ticking(0) {
 }
@@ -226,6 +228,8 @@ void World::insertChunk(Chunk *chunk) {
 	chunks.insert({chunk->cc, chunk});
 	patchBorders(chunk);
 	changedChunks.push_back(chunk->cc);
+	if (chunks.size() % 100 == 0) LOG(INFO,
+			"currently " << chunks.size() << " chunks are loaded");
 }
 
 void World::patchBorders(Chunk *c) {

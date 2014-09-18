@@ -29,17 +29,23 @@ const double World::GRAVITY = -9.81 * RESOLUTION / 60.0 / 60.0 * 4;
 void Chunk::initFaces() {
 	using namespace vec_auto_cast;
 	uint i = 0;
+
+	uint ds[3];
+	for (uint8 d = 0; d < 3; d++) {
+		vec3ui8 dir = DIRS[d].cast<uint8>();
+		ds[d] = getBlockIndex(dir);
+	}
+
 	for (uint z = 0; z < WIDTH; z++) {
 		for (uint y = 0; y < WIDTH; y++) {
 			for (uint x = 0; x < WIDTH; x++) {
 				for (uint8 d = 0; d < 3; d++) {
-					vec3ui8 dir = DIRS[d].cast<uint8>();
 					if ((x == WIDTH - 1 && d==0)
 							|| (y == WIDTH - 1 && d==1)
 							|| (z == WIDTH - 1 && d==2))
 						continue;
 
-					uint ni = i + getBlockIndex(dir);
+					uint ni = i + ds[d];
 
 					uint8 thisType = blocks[i];
 					uint8 thatType = blocks[ni];

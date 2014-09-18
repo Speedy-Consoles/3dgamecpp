@@ -44,12 +44,20 @@ Client::Client(){
 	localClientID = serverInterface->getLocalClientID();
 
 	menu = new Menu(conf);
+
+#ifndef NO_GRAPHICS
 	graphics = new Graphics(world, menu, localClientID, *conf, stopwatch);
+#else
+	graphics = nullptr;
+#endif
+
 }
 
 Client::~Client() {
 	store("graphics-default.profile", *conf);
+#ifndef NO_GRAPHICS
 	delete graphics;
+#endif
 	delete menu;
 	delete conf;
 
@@ -74,9 +82,10 @@ void Client::run() {
 		stopwatch->start(CLOCK_TIC);
 		world->tick(tick, localClientID);
 		stopwatch->stop(CLOCK_TIC);
-
+#ifndef NO_GRAPHICS
 		if (time + timeShift + 1000000 / TICK_SPEED > getMicroTimeSince(startTimePoint))
 			graphics->tick();
+#endif
 
 		stopwatch->start(CLOCK_NET);
 		serverInterface->receive(time + 200000);

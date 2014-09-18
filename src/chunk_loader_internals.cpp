@@ -19,8 +19,10 @@ void ChunkLoader::run() {
 
 	while (!shouldHalt.load(memory_order_seq_cst)) {
 		updateRenderDistance();
-		if (!loadNextChunk())
+		if (!loadNextChunk()) {
 			this_thread::sleep_for(milliseconds(100));
+			//LOG(INFO, "Maximum number of chunks loaded");
+		}
 		sendOffloadQueries();
 		storeChunksOnDisk();
 	} // while not thread interrupted
@@ -50,23 +52,26 @@ void ChunkLoader::updateRenderDistance() {
 
 bool ChunkLoader::loadNextChunk() {
 	// don't wait for the reading-lock to be released
+
 	if (!updatePlayerInfo(false) || !isPlayerValid)
 		return false;
 
-	uint64 length = renderDistance * 2 + 1;
-	uint64 maxLoads = length * length * length;
-	if (playerChunksLoaded > maxLoads)
-		return false;
+	for (int i = 0; i < 100; ++i) {
+		uint64 length = renderDistance * 2 + 1;
+		uint64 maxLoads = length * length * length;
+		if (playerChunksLoaded > maxLoads)
+			return false;
 
-	vec3i64 ccd = getNextChunkToLoad();
+		vec3i64 ccd = getNextChunkToLoad();
 
-	if (playerChunkIndex >= LOADING_ORDER.size())
-		return false;
+		if (playerChunkIndex >= LOADING_ORDER.size())
+			return false;
 
-	vec3i64 cc = ccd + lastPcc;
-	tryToLoadChunk(cc);
+		vec3i64 cc = ccd + lastPcc;
+		tryToLoadChunk(cc);
 
-	playerChunksLoaded++;
+		playerChunksLoaded++;
+	}
 	return true;
 }
 
