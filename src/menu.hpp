@@ -19,10 +19,12 @@ public:
 
 	uint getCursor() const { return cursor; }
 
-	void navigateUp();
-	void navigateDown();
-	void navigateRight();
-	void navigateLeft();
+	bool navigateUp();
+	bool navigateDown();
+	bool navigateRight();
+	bool navigateLeft();
+
+	bool finish();
 
 	uint getEntryCount();
 	std::string getEntryName(uint);
@@ -30,6 +32,9 @@ public:
 
 private:
 	uint cursor = 0;
+
+	uint renderDistanceBuf;
+	AntiAliasing aaBuf;
 
 	GraphicsConf *conf;
 };

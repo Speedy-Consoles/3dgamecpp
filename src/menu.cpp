@@ -28,35 +28,38 @@ enum Entry {
 };
 
 Menu::Menu(GraphicsConf *conf) : conf(conf) {
-	// nothing
+	renderDistanceBuf = conf->render_distance;
+	aaBuf = conf->aa;
 }
 
-void Menu::navigateUp() {
+bool Menu::navigateUp() {
 	cursor = (cursor + getEntryCount() - 1) % getEntryCount();
+	return false;
 }
 
-void Menu::navigateDown() {
+bool Menu::navigateDown() {
 	cursor = (cursor + 1) % getEntryCount();
+	return false;
 }
 
-void Menu::navigateRight() {
+bool Menu::navigateRight() {
 	switch (cursor) {
 	case RENDER_BACKEND:
-		break;
+		return false;
 
 	case FULLSCREEN:
 		conf->fullscreen ^= true;
-		break;
+		return true;
 
 	case ANTI_ALIASING:
-		switch (conf->aa) {
-		case AntiAliasing::NONE:    conf->aa = AntiAliasing::MSAA_2; break;
-		case AntiAliasing::MSAA_2:  conf->aa = AntiAliasing::MSAA_4; break;
-		case AntiAliasing::MSAA_4:  conf->aa = AntiAliasing::MSAA_8; break;
-		case AntiAliasing::MSAA_8:  conf->aa = AntiAliasing::MSAA_16; break;
-		case AntiAliasing::MSAA_16: conf->aa = AntiAliasing::NONE; break;
+		switch (aaBuf) {
+		case AntiAliasing::NONE:    aaBuf = AntiAliasing::MSAA_2; break;
+		case AntiAliasing::MSAA_2:  aaBuf = AntiAliasing::MSAA_4; break;
+		case AntiAliasing::MSAA_4:  aaBuf = AntiAliasing::MSAA_8; break;
+		case AntiAliasing::MSAA_8:  aaBuf = AntiAliasing::MSAA_16; break;
+		case AntiAliasing::MSAA_16: aaBuf = AntiAliasing::NONE; break;
 		}
-		break;
+		return false;
 
 	case FOG:
 		switch (conf->fog) {
@@ -64,32 +67,34 @@ void Menu::navigateRight() {
 		case Fog::FAST:   conf->fog = Fog::FANCY; break;
 		case Fog::FANCY:  conf->fog = Fog::NONE; break;
 		}
-		break;
+		return true;
 
 	case RENDER_DISTANCE:
-		++conf->render_distance;
-		break;
+		++renderDistanceBuf;
+		return false;
 	}
+
+	return false;
 }
 
-void Menu::navigateLeft() {
+bool Menu::navigateLeft() {
 	switch (cursor) {
 	case RENDER_BACKEND:
-		break;
+		return false;
 
 	case FULLSCREEN:
 		conf->fullscreen ^= true;
-		break;
+		return true;
 
 	case ANTI_ALIASING:
-		switch (conf->aa) {
-		case AntiAliasing::NONE:    conf->aa = AntiAliasing::MSAA_16; break;
-		case AntiAliasing::MSAA_2:  conf->aa = AntiAliasing::NONE; break;
-		case AntiAliasing::MSAA_4:  conf->aa = AntiAliasing::MSAA_2; break;
-		case AntiAliasing::MSAA_8:  conf->aa = AntiAliasing::MSAA_4; break;
-		case AntiAliasing::MSAA_16: conf->aa = AntiAliasing::MSAA_8; break;
+		switch (aaBuf) {
+		case AntiAliasing::NONE:    aaBuf = AntiAliasing::MSAA_16; break;
+		case AntiAliasing::MSAA_2:  aaBuf = AntiAliasing::NONE; break;
+		case AntiAliasing::MSAA_4:  aaBuf = AntiAliasing::MSAA_2; break;
+		case AntiAliasing::MSAA_8:  aaBuf = AntiAliasing::MSAA_4; break;
+		case AntiAliasing::MSAA_16: aaBuf = AntiAliasing::MSAA_8; break;
 		}
-		break;
+		return false;
 
 	case FOG:
 		switch (conf->fog) {
@@ -97,13 +102,30 @@ void Menu::navigateLeft() {
 		case Fog::FAST:   conf->fog = Fog::NONE; break;
 		case Fog::FANCY:  conf->fog = Fog::FAST; break;
 		}
-		break;
+		return true;
 
 	case RENDER_DISTANCE:
-		if (conf->render_distance > 0)
-			--conf->render_distance;
-		break;
+		if (renderDistanceBuf > 0)
+			--renderDistanceBuf;
+		return false;
 	}
+
+	return false;
+}
+
+bool Menu::finish() {
+	bool changed = false;
+	if (aaBuf != conf->aa) {
+		conf->aa = aaBuf;
+		changed = true;
+	}
+
+	if (renderDistanceBuf != conf->render_distance) {
+		conf->render_distance = renderDistanceBuf;
+		changed = true;
+	}
+
+	return changed;
 }
 
 uint Menu::getEntryCount() {
@@ -165,9 +187,9 @@ std::string Menu::getEntryValue(uint i) {
 		//case WINDOWED_RES:
 		//case FULLSCREEN_RES:
 
-		case ANTI_ALIASING: ss << conf->aa; break;
+		case ANTI_ALIASING: ss << aaBuf; break;
 		case FOG: ss << conf->fog; break;
-		case RENDER_DISTANCE: ss << conf->render_distance; break;
+		case RENDER_DISTANCE: ss << renderDistanceBuf; break;
 	}
 
 	return ss.str();

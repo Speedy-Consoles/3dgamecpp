@@ -169,14 +169,36 @@ void Client::handleInput() {
 				} // switch scancode
 			} else { // if we are in menu
 				switch (event.key.keysym.scancode) {
-				case SDL_SCANCODE_W: menu->navigateUp(); break;
-				case SDL_SCANCODE_S: menu->navigateDown(); break;
-				case SDL_SCANCODE_A: menu->navigateLeft(); break;
-				case SDL_SCANCODE_D: menu->navigateRight(); break;
+				case SDL_SCANCODE_W:
+					if (menu->navigateUp()) {
+						graphics->setConf(*conf);
+						serverInterface->setConf(*conf);
+					}
+					break;
+				case SDL_SCANCODE_S:
+					if (menu->navigateDown()) {
+						graphics->setConf(*conf);
+						serverInterface->setConf(*conf);
+					}
+				break;
+				case SDL_SCANCODE_A:
+					if (menu->navigateLeft()) {
+						graphics->setConf(*conf);
+						serverInterface->setConf(*conf);
+					}
+				break;
+				case SDL_SCANCODE_D:
+					if (menu->navigateRight()) {
+						graphics->setConf(*conf);
+						serverInterface->setConf(*conf);
+					}
+				break;
 				case SDL_SCANCODE_ESCAPE:
-					graphics->setConf(*conf);
+					if (menu->finish()) {
+						graphics->setConf(*conf);
+						serverInterface->setConf(*conf);
+					}
 					graphics->setMenu(false);
-					serverInterface->setConf(*conf);
 					world->setPause(false);
 					break;
 				default: break;
