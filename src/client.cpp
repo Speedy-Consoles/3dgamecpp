@@ -119,10 +119,15 @@ void Client::handleInput() {
 			}
 			break;
 		case SDL_KEYDOWN:
-			if (event.key.keysym.scancode == SDL_SCANCODE_O)
-				printf("timeShift: %d\n", timeShift = (timeShift + 100000) % 1000000);
-			else if (event.key.keysym.scancode == SDL_SCANCODE_P)
-				printf("timeShift: %d\n", timeShift = (timeShift + 900000) % 1000000);
+			if (event.key.keysym.scancode == SDL_SCANCODE_O) {
+				char buf[128];
+				sprintf(buf, "timeShift: %ld\n", timeShift = (timeShift + 100000) % 1000000);
+				LOG(info) << buf;
+			} else if (event.key.keysym.scancode == SDL_SCANCODE_P) {
+				char buf[128];
+				sprintf(buf, "timeShift: %ld\n", timeShift = (timeShift + 900000) % 1000000);
+				LOG(info) << buf;
+			}
 			if (!graphics->isMenu()) {
 				switch (event.key.keysym.scancode) {
 				case SDL_SCANCODE_ESCAPE:
