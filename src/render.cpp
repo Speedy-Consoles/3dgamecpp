@@ -494,7 +494,7 @@ void Graphics::renderPerformance() {
 		float d1 = used_positions[i] - used_positions[i - 1];
 		float d2 = used_positions[i + 1] - used_positions[i];
 		float diff = 2e-4 * (1.0 / d1 - 1.0 / d2);
-		used_positions[i] += std::min(std::max(-0.02, (double) diff), 0.02);
+		used_positions[i] += clamp((double) diff, -0.02, 0.02);
 	}
 
 	glPushMatrix();

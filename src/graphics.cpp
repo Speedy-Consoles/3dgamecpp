@@ -286,9 +286,9 @@ void Graphics::makeOrthogonal() {
 }
 
 void Graphics::makeFog() {
-	double fogStart = Chunk::WIDTH * (conf.render_distance - 1.0);
-	glFogf(GL_FOG_START, fogStart - ZNEAR - fogStart / 3.0);
-	glFogf(GL_FOG_END, fogStart - ZNEAR);
+	double fogEnd = std::max(0.0, Chunk::WIDTH * (conf.render_distance - 1.0));
+	glFogf(GL_FOG_START, fogEnd - ZNEAR - fogEnd / 3.0);
+	glFogf(GL_FOG_END, fogEnd - ZNEAR);
 }
 
 void Graphics::calcDrawArea() {
