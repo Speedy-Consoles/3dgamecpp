@@ -53,6 +53,7 @@ void Chunk::initFaces() {
 						vec3ui8 faceBlock;
 						uint8 faceDir;
 						if (thisType == 0) {
+							vec3ui8 dir = DIRS[d].cast<uint8>();
 							faceBlock = vec3ui8(x, y, z) + dir;
 							faceDir = (uint8) (d + 3);
 						} else if (thatType == 0){
