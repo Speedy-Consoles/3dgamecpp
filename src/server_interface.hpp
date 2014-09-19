@@ -9,9 +9,7 @@ public:
 	virtual ~ServerInterface() {}
 
 	virtual void togglePlayerFly() = 0;
-
 	virtual void setPlayerMoveInput(int moveInput) = 0;
-
 	virtual void setPlayerOrientation(double yaw, double pitch) = 0;
 
 	virtual void edit(vec3i64 block, uint8 type) = 0;

@@ -87,12 +87,17 @@ private:
 
 	Monitor validPosMonitor;
 
+	// currently selected building block
+	uint8 block = 1;
+
 public:
 	void tick(int tick, bool isLocalPlayer);
 
 	void setOrientation(double yaw, double pitch);
 	void setFly(bool fly);
 	void setMoveInput(int moveInput);
+
+	void setBlock(uint8 b) { block = b; }
 
 	vec3i64 getPos() const;
 	vec3d getVel() const;
@@ -101,6 +106,7 @@ public:
 	bool getFly() const;
 	int getMoveInput() const;
 	vec3i64 getChunkPos() const;
+	uint8 getBlock() const { return block; }
 
 	void create(World *world);
 	void destroy();

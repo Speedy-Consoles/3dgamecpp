@@ -112,6 +112,19 @@ void Client::handleInput() {
     SDL_Event event;
     while (SDL_PollEvent(&event)) {
 		switch (event.type) {
+		case SDL_MOUSEWHEEL: {
+			auto block = player.getBlock();
+			block += event.wheel.y;
+			static const int NUMBER_OF_BLOCKS = 32;
+			while (block > NUMBER_OF_BLOCKS) {
+				block -= NUMBER_OF_BLOCKS;
+			}
+			while (block < 1) {
+				block += NUMBER_OF_BLOCKS;
+			}
+			player.setBlock(block);
+			break;
+		}
 		case  SDL_WINDOWEVENT:
 			switch (event.window.event) {
 			case SDL_WINDOWEVENT_CLOSE:
@@ -236,12 +249,13 @@ void Client::handleInput() {
 				if (target) {
 					if (event.button.button == SDL_BUTTON_LEFT) {
 						vec3i64 rbc = bc + DIRS[d];
-						serverInterface->edit(rbc, 1);
+						serverInterface->edit(rbc, player.getBlock());
 					} else if (event.button.button == SDL_BUTTON_RIGHT) {
 						serverInterface->edit(bc, 0);
 					}
 				}
 			}
+			break;
 		}
 	}
 

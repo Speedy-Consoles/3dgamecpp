@@ -17,6 +17,7 @@ SOURCE_FILES = \
 	render.cpp\
 	render_menu.cpp\
 	stopwatch.cpp\
+	texture_manager.cpp\
 	util.cpp\
 	world.cpp\
 	world_generator.cpp
@@ -36,7 +37,7 @@ LIBS_LD_FLAGS += -Wl,-Bdynamic -llog4cxx -lGL -lGLU -lGLEW -lftgl -lSDL2 -lSDL2_
 
 DEBUG ?= 1
 ifeq ($(DEBUG), 1)
-	CXXFLAGS += -g -O1
+	CXXFLAGS += -g
 	OBJ_DIR = obj/debug
 	BIN_DIR = bin/debug
 else

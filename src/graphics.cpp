@@ -9,6 +9,8 @@
 #include <fstream>
 #include <sstream>
 
+#include <SDL2/SDL_image.h>
+
 Graphics::Graphics(
 		World *world,
 		Menu *menu,
@@ -23,8 +25,19 @@ Graphics::Graphics(
 	LOG(DEBUG, "Constructing Graphics");
 
 	LOG(DEBUG, "Initializing SDL");
-	auto failure = SDL_Init(SDL_INIT_VIDEO);
-	if (failure) LOG(FATAL, SDL_GetError());
+	if (SDL_Init(SDL_INIT_VIDEO))
+		LOG(FATAL, SDL_GetError());
+	int img_init_flags = IMG_INIT_JPG | IMG_INIT_PNG | IMG_INIT_TIF;
+	int img_init_result = IMG_Init(img_init_flags);
+	if (!(img_init_flags & img_init_result & IMG_INIT_JPG)) {
+		LOG(ERROR, "SDL_Image JPEG Plugin could not be initialized")
+	}
+	if (!(img_init_flags & img_init_result & IMG_INIT_PNG)) {
+		LOG(ERROR, "SDL_Image PNG Plugin could not be initialized")
+	}
+	if (!(img_init_flags & img_init_result & IMG_INIT_TIF)) {
+		LOG(ERROR, "SDL_Image TIFF Plugin could not be initialized")
+	}
 
 	LOG(DEBUG, "Creating window");
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
@@ -138,7 +151,7 @@ void Graphics::initGL() {
 	glColorMaterial(GL_FRONT, GL_AMBIENT_AND_DIFFUSE); // tell opengl glColor3f effects the ambient and diffuse properties of material
 
 	// font
-	LOG(DEBUG, "Initializing font");
+	LOG(DEBUG, "Loading font");
 	font = new FTGLTextureFont("res/DejaVuSansMono.ttf");
 	if (font) {
 		font->FaceSize(16);
@@ -148,22 +161,28 @@ void Graphics::initGL() {
 	}
 
 	// textures
-	LOG(INFO, "Initializing textures");
-	IMG_Init(IMG_INIT_JPG | IMG_INIT_PNG | IMG_INIT_TIF);
-	SDL_Surface *blockImage = IMG_Load("img/block.png");
-	if (blockImage) {
-		glGenTextures(1, &blockTexture);
-		glBindTexture(GL_TEXTURE_2D, blockTexture);
-		logOpenGLError();
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST);
-		glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_TRUE);
-		glTexImage2D(GL_TEXTURE_2D, 0, 4, 128, 128, 0, GL_RGBA, GL_UNSIGNED_BYTE, blockImage->pixels);
-		SDL_FreeSurface(blockImage);
-		logOpenGLError();
-	} else {
-		LOG(ERROR, "Could not open 'block.png'");
-	}
+	LOG(DEBUG, "Loading textures");
+	//texManager.loadTexture("img/block.png", 1);
+	uint blocks[] = {
+		 1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15, 16,
+		17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32,
+		 0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+		 0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+		 0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+		 0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+		 0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+		 0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+		 0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+		 0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+		 0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+		 0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+		 0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+		 0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+		 0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+		 0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+	};
+	texManager.loadTextures("img/textures_1.png", 16, 16, blocks);
+	//texManager.loadTexture("img/textures_1.png", 34);
 
 //	glGenTextures(1, &noTexture);
 //	glBindTexture(GL_TEXTURE_2D, noTexture);

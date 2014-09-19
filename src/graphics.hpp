@@ -5,7 +5,6 @@
 
 #include <GL/glew.h>
 #include <SDL2/SDL.h>
-#include <SDL2/SDL_image.h>
 #include <FTGL/ftgl.h>
 
 #include "world.hpp"
@@ -15,6 +14,7 @@
 #include "client.hpp"
 #include "config.hpp"
 #include "menu.hpp"
+#include "texture_manager.hpp"
 
 class Graphics {
 private:
@@ -53,8 +53,8 @@ private:
 	float fogColor[3] = {0.6, 0.6, 0.8};
 	float skyColor[3] = {0.15, 0.15, 0.9};
 	float sunLightPosition[4] = {3.0, 2.0, 9.0, 0.0};
-	GLuint blockTexture;
-	GLuint noTexture;
+
+	TextureManager texManager;
 	FTFont *font;
 
 //	GLuint program = 0;

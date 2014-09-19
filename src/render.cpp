@@ -220,13 +220,21 @@ void Graphics::renderChunks() {
 
 void Graphics::renderChunk(const Chunk &c, bool targeted, vec3ui8 ticc, int td) {
 	using namespace vec_auto_cast;
-	//render blocks
-	glBindTexture(GL_TEXTURE_2D, blockTexture);
-	glBegin(GL_QUADS);
 
+	uint8 lastBlock = 0;
+	texManager.bind(1);
+	glBegin(GL_QUADS);
 	const Chunk::FaceSet &faceSet = c.getFaces();
 	for (Face f : faceSet) {
 		newQuads++;
+
+		auto nextBlock = c.getBlock(f.block);
+		if (lastBlock != nextBlock) {
+			glEnd();
+			texManager.bind(nextBlock);
+			glBegin(GL_QUADS);
+			lastBlock = nextBlock;
+		}
 
 		vec3d color = {1.0, 1.0, 1.0};
 		if (targeted && f.block == ticc && f.dir == td)
@@ -234,7 +242,9 @@ void Graphics::renderChunk(const Chunk &c, bool targeted, vec3ui8 ticc, int td) 
 
 		glNormal3d(DIRS[f.dir][0], DIRS[f.dir][1], DIRS[f.dir][2]);
 		for (int j = 0; j < 4; j++) {
-			glTexCoord2d(QUAD_CYCLE_2D[j][0], QUAD_CYCLE_2D[j][1]);
+			float s = QUAD_CYCLE_2D[j][0];
+			float t = 1.0 - QUAD_CYCLE_2D[j][1];
+			glTexCoord2f(s, t);
 			double light = 1.0;
 			bool s1 = (f.corners & FACE_CORNER_MASK[j][0]) > 0;
 			bool s2 = (f.corners & FACE_CORNER_MASK[j][2]) > 0;
@@ -307,6 +317,20 @@ void Graphics::renderHud(const Player &player) {
 	glVertex2d(2, 20);
 	glVertex2d(-2, 20);
 	glEnd();
+
+	glEnable(GL_TEXTURE_2D);
+	texManager.bind(player.getBlock());
+	glPushMatrix();
+	glTranslatef(-drawWidth * 0.48, -drawHeight * 0.48, 0);
+	float d = (width < height ? width : height) * 0.05;
+	glColor4f(1, 1, 1, 1);
+	glBegin(GL_QUADS);
+		glTexCoord2f(0, 1); glVertex2f(0, 0);
+		glTexCoord2f(1, 1); glVertex2f(d, 0);
+		glTexCoord2f(1, 0); glVertex2f(d, d);
+		glTexCoord2f(0, 0); glVertex2f(0, d);
+	glEnd();
+	glPopMatrix();
 }
 
 void Graphics::renderDebugInfo(const Player &player) {
@@ -314,6 +338,7 @@ void Graphics::renderDebugInfo(const Player &player) {
 	vec3d playerVel = player.getVel();
 	uint32 windowFlags = SDL_GetWindowFlags(window);
 
+	glDisable(GL_TEXTURE_2D);
 	glPushMatrix();
 	glColor3f(1.0f, 1.0f, 1.0f);
 	glTranslatef(-drawWidth / 2 + 3, drawHeight / 2, 0);
@@ -334,6 +359,7 @@ void Graphics::renderDebugInfo(const Player &player) {
 	RENDER_LINE("yvel: %8.1f", playerVel[1]);
 	RENDER_LINE("zvel: %8.1f", playerVel[2]);
 	RENDER_LINE("chunks loaded: %lu", world->getNumChunks());
+	RENDER_LINE("block: %d", player.getBlock());
 	if ((SDL_WINDOW_FULLSCREEN & windowFlags) > 0)
 		glColor3f(1.0f, 0.0f, 0.0f);
 	else
