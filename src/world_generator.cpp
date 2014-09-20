@@ -14,6 +14,17 @@ WorldGenerator::WorldGenerator(uint64 seed) : perlin(seed) {
 
 Chunk *WorldGenerator::generateChunk(vec3i64 cc) {
 	Chunk *chunk = new Chunk(cc);
+	generateChunk(*chunk);
+	return chunk;
+}
+
+void WorldGenerator::generateChunk(vec3i64 cc, Chunk &chunk) {
+	chunk.setCC(cc);
+	generateChunk(chunk);
+}
+
+void WorldGenerator::generateChunk(Chunk &chunk) {
+	auto cc = chunk.getCC();
 	for (uint ix = 0; ix < Chunk::WIDTH; ix++) {
 		for (uint iy = 0; iy < Chunk::WIDTH; iy++) {
 			long x = round((cc[0] * Chunk::WIDTH + ix) / overAllScale);
@@ -43,10 +54,10 @@ Chunk *WorldGenerator::generateChunk(vec3i64 cc) {
 				long z = iz + cc[2] * Chunk::WIDTH;
 				double depth = h - z;
 				if (depth < 0) {
-					chunk->initBlock(index, 0);
+					chunk.initBlock(index, 0);
 					continue;
 				} else if(depth > (h * surfaceRelDepth)) {
-					chunk->initBlock(index, 1);
+					chunk.initBlock(index, 1);
 					continue;
 				}
 				double funPos = (1 - depth / (h * surfaceRelDepth) - 0.5) * 2 / surfaceThresholdXScale;
@@ -56,11 +67,10 @@ Chunk *WorldGenerator::generateChunk(vec3i64 cc) {
 				double pz = z / surfaceScale;
 				double v = perlin.octavePerlin(px, py, pz, 6, surfaceExp);
 				if (v > threshold)
-					chunk->initBlock(index, 1);
+					chunk.initBlock(index, 1);
 				else
-					chunk->initBlock(index, 0);
+					chunk.initBlock(index, 0);
 			}
 		}
 	}
-	return chunk;
 }

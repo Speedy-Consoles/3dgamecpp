@@ -256,7 +256,7 @@ void Graphics::renderChunk(const Chunk &c, bool targeted, vec3ui8 ticc, int td) 
 			if (m && !(s1 && s2))
 				light -= 0.2;
 			glColor3d(color[0] * light, color[1] * light, color[2] * light);
-			vec3d vertex = (c.cc * Chunk::WIDTH
+			vec3d vertex = (c.getCC() * Chunk::WIDTH
 					+ f.block + QUAD_CYCLES_3D[f.dir][j]).cast<double>();
 			glVertex3d(vertex[0], vertex[1], vertex[2]);
 		}

@@ -89,14 +89,15 @@ void ChunkLoader::tryToLoadChunk(vec3i64 cc) {
 	auto iter = isLoaded.find(cc);
 	if (iter == isLoaded.end()) {
 		isLoaded.insert(cc);
-		Chunk *chunk = chunkArchive.loadChunk(cc);
-		if (!chunk)
-			chunk = gen->generateChunk(cc);
-		chunk->setChunkLoader(this);
+		Chunk *chunk = new Chunk(cc, this);
+		if (!chunkArchive.loadChunk(cc, *chunk))
+			gen->generateChunk(cc, *chunk);
 		if (updateFaces)
 			chunk->initFaces();
-		while (!queue.push(chunk))
+		while (!queue.push(chunk)) {
+			LOG(WARNING, "Output queue is full");
 			this_thread::sleep_for(milliseconds(100));
+		}
 	}
 }
 

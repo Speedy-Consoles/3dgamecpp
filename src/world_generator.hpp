@@ -10,12 +10,15 @@
 
 #include "chunk.hpp"
 #include "perlin.hpp"
+#include "util.hpp"
 
 class WorldGenerator {
 public:
 	WorldGenerator(uint64 seed);
 
-	Chunk *generateChunk(vec3i64 cc);
+	DEPRECATED(Chunk *generateChunk(vec3i64 cc));
+	void generateChunk(vec3i64 cc, Chunk &);
+	void generateChunk(Chunk &);
 
 private:
 	Perlin perlin;

@@ -169,7 +169,7 @@ bool World::setBlock(vec3i64 bc, uint8 type, bool updateFaces) {
 
 		for (int i = 0; i < 27; i++) {
 			if(chunkChanged[i])
-				changedChunks.push_front(c->cc + CUBE_CYCLE[i]);
+				changedChunks.push_front(c->getCC() + CUBE_CYCLE[i]);
 		}
 
 		return true;
@@ -225,9 +225,9 @@ Chunk *World::getChunk(vec3i64 cc) {
 
 void World::insertChunk(Chunk *chunk) {
 	using namespace vec_auto_cast;
-	chunks.insert({chunk->cc, chunk});
+	chunks.insert({chunk->getCC(), chunk});
 	patchBorders(chunk);
-	changedChunks.push_back(chunk->cc);
+	changedChunks.push_back(chunk->getCC());
 }
 
 void World::patchBorders(Chunk *c) {
@@ -239,13 +239,13 @@ void World::patchBorders(Chunk *c) {
 
 	// TODO make more efficient
 	for (int i = 0; i < 27; i++) {
-		vec3i64 ncc = c->cc + CUBE_CYCLE[i];
+		vec3i64 ncc = c->getCC() + CUBE_CYCLE[i];
 		Chunk *nc = getChunk(ncc);
 		if (!nc)
 			continue;
 		for (Face f : nc->getBorderFaces()) {
 			vec3i64 nbc = ncc * Chunk::WIDTH + f.block;
-			if (bc2cc(nbc - CUBE_CYCLE[i]) != c->cc)
+			if (bc2cc(nbc - CUBE_CYCLE[i]) != c->getCC())
 				continue;
 			if (updateFace(nbc, f.dir))
 				chunkChanged[i] = true;
@@ -255,7 +255,7 @@ void World::patchBorders(Chunk *c) {
 	for (uint8 d = 0; d < 6; d++) {
 		uint8 invD = (d + 3) % 6;
 		int dim = DIR_DIMS[d];
-		vec3i64 ncc = c->cc + DIRS[d];
+		vec3i64 ncc = c->getCC() + DIRS[d];
 		Chunk *nc = getChunk(ncc);
 		if (!nc)
 			continue;
@@ -281,7 +281,7 @@ void World::patchBorders(Chunk *c) {
 						chunkChanged[DIR_2_CUBE_CYCLE[d]] = true;
 				} else {
 					if (type != 0)
-						c->addFace(Face{icc, d, getFaceCorners(c->cc * Chunk::WIDTH + icc, d)});
+						c->addFace(Face{icc, d, getFaceCorners(c->getCC() * Chunk::WIDTH + icc, d)});
 					else
 						c->removeFace(Face{icc, d, 0});
 				}
@@ -290,7 +290,7 @@ void World::patchBorders(Chunk *c) {
 	}
 	for (int i = 0; i < 27; i++) {
 		if(chunkChanged[i])
-			changedChunks.push_back(c->cc + CUBE_CYCLE[i]);
+			changedChunks.push_back(c->getCC() + CUBE_CYCLE[i]);
 	}
 }
 

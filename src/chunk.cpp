@@ -14,7 +14,10 @@ static size_t faceHashFunc(Face f) {
 }
 
 Chunk::Chunk(vec3i64 cc, ChunkLoader *chunkLoader) :
-		cc(cc), faces(0, faceHashFunc), borderFaces(0, faceHashFunc), chunkLoader(chunkLoader) {
+		cc(cc),
+		chunkLoader(chunkLoader),
+		faces(0, faceHashFunc),
+		borderFaces(0, faceHashFunc) {
 	// nothing
 }
 
@@ -66,9 +69,9 @@ void Chunk::initFaces() {
 						for (int j = 0; j < 8; ++j) {
 							vec3i v = EIGHT_CYCLES_3D[faceDir][j];
 							vec3i dIcc = faceBlock + v;
-							if (		dIcc[0] < 0 || dIcc[0] >= WIDTH
-									||	dIcc[1] < 0 || dIcc[1] >= WIDTH
-									||	dIcc[2] < 0 || dIcc[2] >= WIDTH)
+							if (		dIcc[0] < 0 || dIcc[0] >= (int) WIDTH
+									||	dIcc[1] < 0 || dIcc[1] >= (int) WIDTH
+									||	dIcc[2] < 0 || dIcc[2] >= (int) WIDTH)
 								continue;
 							if (getBlock(dIcc.cast<uint8>())) {
 								corners |= 1 << j;

@@ -1,7 +1,6 @@
 #ifndef CHUNK_HPP
 #define CHUNK_HPP
 
-#include "std_types.hpp"
 #include "vmath.hpp"
 
 #include <unordered_set>
@@ -20,29 +19,30 @@ bool operator == (const Face &lhs, const Face &rhs);
 
 class Chunk {
 public:
-	static const uint8 WIDTH = 32;
-
-	const vec3i64 cc;
+	static const uint WIDTH = 32;
 
 	using FaceSet = std::unordered_set<Face, size_t(*)(Face)>;
 
 private:
+	vec3i64 cc;
+	ChunkLoader *chunkLoader;
 	bool changed = true;
 
-	uint8 blocks[WIDTH * WIDTH * WIDTH];
 	FaceSet faces;
 	FaceSet borderFaces;
 
-	ChunkLoader *chunkLoader;
+	uint8 blocks[WIDTH * WIDTH * WIDTH];
 
 public:
 	Chunk(vec3i64 cc, ChunkLoader *chunkLoader = nullptr);
 
 	void initFaces();
-
+	vec3i64 getCC() const { return cc; }
+	void setCC(vec3i64 cc) { this->cc = cc; }
 	void initBlock(size_t index, uint8 type);
 	bool setBlock(vec3ui8 icc, uint8 type);
 	uint8 getBlock(vec3ui8 icc) const;
+
 	const uint8 *getBlocks() const { return blocks; }
 
 	void addFace(Face face);

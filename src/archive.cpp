@@ -8,7 +8,8 @@
 #include "archive.hpp"
 
 #include <cstring>
-#include <cstdio>
+
+#include "logging.hpp"
 
 using namespace std;
 
@@ -113,6 +114,20 @@ void ArchiveFile::initialize() {
 }
 
 Chunk *ArchiveFile::loadChunk(vec3i64 cc) {
+	Chunk *chunk = new Chunk(cc);
+	if (loadChunk(cc, *chunk)) {
+		return chunk;
+	} else {
+		delete chunk;
+		return nullptr;
+	}
+}
+
+bool ArchiveFile::loadChunk(Chunk &chunk) {
+	return loadChunk(chunk.getCC(), chunk);
+}
+
+bool ArchiveFile::loadChunk(vec3i64 cc, Chunk &chunk) {
 	// read directory entry
 	int64 x = (cc[0] + _region_size) % _region_size;
 	int64 y = (cc[1] + _region_size) % _region_size;
@@ -124,13 +139,12 @@ Chunk *ArchiveFile::loadChunk(vec3i64 cc) {
 
 	// seek there
 	if (dir_entry.offset == 0) {
-		return nullptr;
+		return false;
 	} else {
 		_file.seekg(dir_entry.offset);
 	}
 
 	// load and decode the chunk
-	Chunk *chunk = new Chunk(cc);
 	size_t index = 0;
 	const size_t chunk_size = Chunk::WIDTH * Chunk::WIDTH * Chunk::WIDTH;
 
@@ -143,24 +157,24 @@ Chunk *ArchiveFile::loadChunk(vec3i64 cc) {
 			_file.read((char *) &run_length, sizeof (uint8));
 			_file.read((char *) &block_type, sizeof (uint8));
 			for (size_t i = 0; i < run_length; ++i) {
-				chunk->initBlock(index++, block_type);
+				chunk.initBlock(index++, block_type);
 			}
 		} else {
-			chunk->initBlock(index++, next_block);
+			chunk.initBlock(index++, next_block);
 		}
 	}
 
 	if (!_file.good()) {
 		printf("in stream bad!\n");
-		return nullptr;
+		return false;
 	}
 
-	return chunk;
+	return true;
 }
 
 void ArchiveFile::storeChunk(const Chunk &chunk) {
 	// read directory entry
-	vec3i64 cc = chunk.cc;
+	vec3i64 cc = chunk.getCC();
 	int64 x = (cc[0] + _region_size) % _region_size;
 	int64 y = (cc[1] + _region_size) % _region_size;
 	int64 z = (cc[2] + _region_size) % _region_size;
@@ -226,12 +240,10 @@ void ArchiveFile::storeChunk(const Chunk &chunk) {
 	}
 	_file.write((char *) buffer, store_size);
 	_file.flush();
-	if (!_file.good())
-		printf("safe failed!\n");
 	delete buffer;
 
-	if (!_file) {
-		printf("%ld %ld %ld out stream bad!\n", x, y, z);
+	if (!_file.good()) {
+		LOG(ERROR, "Safe operation failed");
 	}
 }
 
@@ -253,12 +265,26 @@ void ChunkArchive::clearHandles() {
 }
 
 Chunk *ChunkArchive::loadChunk(vec3i64 cc) {
+	Chunk *chunk = new Chunk(cc);
+	if (loadChunk(cc, *chunk)) {
+		return chunk;
+	} else {
+		delete chunk;
+		return nullptr;
+	}
+}
+
+bool ChunkArchive::loadChunk(vec3i64 cc, Chunk &chunk) {
 	ArchiveFile *archive_file = getArchiveFile(cc);
-	return archive_file->loadChunk(cc);
+	return archive_file->loadChunk(cc, chunk);
+}
+
+bool ChunkArchive::loadChunk(Chunk &chunk) {
+	return loadChunk(chunk.getCC(), chunk);
 }
 
 void ChunkArchive::storeChunk(const Chunk &chunk) {
-	ArchiveFile *archive_file = getArchiveFile(chunk.cc);
+	ArchiveFile *archive_file = getArchiveFile(chunk.getCC());
 	archive_file->storeChunk(chunk);
 }
 

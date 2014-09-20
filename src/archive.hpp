@@ -8,12 +8,10 @@
 #ifndef ARCHIVE_HPP
 #define ARCHIVE_HPP
 
-#include <iostream>
 #include <fstream>
-#include <unordered_map>
 #include <string>
+#include <unordered_map>
 
-#include "std_types.hpp"
 #include "vmath.hpp"
 #include "util.hpp"
 #include "chunk.hpp"
@@ -41,7 +39,9 @@ public:
 
 	void initialize();
 
-	Chunk *loadChunk(vec3i64);
+	DEPRECATED(Chunk *loadChunk(vec3i64));
+	bool loadChunk(Chunk &);
+	bool loadChunk(vec3i64, Chunk &);
 	void storeChunk(const Chunk &);
 
 private:
@@ -65,7 +65,9 @@ public:
 	ChunkArchive &operator = (const ChunkArchive &) = delete;
 	ChunkArchive &operator = (ChunkArchive &&) = delete;
 
-	Chunk *loadChunk(vec3i64);
+	DEPRECATED(Chunk *loadChunk(vec3i64));
+	bool loadChunk(Chunk &);
+	bool loadChunk(vec3i64, Chunk &);
 	void storeChunk(const Chunk &);
 
 	void clearHandles();
