@@ -22,6 +22,7 @@ int main(int argc, char *argv[]) {
 	initLogging("logging.conf");
 
 	LOG(INFO, "Starting program");
+	LOG(TRACE, "Trace enabled");
 
 	initUtil();
 	Client client;

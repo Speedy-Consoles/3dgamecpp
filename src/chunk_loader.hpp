@@ -11,6 +11,7 @@
 
 #include <atomic>
 #include <future>
+#include <stack>
 
 class ChunkLoader {
 private:
@@ -68,6 +69,11 @@ private:
 	vec3i64 getNextChunkToLoad();
 	void tryToLoadChunk(vec3i64);
 	bool updatePlayerInfo(bool wait = true);
+
+	std::vector<Chunk *> chunkPool;
+	Chunk *allocateChunk(vec3i64);
+	void deallocateChunk(Chunk *);
+	void clearChunkPool();
 
 	std::atomic<uint> renderDistance;
 	std::atomic<uint> newRenderDistance;

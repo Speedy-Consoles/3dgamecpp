@@ -6,7 +6,10 @@
  */
 
 #include "chunk_loader.hpp"
+
 #include "logging.hpp"
+#undef DEFAULT_LOGGER
+#define DEFAULT_LOGGER NAMED_LOGGER("chunk")
 
 using namespace std;
 
@@ -21,7 +24,6 @@ void ChunkLoader::run() {
 		updateRenderDistance();
 		if (!loadNextChunk()) {
 			this_thread::sleep_for(milliseconds(100));
-			//LOG(INFO, "Maximum number of chunks loaded");
 		}
 		sendOffloadQueries();
 		storeChunksOnDisk();
@@ -52,7 +54,6 @@ void ChunkLoader::updateRenderDistance() {
 
 bool ChunkLoader::loadNextChunk() {
 	// don't wait for the reading-lock to be released
-
 	if (!updatePlayerInfo(false) || !isPlayerValid)
 		return false;
 
@@ -89,7 +90,7 @@ void ChunkLoader::tryToLoadChunk(vec3i64 cc) {
 	auto iter = isLoaded.find(cc);
 	if (iter == isLoaded.end()) {
 		isLoaded.insert(cc);
-		Chunk *chunk = new Chunk(cc, this);
+		Chunk *chunk = allocateChunk(cc);
 		if (!chunkArchive.loadChunk(cc, *chunk))
 			gen->generateChunk(cc, *chunk);
 		if (updateFaces)
@@ -108,7 +109,7 @@ void ChunkLoader::storeChunksOnDisk() {
 	{
 		Chunk *chunk = deletedChunksList->data;
 		chunkArchive.storeChunk(*chunk);
-		delete chunk;
+		deallocateChunk(chunk);
 
 		auto tmp = deletedChunksList->next;
 		delete deletedChunksList;
@@ -166,4 +167,35 @@ bool ChunkLoader::updatePlayerInfo(bool wait) {
 	lastPcc = pcc;
 	isPlayerValid = valid;
 	return true;
+}
+
+Chunk *ChunkLoader::allocateChunk(vec3i64 cc) {
+	Chunk *chunk = nullptr;
+	if (!chunkPool.empty()) {
+		chunk = chunkPool.back();
+		chunkPool.pop_back();
+	} else {
+		size_t size = sizeof (Chunk);
+		void *memory = ::operator new(size);
+		chunk = reinterpret_cast<Chunk *>(memory);
+	}
+	new(chunk) Chunk(cc, this);
+	return chunk;
+}
+
+void ChunkLoader::deallocateChunk(Chunk *chunk) {
+	bool keep = true;
+	if (keep) {
+		chunk->~Chunk();
+		chunkPool.push_back(chunk);
+	} else {
+		::operator delete(chunk);
+	}
+}
+
+void ChunkLoader::clearChunkPool() {
+	for (Chunk *chunk : chunkPool) {
+		::operator delete(chunk);
+	}
+	chunkPool.clear();
 }

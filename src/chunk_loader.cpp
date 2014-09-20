@@ -33,6 +33,8 @@ ChunkLoader::~ChunkLoader() {
 	}
 
 	delete this->gen;
+
+	clearChunkPool();
 }
 
 void ChunkLoader::dispatch() {
