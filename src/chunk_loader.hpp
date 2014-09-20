@@ -65,7 +65,7 @@ private:
 	void sendOffloadQueries();
 
 
-	bool loadNextChunk();
+	bool loadNextChunks();
 	vec3i64 getNextChunkToLoad();
 	void tryToLoadChunk(vec3i64);
 	bool updatePlayerInfo(bool wait = true);

@@ -22,7 +22,7 @@ void ChunkLoader::run() {
 
 	while (!shouldHalt.load(memory_order_seq_cst)) {
 		updateRenderDistance();
-		if (!loadNextChunk()) {
+		if (!loadNextChunks()) {
 			this_thread::sleep_for(milliseconds(100));
 		}
 		sendOffloadQueries();
@@ -52,12 +52,12 @@ void ChunkLoader::updateRenderDistance() {
 	this->renderDistance = newRenderDistance;
 }
 
-bool ChunkLoader::loadNextChunk() {
+bool ChunkLoader::loadNextChunks() {
 	// don't wait for the reading-lock to be released
 	if (!updatePlayerInfo(false) || !isPlayerValid)
 		return false;
 
-	for (int i = 0; i < 100; ++i) {
+	for (int i = 0; i < 300; ++i) {
 		uint64 length = renderDistance * 2 + 1;
 		uint64 maxLoads = length * length * length;
 		if (playerChunksLoaded > maxLoads)
