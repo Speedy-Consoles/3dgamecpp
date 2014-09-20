@@ -29,7 +29,7 @@ ChunkLoader::~ChunkLoader() {
 
 	Chunk *chunk = nullptr;
 	while ((chunk = getNextLoadedChunk()) != nullptr) {
-		delete chunk;
+		deallocateChunk(chunk);
 	}
 
 	delete this->gen;

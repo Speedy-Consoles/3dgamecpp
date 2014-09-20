@@ -15,7 +15,7 @@ LocalServerInterface::LocalServerInterface(World *world, uint64 seed, const Grap
 
 
 LocalServerInterface::~LocalServerInterface() {
-	// nothing
+	delete chunkLoader;
 }
 
 void LocalServerInterface::togglePlayerFly() {
