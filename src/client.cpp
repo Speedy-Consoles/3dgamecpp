@@ -116,7 +116,7 @@ void Client::handleInput() {
 		case SDL_MOUSEWHEEL: {
 			auto block = player.getBlock();
 			block += event.wheel.y;
-			static const int NUMBER_OF_BLOCKS = 32;
+			static const int NUMBER_OF_BLOCKS = 33;
 			while (block > NUMBER_OF_BLOCKS) {
 				block -= NUMBER_OF_BLOCKS;
 			}
