@@ -7,14 +7,18 @@
 #include <SDL2/SDL.h>
 #include <FTGL/ftgl.h>
 
-#include "world.hpp"
+#include "vmath.hpp"
 #include "util.hpp"
 #include "constants.hpp"
-#include "stopwatch.hpp"
 #include "client.hpp"
 #include "config.hpp"
-#include "menu.hpp"
 #include "texture_manager.hpp"
+
+class World;
+class Player;
+class Chunk;
+class Menu;
+class Stopwatch;
 
 class Graphics {
 private:

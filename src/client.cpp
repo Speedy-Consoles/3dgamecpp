@@ -1,3 +1,5 @@
+#include "client.hpp"
+
 #include <iostream>
 #include <thread>
 #include <chrono>
@@ -6,10 +8,11 @@
 
 #include "util.hpp"
 #include "constants.hpp"
-#include "client.hpp"
 #include "local_server_interface.hpp"
 #include "graphics.hpp"
 #include "config.hpp"
+#include "stopwatch.hpp"
+#include "world.hpp"
 #include "menu.hpp"
 
 using namespace std::chrono;

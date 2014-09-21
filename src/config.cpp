@@ -1,14 +1,5 @@
 #include "config.hpp"
 
-RenderBackend DEFAULT_RENDER_BACKEND  = RenderBackend::OGL_2;
-bool          DEFAULT_FULLSCREEN   = false;
-vec2i         DEFAULT_WINDOWED_RES    = vec2i{1600, 900};
-vec2i         DEFAULT_FULLSCREEN_RES  = vec2i{0, 0};
-AntiAliasing  DEFAULT_ANTI_ALIASING   = AntiAliasing::NONE;
-Fog           DEFAULT_FOG             = Fog::FANCY;
-uint          DEFAULT_RENDER_DISTANCE = 8;
-float         DEFAULT_FOV = 120;
-
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/info_parser.hpp>
 
@@ -16,15 +7,26 @@ float         DEFAULT_FOV = 120;
 
 using namespace std;
 using namespace boost;
+using namespace boost::property_tree;
+
+// Defualt values for al customizable options
+RenderBackend DEFAULT_RENDER_BACKEND  = RenderBackend::OGL_2;
+bool          DEFAULT_FULLSCREEN      = false;
+vec2i         DEFAULT_WINDOWED_RES    = vec2i{1600, 900};
+vec2i         DEFAULT_FULLSCREEN_RES  = vec2i{0, 0};
+AntiAliasing  DEFAULT_ANTI_ALIASING   = AntiAliasing::NONE;
+Fog           DEFAULT_FOG             = Fog::FANCY;
+uint          DEFAULT_RENDER_DISTANCE = 8;
+float         DEFAULT_FOV = 120;
 
 namespace boost {
 namespace property_tree {
 
 // RenderBackend Translator
-template<typename Ch, typename Traits, typename Alloc>
-struct translator_between<basic_string<Ch, Traits, Alloc>, RenderBackend> {
+template <>
+struct translator_between<string, RenderBackend> {
 	typedef struct RenderBackendTranslator {
-		typedef basic_string<Ch, Traits, Alloc> internal_type;
+		typedef string internal_type;
 		typedef RenderBackend external_type;
 
 		optional<external_type> get_value(const internal_type &i) {
@@ -48,10 +50,10 @@ struct translator_between<basic_string<Ch, Traits, Alloc>, RenderBackend> {
 };
 
 // AntiAliasing Translator
-template<typename Ch, typename Traits, typename Alloc>
-struct translator_between<basic_string<Ch, Traits, Alloc>, AntiAliasing> {
+template <>
+struct translator_between<string, AntiAliasing> {
 	typedef struct AntiAliasingTranslator {
-		typedef basic_string<Ch, Traits, Alloc> internal_type;
+		typedef string internal_type;
 		typedef AntiAliasing external_type;
 
 		optional<external_type> get_value(const internal_type &i) {
@@ -81,10 +83,10 @@ struct translator_between<basic_string<Ch, Traits, Alloc>, AntiAliasing> {
 };
 
 // Fog Translator
-template<typename Ch, typename Traits, typename Alloc>
-struct translator_between<basic_string<Ch, Traits, Alloc>, Fog> {
+template <>
+struct translator_between<string, Fog> {
 	typedef struct FogTranslator {
-		typedef basic_string<Ch, Traits, Alloc> internal_type;
+		typedef string internal_type;
 		typedef Fog external_type;
 
 		optional<external_type> get_value(const internal_type &i) {
@@ -113,7 +115,7 @@ struct translator_between<basic_string<Ch, Traits, Alloc>, Fog> {
 } // namespace boost
 
 void store(const char *filename, const GraphicsConf &conf) {
-	property_tree::ptree pt;
+	ptree pt;
 
 	pt.put("graphics.render_backend", conf.render_backend);
 	pt.put("graphics.windowed_res.w", conf.windowed_res[0]);
@@ -129,7 +131,7 @@ void store(const char *filename, const GraphicsConf &conf) {
 }
 
 void load(const char *filename, GraphicsConf *conf) {
-	property_tree::ptree pt;
+	ptree pt;
 	try {
 		read_info(filename, pt);
 	} catch (...) {

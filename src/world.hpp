@@ -1,13 +1,13 @@
 #ifndef WORLD_HPP
 #define WORLD_HPP
 
-#include <unordered_map>
 #include <chrono>
 #include <queue>
+#include <unordered_map>
 
 #include "constants.hpp"
-#include "chunk.hpp"
 #include "player.hpp"
+class Chunk;
 
 struct WorldSnapshot {
 	PlayerSnapshot playerSnapshots[MAX_CLIENTS];

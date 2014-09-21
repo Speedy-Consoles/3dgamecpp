@@ -8,10 +8,9 @@
 #ifndef TEXTURE_MANAGER_HPP_
 #define TEXTURE_MANAGER_HPP_
 
-#include <unordered_map>
-#include <unordered_map>
 #include <GL/glew.h>
 #include <GL/gl.h>
+#include <unordered_map>
 
 #include "std_types.hpp"
 

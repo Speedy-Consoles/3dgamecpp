@@ -1,17 +1,19 @@
 #ifndef CHUNK_LOADER_HPP
 #define CHUNK_LOADER_HPP
 
-#include "perlin.hpp"
 #include "vmath.hpp"
-#include "world.hpp"
+#include "archive.hpp"
 #include "queue.hpp"
 #include "stack.hpp"
-#include "archive.hpp"
-#include "world_generator.hpp"
+
+class WorldGenerator;
+class World;
 
 #include <atomic>
 #include <future>
-#include <stack>
+
+#include <unordered_map>
+#include <vector>
 
 class ChunkLoader {
 private:
@@ -21,7 +23,6 @@ private:
 	uint localPlayer;
 
 	WorldGenerator *gen = nullptr;
-
 	World *world = nullptr;
 
 	std::unordered_set<vec3i64, size_t(*)(vec3i64)> isLoaded;

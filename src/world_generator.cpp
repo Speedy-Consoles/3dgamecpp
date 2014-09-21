@@ -7,6 +7,8 @@
 
 #include "world_generator.hpp"
 
+#include <cmath>
+
 WorldGenerator::WorldGenerator(uint64 seed) : perlin(seed) {
 	double s = surfaceThresholdXScale;
 	surfaceThresholdYScale = 1/s + 1/(s*s*s);

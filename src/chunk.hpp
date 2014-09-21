@@ -7,8 +7,6 @@
 
 class ChunkLoader;
 
-class World;
-
 struct Face {
 	vec3ui8 block;
 	uint8 dir;

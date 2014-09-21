@@ -2,12 +2,15 @@
 #define CLIENT_HPP
 
 #include <chrono>
-#include "server_interface.hpp"
-#include "world.hpp"
-#include "stopwatch.hpp"
-#include "menu.hpp"
 
+#include "std_types.hpp"
+
+class ServerInterface;
+class World;
+class Menu;
 class Graphics;
+class GraphicsConf;
+class Stopwatch;
 
 enum ClockId {
 	CLOCK_CLR,

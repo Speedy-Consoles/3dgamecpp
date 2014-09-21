@@ -19,6 +19,7 @@ SOURCE_FILES = \
 	stopwatch.cpp\
 	texture_manager.cpp\
 	util.cpp\
+	vmath.cpp\
 	world.cpp\
 	world_generator.cpp
 

@@ -1,13 +1,15 @@
 #include "graphics.hpp"
-#include "vmath.hpp"
+
+#include "world.hpp"
+#include "chunk.hpp"
+#include "menu.hpp"
+#include "stopwatch.hpp"
+
 #include "util.hpp"
 #include "constants.hpp"
 #include "logging.hpp"
 
 #include <cmath>
-#include <string>
-#include <fstream>
-#include <sstream>
 
 #include <SDL2/SDL_image.h>
 

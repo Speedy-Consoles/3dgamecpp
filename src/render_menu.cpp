@@ -7,6 +7,9 @@
 
 #include "graphics.hpp"
 
+#include "menu.hpp"
+#include "stopwatch.hpp"
+
 void Graphics::renderMenu() {
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	glDrawBuffer(GL_BACK);

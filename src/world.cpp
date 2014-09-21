@@ -1,8 +1,12 @@
 #include "world.hpp"
-#include <cstdio>
+
+#include "chunk.hpp"
+
 #include "constants.hpp"
 #include "util.hpp"
 #include "logging.hpp"
+
+#include <cstdio>
 
 
 World::World() : chunks(0, vec3i64HashFunc), dur_ticking(0) {

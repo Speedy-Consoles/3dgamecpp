@@ -1,4 +1,9 @@
 #include "graphics.hpp"
+
+#include "world.hpp"
+#include "chunk.hpp"
+#include "stopwatch.hpp"
+
 #include "logging.hpp"
 
 void Graphics::switchToPerspective() {

@@ -7,6 +7,9 @@
 
 #include "chunk_loader.hpp"
 
+#include "world_generator.hpp"
+#include "world.hpp"
+
 #include "logging.hpp"
 #undef DEFAULT_LOGGER
 #define DEFAULT_LOGGER NAMED_LOGGER("chunk")
