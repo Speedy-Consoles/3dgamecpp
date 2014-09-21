@@ -12,6 +12,10 @@ class Graphics;
 class GraphicsConf;
 class Stopwatch;
 
+namespace gui {
+	class Frame;
+}
+
 enum ClockId {
 	CLOCK_CLR,
 	CLOCK_NDL,
@@ -47,6 +51,8 @@ private:
 	int64 timeShift = 0;
 
 	bool closeRequested = false;
+
+	gui::Frame *frame;
 
 public:
 	Client(const Client &) = delete;

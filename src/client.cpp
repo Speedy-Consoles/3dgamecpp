@@ -15,6 +15,9 @@
 #include "world.hpp"
 #include "menu.hpp"
 
+#include "gui/frame.hpp"
+
+using namespace gui;
 using namespace std::chrono;
 
 #include "logging.hpp"
@@ -47,28 +50,24 @@ Client::Client(){
 	serverInterface = new LocalServerInterface(world, 42, *conf);
 	localClientID = serverInterface->getLocalClientID();
 
-	menu = new Menu(conf);
-
-#ifndef NO_GRAPHICS
-	graphics = new Graphics(world, menu, localClientID, *conf, stopwatch);
-#else
-	graphics = nullptr;
-#endif
+	frame = new Frame(10, 10, 0, 0);
+	menu = new Menu(frame, conf);
+	graphics = new Graphics(world, frame, localClientID, *conf, stopwatch);
 
 }
 
 Client::~Client() {
 	store("graphics-default.profile", *conf);
-#ifndef NO_GRAPHICS
 	delete graphics;
-#endif
 	delete menu;
-	delete conf;
+	delete frame;
 
 	// world must be deleted before server interface
 	delete world;
 	delete serverInterface;
 	delete stopwatch;
+
+	delete conf;
 }
 
 void Client::run() {
@@ -195,7 +194,7 @@ void Client::handleInput() {
 				} // switch scancode
 			} else { // if we are in menu
 				switch (event.key.keysym.scancode) {
-				case SDL_SCANCODE_W:
+				/*case SDL_SCANCODE_W:
 					if (menu->navigateUp()) {
 						graphics->setConf(*conf);
 						serverInterface->setConf(*conf);
@@ -218,16 +217,18 @@ void Client::handleInput() {
 						graphics->setConf(*conf);
 						serverInterface->setConf(*conf);
 					}
-				break;
+				break;*/
 				case SDL_SCANCODE_ESCAPE:
-					if (menu->finish()) {
+					menu->apply();
+					if (menu->check()){
 						graphics->setConf(*conf);
 						serverInterface->setConf(*conf);
 					}
 					graphics->setMenu(false);
 					world->setPause(false);
 					break;
-				default: break;
+				default:
+					break;
 				}
 			}
 			break;
@@ -242,10 +243,15 @@ void Client::handleInput() {
 				pitch = std::min(pitch, 90.0);
 				serverInterface->setPlayerOrientation(yaw, pitch);
 				player.setOrientation(yaw, pitch);
+			} else {
+				int x = event.motion.x;
+				int y = graphics->getHeight() - event.motion.y;
+				float factor = graphics->getScalingFactor();
+				frame->updateMousePosition(x * factor, y * factor);
 			}
 			break;
 		case SDL_MOUSEBUTTONDOWN:
-			{
+			if (!graphics->isMenu()) {
 				using namespace vec_auto_cast;
 				vec3i64 bc;
 				int d;
@@ -258,9 +264,21 @@ void Client::handleInput() {
 						serverInterface->edit(bc, 0);
 					}
 				}
+			} else {
+				if (event.button.button == SDL_BUTTON_LEFT) {
+					int x = event.button.x;
+					int y = graphics->getHeight() - event.button.y;
+					float factor = graphics->getScalingFactor();
+					frame->handleMouseClick(x * factor, y * factor);
+				}
 			}
 			break;
 		}
+	}
+
+	if (menu->check()){
+		graphics->setConf(*conf);
+		serverInterface->setConf(*conf);
 	}
 
 	const uint8 *keyboard = SDL_GetKeyboardState(nullptr);

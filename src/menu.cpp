@@ -10,199 +10,168 @@
 #include "graphics.hpp"
 #include "util.hpp"
 
-#include <sstream>
+#include "gui/frame.hpp"
+#include "gui/label.hpp"
+#include "gui/button.hpp"
+
+#include <string>
 
 using namespace std;
+using namespace gui;
 
-enum Entry {
-	RENDER_BACKEND,
-	FULLSCREEN,
-
-	//WINDOWED_RES,
-	//FULLSCREEN_RES,
-
-	ANTI_ALIASING,
-	FOG,
-	RENDER_DISTANCE,
-	FOV,
-
-	NUM_ENTRIES,
+template <typename T>
+struct Option {
+	T opt;
+	const char *desc;
 };
 
-Menu::Menu(GraphicsConf *conf) : conf(conf) {
+Option<bool> fullscreenOptions[] = {
+	{false, nullptr},
+	{true, "Yes"},
+	{false, "No"},
+	{false, nullptr},
+};
+
+Option<AntiAliasing> aaOptions[] = {
+	{AntiAliasing::NONE, nullptr},
+	{AntiAliasing::NONE, "Off"},
+	{AntiAliasing::MSAA_2, "MSAA x2"},
+	{AntiAliasing::MSAA_4, "MSAA x4"},
+	{AntiAliasing::MSAA_8, "MSAA x8"},
+	{AntiAliasing::MSAA_16, "MSAA x16"},
+	{AntiAliasing::NONE, nullptr},
+};
+
+Option<Fog> fogOptions[] = {
+	{Fog::NONE, nullptr},
+	{Fog::NONE, "Off"},
+	{Fog::FAST, "Fast"},
+	{Fog::FANCY, "Fancy"},
+	{Fog::NONE, nullptr},
+};
+
+Option<uint> renderDistanceOptions[] = {
+	{0, nullptr},
+	{4, "4"},
+	{8, "8"},
+	{12, "12"},
+	{16, "16"},
+	{24, "24"},
+	{32, "32"},
+	{0, nullptr},
+};
+
+template <typename T>
+int getIndex(T t, const Option<T> *options) {
+	int i = 1;
+	while (options[i].desc != nullptr) {
+		if (t == options[i].opt)
+			return i;
+		++i;
+	}
+	return -1;
+}
+
+template <typename T>
+string getName(T t, const Option<T> *options) {
+	return options[getIndex(t, options)].desc;
+}
+
+Menu::Menu(Frame *frame, GraphicsConf *conf) :
+	frame(frame), conf(conf)
+{
 	renderDistanceBuf = conf->render_distance;
 	aaBuf = conf->aa;
+
+	int yIncr = 20;
+	int y = yIncr;
+
+	Button *applyButton = new Button(0, y, 100, 20);
+	applyButton->text() = string("Apply");
+	applyButton->setOnClick([this](){ apply(); });
+	frame->add(applyButton);
+	y += yIncr * 2;
+
+	Button *fsButton = new Button(0, y, 100, 20);
+	fsButton->text() = string("Fullscreen: ") +
+			getName(conf->fullscreen, fullscreenOptions);
+	fsButton->setOnClick([this, fsButton](){ handleClickFullscreen(fsButton); });
+	frame->add(fsButton);
+	y += yIncr;
+
+	Button *aaButton = new Button(0, y, 100, 20);
+	aaButton->text() = string("Anti-aliasing: ") +
+			getName(conf->aa, aaOptions);
+	aaButton->setOnClick([this, aaButton](){ handleClickAA(aaButton); });
+	frame->add(aaButton);
+	y += yIncr;
+
+	Button *fogButton = new Button(0, y, 100, 20);
+	fogButton->text() = string("Fog: ") +
+			getName(conf->fog, fogOptions);
+	fogButton->setOnClick([this, fogButton](){ handleClickFog(fogButton); });
+	frame->add(fogButton);
+	y += yIncr;
+
+	Button *rdButton = new Button(0, y, 100, 20);
+	rdButton->text() = string("Render distance: ") +
+			getName(conf->render_distance, renderDistanceOptions);
+	rdButton->setOnClick([this, rdButton](){ handleClickRenderDistance(rdButton); });
+	frame->add(rdButton);
+	y += yIncr;
 }
 
-bool Menu::navigateUp() {
-	cursor = (cursor + getEntryCount() - 1) % getEntryCount();
-	return false;
+void Menu::handleClickFullscreen(Label *label) {
+	int i = getIndex(conf->fullscreen, fullscreenOptions);
+	++i;
+	if (fullscreenOptions[i].desc == nullptr)
+		i = 1;
+
+	conf->fullscreen = fullscreenOptions[i].opt;
+	label->text() = string("Fullscreen: ") + fullscreenOptions[i].desc;
+	dirty = true;
 }
 
-bool Menu::navigateDown() {
-	cursor = (cursor + 1) % getEntryCount();
-	return false;
+void Menu::handleClickAA(Label *label) {
+	int i = getIndex(aaBuf, aaOptions);
+	++i;
+	if (aaOptions[i].desc == nullptr)
+		i = 1;
+
+	aaBuf = aaOptions[i].opt;
+	label->text() = string("Anti-aliasing: ") + aaOptions[i].desc;
 }
 
-bool Menu::navigateRight() {
-	switch (cursor) {
-	case RENDER_BACKEND:
-		return false;
+void Menu::handleClickFog(Label *label) {
+	int i = getIndex(conf->fog, fogOptions);
+	++i;
+	if (fogOptions[i].desc == nullptr)
+		i = 1;
 
-	case FULLSCREEN:
-		conf->fullscreen ^= true;
-		return true;
-
-	case ANTI_ALIASING:
-		switch (aaBuf) {
-		case AntiAliasing::NONE:    aaBuf = AntiAliasing::MSAA_2; break;
-		case AntiAliasing::MSAA_2:  aaBuf = AntiAliasing::MSAA_4; break;
-		case AntiAliasing::MSAA_4:  aaBuf = AntiAliasing::MSAA_8; break;
-		case AntiAliasing::MSAA_8:  aaBuf = AntiAliasing::MSAA_16; break;
-		case AntiAliasing::MSAA_16: aaBuf = AntiAliasing::NONE; break;
-		}
-		return false;
-
-	case FOG:
-		switch (conf->fog) {
-		case Fog::NONE:   conf->fog = Fog::FAST; break;
-		case Fog::FAST:   conf->fog = Fog::FANCY; break;
-		case Fog::FANCY:  conf->fog = Fog::NONE; break;
-		}
-		return true;
-
-	case RENDER_DISTANCE:
-		++renderDistanceBuf;
-		return false;
-
-	case FOV:
-		conf->fov = clamp(conf->fov + 0.5f, 10.f, 175.f);
-		return true;
-	}
-
-	return false;
+	conf->fog = fogOptions[i].opt;
+	label->text() = string("Fog: ") + fogOptions[i].desc;
+	dirty = true;
 }
 
-bool Menu::navigateLeft() {
-	switch (cursor) {
-	case RENDER_BACKEND:
-		return false;
+void Menu::handleClickRenderDistance(Label *label) {
+	int i = getIndex(renderDistanceBuf, renderDistanceOptions);
+	++i;
+	if (renderDistanceOptions[i].desc == nullptr)
+		i = 1;
 
-	case FULLSCREEN:
-		conf->fullscreen ^= true;
-		return true;
-
-	case ANTI_ALIASING:
-		switch (aaBuf) {
-		case AntiAliasing::NONE:    aaBuf = AntiAliasing::MSAA_16; break;
-		case AntiAliasing::MSAA_2:  aaBuf = AntiAliasing::NONE; break;
-		case AntiAliasing::MSAA_4:  aaBuf = AntiAliasing::MSAA_2; break;
-		case AntiAliasing::MSAA_8:  aaBuf = AntiAliasing::MSAA_4; break;
-		case AntiAliasing::MSAA_16: aaBuf = AntiAliasing::MSAA_8; break;
-		}
-		return false;
-
-	case FOG:
-		switch (conf->fog) {
-		case Fog::NONE:   conf->fog = Fog::FANCY; break;
-		case Fog::FAST:   conf->fog = Fog::NONE; break;
-		case Fog::FANCY:  conf->fog = Fog::FAST; break;
-		}
-		return true;
-
-	case RENDER_DISTANCE:
-		if (renderDistanceBuf > 0)
-			--renderDistanceBuf;
-		return false;
-
-	case FOV:
-		conf->fov = clamp(conf->fov - 0.5f, 10.f, 175.f);
-		return true;
-	}
-
-	return false;
+	renderDistanceBuf = renderDistanceOptions[i].opt;
+	label->text() = string("Render distance: ") + renderDistanceOptions[i].desc;
 }
 
-bool Menu::finish() {
-	bool changed = false;
-	if (aaBuf != conf->aa) {
+void Menu::apply() {
+	if (conf->aa != aaBuf) {
 		conf->aa = aaBuf;
-		changed = true;
+		dirty = true;
 	}
 
-	if (renderDistanceBuf != conf->render_distance) {
+	if (conf->render_distance != renderDistanceBuf) {
 		conf->render_distance = renderDistanceBuf;
-		changed = true;
+		dirty = true;
 	}
 
-	return changed;
-}
-
-uint Menu::getEntryCount() {
-	return NUM_ENTRIES;
-}
-
-std::string Menu::getEntryName(uint i) {
-	switch (i) {
-		case RENDER_BACKEND: return "Render backend";
-		case FULLSCREEN: return "Fullscreen";
-
-		//case WINDOWED_RES:
-		//case FULLSCREEN_RES:
-
-		case ANTI_ALIASING: return "Anti-aliasing";
-		case FOG: return "Fog";
-		case RENDER_DISTANCE: return "Renderdistance";
-		case FOV: return "Field of view";
-
-		default: return "???";
-	}
-}
-
-stringstream &operator << (stringstream &ss, RenderBackend backend) {
-	switch (backend) {
-		case RenderBackend::UNSUPPORTED: ss << "Unsupported"; break;
-		case RenderBackend::OGL_2: ss << "OpenGL 2.x"; break;
-		case RenderBackend::OGL_3: ss << "OpenGL 3.x"; break;
-	}
-	return ss;
-}
-
-stringstream &operator << (stringstream &ss, AntiAliasing aa) {
-	switch (aa) {
-		case AntiAliasing::NONE: ss << "None"; break;
-		case AntiAliasing::MSAA_2: ss << "MSAA x2"; break;
-		case AntiAliasing::MSAA_4: ss << "MSAA x4"; break;
-		case AntiAliasing::MSAA_8: ss << "MSAA x8"; break;
-		case AntiAliasing::MSAA_16: ss << "MSAA x16"; break;
-	}
-	return ss;
-}
-
-stringstream &operator << (stringstream &ss, Fog fog) {
-	switch (fog) {
-		case Fog::NONE: ss << "Off"; break;
-		case Fog::FAST: ss << "Fast"; break;
-		case Fog::FANCY: ss << "Fancy"; break;
-	}
-	return ss;
-}
-
-std::string Menu::getEntryValue(uint i) {
-	stringstream ss;
-
-	switch (i) {
-		case RENDER_BACKEND: ss << conf->render_backend; break;
-		case FULLSCREEN: ss << (conf->fullscreen ? "On" : "Off"); break;
-
-		//case WINDOWED_RES:
-		//case FULLSCREEN_RES:
-
-		case ANTI_ALIASING: ss << aaBuf; break;
-		case FOG: ss << conf->fog; break;
-		case RENDER_DISTANCE: ss << renderDistanceBuf; break;
-		case FOV: ss << conf->fov; break;
-	}
-
-	return ss.str();
 }

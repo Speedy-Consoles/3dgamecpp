@@ -20,6 +20,13 @@ class Chunk;
 class Menu;
 class Stopwatch;
 
+namespace gui {
+	class Frame;
+	class Label;
+	class Widget;
+	class Button;
+}
+
 class Graphics {
 private:
 	double ZNEAR = 0.1f;
@@ -39,7 +46,8 @@ private:
 
 	GraphicsConf conf;
 	World *world;
-	Menu *menu;
+	//Menu *menu;
+	gui::Frame *frame;
 	uint localClientID;
 
 	std::chrono::time_point<std::chrono::high_resolution_clock> startTimePoint;
@@ -84,7 +92,7 @@ private:
 	Stopwatch *stopwatch;
 
 public:
-	Graphics(World *world, Menu *menu, int localClientID, const GraphicsConf &conf, Stopwatch *stopwatch = nullptr);
+	Graphics(World *world, gui::Frame *frame, int localClientID, const GraphicsConf &conf, Stopwatch *stopwatch = nullptr);
 	~Graphics();
 
 	void tick();
@@ -102,8 +110,10 @@ public:
 	const GraphicsConf &getConf() const { return conf; }
 	void setConf(const GraphicsConf &);
 
-	int getHeight();
-	int getWidth();
+	int getHeight() const;
+	int getWidth() const;
+
+	float getScalingFactor() const;
 
 private:
 	void initGL();
@@ -138,6 +148,12 @@ private:
 	void renderPlayers();
 
 	bool inFrustum(vec3i64 cc, vec3i64 pos, vec3d lookDir);
+
+	void renderWidget(const gui::Widget *);
+	void renderFrame(const gui::Frame *);
+	void renderLabel(const gui::Label *);
+	void renderButton(const gui::Button *);
+	void renderText(const char *text);
 };
 
 #endif // GRAPHICS_HPP

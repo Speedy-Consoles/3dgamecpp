@@ -1,6 +1,10 @@
 EXECUTABLE_NAME = 3dgame
 
 SOURCE_FILES = \
+	gui/button.cpp\
+	gui/frame.cpp\
+	gui/label.cpp\
+	gui/widget.cpp\
 	archive.cpp\
 	chunk_loader.cpp\
 	chunk_loader_internals.cpp\
@@ -26,7 +30,7 @@ SOURCE_FILES = \
 CXX = g++
 LD = g++
 
-CXXFLAGS = -Wall -std=c++11 `freetype-config --cflags` -pthread
+CXXFLAGS = -Wall -std=c++11 `freetype-config --cflags` -pthread -Isrc
 LDFLAGS = -pthread
 
 #CXXFLAGS += -DNO_GRAPHICS

@@ -10,32 +10,32 @@
 
 #include "config.hpp"
 
+namespace gui {
+	class Frame;
+	class Label;
+}
+
 #include <string>
 
 class Menu {
 public:
 	Menu() = delete;
-	Menu(GraphicsConf *);
+	Menu(gui::Frame *frame, GraphicsConf *);
 
-	uint getCursor() const { return cursor; }
+	void handleClickFullscreen(gui::Label *label);
+	void handleClickAA(gui::Label *label);
+	void handleClickFog(gui::Label *label);
+	void handleClickRenderDistance(gui::Label *label);
 
-	bool navigateUp();
-	bool navigateDown();
-	bool navigateRight();
-	bool navigateLeft();
-
-	bool finish();
-
-	uint getEntryCount();
-	std::string getEntryName(uint);
-	std::string getEntryValue(uint);
+	void apply();
+	bool check() { return dirty; dirty = false; }
 
 private:
-	uint cursor = 0;
-
+	bool dirty = false;
 	uint renderDistanceBuf;
 	AntiAliasing aaBuf;
 
+	gui::Frame *frame;
 	GraphicsConf *conf;
 };
 

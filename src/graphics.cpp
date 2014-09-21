@@ -9,19 +9,23 @@
 #include "constants.hpp"
 #include "logging.hpp"
 
+#include "gui/frame.hpp"
+
 #include <cmath>
 
 #include <SDL2/SDL_image.h>
 
+using namespace gui;
+
 Graphics::Graphics(
 		World *world,
-		Menu *menu,
+		Frame *frame,
 		int localClientID,
 		const GraphicsConf &conf,
 		Stopwatch *stopwatch) :
 		conf(conf),
 		world(world),
-		menu(menu),
+		frame(frame),
 		localClientID(localClientID),
 		stopwatch(stopwatch) {
 	LOG(DEBUG, "Constructing Graphics");
@@ -606,12 +610,16 @@ void Graphics::destroyFBO() {
 	fbo = fbo_color_buffer = fbo_depth_buffer = /*fbo_texture = */0;
 }
 
-int Graphics::getWidth() {
+int Graphics::getWidth() const {
 	return width;
 }
 
-int Graphics::getHeight() {
-	return width;
+int Graphics::getHeight() const {
+	return height;
+}
+
+float Graphics::getScalingFactor() const {
+	return (float) drawWidth / width;
 }
 
 void Graphics::tick() {
