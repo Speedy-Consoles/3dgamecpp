@@ -54,9 +54,12 @@ EXECUTABLE = $(BIN_DIR)/$(EXECUTABLE_NAME)
 
 OBJECTS = $(SOURCE_FILES:%.cpp=$(OBJ_DIR)/%.cpp.o)
 
-all: make_dirs depends $(EXECUTABLE)
+all: $(EXECUTABLE)
+
+dir_guard=@mkdir -p $(@D)
 
 $(OBJ_DIR)/%.cpp.o : src/%.cpp
+	$(dir_guard)
 	$(CXX) -MMD -c -o $@ $< $(CXXFLAGS)
 	@cp $(OBJ_DIR)/$*.cpp.d $(OBJ_DIR)/$*.P; \
 	sed -e 's/#.*//' -e 's/^[^:]*: *//' -e 's/ *\\$$//' \
@@ -67,14 +70,11 @@ $(OBJ_DIR)/%.cpp.o : src/%.cpp
 -include $(OBJECTS:%.cpp.o=%.P)
 
 $(EXECUTABLE): $(OBJECTS)
+	$(dir_guard)
 	$(LD) $(LDFLAGS) $(OBJECTS) $(LIBS_LD_FLAGS) -o $@
 
-.PHONY: make_dirs clean depends all
-
-make_dirs:
-	mkdir -p $(OBJ_DIR)
-	mkdir -p $(BIN_DIR)
+.PHONY: make_dirs clean all
 
 clean:
-	rm $(OBJ_DIR)/*
-	rm $(BIN_DIR)/*
+	rm -Rf $(OBJ_DIR)
+	rm -Rf $(BIN_DIR)
