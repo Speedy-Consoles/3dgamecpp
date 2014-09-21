@@ -126,6 +126,7 @@ void Client::handleInput() {
 			while (block < 1) {
 				block += NUMBER_OF_BLOCKS;
 			}
+			serverInterface->setBlock(block);
 			player.setBlock(block);
 			break;
 		}
