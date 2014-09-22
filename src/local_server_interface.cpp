@@ -32,6 +32,10 @@ void LocalServerInterface::setPlayerOrientation(double yaw, double pitch) {
 
 }
 
+void LocalServerInterface::setBlock(uint8 block) {
+
+}
+
 void LocalServerInterface::edit(vec3i64 bc, uint8 type) {
 	// TODO move this to client.cpp
 	if (!world->isPaused())
