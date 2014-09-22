@@ -46,8 +46,7 @@ private:
 
 	GraphicsConf conf;
 	World *world;
-	//Menu *menu;
-	gui::Frame *frame;
+	const Menu *menu;
 	uint localClientID;
 
 	std::chrono::time_point<std::chrono::high_resolution_clock> startTimePoint;
@@ -92,7 +91,7 @@ private:
 	Stopwatch *stopwatch;
 
 public:
-	Graphics(World *world, gui::Frame *frame, int localClientID, const GraphicsConf &conf, Stopwatch *stopwatch = nullptr);
+	Graphics(World *world, const Menu *menu, int localClientID, const GraphicsConf &conf, Stopwatch *stopwatch = nullptr);
 	~Graphics();
 
 	void tick();

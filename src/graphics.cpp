@@ -19,13 +19,13 @@ using namespace gui;
 
 Graphics::Graphics(
 		World *world,
-		Frame *frame,
+		const Menu *menu,
 		int localClientID,
 		const GraphicsConf &conf,
 		Stopwatch *stopwatch) :
 		conf(conf),
 		world(world),
-		frame(frame),
+		menu(menu),
 		localClientID(localClientID),
 		stopwatch(stopwatch) {
 	LOG(DEBUG, "Constructing Graphics");

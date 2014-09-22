@@ -7,7 +7,7 @@
 
 #include "graphics.hpp"
 
-//#include "menu.hpp"
+#include "menu.hpp"
 #include "stopwatch.hpp"
 
 #include "gui/widget.hpp"
@@ -48,7 +48,7 @@ void Graphics::renderMenu() {
 	glEnd();
 	glPopMatrix();
 
-	renderWidget(frame);
+	renderWidget((const Widget *) menu->getFrame());
 
 	glPopMatrix();
 }
