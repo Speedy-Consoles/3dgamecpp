@@ -18,7 +18,7 @@ AntiAliasing  DEFAULT_ANTI_ALIASING   = AntiAliasing::NONE;
 Fog           DEFAULT_FOG             = Fog::FANCY;
 uint          DEFAULT_RENDER_DISTANCE = 8;
 float         DEFAULT_FOV             = 120;
-uint          DEFAULT_TEX_MIPMAPPING  = 10;
+uint          DEFAULT_TEX_MIPMAPPING  = 1000;
 TexFiltering  DEFAULT_TEX_FILTERING   = TexFiltering::LINEAR;
 bool          DEFAULT_TEX_ATLAS       = false;
 
