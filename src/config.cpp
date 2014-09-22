@@ -9,7 +9,7 @@ using namespace std;
 using namespace boost;
 using namespace boost::property_tree;
 
-// Defualt values for al customizable options
+// Default values for all customizable options
 RenderBackend DEFAULT_RENDER_BACKEND  = RenderBackend::OGL_2;
 bool          DEFAULT_FULLSCREEN      = false;
 vec2i         DEFAULT_WINDOWED_RES    = vec2i{1600, 900};
@@ -17,7 +17,10 @@ vec2i         DEFAULT_FULLSCREEN_RES  = vec2i{0, 0};
 AntiAliasing  DEFAULT_ANTI_ALIASING   = AntiAliasing::NONE;
 Fog           DEFAULT_FOG             = Fog::FANCY;
 uint          DEFAULT_RENDER_DISTANCE = 8;
-float         DEFAULT_FOV = 120;
+float         DEFAULT_FOV             = 120;
+uint          DEFAULT_TEX_MIPMAPPING  = 10;
+TexFiltering  DEFAULT_TEX_FILTERING   = TexFiltering::LINEAR;
+bool          DEFAULT_TEX_ATLAS       = false;
 
 namespace boost {
 namespace property_tree {
@@ -111,6 +114,33 @@ struct translator_between<string, Fog> {
 	} type;
 };
 
+// Fog Translator
+template <>
+struct translator_between<string, TexFiltering> {
+	typedef struct TexFilteringTranslator {
+		typedef string internal_type;
+		typedef TexFiltering external_type;
+
+		optional<external_type> get_value(const internal_type &i) {
+			external_type e;
+			if      (i == "nearest") e = TexFiltering::NEAREST;
+			else if (i == "linear")  e = TexFiltering::LINEAR;
+			else                     e = DEFAULT_TEX_FILTERING;
+			return optional<external_type>(e);
+		}
+
+		optional<internal_type> put_value(const external_type &e) {
+			internal_type i;
+			switch (e) {
+				case TexFiltering::NEAREST: i = "nearest"; break;
+				case TexFiltering::LINEAR:  i = "linear"; break;
+				default:                    i = "linear"; break;
+			}
+			return optional<internal_type>(i);
+		}
+	} type;
+};
+
 } // namespace property_tree
 } // namespace boost
 
@@ -126,6 +156,9 @@ void store(const char *filename, const GraphicsConf &conf) {
 	pt.put("graphics.fog", conf.fog);
 	pt.put("graphics.render_distance", conf.render_distance);
 	pt.put("graphics.fov", conf.fov);
+	pt.put("graphics.textures.mipmapping", conf.tex_mipmapping);
+	pt.put("graphics.textures.filtering", conf.tex_filtering);
+	pt.put("graphics.textures.use_atlas", conf.tex_atlas);
 
 	write_info(filename, pt);
 }
@@ -158,4 +191,10 @@ void load(const char *filename, GraphicsConf *conf) {
 			DEFAULT_RENDER_DISTANCE);
 	conf->fov = pt.get("graphics.fov",
 			DEFAULT_FOV);
+	conf->tex_mipmapping = pt.get("graphics.textures.mipmapping",
+			DEFAULT_TEX_MIPMAPPING);
+	conf->tex_filtering = pt.get("graphics.textures.filtering",
+			DEFAULT_TEX_FILTERING);
+	conf->tex_atlas = pt.get("graphics.textures.use_atlas",
+			DEFAULT_TEX_ATLAS);
 }

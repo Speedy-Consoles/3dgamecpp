@@ -27,6 +27,7 @@ Graphics::Graphics(
 		world(world),
 		menu(menu),
 		localClientID(localClientID),
+		texManager(conf),
 		stopwatch(stopwatch) {
 	LOG(DEBUG, "Constructing Graphics");
 
@@ -506,6 +507,8 @@ void Graphics::setConf(const GraphicsConf &conf) {
 		makePerspective();
 		makeMaxFOV();
 	}
+
+	texManager.setConfig(conf);
 }
 
 void Graphics::createFBO() {

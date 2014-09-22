@@ -13,16 +13,24 @@
 
 static const auto TEX2D = GL_TEXTURE_2D;
 
-TextureManager::TextureManager() {
+TextureManager::TextureManager(const GraphicsConf &conf) :
+	conf(conf)
+{
 	// nothing
 }
 
 TextureManager::~TextureManager() {
-	for (auto iter : textures) {
-		glDeleteTextures(1, &iter.second.tex);
+	for (auto iter : loadedTextures) {
+		GLuint tex = iter;
+		glDeleteTextures(1, &tex);
+	}
+
+	for (auto iter : dictionary) {
+		delete[] iter.blocks;
 	}
 }
 
+/*
 GLuint TextureManager::loadAtlas(const char *filename, int xTiles, int yTiles, uint *blocks) {
 	SDL_Surface *img = IMG_Load(filename);
 	if (!img)
@@ -57,6 +65,29 @@ GLuint TextureManager::loadAtlas(const char *filename, int xTiles, int yTiles, u
 
 	return tex;
 }
+*/
+
+static void setLoadingOptions(GraphicsConf &conf) {
+	bool mipmapping = conf.tex_mipmapping > 0;
+	GLenum mag_filter, min_filter;
+
+	switch (conf.tex_filtering) {
+	case TexFiltering::LINEAR:
+		mag_filter = GL_LINEAR;
+		min_filter = mipmapping ? GL_LINEAR_MIPMAP_LINEAR : GL_LINEAR;
+		break;
+	case TexFiltering::NEAREST:
+		mag_filter = GL_NEAREST;
+		min_filter = mipmapping ? GL_LINEAR_MIPMAP_NEAREST : GL_NEAREST;
+		break;
+	}
+	glTexParameteri(TEX2D, GL_TEXTURE_MAG_FILTER, mag_filter);
+	glTexParameteri(TEX2D, GL_TEXTURE_MIN_FILTER, min_filter);
+	if (mipmapping) {
+		glTexParameteri(TEX2D, GL_TEXTURE_MAX_LEVEL, conf.tex_mipmapping);
+		glTexParameteri(TEX2D, GL_GENERATE_MIPMAP, GL_TRUE);
+	}
+}
 
 void TextureManager::loadTextures(const char *filename, int xTiles, int yTiles, uint *blocks) {
 	SDL_Surface *img = IMG_Load(filename);
@@ -73,19 +104,18 @@ void TextureManager::loadTextures(const char *filename, int xTiles, int yTiles, 
 	glGenTextures(n, texs);
 
 	size_t loaded = 0;
+	auto blocks_ptr = blocks;
 	float texW = 1.0 / xTiles;
 	float texH = 1.0 / yTiles;
 	for (int j = 0; j < yTiles; ++j) {
 		for (int i = 0; i < xTiles; ++i) {
-			uint block = *blocks++;
+			uint block = *blocks_ptr++;
 			if (block == 0)
 				continue;
 			GLuint tex = *texs++;
 
 			glBindTexture(TEX2D, tex);
-			glTexParameteri(TEX2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-			glTexParameteri(TEX2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-			glTexParameteri(TEX2D, GL_GENERATE_MIPMAP, GL_TRUE);
+			setLoadingOptions(conf);
 			SDL_Rect rect{i * tileW, j * tileH, tileW, tileH};
 			int ret_code = SDL_BlitSurface(img, &rect, tmp, nullptr);
 			if (ret_code)
@@ -95,6 +125,7 @@ void TextureManager::loadTextures(const char *filename, int xTiles, int yTiles, 
 
 			Entry entry{block, tex, i * texW, j * texH, texW, texH};
 			textures.insert({block, entry});
+			loadedTextures.push_back(tex);
 			++loaded;
 		}
 	}
@@ -110,6 +141,10 @@ void TextureManager::loadTextures(const char *filename, int xTiles, int yTiles, 
 
 	SDL_FreeSurface(tmp);
 	SDL_FreeSurface(img);
+
+	uint *blocks_copy = new uint[n];
+	memcpy(blocks_copy, blocks, n * sizeof (uint));
+	dictionary.push_back(DictEntry{filename, xTiles, yTiles, blocks_copy});
 }
 
 GLuint TextureManager::loadTexture(const char *filename, uint block) {
@@ -119,9 +154,7 @@ GLuint TextureManager::loadTexture(const char *filename, uint block) {
 	GLuint tex;
 	glGenTextures(1, &tex);
 	glBindTexture(TEX2D, tex);
-	glTexParameteri(TEX2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri(TEX2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-	glTexParameteri(TEX2D, GL_GENERATE_MIPMAP, GL_TRUE);
+	setLoadingOptions(conf);
 	glTexImage2D(TEX2D, 0, 4, img->w, img->h, 0,
 			GL_RGBA, GL_UNSIGNED_BYTE, img->pixels);
 	SDL_FreeSurface(img);
@@ -132,7 +165,44 @@ GLuint TextureManager::loadTexture(const char *filename, uint block) {
 
 	Entry entry{block, tex, 0, 0, 1, 1};
 	textures.insert({block, entry});
-	return entry.tex;
+	loadedTextures.push_back(tex);
+
+	uint *blocks_copy = new uint[1];
+	blocks_copy[0] = block;
+	dictionary.push_back(DictEntry{filename, 1, 1, blocks_copy});
+	return tex;
+}
+
+void TextureManager::setConfig(const GraphicsConf &c) {
+	GraphicsConf old_conf = conf;
+	conf = c;
+
+	if (conf.tex_mipmapping != old_conf.tex_mipmapping ||
+			conf.tex_filtering != old_conf.tex_filtering)
+	{
+		for (auto iter : loadedTextures) {
+			GLuint tex = iter;
+			glBindTexture(TEX2D, tex);
+			setLoadingOptions(conf);
+		}
+	}
+}
+
+void TextureManager::reloadAll() {
+	for (auto iter : loadedTextures) {
+		GLuint tex = iter;
+		glDeleteTextures(1, &tex);
+	}
+	textures.clear();
+	loadedTextures.clear();
+
+	std::vector<DictEntry> old_dictionary;
+	old_dictionary.swap(dictionary);
+
+	for (auto iter : old_dictionary) {
+		loadTextures(iter.path.c_str(), iter.xTiles, iter.yTiles, iter.blocks);
+		delete[] iter.blocks;
+	}
 }
 
 void TextureManager::bind(uint block) {

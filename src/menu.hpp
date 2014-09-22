@@ -36,7 +36,8 @@ private:
 	uint renderDistanceBuf;
 	AntiAliasing aaBuf;
 
-	GraphicsConf *conf = nullptr;
+	GraphicsConf *clientConf = nullptr;
+	GraphicsConf bufferConf;
 
 	gui::Frame *frame = nullptr;
 
@@ -44,6 +45,8 @@ private:
 	gui::CycleButton<AntiAliasing> *aaButton;
 	gui::CycleButton<Fog> *fogButton;
 	gui::CycleButton<int> *rdButton;
+	gui::CycleButton<uint> *mipButton;
+	gui::CycleButton<TexFiltering> *filtButton;
 };
 
 #endif // MENU_HPP_
