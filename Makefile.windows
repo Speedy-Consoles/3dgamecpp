@@ -1,12 +1,19 @@
 EXECUTABLE_NAME = 3dgame.exe
 
 SOURCE_FILES = \
+	gui/button.cpp\
+	gui/frame.cpp\
+	gui/label.cpp\
+	gui/widget.cpp\
 	archive.cpp\
 	chunk_loader.cpp\
-	chunk.cpp client.cpp\
+	chunk_loader_internals.cpp\
+	chunk.cpp\
+	client.cpp\
 	config.cpp\
 	graphics.cpp\
 	local_server_interface.cpp\
+	logging.cpp\
 	menu.cpp\
 	monitor.cpp\
 	perlin.cpp\
@@ -14,29 +21,32 @@ SOURCE_FILES = \
 	render.cpp\
 	render_menu.cpp\
 	stopwatch.cpp\
+	texture_manager.cpp\
 	util.cpp\
-	world.cpp
+	vmath.cpp\
+	world.cpp\
+	world_generator.cpp
 
 CXX = x86_64-w64-mingw32-g++
 LD = x86_64-w64-mingw32-g++
 
-CXXFLAGS = -Wall -std=c++11 -pthread `freetype-config --cflags` -DGLEW_STATIC -mwindows
+CXXFLAGS = -Wall -std=c++11 `freetype-config --cflags` -Isrc -DGLEW_STATIC -mwindows -DNO_LOG4CXX
 LDFLAGS = -pthread -mwindows
 
-INCLUDE_DIRS =
+#CXXFLAGS += -DNO_GRAPHICS
+
 LIB_DIRS =
 
-LIBS = mingw32 SDL2main SDL2 glu32 ftgl SDL2_image freetype glew32s opengl32 png z bz2
+LIBS_LD_FLAGS = -lmingw32 -lSDL2main -lSDL2 -lglu32 -lftgl -lSDL2_image -lfreetype -lglew32s -lopengl32 -lpng -lz -lbz2
+
 
 DEBUG ?= 1
 ifeq ($(DEBUG), 1)
-	CXXFLAGS += -g -O0
-	LDFLAGS += -g -O0
+	CXXFLAGS += -g
 	OBJ_DIR = obj_win/debug
 	BIN_DIR = bin_win/debug
 else
 	CXXFLAGS += -O2 -s
-	LDFLAGS += -O2 -s
 	OBJ_DIR = obj_win/release
 	BIN_DIR = bin_win/release
 endif
@@ -44,15 +54,16 @@ endif
 CXXFLAGS += $(addprefix -I, $(INCLUDE_DIRS))
 LDFLAGS += $(addprefix -L, $(LIB_DIRS))
 
-LIBS_LD_FLAGS = $(addprefix -l, $(LIBS))
-
 EXECUTABLE = $(BIN_DIR)/$(EXECUTABLE_NAME)
 
 OBJECTS = $(SOURCE_FILES:%.cpp=$(OBJ_DIR)/%.cpp.o)
 
-all: make_dirs depends $(EXECUTABLE)
+all: $(EXECUTABLE)
+
+dir_guard=@mkdir -p $(@D)
 
 $(OBJ_DIR)/%.cpp.o : src/%.cpp
+	$(dir_guard)
 	$(CXX) -MMD -c -o $@ $< $(CXXFLAGS)
 	@cp $(OBJ_DIR)/$*.cpp.d $(OBJ_DIR)/$*.P; \
 	sed -e 's/#.*//' -e 's/^[^:]*: *//' -e 's/ *\\$$//' \
@@ -63,14 +74,11 @@ $(OBJ_DIR)/%.cpp.o : src/%.cpp
 -include $(OBJECTS:%.cpp.o=%.P)
 
 $(EXECUTABLE): $(OBJECTS)
-	$(LD) $(OBJECTS) $(LDFLAGS) $(LIBS_LD_FLAGS) -o $@
+	$(dir_guard)
+	$(LD) $(LDFLAGS) $(OBJECTS) $(LIBS_LD_FLAGS) -o $@
 
-.PHONY: make_dirs clean depends all
-
-make_dirs:
-	mkdir -p $(OBJ_DIR)
-	mkdir -p $(BIN_DIR)
+.PHONY: make_dirs clean all
 
 clean:
-	rm $(OBJ_DIR)/*
-	rm $(BIN_DIR)/*
+	rm -Rf $(OBJ_DIR)
+	rm -Rf $(BIN_DIR)

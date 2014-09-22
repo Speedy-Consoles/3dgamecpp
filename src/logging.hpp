@@ -1,6 +1,8 @@
 #ifndef LOGGING_HPP_
 #define LOGGING_HPP_
 
+#ifndef NO_LOG4CXX
+
 #include <log4cxx/logger.h>
 
 #define NAMED_LOGGER(name) log4cxx::Logger::getLogger(name)
@@ -22,6 +24,41 @@
 	GLenum e = glGetError();\
 	if (e != GL_NO_ERROR) LOG(ERROR, gluErrorString(e));\
 }
+
+#else
+
+#include <string>
+#include <fstream>
+#include <sstream>
+#include <iostream>
+
+namespace logging {
+	extern std::ofstream stream;
+}
+
+#define NAMED_LOGGER(name)
+#define DEFAULT_LOGGER
+#define LOG(sev, msg) {\
+	std::stringstream ss;\
+	ss << sev << ": " << msg;\
+	std::cout << ss.str() << std::endl;\
+	logging::stream << ss.str() << std::endl;\
+}
+#define LOG_TO(logger, sev, msg) LOG(sev, msg)
+
+#define FATAL "FATAL"
+#define ERROR "ERROR"
+#define WARNING "WARNING"
+#define INFO "INFO"
+#define DEBUG "DEBUG"
+#define TRACE "TRACE"
+
+#define logOpenGLError() {\
+	GLenum e = glGetError();\
+	if (e != GL_NO_ERROR) LOG(ERROR, gluErrorString(e));\
+}
+
+#endif
 
 void initLogging();
 void initLogging(const char *file);

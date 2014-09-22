@@ -11,5 +11,5 @@ build_windows.sh
 3dgame.zip
 region
 *.profile
-client.log
-client.log.*
+*.log
+*.log.*
