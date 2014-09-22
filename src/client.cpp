@@ -50,9 +50,9 @@ Client::Client(){
 	serverInterface = new LocalServerInterface(world, 42, *conf);
 	localClientID = serverInterface->getLocalClientID();
 
-	frame = new Frame(10, 10, 0, 0);
-	menu = new Menu(frame, conf);
-	graphics = new Graphics(world, frame, localClientID, *conf, stopwatch);
+	menu = new Menu(conf);
+	frame = menu->getFrame();
+	graphics = new Graphics(world, menu, localClientID, *conf, stopwatch);
 
 }
 
@@ -60,7 +60,6 @@ Client::~Client() {
 	store("graphics-default.profile", *conf);
 	delete graphics;
 	delete menu;
-	delete frame;
 
 	// world must be deleted before server interface
 	delete world;
@@ -157,6 +156,7 @@ void Client::handleInput() {
 			if (!graphics->isMenu()) {
 				switch (event.key.keysym.scancode) {
 				case SDL_SCANCODE_ESCAPE:
+					menu->update();
 					graphics->setMenu(true);
 					world->setPause(true);
 					break;
@@ -172,6 +172,7 @@ void Client::handleInput() {
 					case AntiAliasing::MSAA_16: conf->aa = AntiAliasing::NONE; break;
 					}
 					graphics->setConf(*conf);
+					menu->update();
 					break;
 //				case SDL_SCANCODE_N:
 //					switch (graphics->getFXAA()) {
@@ -221,10 +222,6 @@ void Client::handleInput() {
 				break;*/
 				case SDL_SCANCODE_ESCAPE:
 					menu->apply();
-					if (menu->check()){
-						graphics->setConf(*conf);
-						serverInterface->setConf(*conf);
-					}
 					graphics->setMenu(false);
 					world->setPause(false);
 					break;

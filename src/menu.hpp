@@ -13,21 +13,22 @@
 namespace gui {
 	class Frame;
 	class Label;
+	template <typename T> class CycleButton;
 }
 
 #include <string>
 
 class Menu {
 public:
+	~Menu();
 	Menu() = delete;
-	Menu(gui::Frame *frame, GraphicsConf *);
+	Menu(GraphicsConf *);
 
-	void handleClickFullscreen(gui::Label *label);
-	void handleClickAA(gui::Label *label);
-	void handleClickFog(gui::Label *label);
-	void handleClickRenderDistance(gui::Label *label);
+	gui::Frame *getFrame() { return frame; }
+	const gui::Frame *getFrame() const { return frame; }
 
 	void apply();
+	void update();
 	bool check() { return dirty; dirty = false; }
 
 private:
@@ -35,8 +36,14 @@ private:
 	uint renderDistanceBuf;
 	AntiAliasing aaBuf;
 
-	gui::Frame *frame;
-	GraphicsConf *conf;
+	GraphicsConf *conf = nullptr;
+
+	gui::Frame *frame = nullptr;
+
+	gui::CycleButton<bool> *fsButton;
+	gui::CycleButton<AntiAliasing> *aaButton;
+	gui::CycleButton<Fog> *fogButton;
+	gui::CycleButton<int> *rdButton;
 };
 
 #endif // MENU_HPP_

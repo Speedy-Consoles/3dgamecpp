@@ -39,6 +39,7 @@ private:
 	ServerInterface *serverInterface = nullptr;
 	World *world = nullptr;
 	Menu *menu = nullptr;
+	gui::Frame *frame = nullptr;
 	Graphics *graphics = nullptr;
 	GraphicsConf *conf = nullptr;
 	Stopwatch *stopwatch = nullptr;
@@ -51,8 +52,6 @@ private:
 	int64 timeShift = 0;
 
 	bool closeRequested = false;
-
-	gui::Frame *frame;
 
 public:
 	Client(const Client &) = delete;

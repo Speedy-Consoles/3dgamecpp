@@ -13,72 +13,22 @@
 #include "gui/frame.hpp"
 #include "gui/label.hpp"
 #include "gui/button.hpp"
-
-#include <string>
+#include "gui/cycle_button.hpp"
 
 using namespace std;
 using namespace gui;
 
-template <typename T>
-struct Option {
-	T opt;
-	const char *desc;
-};
+template class CycleButton<bool>;
+template class CycleButton<int>;
+template class CycleButton<Fog>;
+template class CycleButton<AntiAliasing>;
 
-Option<bool> fullscreenOptions[] = {
-	{false, nullptr},
-	{true, "Yes"},
-	{false, "No"},
-	{false, nullptr},
-};
-
-Option<AntiAliasing> aaOptions[] = {
-	{AntiAliasing::NONE, nullptr},
-	{AntiAliasing::NONE, "Off"},
-	{AntiAliasing::MSAA_2, "MSAA x2"},
-	{AntiAliasing::MSAA_4, "MSAA x4"},
-	{AntiAliasing::MSAA_8, "MSAA x8"},
-	{AntiAliasing::MSAA_16, "MSAA x16"},
-	{AntiAliasing::NONE, nullptr},
-};
-
-Option<Fog> fogOptions[] = {
-	{Fog::NONE, nullptr},
-	{Fog::NONE, "Off"},
-	{Fog::FAST, "Fast"},
-	{Fog::FANCY, "Fancy"},
-	{Fog::NONE, nullptr},
-};
-
-Option<uint> renderDistanceOptions[] = {
-	{0, nullptr},
-	{4, "4"},
-	{8, "8"},
-	{12, "12"},
-	{16, "16"},
-	{24, "24"},
-	{32, "32"},
-	{0, nullptr},
-};
-
-template <typename T>
-int getIndex(T t, const Option<T> *options) {
-	int i = 1;
-	while (options[i].desc != nullptr) {
-		if (t == options[i].opt)
-			return i;
-		++i;
-	}
-	return -1;
+Menu::~Menu() {
+	delete frame;
 }
 
-template <typename T>
-string getName(T t, const Option<T> *options) {
-	return options[getIndex(t, options)].desc;
-}
-
-Menu::Menu(Frame *frame, GraphicsConf *conf) :
-	frame(frame), conf(conf)
+Menu::Menu(GraphicsConf *conf) :
+	conf(conf)
 {
 	renderDistanceBuf = conf->render_distance;
 	aaBuf = conf->aa;
@@ -86,81 +36,65 @@ Menu::Menu(Frame *frame, GraphicsConf *conf) :
 	int yIncr = 20;
 	int y = yIncr;
 
-	Button *applyButton = new Button(0, y, 100, 20);
+	frame = new Frame(10, 10, 0, 0);
+
+	auto *applyButton = new Button(0, y, 100, 20);
 	applyButton->text() = string("Apply");
 	applyButton->setOnClick([this](){ apply(); });
 	frame->add(applyButton);
 	y += yIncr * 2;
 
-	Button *fsButton = new Button(0, y, 100, 20);
-	fsButton->text() = string("Fullscreen: ") +
-			getName(conf->fullscreen, fullscreenOptions);
-	fsButton->setOnClick([this, fsButton](){ handleClickFullscreen(fsButton); });
+	frame->add(new Label(0, y, 180, 20, "Fullscreen:"));
+	fsButton = new CycleButton<bool>(180, y, 100, 20);
+	fsButton->add(false, "Off");
+	fsButton->add(true, "On");
+	fsButton->setOnDataChange([this](bool b){
+		this->conf->fullscreen = b;
+		this->dirty = true;
+	});
 	frame->add(fsButton);
 	y += yIncr;
 
-	Button *aaButton = new Button(0, y, 100, 20);
-	aaButton->text() = string("Anti-aliasing: ") +
-			getName(conf->aa, aaOptions);
-	aaButton->setOnClick([this, aaButton](){ handleClickAA(aaButton); });
+	frame->add(new Label(0, y, 180, 20, "Anti-aliasing:"));
+	aaButton = new CycleButton<AntiAliasing>(180, y, 100, 20);
+	aaButton->add(AntiAliasing::NONE, "Off");
+	aaButton->add(AntiAliasing::MSAA_2, "MSAA x2");
+	aaButton->add(AntiAliasing::MSAA_4, "MSAA x4");
+	aaButton->add(AntiAliasing::MSAA_8, "MSAA x8");
+	aaButton->add(AntiAliasing::MSAA_16, "MSAA x16");
+	aaButton->setOnDataChange([this](AntiAliasing aa){
+		this->aaBuf = aa;
+	});
 	frame->add(aaButton);
 	y += yIncr;
 
-	Button *fogButton = new Button(0, y, 100, 20);
-	fogButton->text() = string("Fog: ") +
-			getName(conf->fog, fogOptions);
-	fogButton->setOnClick([this, fogButton](){ handleClickFog(fogButton); });
+	frame->add(new Label(0, y, 180, 20, "Fog:"));
+	fogButton = new CycleButton<Fog>(180, y, 100, 20);
+	fogButton->add(Fog::NONE, "Off");
+	fogButton->add(Fog::FAST, "Fast");
+	fogButton->add(Fog::FANCY, "Fancy");
+	fogButton->setOnDataChange([this](Fog fog){
+		this->conf->fog = fog;
+		this->dirty = true;
+	});
 	frame->add(fogButton);
 	y += yIncr;
 
-	Button *rdButton = new Button(0, y, 100, 20);
-	rdButton->text() = string("Render distance: ") +
-			getName(conf->render_distance, renderDistanceOptions);
-	rdButton->setOnClick([this, rdButton](){ handleClickRenderDistance(rdButton); });
+	frame->add(new Label(0, y, 180, 20, "Render distance:"));
+	rdButton = new CycleButton<int>(180, y, 100, 20);
+	rdButton->add(4, "4");
+	rdButton->add(8, "8");
+	rdButton->add(12, "12");
+	rdButton->add(16, "16");
+	rdButton->add(24, "24");
+	rdButton->add(32, "32");
+	rdButton->setOnDataChange([this](int rd){
+		this->renderDistanceBuf = rd;
+	});
 	frame->add(rdButton);
 	y += yIncr;
-}
 
-void Menu::handleClickFullscreen(Label *label) {
-	int i = getIndex(conf->fullscreen, fullscreenOptions);
-	++i;
-	if (fullscreenOptions[i].desc == nullptr)
-		i = 1;
-
-	conf->fullscreen = fullscreenOptions[i].opt;
-	label->text() = string("Fullscreen: ") + fullscreenOptions[i].desc;
-	dirty = true;
-}
-
-void Menu::handleClickAA(Label *label) {
-	int i = getIndex(aaBuf, aaOptions);
-	++i;
-	if (aaOptions[i].desc == nullptr)
-		i = 1;
-
-	aaBuf = aaOptions[i].opt;
-	label->text() = string("Anti-aliasing: ") + aaOptions[i].desc;
-}
-
-void Menu::handleClickFog(Label *label) {
-	int i = getIndex(conf->fog, fogOptions);
-	++i;
-	if (fogOptions[i].desc == nullptr)
-		i = 1;
-
-	conf->fog = fogOptions[i].opt;
-	label->text() = string("Fog: ") + fogOptions[i].desc;
-	dirty = true;
-}
-
-void Menu::handleClickRenderDistance(Label *label) {
-	int i = getIndex(renderDistanceBuf, renderDistanceOptions);
-	++i;
-	if (renderDistanceOptions[i].desc == nullptr)
-		i = 1;
-
-	renderDistanceBuf = renderDistanceOptions[i].opt;
-	label->text() = string("Render distance: ") + renderDistanceOptions[i].desc;
+	update();
 }
 
 void Menu::apply() {
@@ -174,4 +108,14 @@ void Menu::apply() {
 		dirty = true;
 	}
 
+}
+
+void Menu::update() {
+	fsButton->set(conf->fullscreen);
+	aaButton->set(conf->aa);
+	fogButton->set(conf->fog);
+	rdButton->set(conf->render_distance);
+
+	aaBuf = conf->aa;
+	renderDistanceBuf = conf->render_distance;
 }
