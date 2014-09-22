@@ -115,6 +115,8 @@ void Graphics::initGL() {
 
 	glEnable(GL_CULL_FACE);
 
+	glEnable(GL_LINE_SMOOTH);
+
 	// light
 	LOG(DEBUG, "Initializing light");
 	//float playerLight[4] = {4.0f, 4.0f, 2.4f, 1.0f};

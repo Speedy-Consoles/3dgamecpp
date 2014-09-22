@@ -216,14 +216,45 @@ void Graphics::renderChunks() {
 		if (lid != 0
 				&& dlFaces[index] > 0
 				&& inFrustum(cc, localPlayer.getPos(), lookDir)
-				&& (!target || tcc != cc)
 				&& dlHasChunk[index]
 				&& dlChunks[index] == cc) {
 			stopwatch->start(CLOCK_DLC);
 			glCallList(lid);
 			stopwatch->stop(CLOCK_DLC);
-		} else if (target && tcc == cc)
-			renderChunk(*world->getChunk(cc), true, ticc, td);
+		}
+	}
+
+	if (target) {
+		glDisable(GL_TEXTURE_2D);
+		glBegin(GL_QUADS);
+		glColor4d(0.0, 0.0, 0.0, 1.0);
+		vec3d pointFive(0.5, 0.5, 0.5);
+		for (int d = 0; d < 6; d++) {
+			glNormal3d(DIRS[d][0], DIRS[d][1], DIRS[d][2]);
+			for (int j = 0; j < 4; j++) {
+				vec3d dirOff = DIRS[d].cast<double>() * 0.00005;
+				vec3d vOff[4];
+				vOff[0] = QUAD_CYCLES_3D[d][j].cast<double>() - pointFive;
+				vOff[0][OTHER_DIR_DIMS[d][0]] *= 1.0001;
+				vOff[0][OTHER_DIR_DIMS[d][1]] *= 1.0001;
+				vOff[1] = QUAD_CYCLES_3D[d][j].cast<double>() - pointFive;
+				vOff[1][OTHER_DIR_DIMS[d][0]] *= 0.97;
+				vOff[1][OTHER_DIR_DIMS[d][1]] *= 0.97;
+				vOff[2] = QUAD_CYCLES_3D[d][(j + 3) % 4].cast<double>() - pointFive;
+				vOff[2][OTHER_DIR_DIMS[d][0]] *= 0.97;
+				vOff[2][OTHER_DIR_DIMS[d][1]] *= 0.97;
+				vOff[3] = QUAD_CYCLES_3D[d][(j + 3) % 4].cast<double>() - pointFive;
+				vOff[3][OTHER_DIR_DIMS[d][0]] *= 1.0001;
+				vOff[3][OTHER_DIR_DIMS[d][1]] *= 1.0001;
+
+				for (int k = 0; k < 4; k++) {
+					vec3d vertex = tbc.cast<double>() + dirOff + vOff[k] + pointFive;
+					glVertex3d(vertex[0], vertex[1], vertex[2]);
+				}
+			}
+		}
+		glEnd();
+		glEnable(GL_TEXTURE_2D);
 	}
 }
 
@@ -245,8 +276,6 @@ int Graphics::renderChunk(const Chunk &c, bool targeted, vec3ui8 ticc, int td) {
 		}
 
 		vec3d color = {1.0, 1.0, 1.0};
-		if (targeted && f.block == ticc && f.dir == td)
-			color = {0.8, 0.2, 0.2};
 
 		glNormal3d(DIRS[f.dir][0], DIRS[f.dir][1], DIRS[f.dir][2]);
 		for (int j = 0; j < 4; j++) {

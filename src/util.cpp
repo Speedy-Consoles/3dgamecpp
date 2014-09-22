@@ -45,7 +45,7 @@ const uint8 FACE_CORNER_MASK[4][3] = {
 	{ 0b00100000, 0b01000000, 0b10000000 }
 };
 
-const vec3i8 CUBE_CYCLE[27] = {
+const vec3i8 NINE_CUBE_CYCLE[27] = {
 	{-1,-1,-1 }, { 0,-1,-1 }, { 1,-1,-1 },
 	{-1, 0,-1 }, { 0, 0,-1 }, { 1, 0,-1 },
 	{-1, 1,-1 }, { 0, 1,-1 }, { 1, 1,-1 },
@@ -57,9 +57,14 @@ const vec3i8 CUBE_CYCLE[27] = {
 	{-1, 1, 1 }, { 0, 1, 1 }, { 1, 1, 1 }
 };
 
+const vec3i8 CUBE_CYCLE[8] = {
+	{ 0, 0, 0 }, { 1, 0, 0 }, { 1, 1, 0 }, { 0, 1, 0 },
+	{ 0, 1, 1 }, { 1, 1, 1 }, { 1, 0, 1 }, { 0, 0, 1 }
+};
+
 const size_t DIR_2_CUBE_CYCLE[6] = { 14, 16, 22, 12, 10, 4 };
 
-const size_t BASE_CUBE_CYCLE = 13;
+const size_t BASE_NINE_CUBE_CYCLE = 13;
 
 std::vector<vec3i8> LOADING_ORDER;
 

@@ -17,9 +17,10 @@ extern const vec3i QUAD_CYCLES_3D[6][4];
 extern const vec2i QUAD_CYCLE_2D[4];
 extern const vec3i EIGHT_CYCLES_3D[6][8];
 extern const uint8 FACE_CORNER_MASK[4][3];
-extern const vec3i8 CUBE_CYCLE[27];
+extern const vec3i8 NINE_CUBE_CYCLE[27];
+extern const vec3i8 CUBE_CYCLE[8];
 extern const size_t DIR_2_CUBE_CYCLE[6];
-extern const size_t BASE_CUBE_CYCLE;
+extern const size_t BASE_NINE_CUBE_CYCLE;
 
 const uint8  TEST_CORNERS[6] { 0b00000111, 0b11000001, 0, 0b11000001, 0b00000111, 0 };
 

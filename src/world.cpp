@@ -157,7 +157,7 @@ bool World::setBlock(vec3i64 bc, uint8 type, bool updateFaces) {
 			vec3i8 dcc = (ncc - cc).cast<int8>();
 
 			if (updateFace(bc, d))
-				chunkChanged[BASE_CUBE_CYCLE] = true;
+				chunkChanged[BASE_NINE_CUBE_CYCLE] = true;
 			else if (updateFace(nbc, invD))
 				chunkChanged[vec2CubeCycle(dcc)] = true;
 
@@ -173,7 +173,7 @@ bool World::setBlock(vec3i64 bc, uint8 type, bool updateFaces) {
 
 		for (int i = 0; i < 27; i++) {
 			if(chunkChanged[i])
-				changedChunks.push_front(c->getCC() + CUBE_CYCLE[i]);
+				changedChunks.push_front(c->getCC() + NINE_CUBE_CYCLE[i]);
 		}
 
 		return true;
@@ -243,13 +243,13 @@ void World::patchBorders(Chunk *c) {
 
 	// TODO make more efficient
 	for (int i = 0; i < 27; i++) {
-		vec3i64 ncc = c->getCC() + CUBE_CYCLE[i];
+		vec3i64 ncc = c->getCC() + NINE_CUBE_CYCLE[i];
 		Chunk *nc = getChunk(ncc);
 		if (!nc)
 			continue;
 		for (Face f : nc->getBorderFaces()) {
 			vec3i64 nbc = ncc * Chunk::WIDTH + f.block;
-			if (bc2cc(nbc - CUBE_CYCLE[i]) != c->getCC())
+			if (bc2cc(nbc - NINE_CUBE_CYCLE[i]) != c->getCC())
 				continue;
 			if (updateFace(nbc, f.dir))
 				chunkChanged[i] = true;
@@ -294,7 +294,7 @@ void World::patchBorders(Chunk *c) {
 	}
 	for (int i = 0; i < 27; i++) {
 		if(chunkChanged[i])
-			changedChunks.push_back(c->getCC() + CUBE_CYCLE[i]);
+			changedChunks.push_back(c->getCC() + NINE_CUBE_CYCLE[i]);
 	}
 }
 
