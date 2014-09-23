@@ -8,7 +8,7 @@
 #include "chunk_loader.hpp"
 
 #include "world_generator.hpp"
-#include "world.hpp"
+#include "game/world.hpp"
 
 #include "logging.hpp"
 #undef DEFAULT_LOGGER

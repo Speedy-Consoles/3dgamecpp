@@ -2,7 +2,7 @@
 
 #include <thread>
 
-#include "logging.hpp"
+#include "io/logging.hpp"
 
 LocalServerInterface::LocalServerInterface(World *world, uint64 seed, const GraphicsConf &conf)
 		: conf(conf) {

@@ -2,8 +2,8 @@
 #define LOCAL_SERVER_INTERFACE_HPP
 
 #include "server_interface.hpp"
-#include "world.hpp"
-#include "chunk_loader.hpp"
+#include "game/world.hpp"
+#include "io/chunk_loader.hpp"
 
 class LocalServerInterface : public ServerInterface {
 private:

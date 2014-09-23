@@ -1,7 +1,7 @@
 #include "chunk.hpp"
 #include "world.hpp"
 #include "util.hpp"
-#include "chunk_loader.hpp"
+#include "io/chunk_loader.hpp"
 
 static size_t faceHashFunc(Face f) {
 		static const int prime = 31;

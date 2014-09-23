@@ -14,7 +14,7 @@
 
 #include "vmath.hpp"
 #include "util.hpp"
-#include "chunk.hpp"
+#include "game/chunk.hpp"
 
 class ArchiveFile {
 public:

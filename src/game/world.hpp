@@ -7,6 +7,7 @@
 
 #include "constants.hpp"
 #include "player.hpp"
+
 class Chunk;
 
 struct WorldSnapshot {

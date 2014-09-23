@@ -1,10 +1,11 @@
-#include "player.hpp"
 #include <cmath>
 #include <limits>
-#include "util.hpp"
-#include "world.hpp"
 #include <algorithm>
 #include <cstring>
+
+#include "util.hpp"
+#include "world.hpp"
+#include "player.hpp"
 
 using namespace std;
 

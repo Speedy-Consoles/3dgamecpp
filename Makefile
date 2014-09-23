@@ -5,26 +5,26 @@ SOURCE_FILES = \
 	gui/frame.cpp\
 	gui/label.cpp\
 	gui/widget.cpp\
-	archive.cpp\
-	chunk_loader.cpp\
-	chunk_loader_internals.cpp\
-	chunk.cpp\
-	client.cpp\
-	config.cpp\
-	graphics.cpp\
-	local_server_interface.cpp\
-	logging.cpp\
-	menu.cpp\
+	io/archive.cpp\
+	io/chunk_loader.cpp\
+	io/chunk_loader_internals.cpp\
+	io/logging.cpp\
+	client/client.cpp\
+	client/config.cpp\
+	client/graphics.cpp\
+	client/local_server_interface.cpp\
+	client/menu.cpp\
+	client/render.cpp\
+	client/render_menu.cpp\
+	client/texture_manager.cpp\
+	game/chunk.cpp\
+	game/player.cpp\
+	game/world.cpp\
 	monitor.cpp\
 	perlin.cpp\
-	player.cpp\
-	render.cpp\
-	render_menu.cpp\
 	stopwatch.cpp\
-	texture_manager.cpp\
 	util.cpp\
 	vmath.cpp\
-	world.cpp\
 	world_generator.cpp
 
 CXX = g++

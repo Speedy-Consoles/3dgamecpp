@@ -6,7 +6,7 @@
  */
 
 #include "button.hpp"
-#include "logging.hpp"
+#include "io/logging.hpp"
 
 #undef DEFAULT_LOGGER
 #define DEFAULT_LOGGER NAMED_LOGGER("gui")

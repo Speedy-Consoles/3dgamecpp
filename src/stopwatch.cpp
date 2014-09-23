@@ -1,5 +1,5 @@
 #include "stopwatch.hpp"
-#include "logging.hpp"
+#include "io/logging.hpp"
 
 using namespace std::chrono;
 

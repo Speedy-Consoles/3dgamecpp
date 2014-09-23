@@ -2,7 +2,7 @@
 #include <cmath>
 #include <algorithm>
 #include "constants.hpp"
-#include "chunk.hpp"
+#include "game/chunk.hpp"
 
 const double TAU = atan(1) * 8;
 

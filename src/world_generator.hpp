@@ -8,7 +8,7 @@
 #ifndef WORLD_GENERATOR_HPP_
 #define WORLD_GENERATOR_HPP_
 
-#include "chunk.hpp"
+#include "game/chunk.hpp"
 #include "perlin.hpp"
 #include "util.hpp"
 

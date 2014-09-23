@@ -1,7 +1,7 @@
 #include "chunk_loader.hpp"
 
-#include "world.hpp"
-#include "chunk.hpp"
+#include "game/world.hpp"
+#include "game/chunk.hpp"
 #include "world_generator.hpp"
 
 using namespace std;

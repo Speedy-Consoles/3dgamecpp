@@ -12,7 +12,7 @@
 #include "graphics.hpp"
 #include "config.hpp"
 #include "stopwatch.hpp"
-#include "world.hpp"
+#include "game/world.hpp"
 #include "menu.hpp"
 
 #include "gui/frame.hpp"
@@ -20,7 +20,7 @@
 using namespace gui;
 using namespace std::chrono;
 
-#include "logging.hpp"
+#include "io/logging.hpp"
 #undef DEFAULT_LOGGER
 #define DEFAULT_LOGGER NAMED_LOGGER("client")
 
