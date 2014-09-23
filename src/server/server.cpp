@@ -78,9 +78,6 @@ public:
 	void run();
 	void sync(int perSecond);
 
-	int64 getPreciseTime();
-	uint64 getApproxTime();
-
 private:
 
 	void receive();
@@ -159,20 +156,8 @@ void Server::run() {
 void Server::sync(int perSecond) {
 	time = time + 1000000 / perSecond;
 	microseconds duration(std::max(0,
-			(int) (time - getPreciseTime())));
+			(int) (time - getMicroTimeSince(startTimePoint))));
 	std::this_thread::sleep_for(duration);
-}
-
-int64 Server::getPreciseTime() {
-	auto diff = chrono::high_resolution_clock::now() - startTimePoint;
-	auto micros = chrono::duration_cast<std::chrono::microseconds>(diff);
-	return micros.count();
-}
-
-uint64 Server::getApproxTime() {
-	auto diff = chrono::steady_clock::now() - approxStartTimePoint;
-	auto millis = chrono::duration_cast<std::chrono::milliseconds>(diff);
-	return millis.count();
 }
 
 void Server::receive() {
@@ -214,7 +199,7 @@ void Server::receive() {
 					continue;
 				}
 
-				clients[id].timeOfLastPacket = getApproxTime();
+				clients[id].timeOfLastPacket = getMilliTimeSince(approxStartTimePoint);
 
 				handleClientMessage(inHeader.type, id, inDataCursor, dataEnd);
 			} else if (channel == -1) {
@@ -230,7 +215,7 @@ void Server::receive() {
 }
 
 void Server::checkInactive() {
-	uint64 approxTimeNow = getApproxTime();
+	uint64 approxTimeNow = getMilliTimeSince(approxStartTimePoint);
 	for (uint8 id = 0; id < MAX_CLIENTS; ++id) {
 		if (!clients[id].connected)
 			continue;
@@ -258,7 +243,7 @@ void Server::handleConnectionRequest(const IPaddress *address) {
 		uint32 token = 0; //TODO
 		clients[id].connected = true;
 		clients[id].token = token;
-		clients[id].timeOfLastPacket = getApproxTime();
+		clients[id].timeOfLastPacket = getMilliTimeSince(approxStartTimePoint);
 		SDLNet_UDP_Bind(socket, id, address);
 		msg.success = true;
 		msg.token = token;
