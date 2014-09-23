@@ -1,31 +1,48 @@
-EXECUTABLE_NAME = 3dgame
+CLIENT_EXECUTABLE_NAME = 3dgame
+SERVER_EXECUTABLE_NAME = 3dgame_srv
 
-SOURCE_FILES = \
-	gui/button.cpp\
-	gui/frame.cpp\
-	gui/label.cpp\
-	gui/widget.cpp\
-	io/archive.cpp\
-	io/chunk_loader.cpp\
-	io/chunk_loader_internals.cpp\
-	io/logging.cpp\
-	client/client.cpp\
-	client/config.cpp\
-	client/graphics.cpp\
-	client/local_server_interface.cpp\
-	client/menu.cpp\
-	client/render.cpp\
-	client/render_menu.cpp\
-	client/texture_manager.cpp\
-	game/chunk.cpp\
-	game/player.cpp\
-	game/world.cpp\
-	monitor.cpp\
-	perlin.cpp\
-	stopwatch.cpp\
-	util.cpp\
-	vmath.cpp\
-	world_generator.cpp
+CLIENT_OBJECT_FILES = \
+	gui/button.cpp.o\
+	gui/frame.cpp.o\
+	gui/label.cpp.o\
+	gui/widget.cpp.o\
+	io/archive.cpp.o\
+	io/chunk_loader.cpp.o\
+	io/chunk_loader_internals.cpp.o\
+	io/logging.cpp.o\
+	client/client.cpp.o\
+	client/config.cpp.o\
+	client/graphics.cpp.o\
+	client/local_server_interface.cpp.o\
+	client/menu.cpp.o\
+	client/render.cpp.o\
+	client/render_menu.cpp.o\
+	client/texture_manager.cpp.o\
+	game/chunk.cpp.o\
+	game/player.cpp.o\
+	game/world.cpp.o\
+	monitor.cpp.o\
+	perlin.cpp.o\
+	stopwatch.cpp.o\
+	util.cpp.o\
+	vmath.cpp.o\
+	world_generator.cpp.o
+
+SERVER_OBJECT_FILES = \
+	io/archive.cpp.o\
+	io/chunk_loader.cpp.o\
+	io/chunk_loader_internals.cpp.o\
+	io/logging.cpp.o\
+	server/server.cpp.o\
+	game/chunk.cpp.o\
+	game/player.cpp.o\
+	game/world.cpp.o\
+	monitor.cpp.o\
+	perlin.cpp.o\
+	stopwatch.cpp.o\
+	util.cpp.o\
+	vmath.cpp.o\
+	world_generator.cpp.o
 
 CXX = g++
 LD = g++
@@ -33,12 +50,12 @@ LD = g++
 CXXFLAGS = -Wall -std=c++11 `freetype-config --cflags` -pthread -Isrc
 LDFLAGS = -pthread
 
+CLIENT_LDFLAGS = $(LDFLAGS)
+SERVER_LDFLAGS = $(LDFLAGS)
 #CXXFLAGS += -DNO_GRAPHICS
 
-LIB_DIRS = 
-
-LIBS_LD_FLAGS  = -Wl,-Bstatic 
-LIBS_LD_FLAGS += -Wl,-Bdynamic -llog4cxx -lGL -lGLU -lGLEW -lftgl -lSDL2 -lSDL2_image
+CLIENT_LIBS_LD_FLAGS = -llog4cxx -lGL -lGLU -lGLEW -lftgl -lSDL2 -lSDL2_image
+SERVER_LIBS_LD_FLAGS = -llog4cxx -lSDL2 -lSDL2_net
 
 DEBUG ?= 1
 ifeq ($(DEBUG), 1)
@@ -51,14 +68,17 @@ else
 	BIN_DIR = bin/release
 endif
 
-CXXFLAGS += $(addprefix -I, $(INCLUDE_DIRS))
-LDFLAGS += $(addprefix -L, $(LIB_DIRS))
+CLIENT_OBJECTS = $(addprefix $(OBJ_DIR)/,$(CLIENT_OBJECT_FILES))
+SERVER_OBJECTS = $(addprefix $(OBJ_DIR)/,$(SERVER_OBJECT_FILES))
 
-EXECUTABLE = $(BIN_DIR)/$(EXECUTABLE_NAME)
+CLIENT_EXECUTABLE = $(BIN_DIR)/$(CLIENT_EXECUTABLE_NAME)
+SERVER_EXECUTABLE = $(BIN_DIR)/$(SERVER_EXECUTABLE_NAME)
 
-OBJECTS = $(SOURCE_FILES:%.cpp=$(OBJ_DIR)/%.cpp.o)
+all: client server
 
-all: $(EXECUTABLE)
+client: $(CLIENT_EXECUTABLE)
+
+server: $(SERVER_EXECUTABLE)
 
 dir_guard=@mkdir -p $(@D)
 
@@ -73,9 +93,13 @@ $(OBJ_DIR)/%.cpp.o : src/%.cpp
 
 -include $(OBJECTS:%.cpp.o=%.P)
 
-$(EXECUTABLE): $(OBJECTS)
+$(CLIENT_EXECUTABLE): $(CLIENT_OBJECTS)
 	$(dir_guard)
-	$(LD) $(LDFLAGS) $(OBJECTS) $(LIBS_LD_FLAGS) -o $@
+	$(LD) $(CLIENT_LDFLAGS) $^ $(CLIENT_LIBS_LD_FLAGS) -o $@
+
+$(SERVER_EXECUTABLE): $(SERVER_OBJECTS)
+	$(dir_guard)
+	$(LD) $(SERVER_LDFLAGS) $^ $(SERVER_LIBS_LD_FLAGS) -o $@
 
 .PHONY: make_dirs clean all
 
