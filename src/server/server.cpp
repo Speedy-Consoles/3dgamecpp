@@ -28,18 +28,23 @@ struct MessageHeader {
 	uint8 type;
 } __attribute__((__packed__ ));
 
+struct ClientMessage {
+	uint32 token;
+} __attribute__((__packed__ ));
+
 struct ConnectionRequest {
 	// nothing
 } __attribute__((__packed__ ));
 
 struct ConnectionResponse {
 	bool success;
-	uint32 token;
 	uint8 id;
+	char padding_1[2];
+	uint32 token;
 } __attribute__((__packed__ ));
 
 struct EchoRequest {
-	uint32 token;
+	uint16 len;
 } __attribute__((__packed__ ));
 
 struct Echo {
@@ -69,10 +74,20 @@ public:
 	void run();
 	void sync(int perSecond);
 private:
+
 	void receive();
+
+	void handleConnectionRequest(const IPaddress *);
+
 	bool getNewId(uint8 *id);
-	void writeBytes(uint8 **cursor, const uint8 *data, size_t len);
-	template <typename T> void writeBytes(uint8 **cursor, const T *data);
+
+	template <typename T>
+	bool write(uint8 **cursor, const T *data, const uint8 *end);
+	bool writeBytes(uint8 **cursor, const uint8 *data, size_t len, const uint8 *end);
+
+	template <typename T>
+	bool read(const uint8 **cursor, T *data, const uint8 *end);
+	bool readBytes(const uint8 **cursor, uint8 *data, size_t len, const uint8 *end);
 };
 
 int main(int argc, char *argv[]) {
@@ -133,58 +148,94 @@ void Server::sync(int perSecond) {
 }
 
 void Server::receive() {
-	uint8 *outDataCursor;
 	MessageHeader outHeader;
 	memcpy(outHeader.magic, MAGIC, sizeof MAGIC);
 	int rc;
 	while ((rc = SDLNet_UDP_Recv(socket, inPacket)) > 0) {
-		uint8 *inDataCursor = inPacket->data;
+		// read the message header
+		const uint8 *inDataCursor = inPacket->data;
 		const uint8 *dataEnd = inPacket->data + inPacket->len;
-		if ((size_t) (dataEnd - inDataCursor) < sizeof (MessageHeader)) continue;
+
 		MessageHeader inHeader;
-		// reading message header
-		memcpy(&inHeader, inDataCursor, sizeof (MessageHeader));
-		inDataCursor += sizeof (MessageHeader);
+		if (!read(&inDataCursor, &inHeader, dataEnd)) {
+			LOG(DEBUG, "Message too short for basic protocol header");
+			continue;
+		}
+
 		// checking magic
-		if (memcmp(inHeader.magic, MAGIC, sizeof (inHeader.magic)) != 0) continue;
+		if (memcmp(inHeader.magic, MAGIC, sizeof (inHeader.magic)) != 0)
+			continue;
 
 		if (inHeader.type == CONNECTION_REQUEST) {
-			ConnectionResponse msg;
-			uint8 id;
-			if (getNewId(&id)) {
-				uint32 token = 0; //TODO
-				clients[id].connected = true;
-				clients[id].token = token;
-				SDLNet_UDP_Bind(socket, id, &inPacket->address);
-				msg.success = true;
-				msg.token = token;
-				msg.id = id;
-			} else {
-				msg.success = false;
-				msg.token = 0;
-				msg.id = 0;
-			}
-			outHeader.type = CONNECTION_RESPONSE;
-			outDataCursor = outPacket->data;
-			writeBytes(&outDataCursor, &outHeader);
-			writeBytes(&outDataCursor, &msg);
-			outPacket->len = outDataCursor - outPacket->data;
-			outPacket->address = inPacket->address;
-			SDLNet_UDP_Send(socket, -1, outPacket);
+			handleConnectionRequest(&inPacket->address);
 		} else {
-			// TODO
-			switch (inHeader.type) {
-			case ECHO_REQUEST:
-				// TODO
-				break;
-			default:
-				break;
+			int channel = inPacket->channel;
+			if (0 <= channel && channel < (int) MAX_CLIENTS) {
+				uint8 id = channel;
+
+				ClientMessage message;
+				if (!read(&inDataCursor, &message, dataEnd)) {
+					LOG(DEBUG, "Message stopped abruptly");
+					continue;
+				}
+
+				if (clients[id].token != message.token) {
+					LOG(DEBUG, "Invalid token for Player " << id);
+					continue;
+				}
+
+				// TODO handle message here!
+			} else {
+				LOG(DEBUG, "Unknown adress");
 			}
 		}
 	}
 
 	if (rc < 0)
 		LOG(ERROR, "Error while receiving inPacket!");
+}
+
+void Server::handleConnectionRequest(const IPaddress *address) {
+	uint8 *host_bytes = (uint8 *) &address->host;
+	uint8 *port_bytes = (uint8 *) &address->port;
+	LOG(INFO, "New connection from IP "
+			<< host_bytes[3] << "." << host_bytes[2] << "."
+			<< host_bytes[1] << "." << host_bytes[0]
+			<< "and port " << ((port_bytes[1] << 8) | port_bytes[0])
+	);
+
+	// handle message
+	ConnectionResponse msg;
+	uint8 id;
+	if (getNewId(&id)) {
+		uint32 token = 0; //TODO
+		clients[id].connected = true;
+		clients[id].token = token;
+		SDLNet_UDP_Bind(socket, id, address);
+		msg.success = true;
+		msg.token = token;
+		msg.id = id;
+		LOG(INFO, "Player " << id << " connected");
+		LOG(INFO, "Token is " << token);
+	} else {
+		msg.success = false;
+		msg.token = 0;
+		msg.id = 0;
+		LOG(INFO, "Server is full");
+	}
+
+	// prepare answer
+	MessageHeader outHeader;
+	memcpy(outHeader.magic, MAGIC, sizeof MAGIC);
+	outHeader.type = CONNECTION_RESPONSE;
+	uint8 *outDataCursor = outPacket->data;
+	write(&outDataCursor, &outHeader, nullptr);
+	write(&outDataCursor, &msg, nullptr);
+	outPacket->len = outDataCursor - outPacket->data;
+	// send to specific address, in case the connection got rejected
+	outPacket->address = inPacket->address;
+	SDLNet_UDP_Send(socket, -1, outPacket);
+
 }
 
 bool Server::getNewId(uint8 *id) {
@@ -197,12 +248,32 @@ bool Server::getNewId(uint8 *id) {
 	return false;
 }
 
-void Server::writeBytes(uint8 **cursor, const uint8 *data, size_t len) {
+template <typename T>
+bool Server::write(uint8 **cursor, const T *data, const uint8 *end) {
+	auto data_ptr = reinterpret_cast<const uint8 *>(data);
+	return writeBytes(cursor, data_ptr, sizeof (T), end);
+}
+
+bool Server::writeBytes(uint8 **cursor, const uint8 *data, size_t len, const uint8 *end) {
+	if (end && (size_t) (end - *cursor) < len) {
+		return false;
+	}
 	memcpy(*cursor, data, len);
 	*cursor += len;
+	return true;
 }
 
 template <typename T>
-void Server::writeBytes(uint8 **cursor, const T *data) {
-	writeBytes(cursor, reinterpret_cast<const uint8 *>(data), sizeof (T));
+bool Server::read(const uint8 **cursor, T *data, const uint8 *end) {
+	auto data_ptr = reinterpret_cast<uint8 *>(data);
+	return readBytes(cursor, data_ptr, sizeof (T), end);
+}
+
+bool Server::readBytes(const uint8 **cursor, uint8 *data, size_t len, const uint8 *end) {
+	if (end && (size_t) (end - *cursor) < len) {
+		return false;
+	}
+	memcpy(data, *cursor, len);
+	*cursor += len;
+	return true;
 }
