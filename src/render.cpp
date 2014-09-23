@@ -76,10 +76,10 @@ void Graphics::render() {
 		);
 //		}
 		logOpenGLError();
-	}
 
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-	glDrawBuffer(GL_BACK);
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		glDrawBuffer(GL_BACK);
+	}
 
 	if (!menuActive) {
 		stopwatch->start(CLOCK_HUD);
@@ -176,6 +176,8 @@ void Graphics::renderChunks() {
 	newFaces = 0;
 	int length = conf.render_distance * 2 + 3;
 
+	texManager.bind(0);
+
 	stopwatch->start(CLOCK_NDL);
 	vec3i64 ccc;
 	while (newFaces < MAX_NEW_QUADS && world->popChangedChunk(&ccc)) {
@@ -267,7 +269,6 @@ int Graphics::renderChunk(const Chunk &c) {
 	int faces = 0;
 
 	uint8 lastBlock = 0;
-	texManager.bind(1);
 	glBegin(GL_QUADS);
 	const Chunk::FaceSet &faceSet = c.getFaces();
 	for (Face f : faceSet) {
