@@ -143,7 +143,7 @@ private:
 	void renderDebugInfo(const Player &);
 	void renderPerformance();
 	void renderChunks();
-	int renderChunk(const Chunk &c, bool targeted, vec3ui8 ticc, int td);
+	int renderChunk(const Chunk &c);
 	void renderPlayers();
 
 	bool inFrustum(vec3i64 cc, vec3i64 pos, vec3d lookDir);

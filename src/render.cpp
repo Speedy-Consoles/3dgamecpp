@@ -135,10 +135,11 @@ void Graphics::renderScene(const Player &player) {
 	glRotated(90, 0, 0, 1);
 	//player position
 	vec3i64 playerPos = player.getPos();
+	int64 m = RESOLUTION * Chunk::WIDTH;
 	glTranslated(
-		-playerPos[0] / (double) RESOLUTION,
-		-playerPos[1] / (double) RESOLUTION,
-		-playerPos[2] / (double) RESOLUTION
+		-((playerPos[0] % m + m) % m) / (double) RESOLUTION,
+		-((playerPos[1] % m + m) % m) / (double) RESOLUTION,
+		-((playerPos[2] % m + m) % m) / (double) RESOLUTION
 	);
 
 	// place light
@@ -187,7 +188,7 @@ void Graphics::renderChunks() {
 				GLuint lid = firstDL + index;
 				faces -= dlFaces[index];
 				glNewList(lid, GL_COMPILE);
-				dlFaces[index] = renderChunk(*chunk, false, vec3ui8(0, 0, 0), 0);
+				dlFaces[index] = renderChunk(*chunk);
 				glEndList();
 				dlChunks[index] = ccc;
 				dlHasChunk[index] = true;
@@ -219,7 +220,10 @@ void Graphics::renderChunks() {
 				&& dlHasChunk[index]
 				&& dlChunks[index] == cc) {
 			stopwatch->start(CLOCK_DLC);
+			glPushMatrix();
+			glTranslatef(cd[0] * (int) Chunk::WIDTH, cd[1] * (int) Chunk::WIDTH, cd[2] * (int) Chunk::WIDTH);
 			glCallList(lid);
+			glPopMatrix();
 			stopwatch->stop(CLOCK_DLC);
 		}
 	}
@@ -248,7 +252,7 @@ void Graphics::renderChunks() {
 				vOff[3][OTHER_DIR_DIMS[d][1]] *= 1.0001;
 
 				for (int k = 0; k < 4; k++) {
-					vec3d vertex = tbc.cast<double>() + dirOff + vOff[k] + pointFive;
+					vec3d vertex = (tbc - pc * Chunk::WIDTH).cast<double>() + dirOff + vOff[k] + pointFive;
 					glVertex3d(vertex[0], vertex[1], vertex[2]);
 				}
 			}
@@ -258,7 +262,7 @@ void Graphics::renderChunks() {
 	}
 }
 
-int Graphics::renderChunk(const Chunk &c, bool targeted, vec3ui8 ticc, int td) {
+int Graphics::renderChunk(const Chunk &c) {
 	using namespace vec_auto_cast;
 	int faces = 0;
 
@@ -293,8 +297,7 @@ int Graphics::renderChunk(const Chunk &c, bool targeted, vec3ui8 ticc, int td) {
 			if (m && !(s1 && s2))
 				light -= 0.2;
 			glColor3d(color[0] * light, color[1] * light, color[2] * light);
-			vec3d vertex = (c.getCC() * Chunk::WIDTH
-					+ f.block + QUAD_CYCLES_3D[f.dir][j]).cast<double>();
+			vec3d vertex = (f.block + QUAD_CYCLES_3D[f.dir][j]).cast<double>();
 			glVertex3d(vertex[0], vertex[1], vertex[2]);
 		}
 		faces++;
