@@ -20,7 +20,7 @@ enum ClientMessageType:uint8 {
 
 enum ServerMessageType:uint8 {
 	CONNECTION_RESPONSE,
-	ECHO,
+	ECHO_RESPONSE,
 };
 
 struct MessageHeader {
@@ -28,28 +28,16 @@ struct MessageHeader {
 	uint8 type;
 } __attribute__((__packed__ ));
 
-struct ClientMessage {
+struct ClientMessageHeader {
 	uint32 token;
-} __attribute__((__packed__ ));
-
-struct ConnectionRequest {
-	// nothing
 } __attribute__((__packed__ ));
 
 struct ConnectionResponse {
 	bool success;
 	uint8 id;
-	char padding_1[2];
 	uint32 token;
 } __attribute__((__packed__ ));
 
-struct EchoRequest {
-	uint16 len;
-} __attribute__((__packed__ ));
-
-struct Echo {
-	// nothing
-} __attribute__((__packed__ ));
 
 struct Client {
 	bool connected;
@@ -78,12 +66,14 @@ private:
 	void receive();
 
 	void handleConnectionRequest(const IPaddress *);
+	void handleClientMessage(uint8 type, uint8 id, const uint8 *data, const uint8 *dataEnd);
 
 	bool getNewId(uint8 *id);
 
 	template <typename T>
-	bool write(uint8 **cursor, const T *data, const uint8 *end);
-	bool writeBytes(uint8 **cursor, const uint8 *data, size_t len, const uint8 *end);
+	void write(uint8 **cursor, const T *data);
+	void writeHeader(uint8 **cursor, uint8 type);
+	void writeBytes(uint8 **cursor, const uint8 *data, size_t len);
 
 	template <typename T>
 	bool read(const uint8 **cursor, T *data, const uint8 *end);
@@ -173,7 +163,7 @@ void Server::receive() {
 			if (0 <= channel && channel < (int) MAX_CLIENTS) {
 				uint8 id = channel;
 
-				ClientMessage message;
+				ClientMessageHeader message;
 				if (!read(&inDataCursor, &message, dataEnd)) {
 					LOG(DEBUG, "Message stopped abruptly");
 					continue;
@@ -184,9 +174,9 @@ void Server::receive() {
 					continue;
 				}
 
-				// TODO handle message here!
+				handleClientMessage(inHeader.type, id, inDataCursor, dataEnd);
 			} else {
-				LOG(DEBUG, "Unknown adress");
+				LOG(DEBUG, "Unknown address");
 			}
 		}
 	}
@@ -199,9 +189,9 @@ void Server::handleConnectionRequest(const IPaddress *address) {
 	uint8 *host_bytes = (uint8 *) &address->host;
 	uint8 *port_bytes = (uint8 *) &address->port;
 	LOG(INFO, "New connection from IP "
-			<< host_bytes[3] << "." << host_bytes[2] << "."
-			<< host_bytes[1] << "." << host_bytes[0]
-			<< "and port " << ((port_bytes[1] << 8) | port_bytes[0])
+			<< (int) host_bytes[0] << "." << (int) host_bytes[1] << "."
+			<< (int) host_bytes[2] << "." << (int) host_bytes[3]
+			<< " and port " << (((int) port_bytes[0] << 8) | port_bytes[1])
 	);
 
 	// handle message
@@ -215,7 +205,7 @@ void Server::handleConnectionRequest(const IPaddress *address) {
 		msg.success = true;
 		msg.token = token;
 		msg.id = id;
-		LOG(INFO, "Player " << id << " connected");
+		LOG(INFO, "Player " << (int) id << " connected");
 		LOG(INFO, "Token is " << token);
 	} else {
 		msg.success = false;
@@ -225,17 +215,30 @@ void Server::handleConnectionRequest(const IPaddress *address) {
 	}
 
 	// prepare answer
-	MessageHeader outHeader;
-	memcpy(outHeader.magic, MAGIC, sizeof MAGIC);
-	outHeader.type = CONNECTION_RESPONSE;
 	uint8 *outDataCursor = outPacket->data;
-	write(&outDataCursor, &outHeader, nullptr);
-	write(&outDataCursor, &msg, nullptr);
+	writeHeader(&outDataCursor, CONNECTION_RESPONSE);
+	write(&outDataCursor, &msg);
 	outPacket->len = outDataCursor - outPacket->data;
 	// send to specific address, in case the connection got rejected
 	outPacket->address = inPacket->address;
 	SDLNet_UDP_Send(socket, -1, outPacket);
 
+}
+
+void Server::handleClientMessage(uint8 type, uint8 id, const uint8 *data, const uint8 *dataEnd) {
+	switch (type) {
+	case ECHO_REQUEST:
+		{
+			uint8 *outDataCursor = outPacket->data;
+			writeHeader(&outDataCursor, ECHO_RESPONSE);
+			writeBytes(&outDataCursor, data, dataEnd - data);
+			outPacket->len = outDataCursor - outPacket->data;
+			SDLNet_UDP_Send(socket, id, outPacket);
+		}
+		break;
+	default:
+		break;
+	}
 }
 
 bool Server::getNewId(uint8 *id) {
@@ -249,18 +252,21 @@ bool Server::getNewId(uint8 *id) {
 }
 
 template <typename T>
-bool Server::write(uint8 **cursor, const T *data, const uint8 *end) {
+void Server::write(uint8 **cursor, const T *data) {
 	auto data_ptr = reinterpret_cast<const uint8 *>(data);
-	return writeBytes(cursor, data_ptr, sizeof (T), end);
+	writeBytes(cursor, data_ptr, sizeof (T));
 }
 
-bool Server::writeBytes(uint8 **cursor, const uint8 *data, size_t len, const uint8 *end) {
-	if (end && (size_t) (end - *cursor) < len) {
-		return false;
-	}
+void Server::writeHeader(uint8 **cursor, uint8 type) {
+	MessageHeader header;
+	memcpy(header.magic, MAGIC, sizeof MAGIC);
+	header.type = type;
+	write(cursor, &header);
+}
+
+void Server::writeBytes(uint8 **cursor, const uint8 *data, size_t len) {
 	memcpy(*cursor, data, len);
 	*cursor += len;
-	return true;
 }
 
 template <typename T>
