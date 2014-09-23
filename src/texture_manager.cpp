@@ -96,13 +96,19 @@ static void setLoadingOptions(GraphicsConf &conf) {
 
 void TextureManager::loadTextures(const char *filename, int xTiles, int yTiles, uint *blocks) {
 	SDL_Surface *img = IMG_Load(filename);
-	if (!img)
-		LOG(ERROR, "file '" << filename << "' could not be loaded");
+	if (!img) {
+		LOG(ERROR, "File '" << filename << "' could not be loaded");
+		return;
+	}
 	int tileW = img->w / xTiles;
 	int tileH = img->h / yTiles;
 	SDL_Surface *tmp = SDL_CreateRGBSurface(
 			0, tileW, tileH, 32,
 			0x000000FF, 0x0000FF00, 0x00FF0000, 0xFF000000);
+	if (!tmp) {
+		LOG(ERROR, "Temporary SDL_Surface could not be created");
+		return;
+	}
 
 	size_t n = xTiles * yTiles;
 	GLuint *texs = new GLuint[n];
@@ -138,24 +144,27 @@ void TextureManager::loadTextures(const char *filename, int xTiles, int yTiles, 
 	if (loaded < n)
 		glDeleteTextures(n - loaded, texs);
 
-	LOG(DEBUG, "Loaded " << loaded << " textures from '" << filename << "'");
-
-	GLenum e = glGetError();
-	if (e != GL_NO_ERROR)
-		LOG(ERROR, "Loading '" << filename << "': " << gluErrorString(e));
-
 	SDL_FreeSurface(tmp);
 	SDL_FreeSurface(img);
+
+	GLenum e = glGetError();
+	if (e != GL_NO_ERROR) {
+		LOG(ERROR, "Loading '" << filename << "': " << gluErrorString(e));
+	}
 
 	uint *blocks_copy = new uint[n];
 	memcpy(blocks_copy, blocks, n * sizeof (uint));
 	dictionary.push_back(DictEntry{filename, xTiles, yTiles, blocks_copy});
+
+	LOG(DEBUG, "Loaded " << loaded << " textures from '" << filename << "'");
 }
 
 GLuint TextureManager::loadTexture(const char *filename, uint block) {
 	SDL_Surface *img = IMG_Load(filename);
-	if (!img)
+	if (!img) {
 		LOG(ERROR, "file '" << filename << "' could not be loaded");
+		return 0;
+	}
 	GLuint tex;
 	glGenTextures(1, &tex);
 	glBindTexture(TEX2D, tex);
@@ -165,8 +174,9 @@ GLuint TextureManager::loadTexture(const char *filename, uint block) {
 	SDL_FreeSurface(img);
 
 	GLenum e = glGetError();
-	if (e != GL_NO_ERROR)
+	if (e != GL_NO_ERROR) {
 		LOG(ERROR, "Loading '" << filename << "': " << gluErrorString(e));
+	}
 
 	Entry entry{block, tex, 0, 0, 1, 1};
 	textures.insert({block, entry});
@@ -211,18 +221,23 @@ void TextureManager::reloadAll() {
 }
 
 void TextureManager::bind(uint block) {
-	if (block == lastBound.block)
-		return;
-	auto iter = textures.find(block);
-	if (iter == textures.end()) {
-		LOG(ERROR, "texture " << block << " not found");
-		return;
-	}
-	Entry entry = iter->second;
-	glBindTexture(TEX2D, entry.tex);
+	if (block == 0) {
+		glBindTexture(TEX2D, 0);
+	} else if (block == lastBound.block) {
+		// nothing
+	} else {
+		auto iter = textures.find(block);
+		if (iter == textures.end()) {
+			LOG(TRACE, "texture " << block << " not found");
+			glBindTexture(TEX2D, 0);
+		} else {
+			Entry entry = iter->second;
+			glBindTexture(TEX2D, entry.tex);
 
-	GLenum e = glGetError();
-	if (e != GL_NO_ERROR)
-		LOG(ERROR, "Binding texture " << entry.tex << ": " << gluErrorString(e));
+			GLenum e = glGetError();
+			if (e != GL_NO_ERROR)
+				LOG(ERROR, "Binding texture " << entry.tex << ": " << gluErrorString(e));
+		}
+	}
 }
 
