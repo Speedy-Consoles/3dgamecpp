@@ -1,12 +1,14 @@
+#include "game/world.hpp"
+#include "io/logging.hpp"
+#include "std_types.hpp"
+#include "util.hpp"
+#include "constants.hpp"
+
 #include <SDL2/SDL_net.h>
 #include <chrono>
 #include <thread>
 
-#include "std_types.hpp"
-#include "io/logging.hpp"
-#include "util.hpp"
-#include "constants.hpp"
-#include "game/world.hpp"
+using namespace std;
 
 #undef DEFAULT_LOGGER
 #define DEFAULT_LOGGER NAMED_LOGGER("server")
@@ -21,6 +23,7 @@ enum ClientMessageType:uint8 {
 enum ServerMessageType:uint8 {
 	CONNECTION_RESPONSE,
 	ECHO_RESPONSE,
+	TIMEOUT,
 };
 
 struct MessageHeader {
@@ -42,31 +45,51 @@ struct ConnectionResponse {
 struct Client {
 	bool connected;
 	uint32 token;
+	uint64 timeOfLastPacket;
 };
 
 class Server {
 private:
-	World *world;
-	int64 time = 0;
-	std::chrono::time_point<std::chrono::high_resolution_clock> startTimePoint;
 	bool closeRequested = false;
+	World *world = nullptr;
 
+	// time keeping
+	// precise time uses the best hardware clock available (microseconds)
+	int64 time = 0;
+	chrono::time_point<chrono::high_resolution_clock> startTimePoint;
+
+	// approximate time uses the standard clock (milliseconds)
+	uint64 approxTime = 0;
+	chrono::time_point<chrono::steady_clock> approxStartTimePoint;
+
+	// connections
 	UDPsocket socket;
 	UDPpacket *outPacket;
 	UDPpacket *inPacket;
 
 	Client clients[MAX_CLIENTS];
+
+	uint64 timeout = 30000; // 30 seconds
+
 public:
 	Server(uint16 port);
 	~Server();
+
 	void run();
 	void sync(int perSecond);
+
+	int64 getPreciseTime();
+	uint64 getApproxTime();
+
 private:
 
 	void receive();
+	void checkInactive();
 
 	void handleConnectionRequest(const IPaddress *);
 	void handleClientMessage(uint8 type, uint8 id, const uint8 *data, const uint8 *dataEnd);
+
+	void disconnect(uint8 id);
 
 	bool getNewId(uint8 *id);
 
@@ -94,10 +117,12 @@ int main(int argc, char *argv[]) {
 }
 
 Server::Server(uint16 port) {
+	LOG(INFO, "Starting server on port " << port);
 	world = new World();
 	socket = SDLNet_UDP_Open(port);
 	for (uint8 i = 0; i < MAX_CLIENTS; i++) {
 		clients[i].connected = false;
+		clients[i].timeOfLastPacket = 0;
 	}
 	inPacket = SDLNet_AllocPacket(1024 * 64);
 	outPacket = SDLNet_AllocPacket(1024 * 64);
@@ -111,18 +136,19 @@ Server::~Server() {
 }
 
 void Server::run() {
-	LOG(INFO, "Running server");
-
 	if (!socket) {
 		LOG(FATAL, "Socket not open!");
 		return;
 	}
 
-	startTimePoint = high_resolution_clock::now();
+	approxStartTimePoint = chrono::steady_clock::now();
+	startTimePoint = chrono::high_resolution_clock::now();
 	time = 0;
+	approxTime = 0;
 	int tick = 0;
 	while (!closeRequested) {
 		receive();
+		checkInactive();
 
 		world->tick(tick, -1);
 		sync(TICK_SPEED);
@@ -133,15 +159,23 @@ void Server::run() {
 void Server::sync(int perSecond) {
 	time = time + 1000000 / perSecond;
 	microseconds duration(std::max(0,
-			(int) (time - getMicroTimeSince(startTimePoint))));
+			(int) (time - getPreciseTime())));
 	std::this_thread::sleep_for(duration);
 }
 
+int64 Server::getPreciseTime() {
+	return (chrono::high_resolution_clock::now() - startTimePoint).count();
+}
+
+uint64 Server::getApproxTime() {
+	return (chrono::steady_clock::now() - approxStartTimePoint).count();
+}
+
 void Server::receive() {
-	MessageHeader outHeader;
-	memcpy(outHeader.magic, MAGIC, sizeof MAGIC);
 	int rc;
 	while ((rc = SDLNet_UDP_Recv(socket, inPacket)) > 0) {
+		LOG(TRACE, "Received message of length " << inPacket->len);
+
 		// read the message header
 		const uint8 *inDataCursor = inPacket->data;
 		const uint8 *dataEnd = inPacket->data + inPacket->len;
@@ -153,8 +187,10 @@ void Server::receive() {
 		}
 
 		// checking magic
-		if (memcmp(inHeader.magic, MAGIC, sizeof (inHeader.magic)) != 0)
+		if (memcmp(inHeader.magic, MAGIC, sizeof (inHeader.magic)) != 0) {
+			LOG(DEBUG, "Incorrect magic");
 			continue;
+		}
 
 		if (inHeader.type == CONNECTION_REQUEST) {
 			handleConnectionRequest(&inPacket->address);
@@ -174,6 +210,8 @@ void Server::receive() {
 					continue;
 				}
 
+				clients[id].timeOfLastPacket = getApproxTime();
+
 				handleClientMessage(inHeader.type, id, inDataCursor, dataEnd);
 			} else {
 				LOG(DEBUG, "Unknown address");
@@ -183,6 +221,17 @@ void Server::receive() {
 
 	if (rc < 0)
 		LOG(ERROR, "Error while receiving inPacket!");
+}
+
+void Server::checkInactive() {
+	for (uint8 id = 0; id < MAX_CLIENTS; ++id) {
+		if (!clients[id].connected)
+			continue;
+
+		if (clients[id].timeOfLastPacket > timeout) {
+			disconnect(id);
+		}
+	}
 }
 
 void Server::handleConnectionRequest(const IPaddress *address) {
@@ -201,6 +250,7 @@ void Server::handleConnectionRequest(const IPaddress *address) {
 		uint32 token = 0; //TODO
 		clients[id].connected = true;
 		clients[id].token = token;
+		clients[id].timeOfLastPacket = getApproxTime();
 		SDLNet_UDP_Bind(socket, id, address);
 		msg.success = true;
 		msg.token = token;
@@ -227,18 +277,27 @@ void Server::handleConnectionRequest(const IPaddress *address) {
 
 void Server::handleClientMessage(uint8 type, uint8 id, const uint8 *data, const uint8 *dataEnd) {
 	switch (type) {
-	case ECHO_REQUEST:
-		{
-			uint8 *outDataCursor = outPacket->data;
-			writeHeader(&outDataCursor, ECHO_RESPONSE);
-			writeBytes(&outDataCursor, data, dataEnd - data);
-			outPacket->len = outDataCursor - outPacket->data;
-			SDLNet_UDP_Send(socket, id, outPacket);
-		}
+	case ECHO_REQUEST: {
+		uint8 *outDataCursor = outPacket->data;
+		writeHeader(&outDataCursor, ECHO_RESPONSE);
+		writeBytes(&outDataCursor, data, dataEnd - data);
+		outPacket->len = outDataCursor - outPacket->data;
+		SDLNet_UDP_Send(socket, id, outPacket);
 		break;
+	}
 	default:
 		break;
 	}
+}
+
+void Server::disconnect(uint8 id) {
+	clients[id].connected = false;
+
+	uint8 *cursor = outPacket->data;
+	writeHeader(&cursor, TIMEOUT);
+	outPacket->len = cursor - outPacket->data;
+	SDLNet_UDP_Send(socket, id, outPacket);
+	SDLNet_UDP_Unbind(socket, id);
 }
 
 bool Server::getNewId(uint8 *id) {
