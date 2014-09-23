@@ -148,7 +148,7 @@ void Server::run() {
 	int tick = 0;
 	while (!closeRequested) {
 		receive();
-		checkInactive();
+		//checkInactive();
 
 		world->tick(tick, -1);
 		sync(TICK_SPEED);
@@ -164,11 +164,15 @@ void Server::sync(int perSecond) {
 }
 
 int64 Server::getPreciseTime() {
-	return (chrono::high_resolution_clock::now() - startTimePoint).count();
+	auto diff = chrono::high_resolution_clock::now() - startTimePoint;
+	auto micros = chrono::duration_cast<std::chrono::microseconds>(diff);
+	return micros.count();
 }
 
 uint64 Server::getApproxTime() {
-	return (chrono::steady_clock::now() - approxStartTimePoint).count();
+	auto diff = chrono::steady_clock::now() - approxStartTimePoint;
+	auto millis = chrono::duration_cast<std::chrono::microseconds>(diff);
+	return millis.count();
 }
 
 void Server::receive() {
