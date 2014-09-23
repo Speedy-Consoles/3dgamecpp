@@ -80,6 +80,11 @@ static void setLoadingOptions(GraphicsConf &conf) {
 		mag_filter = GL_NEAREST;
 		min_filter = mipmapping ? GL_LINEAR_MIPMAP_NEAREST : GL_NEAREST;
 		break;
+	default:
+		LOG(ERROR, "Reached unreachable code");
+		mag_filter = 0;
+		min_filter = 0;
+		break;
 	}
 	glTexParameteri(TEX2D, GL_TEXTURE_MAG_FILTER, mag_filter);
 	glTexParameteri(TEX2D, GL_TEXTURE_MIN_FILTER, min_filter);

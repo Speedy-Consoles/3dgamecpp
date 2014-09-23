@@ -46,6 +46,7 @@ Menu::Menu(GraphicsConf *c) :
 	fsButton->add(false, "Off");
 	fsButton->add(true, "On");
 	fsButton->setOnDataChange([this](bool b){
+		this->bufferConf.fullscreen = b;
 		this->clientConf->fullscreen = b;
 		this->dirty = true;
 	});
@@ -71,6 +72,7 @@ Menu::Menu(GraphicsConf *c) :
 	fogButton->add(Fog::FAST, "Fast");
 	fogButton->add(Fog::FANCY, "Fancy");
 	fogButton->setOnDataChange([this](Fog fog){
+		this->bufferConf.fog = fog;
 		this->clientConf->fog = fog;
 		this->dirty = true;
 	});
@@ -106,6 +108,8 @@ Menu::Menu(GraphicsConf *c) :
 	mipButton->add(1000, "Max");
 	mipButton->setOnDataChange([this](uint mip){
 		this->bufferConf.tex_mipmapping = mip;
+		this->clientConf->tex_mipmapping = mip;
+		dirty = true;
 	});
 	frame->add(mipButton);
 	y += yIncr;
@@ -116,6 +120,8 @@ Menu::Menu(GraphicsConf *c) :
 	filtButton->add(TexFiltering::LINEAR, "Linear");
 	filtButton->setOnDataChange([this](TexFiltering filt){
 		this->bufferConf.tex_filtering = filt;
+		this->clientConf->tex_filtering = filt;
+		dirty = true;
 	});
 	frame->add(filtButton);
 	y += yIncr;
