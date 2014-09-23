@@ -23,7 +23,7 @@ enum ClientMessageType:uint8 {
 enum ServerMessageType:uint8 {
 	CONNECTION_RESPONSE,
 	ECHO_RESPONSE,
-	TIMEOUT,
+	CONNECTION_RESET,
 };
 
 struct MessageHeader {
@@ -69,7 +69,7 @@ private:
 
 	Client clients[MAX_CLIENTS];
 
-	uint64 timeout = 30000; // 30 seconds
+	uint64 timeout = 5000; // 30 seconds
 
 public:
 	Server(uint16 port);
@@ -148,7 +148,7 @@ void Server::run() {
 	int tick = 0;
 	while (!closeRequested) {
 		receive();
-		//checkInactive();
+		checkInactive();
 
 		world->tick(tick, -1);
 		sync(TICK_SPEED);
@@ -171,7 +171,7 @@ int64 Server::getPreciseTime() {
 
 uint64 Server::getApproxTime() {
 	auto diff = chrono::steady_clock::now() - approxStartTimePoint;
-	auto millis = chrono::duration_cast<std::chrono::microseconds>(diff);
+	auto millis = chrono::duration_cast<std::chrono::milliseconds>(diff);
 	return millis.count();
 }
 
@@ -210,15 +210,17 @@ void Server::receive() {
 				}
 
 				if (clients[id].token != message.token) {
-					LOG(DEBUG, "Invalid token for Player " << id);
+					LOG(DEBUG, "Invalid token for Player " << (int) id);
 					continue;
 				}
 
 				clients[id].timeOfLastPacket = getApproxTime();
 
 				handleClientMessage(inHeader.type, id, inDataCursor, dataEnd);
-			} else {
+			} else if (channel == -1) {
 				LOG(DEBUG, "Unknown address");
+			} else {
+				LOG(WARNING, "Incorrect channel");
 			}
 		}
 	}
@@ -228,11 +230,13 @@ void Server::receive() {
 }
 
 void Server::checkInactive() {
+	uint64 approxTimeNow = getApproxTime();
 	for (uint8 id = 0; id < MAX_CLIENTS; ++id) {
 		if (!clients[id].connected)
 			continue;
 
-		if (clients[id].timeOfLastPacket > timeout) {
+		if (approxTimeNow - clients[id].timeOfLastPacket > timeout) {
+			LOG(INFO, "Player " << (int) id << " timed out");
 			disconnect(id);
 		}
 	}
@@ -276,10 +280,10 @@ void Server::handleConnectionRequest(const IPaddress *address) {
 	// send to specific address, in case the connection got rejected
 	outPacket->address = inPacket->address;
 	SDLNet_UDP_Send(socket, -1, outPacket);
-
 }
 
 void Server::handleClientMessage(uint8 type, uint8 id, const uint8 *data, const uint8 *dataEnd) {
+	LOG(TRACE, "Message " << (int) type << " for Player " << (int) id << " accepted");
 	switch (type) {
 	case ECHO_REQUEST: {
 		uint8 *outDataCursor = outPacket->data;
@@ -298,10 +302,12 @@ void Server::disconnect(uint8 id) {
 	clients[id].connected = false;
 
 	uint8 *cursor = outPacket->data;
-	writeHeader(&cursor, TIMEOUT);
+	writeHeader(&cursor, CONNECTION_RESET);
 	outPacket->len = cursor - outPacket->data;
 	SDLNet_UDP_Send(socket, id, outPacket);
 	SDLNet_UDP_Unbind(socket, id);
+
+	LOG(INFO, "Player " << (int) id << " disconnected");
 }
 
 bool Server::getNewId(uint8 *id) {
