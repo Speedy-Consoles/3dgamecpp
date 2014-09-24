@@ -1,3 +1,4 @@
+#include "socket.hpp"
 #include "game/world.hpp"
 #include "io/logging.hpp"
 #include "std_types.hpp"
@@ -6,13 +7,15 @@
 #include "time.hpp"
 
 #include <boost/asio.hpp>
-#include <chrono>
 #include <thread>
 #include <future>
 
 using namespace std;
 using namespace boost;
 using namespace boost::asio::ip;
+
+using namespace my::time;
+using namespace my::net;
 
 #undef DEFAULT_LOGGER
 #define DEFAULT_LOGGER NAMED_LOGGER("server")
@@ -72,26 +75,16 @@ private:
 	uint16 port = 0;
 	time_t timeout = my::time::seconds(10); // 10 seconds
 
-	size_t inBufferCapacity = 0;
-	size_t inBufferSize = 0;
-	char *inBuffer = nullptr;
-	udp::endpoint sourceEndpoint;
-
-
-	size_t outBufferCapacity = 0;
-	char *outBuffer = nullptr;
+	Buffer inBuf;
+	Buffer outBuf;
 
 	// time keeping
 	// precise time uses the best hardware clock available (microseconds)
 	time_t time = 0;
 
 	// our listening socket
-	asio::io_service ios;
-	udp::socket socket;
-
-	// used for handling asynchronous receives
-	std::future<size_t> newPacketFuture;
-	std::promise<size_t> newPacketPromise;
+	my::net::ios_t ios;
+	my::net::Socket socket;
 
 public:
 	Server(uint16 port);
@@ -104,10 +97,10 @@ private:
 	template <typename T>
 	bool receiveFor(T dur);
 	void signalReadyToReceive();
-	void receive();
+	void handle(const Packet &p);
 	void checkInactive();
 
-	void handleConnectionRequest();
+	void handleConnectionRequest(const endpoint_t &);
 	void handleClientMessage(uint8 type, uint8 id, const char *data, const char *dataEnd);
 
 	void disconnect(uint8 id);
@@ -142,24 +135,22 @@ int main(int argc, char *argv[]) {
 
 }
 
-Server::Server(uint16 port) : port(port), socket(ios) {
+Server::Server(uint16 port) :
+	port(port),
+	inBuf(1024*64),
+	outBuf(1024*64),
+	ios(),
+	socket(ios)
+{
 	LOG(INFO, "Creating Server");
 	world = new World();
 	for (uint8 i = 0; i < MAX_CLIENTS; i++) {
 		clients[i].connected = false;
 		clients[i].timeOfLastPacket = 0;
 	}
-	inBufferCapacity = 1024 * 64;
-	outBufferCapacity = 1024 * 64;
-	inBuffer = new char[inBufferCapacity];
-	outBuffer = new char[outBufferCapacity];
 }
 
 Server::~Server() {
-	if (socket.is_open())
-		socket.close();
-	delete[] inBuffer;
-	delete[] outBuffer;
 	delete world;
 }
 
@@ -168,12 +159,21 @@ void Server::run() {
 
 	time = my::time::get();
 
-	socket.open(udp::v4());
+	if (socket.getSystemError()) {
+		LOG(FATAL, "Could not create listening socket");
+		return;
+	}
+
+	socket.open();
+	if (socket.getSystemError()) {
+		LOG(FATAL, "Could not create listening socket");
+		return;
+	}
+
 	socket.bind(udp::endpoint(udp::v4(), port));
-	system::error_code error;
-	socket.non_blocking(true, error);
-	if (error) {
-		LOG(FATAL, "Could not set nonblocking state");
+
+	if (socket.getSystemError()) {
+		LOG(FATAL, "Could not bind listening socket");
 		return;
 	}
 
@@ -183,78 +183,29 @@ void Server::run() {
 
 	int tick = 0;
 	while (!closeRequested) {
-		while (receiveFor(chrono::milliseconds(5))) {
-			receive();
+		time_t remTime;
+		while ((remTime = time - get() + seconds(1) / TICK_SPEED) > 0) {
+			inBuf.clear();
+			Packet p = {&inBuf};
+			socket.receiveFor(&p, remTime);
+			if (socket.getErrorCode() == Socket::OK)
+				handle(p);
 		}
+
+		world->tick(tick, -1);
+		tick++;
+		time += seconds(1) / TICK_SPEED;
 
 		checkInactive();
-
-		if (time - my::time::get() > my::time::seconds(1) / TICK_SPEED) {
-			world->tick(tick, -1);
-			time += my::time::seconds(1) / TICK_SPEED;
-			tick++;
-		}
 	}
 }
 
-template <typename T>
-bool Server::receiveFor(T dur) {
-	if (newPacketFuture.valid()) {
-		KEEP_WAITING:
-		switch (newPacketFuture.wait_for(dur)) {
-		case future_status::ready:
-			inBufferSize = newPacketFuture.get();
-			return true;
-		case future_status::deferred:
-			LOG(ERROR, "Deferred future");
-		default:
-			return false;
-		}
-	} else {
-		system::error_code error;
-		auto buf = asio::buffer(inBuffer, inBufferCapacity);
-		socket.receive_from(buf, sourceEndpoint, 0, error);
-
-		if (!error) {
-			return true;
-		} else if (error == asio::error::would_block) {
-			signalReadyToReceive();
-			goto KEEP_WAITING;
-		} else {
-			LOG(ERROR, "Error while receiving message");
-			return false;
-		}
-	}
-}
-
-void Server::signalReadyToReceive() {
-	auto buf = asio::buffer(inBuffer, inBufferCapacity);
-
-	auto lambda = [this](const system::error_code &error, size_t size) {
-		if (!error) {
-			LOG(TRACE, "Asynchronous message received");
-			newPacketPromise.set_value(size);
-		} else if (error == boost::asio::error::message_size) {
-			LOG(WARNING, "Message of length " << size
-					<< " did not fit into input buffer");
-			newPacketPromise.set_value(0);
-		} else {
-			LOG(ERROR, "Could not receive message");
-			newPacketPromise.set_value(0);
-		}
-	};
-
-	newPacketPromise = std::promise<size_t>();
-	newPacketFuture = newPacketPromise.get_future();
-	socket.async_receive_from(buf, sourceEndpoint, lambda);
-}
-
-void Server::receive() {
-	LOG(TRACE, "Received message of length " << inBufferSize);
+void Server::handle(const Packet &p) {
+	LOG(TRACE, "Received message of length " << p.buf->rSize());
 
 	// read the message header
-	const char *inDataCursor = inBuffer;
-	const char *dataEnd = inDataCursor + inBufferSize;
+	const char *inDataCursor = p.buf->rBegin();
+	const char *dataEnd = p.buf->rEnd();
 
 	MessageHeader header;
 	if (!read(&inDataCursor, &header, dataEnd)) {
@@ -269,11 +220,11 @@ void Server::receive() {
 	}
 
 	if (header.type == CONNECTION_REQUEST) {
-		handleConnectionRequest();
+		handleConnectionRequest(p.endpoint);
 	} else {
 		int player = -1;
 		for (int id = 0; id < (int) MAX_CLIENTS; ++id) {
-			if (clients[id].endpoint == sourceEndpoint) {
+			if (clients[id].endpoint == p.endpoint) {
 				player =  id;
 				break;
 			}
@@ -299,38 +250,19 @@ void Server::receive() {
 		} else {
 			LOG(DEBUG, "Unknown remote address");
 
-			char *cursor = outBuffer;
+			outBuf.clear();
+			char *cursor = outBuf.wBegin();
 			writeHeader(&cursor, CONNECTION_RESET);
-			auto buffer = asio::buffer(outBuffer, cursor - outBuffer);
-			system::error_code error;
-			socket.send_to(buffer, sourceEndpoint, 0, error);
+			Packet outPacket{&outBuf, p.endpoint};
+			socket.send(outPacket);
 		}
 	}
 }
 
-void Server::checkInactive() {
-	for (uint8 id = 0; id < MAX_CLIENTS; ++id) {
-		if (!clients[id].connected)
-			continue;
-
-		if (my::time::get() - clients[id].timeOfLastPacket > timeout) {
-			LOG(INFO, "Player " << (int) id << " timed out");
-
-			char *cursor = outBuffer;
-			writeHeader(&cursor, CONNECTION_TIMEOUT);
-			auto buffer = asio::buffer(outBuffer, cursor - outBuffer);
-			system::error_code error;
-			socket.send_to(buffer, clients[id].endpoint, 0, error);
-
-			disconnect(id);
-		}
-	}
-}
-
-void Server::handleConnectionRequest() {
+void Server::handleConnectionRequest(const endpoint_t &endpoint) {
 	LOG(INFO, "New connection from IP "
-			<< sourceEndpoint.address().to_string()
-			<< " and port " << sourceEndpoint.port()
+			<< endpoint.address().to_string()
+			<< " and port " << endpoint.port()
 	);
 
 	// find a free spot for the new player
@@ -341,7 +273,7 @@ void Server::handleConnectionRequest() {
 		if (newPlayer == -1 && !connected) {
 			newPlayer = i;
 		}
-		if (connected && clients[i].endpoint == sourceEndpoint) {
+		if (connected && clients[i].endpoint == endpoint) {
 			duplicate = i;
 		}
 	}
@@ -360,13 +292,14 @@ void Server::handleConnectionRequest() {
 	}
 
 	// build response
-	char *outDataCursor = outBuffer;
+	outBuf.clear();
+	char *outDataCursor = outBuf.wBegin();
 	if (!failure) {
 		uint8 id = (uint) newPlayer;
 		uint32 token = 0; //TODO
 
 		clients[id].connected = true;
-		clients[id].endpoint = sourceEndpoint;
+		clients[id].endpoint = endpoint;
 		clients[id].token = token;
 		clients[id].timeOfLastPacket = my::time::get();
 
@@ -385,34 +318,43 @@ void Server::handleConnectionRequest() {
 	}
 
 	// send response
-	auto buffer = asio::buffer(outBuffer, outDataCursor - outBuffer);
-	system::error_code error;
-	socket.send_to(buffer, sourceEndpoint, 0, error);
-	if (error) {
-		LOG(ERROR, "Could not send message");
-	}
+	Packet outPacket{&outBuf, endpoint};
+	socket.send(outPacket);
 }
 
 void Server::handleClientMessage(uint8 type, uint8 id, const char *data, const char *dataEnd) {
 	LOG(TRACE, "Message " << (int) type << " for Player " << (int) id << " accepted");
 	switch (type) {
 	case ECHO_REQUEST: {
-		char *outDataCursor = outBuffer;
+		outBuf.clear();
+		char *outDataCursor = outBuf.wBegin();
 		writeHeader(&outDataCursor, ECHO_RESPONSE);
 		writeBytes(&outDataCursor, data, dataEnd - data);
-		auto buffer = asio::buffer(outBuffer, outDataCursor - outBuffer);
-		system::error_code error;
-		socket.send_to(buffer, clients[id].endpoint, 0, error);
-		if (error) {
-			LOG(ERROR, "Could not send message");
-		} else {
-			LOG(DEBUG, "Echo message by player " << (int) id
-					<< " with length " << dataEnd - data);
-		}
+		Packet outPacket{&outBuf, clients[id].endpoint};
+		socket.send(outPacket);
 		break;
 	}
 	default:
 		break;
+	}
+}
+
+void Server::checkInactive() {
+	for (uint8 id = 0; id < MAX_CLIENTS; ++id) {
+		if (!clients[id].connected)
+			continue;
+
+		if (my::time::get() - clients[id].timeOfLastPacket > timeout) {
+			LOG(INFO, "Player " << (int) id << " timed out");
+
+			outBuf.clear();
+			char *cursor = outBuf.wBegin();
+			writeHeader(&cursor, CONNECTION_TIMEOUT);
+			Packet outPacket{&outBuf, clients[id].endpoint};
+			socket.send(outPacket);
+
+			disconnect(id);
+		}
 	}
 }
 
