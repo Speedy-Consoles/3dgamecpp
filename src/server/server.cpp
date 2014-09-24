@@ -150,7 +150,7 @@ void Server::run() {
 	socket.bind(udp::endpoint(udp::v4(), port));
 
 	if (socket.getSystemError() == asio::error::address_in_use) {
-		LOG(FATAL, "Could not bind socket");
+		LOG(FATAL, "Port already in use");
 		return;
 	}
 
@@ -173,6 +173,7 @@ void Server::run() {
 			case Socket::SYSTEM_ERROR:
 				LOG(ERROR, "boost::asio error " << socket.getSystemError()
 						<< "while receiving packets");
+				break;
 			default:
 				LOG(ERROR, "Unknown error while receiving packets");
 			}
