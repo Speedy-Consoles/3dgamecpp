@@ -55,7 +55,7 @@ SERVER_LDFLAGS = $(LDFLAGS)
 #CXXFLAGS += -DNO_GRAPHICS
 
 CLIENT_LIBS_LD_FLAGS = -llog4cxx -lGL -lGLU -lGLEW -lftgl -lSDL2 -lSDL2_image
-SERVER_LIBS_LD_FLAGS = -llog4cxx -lSDL2 -lSDL2_net
+SERVER_LIBS_LD_FLAGS = -llog4cxx -lSDL2 -lSDL2_net -lboost_system
 
 DEBUG ?= 1
 ifeq ($(DEBUG), 1)
