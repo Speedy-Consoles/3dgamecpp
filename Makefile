@@ -2,14 +2,6 @@ CLIENT_EXECUTABLE_NAME = 3dgame
 SERVER_EXECUTABLE_NAME = 3dgame_srv
 
 CLIENT_OBJECT_FILES = \
-	gui/button.cpp.o\
-	gui/frame.cpp.o\
-	gui/label.cpp.o\
-	gui/widget.cpp.o\
-	io/archive.cpp.o\
-	io/chunk_loader.cpp.o\
-	io/chunk_loader_internals.cpp.o\
-	io/logging.cpp.o\
 	client/client.cpp.o\
 	client/config.cpp.o\
 	client/graphics.cpp.o\
@@ -21,25 +13,35 @@ CLIENT_OBJECT_FILES = \
 	game/chunk.cpp.o\
 	game/player.cpp.o\
 	game/world.cpp.o\
+	gui/button.cpp.o\
+	gui/frame.cpp.o\
+	gui/label.cpp.o\
+	gui/widget.cpp.o\
+	io/archive.cpp.o\
+	io/chunk_loader.cpp.o\
+	io/chunk_loader_internals.cpp.o\
+	io/logging.cpp.o\
 	monitor.cpp.o\
 	perlin.cpp.o\
 	stopwatch.cpp.o\
+	time.cpp.o\
 	util.cpp.o\
 	vmath.cpp.o\
 	world_generator.cpp.o
 
 SERVER_OBJECT_FILES = \
-	io/archive.cpp.o\
-	io/chunk_loader.cpp.o\
-	io/chunk_loader_internals.cpp.o\
-	io/logging.cpp.o\
 	server/server.cpp.o\
 	game/chunk.cpp.o\
 	game/player.cpp.o\
 	game/world.cpp.o\
+	io/archive.cpp.o\
+	io/chunk_loader.cpp.o\
+	io/chunk_loader_internals.cpp.o\
+	io/logging.cpp.o\
 	monitor.cpp.o\
 	perlin.cpp.o\
 	stopwatch.cpp.o\
+	time.cpp.o\
 	util.cpp.o\
 	vmath.cpp.o\
 	world_generator.cpp.o

@@ -351,6 +351,6 @@ WorldSnapshot World::makeSnapshot(int tick) const {
 
 std::chrono::microseconds World::getTickingTime() {
 	auto dur = dur_ticking;
-	dur_ticking = microseconds::zero();
+	dur_ticking = std::chrono::microseconds::zero();
 	return dur;
 }

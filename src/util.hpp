@@ -4,8 +4,9 @@
 #include <vector>
 #include <chrono>
 #include "vmath.hpp"
+#include "time.hpp"
 
-using namespace std::chrono;
+//using namespace std;
 
 extern const double TAU;
 
@@ -22,7 +23,7 @@ extern const vec3i8 CUBE_CYCLE[8];
 extern const size_t DIR_2_CUBE_CYCLE[6];
 extern const size_t BASE_NINE_CUBE_CYCLE;
 
-const uint8  TEST_CORNERS[6] { 0b00000111, 0b11000001, 0, 0b11000001, 0b00000111, 0 };
+const uint8 TEST_CORNERS[6] { 0b00000111, 0b11000001, 0, 0b11000001, 0b00000111, 0 };
 
 extern std::vector<vec3i8> LOADING_ORDER;
 
@@ -39,9 +40,6 @@ vec3i64 bc2cc(vec3i64 bc);
 vec3ui8 bc2icc(vec3i64 bc);
 
 size_t vec3i64HashFunc(vec3i64 v);
-
-int64 getMicroTimeSince(time_point<high_resolution_clock>);
-int64 getMilliTimeSince(time_point<steady_clock>);
 
 template<typename T> T clamp(T v, T min, T max) {
 	if (v != v)

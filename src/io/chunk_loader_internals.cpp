@@ -15,6 +15,7 @@
 #define DEFAULT_LOGGER NAMED_LOGGER("chunk")
 
 using namespace std;
+using namespace std::chrono;
 
 void ChunkLoader::run() {
 	LOG(INFO, "ChunkLoader thread dispatched");

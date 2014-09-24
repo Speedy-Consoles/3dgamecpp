@@ -16,6 +16,7 @@
 #include <SDL2/SDL_image.h>
 
 using namespace gui;
+using namespace std::chrono;
 
 Graphics::Graphics(
 		World *world,
