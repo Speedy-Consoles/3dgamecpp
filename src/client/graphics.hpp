@@ -49,7 +49,6 @@ private:
 	const Menu *menu;
 	uint localClientID;
 
-	std::chrono::time_point<std::chrono::high_resolution_clock> startTimePoint;
 	int lastFPS = 0;
 	int64 lastFPSUpdate = 0;
 	int frameCounter = 0;

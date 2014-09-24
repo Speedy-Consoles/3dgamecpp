@@ -12,9 +12,6 @@
 
 #include <chrono>
 
-int64 getMicroTimeSince(std::chrono::time_point<std::chrono::high_resolution_clock>);
-int64 getMilliTimeSince(std::chrono::time_point<std::chrono::steady_clock>);
-
 namespace my { namespace time {
 
 // all times should be measured in this

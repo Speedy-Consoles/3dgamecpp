@@ -46,7 +46,7 @@ private:
 
 	int localClientID;
 
-	std::chrono::time_point<std::chrono::high_resolution_clock> startTimePoint;
+	time_t startTimePoint;
 
 	int64 time = 0;
 	int64 timeShift = 0;

@@ -12,6 +12,7 @@
 #include "graphics.hpp"
 #include "config.hpp"
 #include "stopwatch.hpp"
+#include "time.hpp"
 #include "game/world.hpp"
 #include "menu.hpp"
 
@@ -71,7 +72,7 @@ Client::~Client() {
 
 void Client::run() {
 	LOG(INFO, "Running client");
-	startTimePoint = high_resolution_clock::now();
+	startTimePoint = my::time::get();
 	time = 0;
 	int tick = 0;
 	while (!closeRequested) {
@@ -85,7 +86,7 @@ void Client::run() {
 		world->tick(tick, localClientID);
 		stopwatch->stop(CLOCK_TIC);
 #ifndef NO_GRAPHICS
-		if (time + timeShift + 1000000 / TICK_SPEED > getMicroTimeSince(startTimePoint))
+		if (time + timeShift + 1000000 / TICK_SPEED > my::time::get() - startTimePoint)
 			graphics->tick();
 #endif
 
@@ -104,7 +105,7 @@ void Client::run() {
 void Client::sync(int perSecond) {
 	time = time + 1000000 / perSecond;
 	microseconds duration(std::max(0,
-			(int) (time + timeShift - getMicroTimeSince(startTimePoint))));
+			(int) (time + timeShift + startTimePoint - my::time::get())));
 	std::this_thread::sleep_for(duration);
 }
 

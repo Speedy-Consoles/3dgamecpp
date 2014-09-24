@@ -4,6 +4,7 @@
 #include "game/chunk.hpp"
 #include "menu.hpp"
 #include "stopwatch.hpp"
+#include "time.hpp"
 
 #include "util.hpp"
 #include "constants.hpp"
@@ -84,8 +85,6 @@ Graphics::Graphics(
 	makeMaxFOV();
 
 	initGL();
-
-	startTimePoint = high_resolution_clock::now();
 }
 
 Graphics::~Graphics() {
@@ -640,8 +639,7 @@ void Graphics::tick() {
 	SDL_GL_SwapWindow(window);
 	stopwatch->stop(CLOCK_FLP);
 	frameCounter++;
-	int64 time = getMicroTimeSince(startTimePoint);
-	if (time - lastFPSUpdate > 1000000) {
+	if (my::time::get() - lastFPSUpdate > 1000000) {
 		lastFPS = frameCounter;
 		lastFPSUpdate += 1000000;
 		frameCounter = 0;

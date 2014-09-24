@@ -3,6 +3,7 @@
 #include "std_types.hpp"
 #include "util.hpp"
 #include "constants.hpp"
+#include "time.hpp"
 
 #include <boost/asio.hpp>
 #include <chrono>
@@ -83,11 +84,10 @@ private:
 	// time keeping
 	// precise time uses the best hardware clock available (microseconds)
 	int64 time = 0;
-	chrono::time_point<chrono::high_resolution_clock> startTimePoint;
+	time_t startTimePoint;
 
 	// approximate time uses the standard clock (milliseconds)
 	uint64 approxTime = 0;
-	chrono::time_point<chrono::steady_clock> approxStartTimePoint;
 
 	// our listening socket
 	asio::io_service ios;
@@ -170,8 +170,7 @@ Server::~Server() {
 void Server::run() {
 	LOG(INFO, "Starting Server on port " << port);
 
-	approxStartTimePoint = chrono::steady_clock::now();
-	startTimePoint = chrono::high_resolution_clock::now();
+	startTimePoint = my::time::get();
 	time = 0;
 	approxTime = 0;
 
@@ -196,7 +195,7 @@ void Server::run() {
 
 		checkInactive();
 
-		if (time - getMicroTimeSince(startTimePoint) > 1000000 / TICK_SPEED) {
+		if (time + startTimePoint - my::time::get() > 1000000 / TICK_SPEED) {
 			world->tick(tick, -1);
 			time += 1000000 / TICK_SPEED;
 			tick++;
@@ -300,7 +299,7 @@ void Server::receive() {
 				return;
 			}
 
-			clients[id].timeOfLastPacket = getMilliTimeSince(approxStartTimePoint);
+			clients[id].timeOfLastPacket = my::time::get() - startTimePoint;
 
 			handleClientMessage(header.type, id, inDataCursor, dataEnd);
 		} else {
@@ -316,7 +315,7 @@ void Server::receive() {
 }
 
 void Server::checkInactive() {
-	uint64 approxTimeNow = getMilliTimeSince(approxStartTimePoint);
+	uint64 approxTimeNow = my::time::get() - startTimePoint;
 	for (uint8 id = 0; id < MAX_CLIENTS; ++id) {
 		if (!clients[id].connected)
 			continue;
@@ -376,7 +375,7 @@ void Server::handleConnectionRequest() {
 		clients[id].connected = true;
 		clients[id].endpoint = sourceEndpoint;
 		clients[id].token = token;
-		clients[id].timeOfLastPacket = getMilliTimeSince(approxStartTimePoint);
+		clients[id].timeOfLastPacket = my::time::get() - startTimePoint;
 
 		ConnectionAcceptedResponse msg;
 		msg.token = token;

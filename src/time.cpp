@@ -13,16 +13,6 @@
 using namespace std;
 using namespace std::chrono;
 
-int64 getMicroTimeSince(time_point<high_resolution_clock> since) {
-	auto dur = high_resolution_clock::now() - since;
-	return duration_cast<microseconds>(dur).count();
-}
-
-int64 getMilliTimeSince(time_point<steady_clock> since) {
-	auto dur = steady_clock::now() - since;
-	return duration_cast<milliseconds>(dur).count();
-}
-
 namespace my{ namespace time {
 
 int64 get() {
