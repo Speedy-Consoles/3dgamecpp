@@ -16,7 +16,6 @@ namespace my { namespace net {
 
 Socket::~Socket() {
 	if (_socket.is_open()) {
-		_socket.shutdown(socket_t::shutdown_both);
 		_socket.close();
 	}
 }
@@ -52,11 +51,11 @@ bool Socket::isOpen() const {
 }
 
 void Socket::connect(const endpoint_t &endpoint) {
-	_socket.connect(endpoint);
+	_socket.connect(endpoint, _error);
 }
 
 void Socket::bind(const endpoint_t &endpoint) {
-	_socket.bind(endpoint);
+	_socket.bind(endpoint, _error);
 }
 
 Socket::ErrorCode Socket::receive(Packet *p) {
@@ -71,12 +70,12 @@ Socket::ErrorCode Socket::receive(Packet *p) {
 		break;
 	default:
 		LOG(ERROR, "While waiting for packages");
-		return UNKNOWN_ERROR;
+		return SYSTEM_ERROR;
 	}
 
 	// wait for the specified time
 	_error = _recvFuture.get();
-	return _error ? UNKNOWN_ERROR : OK;
+	return _error ? SYSTEM_ERROR : OK;
 }
 
 Socket::ErrorCode Socket::receiveNow(Packet *p) {
@@ -91,7 +90,7 @@ Socket::ErrorCode Socket::receiveNow(Packet *p) {
 			return WOULD_BLOCK;
 		} else {
 			LOG(ERROR, "While looking for packages");
-			return UNKNOWN_ERROR;
+			return SYSTEM_ERROR;
 		}
 	} else {
 		return TIMEOUT;
@@ -109,7 +108,7 @@ Socket::ErrorCode Socket::receiveFor(Packet *p, uint64 duration) {
 	case TIMEOUT:
 		break;
 	default:
-		return UNKNOWN_ERROR;
+		return SYSTEM_ERROR;
 	}
 
 	// wait for the specified time
@@ -117,7 +116,7 @@ Socket::ErrorCode Socket::receiveFor(Packet *p, uint64 duration) {
 	switch (status) {
 	case std::future_status::ready:
 		_error = _recvFuture.get();
-		return _error ? UNKNOWN_ERROR : OK;
+		return _error ? SYSTEM_ERROR : OK;
 	case std::future_status::timeout:
 		return TIMEOUT;
 	default:
@@ -158,12 +157,12 @@ Socket::ErrorCode Socket::send(const Packet &p) {
 		break;
 	default:
 		LOG(ERROR, "While trying to send packet");
-		return UNKNOWN_ERROR;
+		return SYSTEM_ERROR;
 	}
 
 	// wait for the specified time
 	_error = _sendFuture.get();
-	return _error ? UNKNOWN_ERROR : OK;
+	return _error ? SYSTEM_ERROR : OK;
 }
 
 Socket::ErrorCode Socket::sendNow(const Packet &p) {
@@ -178,7 +177,7 @@ Socket::ErrorCode Socket::sendNow(const Packet &p) {
 			return WOULD_BLOCK;
 		} else {
 			LOG(ERROR, "While sending packets");
-			return UNKNOWN_ERROR;
+			return SYSTEM_ERROR;
 		}
 	} else {
 		return TIMEOUT;
@@ -196,7 +195,7 @@ Socket::ErrorCode Socket::sendFor(const Packet &p, uint64 duration) {
 	case TIMEOUT:
 		break;
 	default:
-		return UNKNOWN_ERROR;
+		return SYSTEM_ERROR;
 	}
 
 	// wait for the specified time
@@ -204,7 +203,7 @@ Socket::ErrorCode Socket::sendFor(const Packet &p, uint64 duration) {
 	switch (status) {
 	case std::future_status::ready:
 		_error = _sendFuture.get();
-		return _error ? UNKNOWN_ERROR : OK;
+		return _error ? SYSTEM_ERROR : OK;
 	case std::future_status::timeout:
 		return TIMEOUT;
 	default:

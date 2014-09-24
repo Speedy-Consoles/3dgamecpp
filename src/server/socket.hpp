@@ -32,6 +32,7 @@ class Socket {
 public:
 	enum ErrorCode {
 		OK = 0,
+		SYSTEM_ERROR,
 		UNKNOWN_ERROR,
 		WOULD_BLOCK,
 		TIMEOUT,

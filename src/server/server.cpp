@@ -146,23 +146,14 @@ void Server::run() {
 
 	time = my::time::get();
 
-	if (socket.getSystemError()) {
-		LOG(FATAL, "Could not create listening socket");
-		return;
-	}
-
 	socket.open();
-	if (socket.getSystemError()) {
-		LOG(FATAL, "Could not create listening socket");
-		return;
-	}
-
 	socket.bind(udp::endpoint(udp::v4(), port));
 
-	if (socket.getSystemError()) {
-		LOG(FATAL, "Could not bind listening socket");
+	if (socket.getSystemError() == asio::error::address_in_use) {
+		LOG(FATAL, "Could not bind socket");
 		return;
 	}
+
 
 	// this will make sure our async_recv calls get handled
 	auto w = new asio::io_service::work(ios);
@@ -180,9 +171,11 @@ void Server::run() {
 				break;
 			case Socket::TIMEOUT:
 				break;
+			case Socket::SYSTEM_ERROR:
+				LOG(ERROR, "boost::asio error " << socket.getSystemError()
+						<< "while receiving packets");
 			default:
-				LOG(ERROR, "Error while receiving packets: "
-						<< socket.getSystemError());
+				LOG(ERROR, "Unknown error while receiving packets");
 			}
 		}
 
@@ -200,10 +193,6 @@ void Server::run() {
 
 void Server::handle(const Packet &p) {
 	LOG(TRACE, "Received message of length " << p.buf->rSize());
-
-	// read the message header
-	const char *inDataCursor = p.buf->rBegin();
-	const char *dataEnd = p.buf->rEnd();
 
 	MessageHeader header;
 	if (p.buf->rSize() < sizeof (MessageHeader)) {
@@ -248,14 +237,22 @@ void Server::handle(const Packet &p) {
 
 			clients[id].timeOfLastPacket = my::time::get();
 
-			handleClientMessage(header.type, id, inDataCursor, dataEnd);
+			handleClientMessage(header.type, id, p.buf->rBegin(), p.buf->rEnd());
 		} else {
 			LOG(DEBUG, "Unknown remote address");
 
 			outBuf.clear();
 			outBuf << MAGIC << CONNECTION_RESET;
 			Packet outPacket{&outBuf, p.endpoint};
-			socket.send(outPacket);
+			switch (socket.send(outPacket)) {
+			case Socket::OK:
+				break;
+			case Socket::SYSTEM_ERROR:
+				LOG(ERROR, "boost::asio error " << socket.getSystemError()
+						<< "while sending packet");
+			default:
+				LOG(ERROR, "Unknown error while sending packet");
+			}
 		}
 	}
 }
