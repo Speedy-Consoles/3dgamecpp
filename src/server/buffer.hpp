@@ -51,14 +51,14 @@ private:
 };
 
 template <typename T>
-Buffer &operator << (Buffer &buffer, T t) {
-	auto ptr = reinterpret_cast<char *>(&t);
+Buffer &operator << (Buffer &buffer, const T &t) {
+	auto ptr = reinterpret_cast<const char *>(&t);
 	buffer.write(ptr, sizeof (T));
 	return buffer;
 }
 
 template <typename T>
-Buffer &operator >> (Buffer &buffer, T t) {
+Buffer &operator >> (Buffer &buffer, T &t) {
 	auto ptr = reinterpret_cast<char *>(&t);
 	buffer.read(ptr, sizeof (T));
 	return buffer;
