@@ -92,12 +92,9 @@ private:
 	udp::socket socket;
 
 	// used for handling asynchronous receives
-	atomic<bool> hasNewPacket;
-	size_t newPacketSize;
 	udp::endpoint remoteEndpoint;
-	mutex m;
-	condition_variable cv;
-	future<void> f;
+	std::future<size_t> newPacketFuture;
+	std::promise<size_t> newPacketPromise;
 
 public:
 	Server(uint16 port);
@@ -146,7 +143,7 @@ int main(int argc, char *argv[]) {
 
 }
 
-Server::Server(uint16 port) : port(port), socket(ios), hasNewPacket(false) {
+Server::Server(uint16 port) : port(port), socket(ios) {
 	LOG(INFO, "Creating Server");
 	world = new World();
 	for (uint8 i = 0; i < MAX_CLIENTS; i++) {
@@ -180,20 +177,23 @@ void Server::run() {
 
 	// this will make sure our async_recv calls get handled
 	asio::io_service::work w(ios);
-	f = async(launch::async, [this]{ ios.run(); });
+	future<void> f = async(launch::async, [this]{ ios.run(); });
 
 	signalReadyToReceive();
 
 	int tick = 0;
 	while (!closeRequested) {
-		unique_lock<mutex> lock(m);
-		cv.wait_for(lock, chrono::milliseconds(5));
-		if (hasNewPacket) {
+		switch (newPacketFuture.wait_for(chrono::milliseconds(5))) {
+		case future_status::ready:
 			receive();
-			hasNewPacket = false;
 			signalReadyToReceive();
+			break;
+		case future_status::deferred:
+			LOG(ERROR, "Deferred future");
+			break;
+		default:
+			break;
 		}
-		lock.unlock();
 
 		checkInactive();
 
@@ -211,23 +211,24 @@ void Server::signalReadyToReceive() {
 	auto lambda = [this](const system::error_code &error, size_t size) {
 		if (!error) {
 			LOG(TRACE, "Asynchronous message received");
-			unique_lock<mutex> lock(m);
-			newPacketSize = size;
-			hasNewPacket = true;
-			lock.unlock();
-			cv.notify_one();
+			newPacketPromise.set_value(size);
 		} else if (error == boost::asio::error::message_size) {
 			LOG(WARNING, "Message of length " << size
 					<< " did not fit into input buffer");
+			newPacketPromise.set_value(0);
 		} else {
 			LOG(ERROR, "Could not receive message");
+			newPacketPromise.set_value(0);
 		}
 	};
 
+	newPacketPromise = std::promise<size_t>();
+	newPacketFuture = newPacketPromise.get_future();
 	socket.async_receive_from(buf, remoteEndpoint, lambda);
 }
 
 void Server::receive() {
+	size_t newPacketSize = newPacketFuture.get();
 	LOG(TRACE, "Received message of length " << newPacketSize);
 
 	// read the message header
