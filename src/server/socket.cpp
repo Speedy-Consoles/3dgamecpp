@@ -31,11 +31,6 @@ Socket::Socket(ios_t &ios, const endpoint_t &endpoint) :
 	_socket(ios, endpoint)
 {
 	_socket.non_blocking(true, _error);
-	_ec = _error ? UNKNOWN_ERROR : OK;
-}
-
-Socket::ErrorCode Socket::getErrorCode() const {
-	return _ec;
 }
 
 const error_t &Socket::getSystemError() const {
@@ -44,10 +39,7 @@ const error_t &Socket::getSystemError() const {
 
 void Socket::open() {
 	_socket.open(udp::v4());
-	if ((_ec = _error ? UNKNOWN_ERROR : OK))
-		return;
 	_socket.non_blocking(true, _error);
-	_ec = _error ? UNKNOWN_ERROR : OK;
 }
 
 void Socket::close() {
@@ -67,72 +59,76 @@ void Socket::bind(const endpoint_t &endpoint) {
 	_socket.bind(endpoint);
 }
 
-void Socket::receive(Packet *p) {
+Socket::ErrorCode Socket::receive(Packet *p) {
 	// try to acquire next package synchronously
-	if (!_future.valid()) {
-		receiveNow(p);
-		if (_ec == OK) {
-			return;
-		} else if (_ec == WOULD_BLOCK) {
-			startAsyncReceive(p);
-		} else {
-			LOG(ERROR, "While waiting for packages");
-			return;
-		}
-	}
-
-	// wait for the specified time
-	_future.get();
-}
-
-void Socket::receiveNow(Packet *p) {
-	auto buf = asio::buffer(p->buf->wBegin(), p->buf->wSize());
-	size_t bytesRead = _socket.receive_from(buf, p->endpoint, 0, _error);
-
-	if (!_error) {
-		p->buf->wSeekRel(bytesRead);
-	} else if (_error == asio::error::would_block) {
-		_ec = WOULD_BLOCK;
-	} else {
-		LOG(ERROR, "While looking for packages");
-		_ec = UNKNOWN_ERROR;
-	}
-}
-
-void Socket::receiveFor(Packet *p, uint64 duration) {
-	// try to acquire next package synchronously
-	if (!_future.valid()) {
-		receiveNow(p);
-		if (_ec == OK) {
-			return;
-		} else if (_ec == WOULD_BLOCK) {
-			startAsyncReceive(p);
-		} else {
-			LOG(ERROR, "While waiting for packages");
-			return;
-		}
-	}
-
-	// wait for the specified time
-	auto status = _future.wait_for(std::chrono::microseconds(duration));
-	switch (status) {
-	case std::future_status::ready:
-		_future.get();
-		_ec = OK;
+	switch (receiveNow(p)) {
+	case OK:
+		return OK;
+	case WOULD_BLOCK:
+		startAsyncReceive(p);
 		break;
-	case std::future_status::timeout:
-		_ec = TIMEOUT;
+	case TIMEOUT:
 		break;
 	default:
-		LOG(ERROR, "Deferred future");
-		_ec = UNKNOWN_ERROR;
-		break;
+		LOG(ERROR, "While waiting for packages");
+		return UNKNOWN_ERROR;
+	}
+
+	// wait for the specified time
+	_error = _recvFuture.get();
+	return _error ? UNKNOWN_ERROR : OK;
+}
+
+Socket::ErrorCode Socket::receiveNow(Packet *p) {
+	if (!_recvFuture.valid()) {
+		auto buf = asio::buffer(p->buf->wBegin(), p->buf->wSize());
+		size_t bytesRead = _socket.receive_from(buf, p->endpoint, 0, _error);
+
+		if (!_error) {
+			p->buf->wSeekRel(bytesRead);
+			return OK;
+		} else if (_error == asio::error::would_block) {
+			return WOULD_BLOCK;
+		} else {
+			LOG(ERROR, "While looking for packages");
+			return UNKNOWN_ERROR;
+		}
+	} else {
+		return TIMEOUT;
 	}
 }
 
-void Socket::receiveUntil(Packet *p, uint64 time) {
+Socket::ErrorCode Socket::receiveFor(Packet *p, uint64 duration) {
+	// try to acquire next package synchronously
+	switch (receiveNow(p)) {
+	case OK:
+		return OK;
+	case WOULD_BLOCK:
+		startAsyncReceive(p);
+		break;
+	case TIMEOUT:
+		break;
+	default:
+		return UNKNOWN_ERROR;
+	}
+
+	// wait for the specified time
+	auto status = _recvFuture.wait_for(std::chrono::microseconds(duration));
+	switch (status) {
+	case std::future_status::ready:
+		_error = _recvFuture.get();
+		return _error ? UNKNOWN_ERROR : OK;
+	case std::future_status::timeout:
+		return TIMEOUT;
+	default:
+		LOG(ERROR, "Deferred future");
+		return UNKNOWN_ERROR;
+	}
+}
+
+Socket::ErrorCode Socket::receiveUntil(Packet *p, uint64 time) {
 	time_t now = my::time::get();
-	receiveFor(p, time - now);
+	return receiveFor(p, time - now);
 }
 
 void Socket::startAsyncReceive(Packet *p) {
@@ -141,33 +137,100 @@ void Socket::startAsyncReceive(Packet *p) {
 	auto lambda = [this, p](const error_t &error, size_t size) {
 		if (!error) {
 			p->buf->wSeekRel(size);
-			_ec = OK;
-		} else if (error == boost::asio::error::message_size) {
-			_ec = Socket::BUFFER_TOO_SMALL;
 		}
-		_error = error;
-		_promise.set_value();
+		_recvPromise.set_value(error);
 	};
 
-	_promise = std::promise<void>();
-	_future = _promise.get_future();
+	_recvPromise = std::promise<error_t>();
+	_recvFuture = _recvPromise.get_future();
 	_socket.async_receive_from(buf, p->endpoint, lambda);
 }
 
-void Socket::send(const Packet &) {
+Socket::ErrorCode Socket::send(const Packet &p) {
+	// try to send packet synchronously
+	switch (sendNow(p)) {
+	case OK:
+		return OK;
+	case WOULD_BLOCK:
+		startAsyncSend(p);
+		break;
+	case TIMEOUT:
+		break;
+	default:
+		LOG(ERROR, "While trying to send packet");
+		return UNKNOWN_ERROR;
+	}
 
+	// wait for the specified time
+	_error = _sendFuture.get();
+	return _error ? UNKNOWN_ERROR : OK;
 }
 
-void Socket::sendNow(const Packet &) {
+Socket::ErrorCode Socket::sendNow(const Packet &p) {
+	if (!_sendFuture.valid()) {
+		auto buf = asio::buffer(p.buf->rBegin(), p.buf->rSize());
+		size_t bytesSent = _socket.send_to(buf, p.endpoint, 0, _error);
 
+		if (!_error) {
+			p.buf->rSeekRel(bytesSent);
+			return OK;
+		} else if (_error == asio::error::would_block) {
+			return WOULD_BLOCK;
+		} else {
+			LOG(ERROR, "While sending packets");
+			return UNKNOWN_ERROR;
+		}
+	} else {
+		return TIMEOUT;
+	}
 }
 
-void Socket::sendFor(const Packet &, uint64 duration) {
+Socket::ErrorCode Socket::sendFor(const Packet &p, uint64 duration) {
+	// try to send packet synchronously
+	switch (sendNow(p)) {
+	case OK:
+		return OK;
+	case WOULD_BLOCK:
+		startAsyncSend(p);
+		break;
+	case TIMEOUT:
+		break;
+	default:
+		return UNKNOWN_ERROR;
+	}
 
+	// wait for the specified time
+	auto status = _sendFuture.wait_for(std::chrono::microseconds(duration));
+	switch (status) {
+	case std::future_status::ready:
+		_error = _sendFuture.get();
+		return _error ? UNKNOWN_ERROR : OK;
+	case std::future_status::timeout:
+		return TIMEOUT;
+	default:
+		LOG(ERROR, "Deferred future");
+		return UNKNOWN_ERROR;
+	}
 }
 
-void Socket::sendUntil(const Packet &, uint64 time) {
+Socket::ErrorCode Socket::sendUntil(const Packet &p, uint64 time) {
+	time_t now = my::time::get();
+	return sendFor(p, time - now);
+}
 
+void Socket::startAsyncSend(const Packet &p) {
+	auto buf = asio::buffer(p.buf->rBegin(), p.buf->rSize());
+
+	auto lambda = [this, &p](const error_t &error, size_t size) {
+		if (!error) {
+			p.buf->rSeekRel(size);
+		}
+		_sendPromise.set_value(error);
+	};
+
+	_sendPromise = std::promise<error_t>();
+	_sendFuture = _sendPromise.get_future();
+	_socket.async_send_to(buf, p.endpoint, lambda);
 }
 
 }} // namespace my::net

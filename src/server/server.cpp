@@ -174,9 +174,16 @@ void Server::run() {
 		while ((remTime = time - get() + seconds(1) / TICK_SPEED) > 0) {
 			inBuf.clear();
 			Packet p = {&inBuf};
-			socket.receiveFor(&p, remTime);
-			if (socket.getErrorCode() == Socket::OK)
+			switch (socket.receiveFor(&p, remTime)) {
+			case Socket::OK:
 				handle(p);
+				break;
+			case Socket::TIMEOUT:
+				break;
+			default:
+				LOG(ERROR, "Error while receiving packets: "
+						<< socket.getSystemError());
+			}
 		}
 
 		world->tick(tick, -1);

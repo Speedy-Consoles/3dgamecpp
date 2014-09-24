@@ -42,7 +42,6 @@ public:
 	Socket(ios_t &ios);
 	Socket(ios_t &ios, const endpoint_t &endpoint);
 
-	ErrorCode getErrorCode() const;
 	const error_t &getSystemError() const;
 
 	void open();
@@ -53,26 +52,28 @@ public:
 	void connect(const endpoint_t &endpoint);
 	void bind(const endpoint_t &endpoint);
 
-	void receive(Packet *);
-	void receiveNow(Packet *);
-	void receiveFor(Packet *, uint64 duration);
-	void receiveUntil(Packet *, uint64 time);
+	ErrorCode receive(Packet *);
+	ErrorCode receiveNow(Packet *);
+	ErrorCode receiveFor(Packet *, uint64 duration);
+	ErrorCode receiveUntil(Packet *, uint64 time);
 
-	void send(const Packet &);
-	void sendNow(const Packet &);
-	void sendFor(const Packet &, uint64 duration);
-	void sendUntil(const Packet &, uint64 time);
+	ErrorCode send(const Packet &);
+	ErrorCode sendNow(const Packet &);
+	ErrorCode sendFor(const Packet &, uint64 duration);
+	ErrorCode sendUntil(const Packet &, uint64 time);
 
 private:
 	socket_t _socket;
-
-	ErrorCode _ec = OK;
 	error_t _error;
 
-	std::future<void> _future;
-	std::promise<void> _promise;
+	std::future<error_t> _recvFuture;
+	std::promise<error_t> _recvPromise;
+
+	std::future<error_t> _sendFuture;
+	std::promise<error_t> _sendPromise;
 
 	void startAsyncReceive(Packet *p);
+	void startAsyncSend(const Packet &);
 };
 
 }} // namespace my::net
