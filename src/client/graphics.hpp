@@ -49,9 +49,12 @@ private:
 	const Menu *menu;
 	uint localClientID;
 
-	int lastFPS = 0;
-	int64 lastFPSUpdate = 0;
-	int frameCounter = 0;
+	int prevFPS[20];
+	int fpsCounter = 0;
+	int fpsSum = 0;
+	size_t fpsIndex = 0;
+	time_t lastFPSUpdate = 0;
+	time_t lastStopWatchSave = 0;
 	int newFaces = 0;
 	int faces = 0;
 

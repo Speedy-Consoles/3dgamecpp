@@ -72,8 +72,7 @@ Client::~Client() {
 
 void Client::run() {
 	LOG(INFO, "Running client");
-	startTimePoint = my::time::get();
-	time = 0;
+	time = my::time::get();
 	int tick = 0;
 	while (!closeRequested) {
 		handleInput();
@@ -86,7 +85,7 @@ void Client::run() {
 		world->tick(tick, localClientID);
 		stopwatch->stop(CLOCK_TIC);
 #ifndef NO_GRAPHICS
-		if (time + timeShift + 1000000 / TICK_SPEED > my::time::get() - startTimePoint)
+		if (my::time::get() < time + timeShift + my::time::seconds(1) / TICK_SPEED)
 			graphics->tick();
 #endif
 
@@ -103,10 +102,8 @@ void Client::run() {
 }
 
 void Client::sync(int perSecond) {
-	time = time + 1000000 / perSecond;
-	microseconds duration(std::max(0,
-			(int) (time + timeShift + startTimePoint - my::time::get())));
-	std::this_thread::sleep_for(duration);
+	time = time + my::time::seconds(1) / perSecond;
+	my::time::sleepUntil(time + timeShift);
 }
 
 void Client::handleInput() {

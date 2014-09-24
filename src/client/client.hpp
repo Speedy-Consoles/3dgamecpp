@@ -46,10 +46,8 @@ private:
 
 	int localClientID;
 
-	time_t startTimePoint;
-
-	int64 time = 0;
-	int64 timeShift = 0;
+	time_t time = 0;
+	time_t timeShift = 0;
 
 	bool closeRequested = false;
 

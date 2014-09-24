@@ -390,7 +390,7 @@ void Graphics::renderDebugInfo(const Player &player) {
 			glTranslatef(0, -16, 0);\
 			font->Render(buffer)
 
-	RENDER_LINE("fps: %d", lastFPS);
+	RENDER_LINE("fps: %d", fpsSum);
 	RENDER_LINE("new faces: %d", newFaces);
 	RENDER_LINE("faces: %d", faces);
 	RENDER_LINE("x: %ld (%ld)", playerPos[0], playerPos[0] / RESOLUTION);

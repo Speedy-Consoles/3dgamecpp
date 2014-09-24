@@ -85,6 +85,9 @@ Graphics::Graphics(
 	makeMaxFOV();
 
 	initGL();
+	for (int i = 0; i < 20; i++) {
+		prevFPS[i] = 0;
+	}
 }
 
 Graphics::~Graphics() {
@@ -638,13 +641,21 @@ void Graphics::tick() {
 	stopwatch->start(CLOCK_FLP);
 	SDL_GL_SwapWindow(window);
 	stopwatch->stop(CLOCK_FLP);
-	frameCounter++;
-	if (my::time::get() - lastFPSUpdate > 1000000) {
-		lastFPS = frameCounter;
-		lastFPSUpdate += 1000000;
-		frameCounter = 0;
+
+	if (my::time::get() - lastStopWatchSave > my::time::millis(200)) {
+		lastStopWatchSave = my::time::get();
 		stopwatch->stop(CLOCK_ALL);
 		stopwatch->save();
 		stopwatch->start(CLOCK_ALL);
 	}
+
+	while (my::time::get() - lastFPSUpdate > my::time::millis(50)) {
+		lastFPSUpdate += my::time::millis(50);
+		fpsSum -= prevFPS[fpsIndex];
+		fpsSum += fpsCounter;
+		prevFPS[fpsIndex] = fpsCounter;
+		fpsCounter = 0;
+		fpsIndex = (fpsIndex + 1) % 20;
+	}
+	fpsCounter++;
 }

@@ -59,7 +59,7 @@ struct Client {
 	bool connected;
 	udp::endpoint endpoint;
 	uint32 token;
-	uint64 timeOfLastPacket;
+	time_t timeOfLastPacket;
 };
 
 class Server {
@@ -70,7 +70,7 @@ private:
 	Client clients[MAX_CLIENTS];
 
 	uint16 port = 0;
-	uint64 timeout = 10000; // 10 seconds
+	time_t timeout = my::time::seconds(10); // 10 seconds
 
 	size_t inBufferCapacity = 0;
 	size_t inBufferSize = 0;
@@ -83,11 +83,7 @@ private:
 
 	// time keeping
 	// precise time uses the best hardware clock available (microseconds)
-	int64 time = 0;
-	time_t startTimePoint;
-
-	// approximate time uses the standard clock (milliseconds)
-	uint64 approxTime = 0;
+	time_t time = 0;
 
 	// our listening socket
 	asio::io_service ios;
@@ -170,9 +166,7 @@ Server::~Server() {
 void Server::run() {
 	LOG(INFO, "Starting Server on port " << port);
 
-	startTimePoint = my::time::get();
-	time = 0;
-	approxTime = 0;
+	time = my::time::get();
 
 	socket.open(udp::v4());
 	socket.bind(udp::endpoint(udp::v4(), port));
@@ -195,9 +189,9 @@ void Server::run() {
 
 		checkInactive();
 
-		if (time + startTimePoint - my::time::get() > 1000000 / TICK_SPEED) {
+		if (time - my::time::get() > my::time::seconds(1) / TICK_SPEED) {
 			world->tick(tick, -1);
-			time += 1000000 / TICK_SPEED;
+			time += my::time::seconds(1) / TICK_SPEED;
 			tick++;
 		}
 	}
@@ -299,7 +293,7 @@ void Server::receive() {
 				return;
 			}
 
-			clients[id].timeOfLastPacket = my::time::get() - startTimePoint;
+			clients[id].timeOfLastPacket = my::time::get();
 
 			handleClientMessage(header.type, id, inDataCursor, dataEnd);
 		} else {
@@ -315,12 +309,11 @@ void Server::receive() {
 }
 
 void Server::checkInactive() {
-	uint64 approxTimeNow = my::time::get() - startTimePoint;
 	for (uint8 id = 0; id < MAX_CLIENTS; ++id) {
 		if (!clients[id].connected)
 			continue;
 
-		if (approxTimeNow - clients[id].timeOfLastPacket > timeout) {
+		if (my::time::get() - clients[id].timeOfLastPacket > timeout) {
 			LOG(INFO, "Player " << (int) id << " timed out");
 
 			char *cursor = outBuffer;
@@ -375,7 +368,7 @@ void Server::handleConnectionRequest() {
 		clients[id].connected = true;
 		clients[id].endpoint = sourceEndpoint;
 		clients[id].token = token;
-		clients[id].timeOfLastPacket = my::time::get() - startTimePoint;
+		clients[id].timeOfLastPacket = my::time::get();
 
 		ConnectionAcceptedResponse msg;
 		msg.token = token;
