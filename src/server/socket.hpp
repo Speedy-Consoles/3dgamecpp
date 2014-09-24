@@ -23,11 +23,6 @@ using socket_t = boost::asio::ip::udp::socket;
 using endpoint_t = boost::asio::ip::udp::endpoint;
 using error_t = boost::system::error_code;
 
-struct Packet {
-	Buffer *buf;
-	endpoint_t endpoint;
-};
-
 class Socket {
 public:
 	enum ErrorCode {
@@ -53,15 +48,15 @@ public:
 	void connect(const endpoint_t &endpoint);
 	void bind(const endpoint_t &endpoint);
 
-	ErrorCode receive(Packet *);
-	ErrorCode receiveNow(Packet *);
-	ErrorCode receiveFor(Packet *, uint64 duration);
-	ErrorCode receiveUntil(Packet *, uint64 time);
+	ErrorCode receive(Buffer *, endpoint_t *);
+	ErrorCode receiveNow(Buffer *, endpoint_t *);
+	ErrorCode receiveFor(Buffer *, endpoint_t *, uint64 duration);
+	ErrorCode receiveUntil(Buffer *, endpoint_t *, uint64 time);
 
-	ErrorCode send(const Packet &);
-	ErrorCode sendNow(const Packet &);
-	ErrorCode sendFor(const Packet &, uint64 duration);
-	ErrorCode sendUntil(const Packet &, uint64 time);
+	ErrorCode send(const Buffer &, const endpoint_t &);
+	ErrorCode sendNow(const Buffer &, const endpoint_t &);
+	ErrorCode sendFor(const Buffer &, const endpoint_t &, uint64 duration);
+	ErrorCode sendUntil(const Buffer &, const endpoint_t &, uint64 time);
 
 private:
 	socket_t _socket;
@@ -73,8 +68,8 @@ private:
 	std::future<error_t> _sendFuture;
 	std::promise<error_t> _sendPromise;
 
-	void startAsyncReceive(Packet *p);
-	void startAsyncSend(const Packet &);
+	void startAsyncReceive(Buffer *, endpoint_t *);
+	void startAsyncSend(const Buffer &, const endpoint_t &);
 };
 
 }} // namespace my::net

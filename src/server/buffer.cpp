@@ -48,9 +48,14 @@ void Buffer::write(const char *data, size_t len) {
 	_whead += len;
 }
 
-void Buffer::read(char *data, size_t len) {
+void Buffer::read(char *data, size_t len) const {
 	memcpy(data, _rhead, len);
 	_rhead += len;
 }
 
+Buffer &operator << (Buffer &lhs, const Buffer &rhs) {
+	lhs.write(rhs.rBegin(), rhs.rSize());
+	rhs.rSeekRel(rhs.rSize());
+	return lhs;
+}
 

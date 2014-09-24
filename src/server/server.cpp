@@ -93,11 +93,11 @@ public:
 	void run();
 
 private:
-	void handle(const Packet &p);
+	void handle(const Buffer &, const endpoint_t &);
 	void checkInactive();
 
 	void handleConnectionRequest(const endpoint_t &);
-	void handleClientMessage(uint8 type, uint8 id, const char *data, const char *dataEnd);
+	void handleClientMessage(uint8 type, uint8 id, const Buffer &);
 
 	void disconnect(uint8 id);
 };
@@ -154,7 +154,6 @@ void Server::run() {
 		return;
 	}
 
-
 	// this will make sure our async_recv calls get handled
 	auto w = new asio::io_service::work(ios);
 	future<void> f = async(launch::async, [this]{ ios.run(); });
@@ -164,10 +163,10 @@ void Server::run() {
 		time_t remTime;
 		while ((remTime = time - get() + seconds(1) / TICK_SPEED) > 0) {
 			inBuf.clear();
-			Packet p = {&inBuf};
-			switch (socket.receiveFor(&p, remTime)) {
+			endpoint_t endpoint;
+			switch (socket.receiveFor(&inBuf, &endpoint, remTime)) {
 			case Socket::OK:
-				handle(p);
+				handle(inBuf, endpoint);
 				break;
 			case Socket::TIMEOUT:
 				break;
@@ -191,16 +190,16 @@ void Server::run() {
 	f.get();
 }
 
-void Server::handle(const Packet &p) {
-	LOG(TRACE, "Received message of length " << p.buf->rSize());
+void Server::handle(const Buffer &buffer, const endpoint_t &endpoint) {
+	LOG(TRACE, "Received message of length " << buffer.rSize());
 
 	MessageHeader header;
-	if (p.buf->rSize() < sizeof (MessageHeader)) {
+	if (buffer.rSize() < sizeof (MessageHeader)) {
 		LOG(DEBUG, "Message too short for basic protocol header");
 		return;
 	}
 
-	*p.buf >> header;
+	buffer >> header;
 
 	// checking magic
 	if (memcmp(header.magic, MAGIC, sizeof (header.magic)) != 0) {
@@ -209,11 +208,11 @@ void Server::handle(const Packet &p) {
 	}
 
 	if (header.type == CONNECTION_REQUEST) {
-		handleConnectionRequest(p.endpoint);
+		handleConnectionRequest(endpoint);
 	} else {
 		int player = -1;
 		for (int id = 0; id < (int) MAX_CLIENTS; ++id) {
-			if (clients[id].endpoint == p.endpoint) {
+			if (clients[id].endpoint == endpoint) {
 				player =  id;
 				break;
 			}
@@ -223,12 +222,12 @@ void Server::handle(const Packet &p) {
 			uint8 id = player;
 
 			ClientMessageHeader message;
-			if (p.buf->rSize() < sizeof (ClientMessageHeader)) {
+			if (buffer.rSize() < sizeof (ClientMessageHeader)) {
 				LOG(DEBUG, "Message stopped abruptly");
 				return;
 			}
 
-			*p.buf >> message;
+			buffer >> message;
 
 			if (clients[id].token != message.token) {
 				LOG(DEBUG, "Invalid token for Player " << (int) id);
@@ -237,14 +236,13 @@ void Server::handle(const Packet &p) {
 
 			clients[id].timeOfLastPacket = my::time::get();
 
-			handleClientMessage(header.type, id, p.buf->rBegin(), p.buf->rEnd());
+			handleClientMessage(header.type, id, buffer);
 		} else {
 			LOG(DEBUG, "Unknown remote address");
 
 			outBuf.clear();
 			outBuf << MAGIC << CONNECTION_RESET;
-			Packet outPacket{&outBuf, p.endpoint};
-			switch (socket.send(outPacket)) {
+			switch (socket.send(outBuf, endpoint)) {
 			case Socket::OK:
 				break;
 			case Socket::SYSTEM_ERROR:
@@ -312,19 +310,16 @@ void Server::handleConnectionRequest(const endpoint_t &endpoint) {
 	}
 
 	// send response
-	Packet outPacket{&outBuf, endpoint};
-	socket.send(outPacket);
+	socket.send(outBuf, endpoint);
 }
 
-void Server::handleClientMessage(uint8 type, uint8 id, const char *data, const char *dataEnd) {
+void Server::handleClientMessage(uint8 type, uint8 id, const Buffer &buffer) {
 	LOG(TRACE, "Message " << (int) type << " for Player " << (int) id << " accepted");
 	switch (type) {
 	case ECHO_REQUEST: {
 		outBuf.clear();
-		outBuf << MAGIC << ECHO_RESPONSE;
-		outBuf.write(data, dataEnd - data);
-		Packet outPacket{&outBuf, clients[id].endpoint};
-		socket.send(outPacket);
+		outBuf << MAGIC << ECHO_RESPONSE << buffer;
+		socket.send(outBuf, clients[id].endpoint);
 		break;
 	}
 	default:
@@ -342,8 +337,7 @@ void Server::checkInactive() {
 
 			outBuf.clear();
 			outBuf << MAGIC << CONNECTION_TIMEOUT;
-			Packet outPacket{&outBuf, clients[id].endpoint};
-			socket.send(outPacket);
+			socket.send(outBuf, clients[id].endpoint);
 
 			disconnect(id);
 		}

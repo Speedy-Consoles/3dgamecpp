@@ -37,31 +37,33 @@ public:
 	const char *rEnd() const { return _whead; }
 	size_t rSize() const { return _whead - _rhead; }
 
-	void rSeekRel(ptrdiff_t diff) { _rhead += diff; }
-	void rSeek(size_t pos) { _rhead = _data + pos; }
+	void rSeekRel(ptrdiff_t diff) const { _rhead += diff; }
+	void rSeek(size_t pos) const { _rhead = _data + pos; }
 
-	void read(char *data, size_t len);
+	void read(char *data, size_t len) const;
 
 
 private:
 	size_t _capacity = 0;
 	char *_data = nullptr;
 	char *_whead = nullptr;
-	char *_rhead = nullptr;
+	mutable char *_rhead = nullptr;
 };
 
+Buffer &operator << (Buffer &lhs, const Buffer &rhs);
+
 template <typename T>
-Buffer &operator << (Buffer &buffer, const T &t) {
-	auto ptr = reinterpret_cast<const char *>(&t);
-	buffer.write(ptr, sizeof (T));
-	return buffer;
+Buffer &operator << (Buffer &lhs, const T &rhs) {
+	auto ptr = reinterpret_cast<const char *>(&rhs);
+	lhs.write(ptr, sizeof (T));
+	return lhs;
 }
 
 template <typename T>
-Buffer &operator >> (Buffer &buffer, T &t) {
-	auto ptr = reinterpret_cast<char *>(&t);
-	buffer.read(ptr, sizeof (T));
-	return buffer;
+const Buffer &operator >> (const Buffer &lhs, T &rhs) {
+	auto ptr = reinterpret_cast<char *>(&rhs);
+	lhs.read(ptr, sizeof (T));
+	return lhs;
 }
 
 #endif // BUFFER_HPP_
