@@ -93,10 +93,6 @@ public:
 	void run();
 
 private:
-
-	template <typename T>
-	bool receiveFor(T dur);
-	void signalReadyToReceive();
 	void handle(const Packet &p);
 	void checkInactive();
 
@@ -104,15 +100,6 @@ private:
 	void handleClientMessage(uint8 type, uint8 id, const char *data, const char *dataEnd);
 
 	void disconnect(uint8 id);
-
-	template <typename T>
-	void write(char **cursor, const T *data);
-	void writeHeader(char **cursor, uint8 type);
-	void writeBytes(char **cursor, const char *data, size_t len);
-
-	template <typename T>
-	bool read(const char **cursor, T *data, const char *end);
-	bool readBytes(const char **cursor, char *data, size_t len, const char *end);
 };
 
 int main(int argc, char *argv[]) {
@@ -178,7 +165,7 @@ void Server::run() {
 	}
 
 	// this will make sure our async_recv calls get handled
-	asio::io_service::work w(ios);
+	auto w = new asio::io_service::work(ios);
 	future<void> f = async(launch::async, [this]{ ios.run(); });
 
 	int tick = 0;
@@ -198,6 +185,10 @@ void Server::run() {
 
 		checkInactive();
 	}
+
+	socket.close();
+	delete w;
+	f.get();
 }
 
 void Server::handle(const Packet &p) {
@@ -208,10 +199,12 @@ void Server::handle(const Packet &p) {
 	const char *dataEnd = p.buf->rEnd();
 
 	MessageHeader header;
-	if (!read(&inDataCursor, &header, dataEnd)) {
+	if (p.buf->rSize() < sizeof (MessageHeader)) {
 		LOG(DEBUG, "Message too short for basic protocol header");
 		return;
 	}
+
+	*p.buf >> header;
 
 	// checking magic
 	if (memcmp(header.magic, MAGIC, sizeof (header.magic)) != 0) {
@@ -234,10 +227,12 @@ void Server::handle(const Packet &p) {
 			uint8 id = player;
 
 			ClientMessageHeader message;
-			if (!read(&inDataCursor, &message, dataEnd)) {
+			if (p.buf->rSize() < sizeof (ClientMessageHeader)) {
 				LOG(DEBUG, "Message stopped abruptly");
 				return;
 			}
+
+			*p.buf >> message;
 
 			if (clients[id].token != message.token) {
 				LOG(DEBUG, "Invalid token for Player " << (int) id);
@@ -251,8 +246,7 @@ void Server::handle(const Packet &p) {
 			LOG(DEBUG, "Unknown remote address");
 
 			outBuf.clear();
-			char *cursor = outBuf.wBegin();
-			writeHeader(&cursor, CONNECTION_RESET);
+			outBuf << MAGIC << CONNECTION_RESET;
 			Packet outPacket{&outBuf, p.endpoint};
 			socket.send(outPacket);
 		}
@@ -293,7 +287,6 @@ void Server::handleConnectionRequest(const endpoint_t &endpoint) {
 
 	// build response
 	outBuf.clear();
-	char *outDataCursor = outBuf.wBegin();
 	if (!failure) {
 		uint8 id = (uint) newPlayer;
 		uint32 token = 0; //TODO
@@ -306,15 +299,12 @@ void Server::handleConnectionRequest(const endpoint_t &endpoint) {
 		ConnectionAcceptedResponse msg;
 		msg.token = token;
 		msg.id = id;
-		writeHeader(&outDataCursor, CONNECTION_ACCEPTED);
-		write(&outDataCursor, &msg);
-		LOG(INFO, "Player " << (int) id << " connected with token "
-				<< token);
+		outBuf << MAGIC << CONNECTION_ACCEPTED << msg;
+		LOG(INFO, "Player " << (int) id << " connected with token " << token);
 	} else {
 		ConnectionRejectedResponse msg;
 		msg.reason = reason;
-		writeHeader(&outDataCursor, CONNECTION_REJECTED);
-		write(&outDataCursor, &msg);
+		outBuf << MAGIC << CONNECTION_REJECTED << msg;
 	}
 
 	// send response
@@ -327,9 +317,8 @@ void Server::handleClientMessage(uint8 type, uint8 id, const char *data, const c
 	switch (type) {
 	case ECHO_REQUEST: {
 		outBuf.clear();
-		char *outDataCursor = outBuf.wBegin();
-		writeHeader(&outDataCursor, ECHO_RESPONSE);
-		writeBytes(&outDataCursor, data, dataEnd - data);
+		outBuf << MAGIC << ECHO_RESPONSE;
+		outBuf.write(data, dataEnd - data);
 		Packet outPacket{&outBuf, clients[id].endpoint};
 		socket.send(outPacket);
 		break;
@@ -348,8 +337,7 @@ void Server::checkInactive() {
 			LOG(INFO, "Player " << (int) id << " timed out");
 
 			outBuf.clear();
-			char *cursor = outBuf.wBegin();
-			writeHeader(&cursor, CONNECTION_TIMEOUT);
+			outBuf << MAGIC << CONNECTION_TIMEOUT;
 			Packet outPacket{&outBuf, clients[id].endpoint};
 			socket.send(outPacket);
 
@@ -361,37 +349,4 @@ void Server::checkInactive() {
 void Server::disconnect(uint8 id) {
 	LOG(INFO, "Player " << (int) id << " disconnected");
 	clients[id].connected = false;
-}
-
-template <typename T>
-void Server::write(char **cursor, const T *data) {
-	auto data_ptr = reinterpret_cast<const char *>(data);
-	writeBytes(cursor, data_ptr, sizeof (T));
-}
-
-void Server::writeHeader(char **cursor, uint8 type) {
-	MessageHeader header;
-	memcpy(header.magic, MAGIC, sizeof MAGIC);
-	header.type = type;
-	write(cursor, &header);
-}
-
-void Server::writeBytes(char **cursor, const char *data, size_t len) {
-	memcpy(*cursor, data, len);
-	*cursor += len;
-}
-
-template <typename T>
-bool Server::read(const char **cursor, T *data, const char *end) {
-	auto data_ptr = reinterpret_cast<char *>(data);
-	return readBytes(cursor, data_ptr, sizeof (T), end);
-}
-
-bool Server::readBytes(const char **cursor, char *data, size_t len, const char *end) {
-	if (end && (size_t) (end - *cursor) < len) {
-		return false;
-	}
-	memcpy(data, *cursor, len);
-	*cursor += len;
-	return true;
 }

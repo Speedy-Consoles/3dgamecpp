@@ -7,6 +7,8 @@
 
 #include "buffer.hpp"
 
+#include <cstring>
+
 Buffer::~Buffer() {
 	if (_data) {
 		delete[] _data;
@@ -39,6 +41,16 @@ void Buffer::resize(size_t capacity) {
 	_data = new char[capacity];
 	_whead = _data;
 	_rhead = _data;
+}
+
+void Buffer::write(const char *data, size_t len) {
+	memcpy(_whead, data, len);
+	_whead += len;
+}
+
+void Buffer::read(char *data, size_t len) {
+	memcpy(data, _rhead, len);
+	_rhead += len;
 }
 
 
