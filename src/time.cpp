@@ -15,7 +15,7 @@ using namespace std::chrono;
 
 namespace my{ namespace time {
 
-int64 get() {
+int64 now() {
 	auto static start = high_resolution_clock::now();
 	auto stop = high_resolution_clock::now();
 	auto diff = stop - start;
@@ -27,7 +27,7 @@ void sleepFor(time_t dur) {
 }
 
 void sleepUntil(time_t t) {
-	this_thread::sleep_for(std::chrono::microseconds(t - get()));
+	this_thread::sleep_for(std::chrono::microseconds(t - now()));
 }
 
 }} // namespace my::time

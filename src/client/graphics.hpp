@@ -1,8 +1,6 @@
 #ifndef GRAPHICS_HPP
 #define GRAPHICS_HPP
 
-#include <chrono>
-
 #include <GL/glew.h>
 #include <SDL2/SDL.h>
 #include <FTGL/ftgl.h>

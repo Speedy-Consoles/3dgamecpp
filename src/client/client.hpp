@@ -1,9 +1,8 @@
 #ifndef CLIENT_HPP
 #define CLIENT_HPP
 
-#include <chrono>
-
 #include "std_types.hpp"
+#include "time.hpp"
 
 class ServerInterface;
 class World;
@@ -46,8 +45,8 @@ private:
 
 	int localClientID;
 
-	time_t time = 0;
-	time_t timeShift = 0;
+	my::time::time_t time = 0;
+	my::time::time_t timeShift = 0;
 
 	bool closeRequested = false;
 

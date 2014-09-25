@@ -134,7 +134,7 @@ Socket::ErrorCode Socket::receiveFor(
 Socket::ErrorCode Socket::receiveUntil(
 		Buffer *b, endpoint_t *e, uint64 time)
 {
-	time_t now = my::time::get();
+	time_t now = my::time::now();
 	return receiveFor(b, e, time - now);
 }
 
@@ -227,7 +227,7 @@ Socket::ErrorCode Socket::sendFor(
 Socket::ErrorCode Socket::sendUntil(
 		const Buffer &b, const endpoint_t &e, uint64 time)
 {
-	time_t now = my::time::get();
+	time_t now = my::time::now();
 	return sendFor(b, e, time - now);
 }
 

@@ -1,7 +1,6 @@
 #ifndef WORLD_HPP
 #define WORLD_HPP
 
-#include <chrono>
 #include <queue>
 #include <unordered_map>
 
@@ -51,8 +50,6 @@ private:
 
 	bool pause = true;
 
-	std::chrono::microseconds dur_ticking;
-
 public:
 
 	World();
@@ -89,8 +86,6 @@ public:
 	size_t getNumChunks();
 
 	WorldSnapshot makeSnapshot(int tick) const;
-
-	std::chrono::microseconds getTickingTime();
 private:
 	bool updateFace(vec3i64 bc, uint8 faceDir);
 	void patchBorders(Chunk *c);

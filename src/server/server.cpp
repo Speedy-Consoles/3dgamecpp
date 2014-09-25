@@ -79,7 +79,6 @@ private:
 	Buffer outBuf;
 
 	// time keeping
-	// precise time uses the best hardware clock available (microseconds)
 	time_t time = 0;
 
 	// our listening socket
@@ -144,7 +143,7 @@ Server::~Server() {
 void Server::run() {
 	LOG(INFO, "Starting Server on port " << port);
 
-	time = my::time::get();
+	time = my::time::now();
 
 	socket.open();
 	socket.bind(udp::endpoint(udp::v4(), port));
@@ -161,7 +160,7 @@ void Server::run() {
 	int tick = 0;
 	while (!closeRequested) {
 		time_t remTime;
-		while ((remTime = time - get() + seconds(1) / TICK_SPEED) > 0) {
+		while ((remTime = time - now() + seconds(1) / TICK_SPEED) > 0) {
 			inBuf.clear();
 			endpoint_t endpoint;
 			switch (socket.receiveFor(&inBuf, &endpoint, remTime)) {
@@ -235,7 +234,7 @@ void Server::handle(const Buffer &buffer, const endpoint_t &endpoint) {
 				return;
 			}
 
-			clients[id].timeOfLastPacket = my::time::get();
+			clients[id].timeOfLastPacket = my::time::now();
 
 			handleClientMessage(header.type, id, buffer);
 		} else {
@@ -297,7 +296,7 @@ void Server::handleConnectionRequest(const endpoint_t &endpoint) {
 		clients[id].connected = true;
 		clients[id].endpoint = endpoint;
 		clients[id].token = token;
-		clients[id].timeOfLastPacket = my::time::get();
+		clients[id].timeOfLastPacket = my::time::now();
 
 		ConnectionAcceptedResponse msg;
 		msg.token = token;
@@ -333,7 +332,7 @@ void Server::checkInactive() {
 		if (!clients[id].connected)
 			continue;
 
-		if (my::time::get() - clients[id].timeOfLastPacket > timeout) {
+		if (my::time::now() - clients[id].timeOfLastPacket > timeout) {
 			LOG(INFO, "Player " << (int) id << " timed out");
 
 			outBuf.clear();

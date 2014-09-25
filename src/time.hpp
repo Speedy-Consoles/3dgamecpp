@@ -10,15 +10,13 @@
 
 #include "std_types.hpp"
 
-#include <chrono>
-
 namespace my { namespace time {
 
 // all times should be measured in this
 using time_t = int64;
 
 // all times are measured in microseconds
-time_t get();
+time_t now();
 
 void sleepFor(time_t);
 void sleepUntil(time_t);

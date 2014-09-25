@@ -2,7 +2,6 @@
 
 #include <iostream>
 #include <thread>
-#include <chrono>
 #include <cmath>
 #include <cstdio>
 
@@ -19,7 +18,6 @@
 #include "gui/frame.hpp"
 
 using namespace gui;
-using namespace std::chrono;
 
 #include "io/logging.hpp"
 #undef DEFAULT_LOGGER
@@ -72,7 +70,7 @@ Client::~Client() {
 
 void Client::run() {
 	LOG(INFO, "Running client");
-	time = my::time::get();
+	time = my::time::now();
 	int tick = 0;
 	while (!closeRequested) {
 		handleInput();
@@ -85,7 +83,7 @@ void Client::run() {
 		world->tick(tick, localClientID);
 		stopwatch->stop(CLOCK_TIC);
 #ifndef NO_GRAPHICS
-		if (my::time::get() < time + timeShift + my::time::seconds(1) / TICK_SPEED)
+		if (my::time::now() < time + timeShift + my::time::seconds(1) / TICK_SPEED)
 			graphics->tick();
 #endif
 

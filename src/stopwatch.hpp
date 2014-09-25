@@ -1,24 +1,21 @@
 #ifndef STOPWATCH_HPP
 #define STOPWATCH_HPP
 
-#include <chrono>
 #include <vector>
 #include <stack>
 
 #include "std_types.hpp"
+#include "time.hpp"
 
 class Stopwatch {
 public:
-	using dur_type = std::chrono::nanoseconds;
-	using time_point_type = std::chrono::time_point<std::chrono::high_resolution_clock>;
-
 	Stopwatch(size_t size);
 
 	void start(uint);
 	void stop(uint id = -1);
 
-	dur_type get(uint);
-	dur_type getTotal();
+	my::time::time_t get(uint);
+	my::time::time_t getTotal();
 	float getRel(uint);
 
 	void save();
@@ -26,14 +23,14 @@ public:
 private:
 
 	struct EntryType {
-		time_point_type start;
-		dur_type dur;
+		my::time::time_t start;
+		my::time::time_t dur;
 		float rel;
 	};
 
 	std::vector<EntryType> _clocks;
 	std::stack<uint> _stack;
-	dur_type _total;
+	my::time::time_t _total = 0;
 };
 
 #endif // STOPWATCH_HPP

@@ -10,12 +10,12 @@
 #include "world_generator.hpp"
 #include "game/world.hpp"
 
+#include "time.hpp"
 #include "logging.hpp"
 #undef DEFAULT_LOGGER
 #define DEFAULT_LOGGER NAMED_LOGGER("chunk")
 
 using namespace std;
-using namespace std::chrono;
 
 void ChunkLoader::run() {
 	LOG(INFO, "ChunkLoader thread dispatched");
@@ -27,7 +27,7 @@ void ChunkLoader::run() {
 	while (!shouldHalt.load(memory_order_seq_cst)) {
 		updateRenderDistance();
 		if (!loadNextChunks()) {
-			this_thread::sleep_for(milliseconds(100));
+			my::time::sleepFor(my::time::millis(100));
 		}
 		sendOffloadQueries();
 		storeChunksOnDisk();
@@ -101,7 +101,7 @@ void ChunkLoader::tryToLoadChunk(vec3i64 cc) {
 			chunk->initFaces();
 		while (!queue.push(chunk) && !shouldHalt.load(memory_order_seq_cst)) {
 			LOG(WARNING, "Output queue is full");
-			this_thread::sleep_for(milliseconds(100));
+			my::time::sleepFor(my::time::millis(100));
 		}
 	}
 }

@@ -1,12 +1,12 @@
 #include "stopwatch.hpp"
 #include "io/logging.hpp"
 
-using namespace std::chrono;
+using namespace my;
 
-Stopwatch::Stopwatch(size_t size) : _clocks(size), _total(dur_type::zero()) {
-	auto now = high_resolution_clock::now();
+Stopwatch::Stopwatch(size_t size) : _clocks(size) {
+	auto now = time::now();
 	for (EntryType &entry : _clocks) {
-		entry.dur = dur_type::zero();
+		entry.dur = 0;
 		entry.start = now;
 		entry.rel = 0.0;
 	}
@@ -14,7 +14,7 @@ Stopwatch::Stopwatch(size_t size) : _clocks(size), _total(dur_type::zero()) {
 }
 
 void Stopwatch::start(uint id) {
-	auto now = high_resolution_clock::now();
+	auto now = time::now();
 	if (!_stack.empty()) {
 		EntryType &old_entry = _clocks[_stack.top()];
 		old_entry.dur += now - old_entry.start;
@@ -37,7 +37,7 @@ void Stopwatch::stop(uint id) {
 		LOG(DEBUG, "Stopped clock " << _stack.top()
 				<< " but " << id << " given");
 	}
-	auto now = high_resolution_clock::now();
+	auto now = time::now();
 	EntryType &entry = _clocks[_stack.top()];
 	entry.dur += now - entry.start;
 	_total += now - entry.start;
@@ -48,11 +48,11 @@ void Stopwatch::stop(uint id) {
 	}
 }
 
-auto Stopwatch::get(uint id) -> dur_type {
+time_t Stopwatch::get(uint id) {
 	return _clocks[id].dur;
 }
 
-auto Stopwatch::getTotal() -> dur_type {
+time_t Stopwatch::getTotal() {
 	return _total;
 }
 
@@ -67,9 +67,9 @@ void Stopwatch::save() {
 	}
 
 	for (auto &clock: _clocks) {
-		clock.rel = (double) clock.dur.count() / _total.count();
-		clock.dur = dur_type::zero();
+		clock.rel = (double) clock.dur / _total;
+		clock.dur = 0;
 	}
 
-	_total = dur_type::zero();
+	_total = 0;
 }

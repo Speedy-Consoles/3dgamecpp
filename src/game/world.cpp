@@ -9,7 +9,7 @@
 #include <cstdio>
 
 
-World::World() : chunks(0, vec3i64HashFunc), dur_ticking(0) {
+World::World() : chunks(0, vec3i64HashFunc) {
 }
 
 World::~World() {
@@ -347,10 +347,4 @@ WorldSnapshot World::makeSnapshot(int tick) const {
 			snapshot.playerSnapshots[i] = players[i].makeSnapshot(tick);
 	}
 	return snapshot;
-}
-
-std::chrono::microseconds World::getTickingTime() {
-	auto dur = dur_ticking;
-	dur_ticking = std::chrono::microseconds::zero();
-	return dur;
 }
