@@ -30,9 +30,9 @@ CLIENT_OBJECT_FILES = \
 	world_generator.cpp.o
 
 SERVER_OBJECT_FILES = \
-	server/buffer.cpp.o\
 	server/server.cpp.o\
-	server/socket.cpp.o\
+	net/buffer.cpp.o\
+	net/socket.cpp.o\
 	game/chunk.cpp.o\
 	game/player.cpp.o\
 	game/world.cpp.o\
