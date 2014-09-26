@@ -31,6 +31,7 @@ public:
 	void wSeek(size_t pos) { _whead = _data + pos; }
 
 	void write(const char *data, size_t len);
+	void put(char data);
 
 	// reading
 	const char *rBegin() const { return _rhead; }
@@ -51,6 +52,7 @@ private:
 };
 
 Buffer &operator << (Buffer &lhs, const Buffer &rhs);
+Buffer &operator << (Buffer &lhs, const char *string);
 
 template <typename T>
 Buffer &operator << (Buffer &lhs, const T &rhs) {

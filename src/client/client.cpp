@@ -8,20 +8,49 @@
 #include "util.hpp"
 #include "constants.hpp"
 #include "local_server_interface.hpp"
+#include "remote_server_interface.hpp"
 #include "graphics.hpp"
 #include "config.hpp"
 #include "stopwatch.hpp"
 #include "time.hpp"
 #include "game/world.hpp"
 #include "menu.hpp"
-
 #include "gui/frame.hpp"
-
-using namespace gui;
-
 #include "io/logging.hpp"
+#include "net/socket.hpp"
+
 #undef DEFAULT_LOGGER
 #define DEFAULT_LOGGER NAMED_LOGGER("client")
+
+class Client {
+private:
+	ServerInterface *serverInterface = nullptr;
+	World *world = nullptr;
+	Menu *menu = nullptr;
+	gui::Frame *frame = nullptr;
+	Graphics *graphics = nullptr;
+	GraphicsConf *conf = nullptr;
+	Stopwatch *stopwatch = nullptr;
+
+	int localClientID;
+
+	my::time::time_t time = 0;
+	my::time::time_t timeShift = 0;
+
+	bool closeRequested = false;
+
+public:
+	Client(const Client &) = delete;
+	Client();
+	~Client();
+
+	void run();
+
+private:
+	void sync(int perSecond);
+
+	void handleInput();
+};
 
 int main(int argc, char *argv[]) {
 	initLogging("logging.conf");
@@ -36,7 +65,7 @@ int main(int argc, char *argv[]) {
 	return 0;
 }
 
-Client::Client(){
+Client::Client() {
 	stopwatch = new Stopwatch(CLOCK_ID_NUM);
 	stopwatch->start(CLOCK_ALL);
 
@@ -45,8 +74,8 @@ Client::Client(){
 
 	world = new World();
 
-	//serverInterface = RemoteServerInterface(args[0], world);
-	serverInterface = new LocalServerInterface(world, 42, *conf);
+	serverInterface = new RemoteServerInterface("localhost", *conf);
+	//serverInterface = new LocalServerInterface(world, 42, *conf);
 	localClientID = serverInterface->getLocalClientID();
 
 	menu = new Menu(conf);
@@ -75,26 +104,30 @@ void Client::run() {
 	while (!closeRequested) {
 		handleInput();
 
-		stopwatch->start(CLOCK_NET);
-		serverInterface->sendInput();
-		stopwatch->stop(CLOCK_NET);
+		if (serverInterface->getStatus() == ServerInterface::CONNECTED) {
+			stopwatch->start(CLOCK_NET);
+			serverInterface->sendInput();
+			stopwatch->stop(CLOCK_NET);
 
-		stopwatch->start(CLOCK_TIC);
-		world->tick(tick, localClientID);
-		stopwatch->stop(CLOCK_TIC);
+			stopwatch->start(CLOCK_TIC);
+			world->tick(tick, localClientID);
+			stopwatch->stop(CLOCK_TIC);
+		}
 #ifndef NO_GRAPHICS
 		if (my::time::now() < time + timeShift + my::time::seconds(1) / TICK_SPEED)
 			graphics->tick();
+
 #endif
+		if (serverInterface->getStatus() == ServerInterface::CONNECTED) {
+			stopwatch->start(CLOCK_NET);
+			serverInterface->receiveChunks(time + 200000);
+			stopwatch->stop(CLOCK_NET);
 
-		stopwatch->start(CLOCK_NET);
-		serverInterface->receive(time + 200000);
-		stopwatch->stop(CLOCK_NET);
-
-		stopwatch->start(CLOCK_SYN);
-		sync(TICK_SPEED);
-		stopwatch->stop(CLOCK_SYN);
-		tick++;
+			stopwatch->start(CLOCK_SYN);
+			sync(TICK_SPEED);
+			stopwatch->stop(CLOCK_SYN);
+			tick++;
+		}
 	}
 	serverInterface->stop();
 }

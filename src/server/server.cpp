@@ -22,8 +22,6 @@ using namespace my::net;
 #undef DEFAULT_LOGGER
 #define DEFAULT_LOGGER NAMED_LOGGER("server")
 
-static const uint8 MAGIC[4] = {0xaa, 0x0d, 0xbe, 0x15};
-
 struct Client {
 	bool connected;
 	udp::endpoint endpoint;
@@ -49,6 +47,8 @@ private:
 
 	// our listening socket
 	my::net::ios_t ios;
+	ios_t::work *w;
+	future<void> f;
 	my::net::Socket socket;
 
 public:
@@ -92,6 +92,7 @@ Server::Server(uint16 port) :
 	inBuf(1024*64),
 	outBuf(1024*64),
 	ios(),
+	w(new ios_t::work(ios)),
 	socket(ios)
 {
 	LOG(INFO, "Creating Server");
@@ -100,28 +101,37 @@ Server::Server(uint16 port) :
 		clients[i].connected = false;
 		clients[i].timeOfLastPacket = 0;
 	}
+
+	// TODO use returned error
+	socket.open();
+	socket.bind(udp::endpoint(udp::v4(), port));
+
+	auto err = socket.getSystemError();
+	if (err == asio::error::address_in_use) {
+		LOG(FATAL, "Port already in use");
+		return;
+	} else if (err) {
+		LOG(FATAL, "Unknown socket error!");
+		return;
+	}
+
+	// this will make sure our async_recv calls get handled
+	f = async(launch::async, [this]{ ios.run(); });
 }
 
 Server::~Server() {
 	delete world;
+
+	socket.close();
+	delete w;
+	if (f.valid())
+		f.get();
 }
 
 void Server::run() {
 	LOG(INFO, "Starting Server on port " << port);
 
 	time = my::time::now();
-
-	socket.open();
-	socket.bind(udp::endpoint(udp::v4(), port));
-
-	if (socket.getSystemError() == asio::error::address_in_use) {
-		LOG(FATAL, "Port already in use");
-		return;
-	}
-
-	// this will make sure our async_recv calls get handled
-	auto w = new asio::io_service::work(ios);
-	future<void> f = async(launch::async, [this]{ ios.run(); });
 
 	int tick = 0;
 	while (!closeRequested) {
@@ -150,10 +160,6 @@ void Server::run() {
 
 		checkInactive();
 	}
-
-	socket.close();
-	delete w;
-	f.get();
 }
 
 void Server::handle(const Buffer &buffer, const endpoint_t &endpoint) {
@@ -168,8 +174,10 @@ void Server::handle(const Buffer &buffer, const endpoint_t &endpoint) {
 	buffer >> header;
 
 	// checking magic
-	if (memcmp(header.magic, MAGIC, sizeof (header.magic)) != 0) {
-		LOG(DEBUG, "Incorrect magic");
+	if (!checkMagic(header)) {
+		char wrongMagic[12];
+		sprintf(wrongMagic, "%02x %02x %02x %02x", header.magic[0], header.magic[1], header.magic[2], header.magic[3]);
+		LOG(DEBUG, "Incorrect magic (" << wrongMagic << ")");
 		return;
 	}
 
@@ -208,12 +216,13 @@ void Server::handle(const Buffer &buffer, const endpoint_t &endpoint) {
 
 			outBuf.clear();
 			outBuf << MAGIC << CONNECTION_RESET;
-			switch (socket.send(outBuf, endpoint)) {
+			switch (socket.send(outBuf, &endpoint)) {
 			case Socket::OK:
 				break;
 			case Socket::SYSTEM_ERROR:
 				LOG(ERROR, "boost::asio error " << socket.getSystemError()
-						<< "while sending packet");
+						<< " while sending packet");
+				break;
 			default:
 				LOG(ERROR, "Unknown error while sending packet");
 			}
@@ -276,7 +285,7 @@ void Server::handleConnectionRequest(const endpoint_t &endpoint) {
 	}
 
 	// send response
-	socket.send(outBuf, endpoint);
+	socket.send(outBuf, &endpoint);
 }
 
 void Server::handleClientMessage(uint8 type, uint8 id, const Buffer &buffer) {
@@ -285,7 +294,7 @@ void Server::handleClientMessage(uint8 type, uint8 id, const Buffer &buffer) {
 	case ECHO_REQUEST: {
 		outBuf.clear();
 		outBuf << MAGIC << ECHO_RESPONSE << buffer;
-		socket.send(outBuf, clients[id].endpoint);
+		socket.send(outBuf, &clients[id].endpoint);
 		break;
 	}
 	default:
@@ -303,7 +312,7 @@ void Server::checkInactive() {
 
 			outBuf.clear();
 			outBuf << MAGIC << CONNECTION_TIMEOUT;
-			socket.send(outBuf, clients[id].endpoint);
+			socket.send(outBuf, &clients[id].endpoint);
 
 			disconnect(id);
 		}

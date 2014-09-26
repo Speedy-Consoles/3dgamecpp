@@ -15,7 +15,9 @@ private:
 public:
 	LocalServerInterface(World *world, uint64 seed, const GraphicsConf &conf);
 
-	virtual ~LocalServerInterface();
+	~LocalServerInterface();
+
+	Status getStatus() override;
 
 	void togglePlayerFly() override;
 
@@ -26,7 +28,7 @@ public:
 
 	void edit(vec3i64 bc, uint8 type) override;
 
-	void receive(uint64 timeLimit) override;
+	void receiveChunks(uint64 timeLimit) override;
 
 	void sendInput() override;
 

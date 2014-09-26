@@ -1,6 +1,10 @@
 #ifndef NET_HPP
 #define NET_HPP
 
+#include "std_types.hpp"
+
+static const uint8 MAGIC[4] = {0xaa, 0x0d, 0xbe, 0x15};
+
 enum ClientMessageType : uint8 {
 	CONNECTION_REQUEST,
 	ECHO_REQUEST,
@@ -36,5 +40,7 @@ struct ConnectionAcceptedResponse {
 struct ConnectionRejectedResponse {
 	uint8 reason;
 } __attribute__((__packed__ ));
+
+bool checkMagic(const MessageHeader &h);
 
 #endif // NET_HPP

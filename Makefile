@@ -6,10 +6,14 @@ CLIENT_OBJECT_FILES = \
 	client/config.cpp.o\
 	client/graphics.cpp.o\
 	client/local_server_interface.cpp.o\
+	client/remote_server_interface.cpp.o\
 	client/menu.cpp.o\
 	client/render.cpp.o\
 	client/render_menu.cpp.o\
 	client/texture_manager.cpp.o\
+	net/buffer.cpp.o\
+	net/socket.cpp.o\
+	net/net.cpp.o\
 	game/chunk.cpp.o\
 	game/player.cpp.o\
 	game/world.cpp.o\
@@ -33,6 +37,7 @@ SERVER_OBJECT_FILES = \
 	server/server.cpp.o\
 	net/buffer.cpp.o\
 	net/socket.cpp.o\
+	net/net.cpp.o\
 	game/chunk.cpp.o\
 	game/player.cpp.o\
 	game/world.cpp.o\
@@ -58,7 +63,7 @@ CLIENT_LDFLAGS = $(LDFLAGS)
 SERVER_LDFLAGS = $(LDFLAGS)
 #CXXFLAGS += -DNO_GRAPHICS
 
-CLIENT_LIBS_LD_FLAGS = -llog4cxx -lGL -lGLU -lGLEW -lftgl -lSDL2 -lSDL2_image
+CLIENT_LIBS_LD_FLAGS = -llog4cxx -lboost_system -lGL -lGLU -lGLEW -lftgl -lSDL2 -lSDL2_image
 SERVER_LIBS_LD_FLAGS = -llog4cxx -lboost_system
 
 DEBUG ?= 1

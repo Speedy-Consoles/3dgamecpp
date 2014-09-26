@@ -36,9 +36,10 @@ const error_t &Socket::getSystemError() const {
 	return _error;
 }
 
-void Socket::open() {
+Socket::ErrorCode Socket::open() {
 	_socket.open(udp::v4());
 	_socket.non_blocking(true, _error);
+	return _error ? SYSTEM_ERROR : OK;
 }
 
 void Socket::close() {
@@ -50,12 +51,14 @@ bool Socket::isOpen() const {
 	return _socket.is_open();
 }
 
-void Socket::connect(const endpoint_t &endpoint) {
+Socket::ErrorCode Socket::connect(const endpoint_t &endpoint) {
 	_socket.connect(endpoint, _error);
+	return _error ? SYSTEM_ERROR : OK;
 }
 
-void Socket::bind(const endpoint_t &endpoint) {
+Socket::ErrorCode Socket::bind(const endpoint_t &endpoint) {
 	_socket.bind(endpoint, _error);
+	return _error ? SYSTEM_ERROR : OK;
 }
 
 Socket::ErrorCode Socket::receive(
@@ -84,8 +87,12 @@ Socket::ErrorCode Socket::receiveNow(
 		Buffer *b, endpoint_t *e)
 {
 	if (!_recvFuture.valid()) {
-		auto buf = asio::buffer(b->wBegin(), b->wSize());
-		size_t bytesRead = _socket.receive_from(buf, *e, 0, _error);
+		auto buf = asio::buffer((void *) b->wBegin(), b->wSize());
+		size_t bytesRead;
+		if (e)
+			bytesRead = _socket.receive_from(buf, *e, 0, _error);
+		else
+			bytesRead = _socket.receive(buf, 0, _error);
 
 		if (!_error) {
 			b->wSeekRel(bytesRead);
@@ -141,18 +148,22 @@ Socket::ErrorCode Socket::receiveUntil(
 void Socket::startAsyncReceive(Buffer *b, endpoint_t *e) {
 	_recvPromise = std::promise<error_t>();
 	_recvFuture = _recvPromise.get_future();
-	auto buf = asio::buffer(b->wBegin(), b->wSize());
-	_socket.async_receive_from(buf, *e, [this, b](const error_t &err, size_t size)
-	{
+	auto buf = asio::buffer((void *) b->wBegin(), b->wSize());
+	auto lambda = [this, b](const error_t &err, size_t size) {
 		if (!err) {
 			b->wSeekRel(size);
 		}
 		_recvPromise.set_value(err);
-	});
+	};
+	if (e) {
+		_socket.async_receive_from(buf, *e, lambda);
+	} else {
+		_socket.async_receive(buf, lambda);
+	}
 }
 
 Socket::ErrorCode Socket::send(
-		const Buffer &b, const endpoint_t &e)
+		const Buffer &b, const endpoint_t *e)
 {
 	// try to send packet synchronously
 	switch (sendNow(b, e)) {
@@ -174,11 +185,15 @@ Socket::ErrorCode Socket::send(
 }
 
 Socket::ErrorCode Socket::sendNow(
-		const Buffer &b, const endpoint_t &e)
+		const Buffer &b, const endpoint_t *e)
 {
 	if (!_sendFuture.valid()) {
-		auto buf = asio::buffer(b.rBegin(), b.rSize());
-		size_t bytesSent = _socket.send_to(buf, e, 0, _error);
+		auto buf = asio::buffer((const void *) b.rBegin(), b.rSize());
+		size_t bytesSent;
+		if (e)
+			bytesSent = _socket.send_to(buf, *e, 0, _error);
+		else
+			bytesSent = _socket.send(buf, 0, _error);
 
 		if (!_error) {
 			b.rSeekRel(bytesSent);
@@ -195,7 +210,7 @@ Socket::ErrorCode Socket::sendNow(
 }
 
 Socket::ErrorCode Socket::sendFor(
-		const Buffer &b, const endpoint_t &e, uint64 duration)
+		const Buffer &b, const endpoint_t *e, uint64 duration)
 {
 	// try to send packet synchronously
 	switch (sendNow(b, e)) {
@@ -225,25 +240,28 @@ Socket::ErrorCode Socket::sendFor(
 }
 
 Socket::ErrorCode Socket::sendUntil(
-		const Buffer &b, const endpoint_t &e, uint64 time)
+		const Buffer &b, const endpoint_t *e, uint64 time)
 {
 	time_t now = my::time::now();
 	return sendFor(b, e, time - now);
 }
 
 void Socket::startAsyncSend(
-		const Buffer &b, const endpoint_t &e)
+		const Buffer &b, const endpoint_t *e)
 {
 	_sendPromise = std::promise<error_t>();
 	_sendFuture = _sendPromise.get_future();
-	auto buf = asio::buffer(b.rBegin(), b.rSize());
-	_socket.async_send_to(buf, e, [this, &b](const error_t &err, size_t size)
-	{
+	auto buf = asio::buffer((const void *) b.rBegin(), b.rSize());
+	auto lambda = [this, &b](const error_t &err, size_t size) {
 		if (!err) {
 			b.rSeekRel(size);
 		}
 		_sendPromise.set_value(err);
-	});
+	};
+	if (e)
+		_socket.async_send_to(buf, *e, lambda);
+	else
+		_socket.async_send(buf, lambda);
 }
 
 }} // namespace my::net

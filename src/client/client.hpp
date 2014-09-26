@@ -4,17 +4,6 @@
 #include "std_types.hpp"
 #include "time.hpp"
 
-class ServerInterface;
-class World;
-class Menu;
-class Graphics;
-class GraphicsConf;
-class Stopwatch;
-
-namespace gui {
-	class Frame;
-}
-
 enum ClockId {
 	CLOCK_CLR,
 	CLOCK_NDL,
@@ -31,36 +20,6 @@ enum ClockId {
 	CLOCK_ALL,
 
 	CLOCK_ID_NUM
-};
-
-class Client {
-private:
-	ServerInterface *serverInterface = nullptr;
-	World *world = nullptr;
-	Menu *menu = nullptr;
-	gui::Frame *frame = nullptr;
-	Graphics *graphics = nullptr;
-	GraphicsConf *conf = nullptr;
-	Stopwatch *stopwatch = nullptr;
-
-	int localClientID;
-
-	my::time::time_t time = 0;
-	my::time::time_t timeShift = 0;
-
-	bool closeRequested = false;
-
-public:
-	Client(const Client &) = delete;
-	Client();
-	~Client();
-
-	void run();
-
-private:
-	void sync(int perSecond);
-
-	void handleInput();
 };
 
 #endif // CLIENT_HPP

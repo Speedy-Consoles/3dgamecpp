@@ -18,6 +18,10 @@ LocalServerInterface::~LocalServerInterface() {
 	delete chunkLoader;
 }
 
+ServerInterface::Status LocalServerInterface::getStatus() {
+	return CONNECTED;
+}
+
 void LocalServerInterface::togglePlayerFly() {
 	// TODO move this to client.cpp
 	if (!world->isPaused())
@@ -42,7 +46,7 @@ void LocalServerInterface::edit(vec3i64 bc, uint8 type) {
 		world->setBlock(bc, type, true);
 }
 
-void LocalServerInterface::receive(uint64 timeLimit) {
+void LocalServerInterface::receiveChunks(uint64 timeLimit) {
 	Chunk *chunk = nullptr;
 	while ((chunk = chunkLoader->getNextLoadedChunk()) != nullptr) {
 		world->insertChunk(chunk);

@@ -6,7 +6,20 @@
 
 class ServerInterface {
 public:
+	enum Status {
+		NOT_CONNECTED,
+		RESOLVING,
+		COULD_NOT_RESOLVE,
+		CONNECTING,
+		SERVER_FULL,
+		TIMEOUT,
+		UNKNOWN_ERROR,
+		CONNECTED,
+	};
+
 	virtual ~ServerInterface() {}
+
+	virtual Status getStatus() = 0;
 
 	virtual void togglePlayerFly() = 0;
 	virtual void setPlayerMoveInput(int moveInput) = 0;
@@ -15,7 +28,7 @@ public:
 
 	virtual void edit(vec3i64 block, uint8 type) = 0;
 
-	virtual void receive(uint64 timeLimit) = 0;
+	virtual void receiveChunks(uint64 timeLimit) = 0;
 
 	virtual void sendInput() = 0;
 

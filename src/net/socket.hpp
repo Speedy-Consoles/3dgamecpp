@@ -40,23 +40,27 @@ public:
 
 	const error_t &getSystemError() const;
 
-	void open();
+	ErrorCode open();
 	void close();
 
 	bool isOpen() const;
 
-	void connect(const endpoint_t &endpoint);
-	void bind(const endpoint_t &endpoint);
+	ErrorCode connect(const endpoint_t &endpoint);
+	ErrorCode bind(const endpoint_t &endpoint);
 
-	ErrorCode receive(Buffer *, endpoint_t *);
-	ErrorCode receiveNow(Buffer *, endpoint_t *);
+	ErrorCode receive(Buffer *, endpoint_t * = nullptr);
+	ErrorCode receiveNow(Buffer *, endpoint_t * = nullptr);
 	ErrorCode receiveFor(Buffer *, endpoint_t *, uint64 duration);
+	ErrorCode receiveFor(Buffer *buf, uint64 duration) {return receiveFor(buf, nullptr, duration);}
 	ErrorCode receiveUntil(Buffer *, endpoint_t *, uint64 time);
+	ErrorCode receiveUntil(Buffer *buf, uint64 time) {return receiveUntil(buf, nullptr, time);}
 
-	ErrorCode send(const Buffer &, const endpoint_t &);
-	ErrorCode sendNow(const Buffer &, const endpoint_t &);
-	ErrorCode sendFor(const Buffer &, const endpoint_t &, uint64 duration);
-	ErrorCode sendUntil(const Buffer &, const endpoint_t &, uint64 time);
+	ErrorCode send(const Buffer &, const endpoint_t * = nullptr);
+	ErrorCode sendNow(const Buffer &, const endpoint_t * = nullptr);
+	ErrorCode sendFor(const Buffer &, const endpoint_t *, uint64 duration);
+	ErrorCode sendFor(const Buffer &buf, uint64 duration) {return sendFor(buf, nullptr, duration);}
+	ErrorCode sendUntil(const Buffer &, const endpoint_t *, uint64 time);
+	ErrorCode sendUntil(const Buffer &buf, uint64 time) {return sendUntil(buf, nullptr, time);}
 
 private:
 	socket_t _socket;
@@ -69,7 +73,7 @@ private:
 	std::promise<error_t> _sendPromise;
 
 	void startAsyncReceive(Buffer *, endpoint_t *);
-	void startAsyncSend(const Buffer &, const endpoint_t &);
+	void startAsyncSend(const Buffer &, const endpoint_t *);
 };
 
 }} // namespace my::net
