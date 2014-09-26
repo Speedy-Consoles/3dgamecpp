@@ -65,57 +65,52 @@ void RemoteServerInterface::asyncConnect(std::string address) {
 
 		socket.connect(udp::endpoint(ep.address(), 8547));
 
+		// TODO make connecting more error tolerant
+		ClientMessage cmsg;
+		cmsg.type = CONNECTION_REQUEST;
 		outBuf.clear();
-		outBuf << MAGIC << CONNECTION_REQUEST;
+		outBuf << cmsg;
 		socket.send(outBuf);
 
-		// TODO make more error tolerant
 		inBuf.clear();
 		switch (socket.receiveFor(&inBuf, timeout)) {
 		case Socket::OK:
 		{
-			MessageHeader header;
-			if (inBuf.rSize() < sizeof (MessageHeader)) {
-				LOG(DEBUG, "Message too short for basic protocol header");
-				return;
-			}
-			inBuf >> header;
-			if (!checkMagic(header)) {
-				LOG(DEBUG, "Incorrect magic");
-				return;
-			}
-
-			switch (header.type) {
+			ServerMessage smsg;
+			inBuf >> smsg;
+			switch (smsg.type) {
 			case CONNECTION_ACCEPTED:
-				if (inBuf.rSize() < sizeof (ConnectionAcceptedResponse)) {
-					LOG(DEBUG, "Message stopped abruptly");
-					return;
-				}
-				ConnectionAcceptedResponse msg;
-				inBuf >> msg;
-				localPlayerId = msg.id;
-				token = msg.token;
+				localPlayerId = smsg.conAccepted.id;
 				status = CONNECTED;
 				LOG(INFO, "Connected to " << ep.address().to_string());
-				return;
+				break;
 			case CONNECTION_REJECTED:
-			{
-				if (inBuf.rSize() < sizeof (ConnectionRejectedResponse)) {
-					LOG(DEBUG, "Message stopped abruptly");
-					return;
-				}
-				ConnectionRejectedResponse msg;
-				inBuf >> msg;
-				if (msg.reason == SERVER_FULL) {
+				if (smsg.conRejected.reason == FULL) {
 					status = SERVER_FULL;
-					return;
+					break;
 				} else {
-					status = UNKNOWN_ERROR;
-					return;
+					status = CONNECTION_ERROR;
+					break;
 				}
-			}
+			case MALFORMED_SERVER_MESSAGE:
+				switch (smsg.malformed.error) {
+				case MESSAGE_TOO_SHORT:
+					LOG(DEBUG, "Message too short");
+					status = CONNECTION_ERROR;
+					break;
+				case WRONG_MAGIC:
+					LOG(DEBUG, "Incorrect magic");
+					status = CONNECTION_ERROR;
+					break;
+				default:
+					LOG(DEBUG, "Unknown error reading message");
+					status = CONNECTION_ERROR;
+					break;
+				}
+				break;
 			default:
 				LOG(DEBUG, "Unexpected message");
+				status = CONNECTION_ERROR;
 				return;
 			}
 			break;
@@ -125,7 +120,7 @@ void RemoteServerInterface::asyncConnect(std::string address) {
 			LOG(INFO, "Connection to " << ep.address().to_string() << " timed out");
 			break;
 		default:
-			status = UNKNOWN_ERROR;
+			status = CONNECTION_ERROR;
 			LOG(ERROR, "Error while connecting");
 			break;
 		}
@@ -170,8 +165,10 @@ void RemoteServerInterface::receiveChunks(uint64 timeLimit) {
 void RemoteServerInterface::sendInput() {
 	if (status != CONNECTED)
 		return;
+	ClientMessage cmsg;
+	cmsg.type = ECHO_REQUEST;
 	outBuf.clear();
-	outBuf << MAGIC << ECHO_REQUEST << token << "wurst" << '\0';
+	outBuf << cmsg << "wurst" << '\0';
 	socket.send(outBuf);
 }
 

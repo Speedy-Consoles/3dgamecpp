@@ -122,12 +122,12 @@ void Client::run() {
 			stopwatch->start(CLOCK_NET);
 			serverInterface->receiveChunks(time + 200000);
 			stopwatch->stop(CLOCK_NET);
-
-			stopwatch->start(CLOCK_SYN);
-			sync(TICK_SPEED);
-			stopwatch->stop(CLOCK_SYN);
-			tick++;
 		}
+
+		stopwatch->start(CLOCK_SYN);
+		sync(TICK_SPEED);
+		stopwatch->stop(CLOCK_SYN);
+		tick++;
 	}
 	serverInterface->stop();
 }

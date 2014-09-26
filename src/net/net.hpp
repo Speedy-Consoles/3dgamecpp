@@ -2,15 +2,23 @@
 #define NET_HPP
 
 #include "std_types.hpp"
+#include "buffer.hpp"
 
 static const uint8 MAGIC[4] = {0xaa, 0x0d, 0xbe, 0x15};
 
+enum MessageError : uint8 {
+	MESSAGE_TOO_SHORT,
+	WRONG_MAGIC,
+};
+
 enum ClientMessageType : uint8 {
+	MALFORMED_CLIENT_MESSAGE,
 	CONNECTION_REQUEST,
 	ECHO_REQUEST,
 };
 
 enum ServerMessageType : uint8 {
+	MALFORMED_SERVER_MESSAGE,
 	CONNECTION_ACCEPTED,
 	CONNECTION_REJECTED,
 	CONNECTION_TIMEOUT,
@@ -18,29 +26,32 @@ enum ServerMessageType : uint8 {
 	ECHO_RESPONSE,
 };
 
-enum ConnectionRejectionReason : uint8 {
-	SERVER_FULL,
+enum RejectionReason : uint8 {
+	FULL,
 	DUPLICATE_ENDPOINT,
 };
 
-struct MessageHeader {
-	uint8 magic[4];
-	uint8 type;
-} __attribute__((__packed__ ));
+union ServerMessage {
+	ServerMessageType type;
+	struct { ServerMessageType type; MessageError error; } malformed;
+	struct { ServerMessageType type; uint8 id; } conAccepted;
+	struct { ServerMessageType type; RejectionReason reason; } conRejected;
+	struct { ServerMessageType type; } conTimeout;
+	struct { ServerMessageType type; } conReset;
+	struct { ServerMessageType type; } echoResp;
+};
 
-struct ClientMessageHeader {
-	uint32 token;
-} __attribute__((__packed__ ));
+union ClientMessage {
+	ClientMessageType type;
+	struct { ClientMessageType type; MessageError error; } malformed;
+	struct { ClientMessageType type; } conRequest;
+	struct { ClientMessageType type; } echoRequest;
+};
 
-struct ConnectionAcceptedResponse {
-	uint8 id;
-	uint32 token;
-} __attribute__((__packed__ ));
+Buffer &operator << (Buffer &lhs, const ServerMessage &rhs);
+const Buffer &operator >> (const Buffer &lhs, ServerMessage &rhs);
 
-struct ConnectionRejectedResponse {
-	uint8 reason;
-} __attribute__((__packed__ ));
-
-bool checkMagic(const MessageHeader &h);
+Buffer &operator << (Buffer &lhs, const ClientMessage &rhs);
+const Buffer &operator >> (const Buffer &lhs, ClientMessage &rhs);
 
 #endif // NET_HPP

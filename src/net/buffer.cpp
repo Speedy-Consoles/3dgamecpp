@@ -58,13 +58,15 @@ void Buffer::read(char *data, size_t len) const {
 }
 
 Buffer &operator << (Buffer &lhs, const Buffer &rhs) {
-	lhs.write(rhs.rBegin(), rhs.rSize());
-	rhs.rSeekRel(rhs.rSize());
+	if (lhs.wSize() > rhs.rSize()) {
+		lhs.write(rhs.rBegin(), rhs.rSize());
+		rhs.rSeekRel(rhs.rSize());
+	}
 	return lhs;
 }
 
 Buffer &operator << (Buffer &lhs, const char *string) {
-	while (*string != '\0') {
+	while (lhs.wSize() > 0 && *string != '\0') {
 		lhs.put(*string++);
 	}
 	return lhs;
