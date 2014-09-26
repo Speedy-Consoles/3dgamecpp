@@ -56,15 +56,15 @@ Buffer &operator << (Buffer &lhs, const char *string);
 
 template <typename T>
 Buffer &operator << (Buffer &lhs, const T &rhs) {
-	auto ptr = reinterpret_cast<const char *>(&rhs);
-	lhs.write(ptr, sizeof (T));
+	if (lhs.wSize() >= sizeof (T))
+		lhs.write(reinterpret_cast<const char *>(&rhs), sizeof (T));
 	return lhs;
 }
 
 template <typename T>
 const Buffer &operator >> (const Buffer &lhs, T &rhs) {
-	auto ptr = reinterpret_cast<char *>(&rhs);
-	lhs.read(ptr, sizeof (T));
+	if (lhs.rSize() >= sizeof (T))
+		lhs.read(reinterpret_cast<char *>(&rhs), sizeof (T));
 	return lhs;
 }
 

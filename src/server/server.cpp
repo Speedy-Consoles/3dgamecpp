@@ -36,7 +36,6 @@ private:
 
 	Client clients[MAX_CLIENTS];
 
-	uint16 port = 0;
 	time_t timeout = my::time::seconds(10); // 10 seconds
 
 	Buffer inBuf;
@@ -58,11 +57,11 @@ public:
 	void run();
 
 private:
-	void handle(const Buffer &, const endpoint_t &);
+	void handleMessage(const endpoint_t &);
 	void checkInactive();
 
 	void handleConnectionRequest(const endpoint_t &);
-	void handleClientMessage(uint8 type, uint8 id, const Buffer &);
+	void handleClientMessage(const ClientMessage &cmsg, uint8 id);
 
 	void disconnect(uint8 id);
 };
@@ -70,7 +69,6 @@ private:
 int main(int argc, char *argv[]) {
 	initLogging("logging_srv.conf");
 
-	LOG(INFO, "Starting server");
 	LOG(TRACE, "Trace enabled");
 
 	initUtil();
@@ -88,7 +86,6 @@ int main(int argc, char *argv[]) {
 }
 
 Server::Server(uint16 port) :
-	port(port),
 	inBuf(1024*64),
 	outBuf(1024*64),
 	ios(),
@@ -102,18 +99,8 @@ Server::Server(uint16 port) :
 		clients[i].timeOfLastPacket = 0;
 	}
 
-	// TODO use returned error
 	socket.open();
 	socket.bind(udp::endpoint(udp::v4(), port));
-
-	auto err = socket.getSystemError();
-	if (err == asio::error::address_in_use) {
-		LOG(FATAL, "Port already in use");
-		return;
-	} else if (err) {
-		LOG(FATAL, "Unknown socket error!");
-		return;
-	}
 
 	// this will make sure our async_recv calls get handled
 	f = async(launch::async, [this]{ ios.run(); });
@@ -129,19 +116,29 @@ Server::~Server() {
 }
 
 void Server::run() {
-	LOG(INFO, "Starting Server on port " << port);
+	LOG(INFO, "Starting server");
+
+	auto err = socket.getSystemError();
+	if (err == asio::error::address_in_use) {
+		LOG(FATAL, "Port already in use");
+		return;
+	} else if (err) {
+		LOG(FATAL, "Unknown socket error!");
+		return;
+	}
 
 	time = my::time::now();
 
 	int tick = 0;
 	while (!closeRequested) {
 		time_t remTime;
+		inBuf.clear();
 		while ((remTime = time - now() + seconds(1) / TICK_SPEED) > 0) {
-			inBuf.clear();
 			endpoint_t endpoint;
 			switch (socket.receiveFor(&inBuf, &endpoint, remTime)) {
 			case Socket::OK:
-				handle(inBuf, endpoint);
+				handleMessage(endpoint);
+				inBuf.clear();
 				break;
 			case Socket::TIMEOUT:
 				break;
@@ -162,60 +159,47 @@ void Server::run() {
 	}
 }
 
-void Server::handle(const Buffer &buffer, const endpoint_t &endpoint) {
-	LOG(TRACE, "Received message of length " << buffer.rSize());
+void Server::handleMessage(const endpoint_t &endpoint) {
+	LOG(TRACE, "Received message of length " << inBuf.rSize());
 
-	MessageHeader header;
-	if (buffer.rSize() < sizeof (MessageHeader)) {
-		LOG(DEBUG, "Message too short for basic protocol header");
-		return;
-	}
-
-	buffer >> header;
-
-	// checking magic
-	if (!checkMagic(header)) {
-		char wrongMagic[12];
-		sprintf(wrongMagic, "%02x %02x %02x %02x", header.magic[0], header.magic[1], header.magic[2], header.magic[3]);
-		LOG(DEBUG, "Incorrect magic (" << wrongMagic << ")");
-		return;
-	}
-
-	if (header.type == CONNECTION_REQUEST) {
+	ClientMessage cmsg;
+	inBuf >> cmsg;
+	switch (cmsg.type) {
+	case MALFORMED_CLIENT_MESSAGE:
+		switch (cmsg.malformed.error) {
+		case MESSAGE_TOO_SHORT:
+			LOG(DEBUG, "Message too short");
+			break;
+		case WRONG_MAGIC:
+			LOG(DEBUG, "Incorrect magic");
+			break;
+		default:
+			LOG(DEBUG, "Unknown error reading message");
+			break;
+		}
+		break;
+	case CONNECTION_REQUEST:
 		handleConnectionRequest(endpoint);
-	} else {
-		int player = -1;
-		for (int id = 0; id < (int) MAX_CLIENTS; ++id) {
-			if (clients[id].endpoint == endpoint) {
-				player =  id;
+		break;
+	default:
+		uint8 id = -1;
+		for (int i = 0; i < (int) MAX_CLIENTS; ++i) {
+			if (clients[i].connected && clients[i].endpoint == endpoint) {
+				id = i;
 				break;
 			}
 		}
 
-		if (player >= 0 && clients[player].connected) {
-			uint8 id = player;
-
-			ClientMessageHeader message;
-			if (buffer.rSize() < sizeof (ClientMessageHeader)) {
-				LOG(DEBUG, "Message stopped abruptly");
-				return;
-			}
-
-			buffer >> message;
-
-			if (clients[id].token != message.token) {
-				LOG(DEBUG, "Invalid token for Player " << (int) id);
-				return;
-			}
-
+		if (id >= 0) {
 			clients[id].timeOfLastPacket = my::time::now();
-
-			handleClientMessage(header.type, id, buffer);
+			handleClientMessage(cmsg, id);
 		} else {
 			LOG(DEBUG, "Unknown remote address");
 
+			ServerMessage smsg;
+			smsg.type = CONNECTION_RESET;
 			outBuf.clear();
-			outBuf << MAGIC << CONNECTION_RESET;
+			outBuf << smsg;
 			switch (socket.send(outBuf, &endpoint)) {
 			case Socket::OK:
 				break;
@@ -225,16 +209,15 @@ void Server::handle(const Buffer &buffer, const endpoint_t &endpoint) {
 				break;
 			default:
 				LOG(ERROR, "Unknown error while sending packet");
+				break;
 			}
 		}
+		break;
 	}
 }
 
 void Server::handleConnectionRequest(const endpoint_t &endpoint) {
-	LOG(INFO, "New connection from IP "
-			<< endpoint.address().to_string()
-			<< " and port " << endpoint.port()
-	);
+	LOG(INFO, "New connection from " << endpoint.address().to_string() << ":" << endpoint.port());
 
 	// find a free spot for the new player
 	int newPlayer = -1;
@@ -243,57 +226,49 @@ void Server::handleConnectionRequest(const endpoint_t &endpoint) {
 		bool connected = clients[i].connected;
 		if (newPlayer == -1 && !connected) {
 			newPlayer = i;
-		}
-		if (connected && clients[i].endpoint == endpoint) {
+		} else if (connected && clients[i].endpoint == endpoint) {
 			duplicate = i;
+			break;
 		}
 	}
 
 	// check for problems
-	bool failure = false;
-	uint8 reason;
-	if (newPlayer == -1) {
-		LOG(INFO, "Server is full");
-		failure = true;
-		reason = SERVER_FULL;
-	} else if (duplicate != -1) {
+	ServerMessage smsg;
+	if (duplicate != -1) {
 		LOG(INFO, "Duplicate remote endpoint with player " << duplicate);
-		failure = true;
-		reason = DUPLICATE_ENDPOINT;
-	}
-
-	// build response
-	outBuf.clear();
-	if (!failure) {
+		smsg.type = CONNECTION_REJECTED;
+		smsg.conRejected.reason = DUPLICATE_ENDPOINT;
+	} else if (newPlayer == -1) {
+		LOG(INFO, "Server is full");
+		smsg.type = CONNECTION_REJECTED;
+		smsg.conRejected.reason = FULL;
+	} else {
 		uint8 id = (uint) newPlayer;
-		uint32 token = 0; //TODO
 
 		clients[id].connected = true;
 		clients[id].endpoint = endpoint;
-		clients[id].token = token;
 		clients[id].timeOfLastPacket = my::time::now();
 
-		ConnectionAcceptedResponse msg;
-		msg.token = token;
-		msg.id = id;
-		outBuf << MAGIC << CONNECTION_ACCEPTED << msg;
-		LOG(INFO, "Player " << (int) id << " connected with token " << token);
-	} else {
-		ConnectionRejectedResponse msg;
-		msg.reason = reason;
-		outBuf << MAGIC << CONNECTION_REJECTED << msg;
+		smsg.type = CONNECTION_ACCEPTED;
+		smsg.conAccepted.id = id;
+		LOG(INFO, "New Player " << (int) id);
 	}
 
 	// send response
+	outBuf.clear();
+	outBuf << smsg;
 	socket.send(outBuf, &endpoint);
 }
 
-void Server::handleClientMessage(uint8 type, uint8 id, const Buffer &buffer) {
-	LOG(TRACE, "Message " << (int) type << " for Player " << (int) id << " accepted");
-	switch (type) {
-	case ECHO_REQUEST: {
+void Server::handleClientMessage(const ClientMessage &cmsg, uint8 id) {
+	LOG(TRACE, "Message " << (int) cmsg.type << " for Player " << (int) id << " accepted");
+	switch (cmsg.type) {
+	case ECHO_REQUEST:
+	{
+		ServerMessage smsg;
+		smsg.type = ECHO_RESPONSE;
 		outBuf.clear();
-		outBuf << MAGIC << ECHO_RESPONSE << buffer;
+		outBuf << smsg << inBuf;
 		socket.send(outBuf, &clients[id].endpoint);
 		break;
 	}
@@ -303,6 +278,7 @@ void Server::handleClientMessage(uint8 type, uint8 id, const Buffer &buffer) {
 }
 
 void Server::checkInactive() {
+	return;
 	for (uint8 id = 0; id < MAX_CLIENTS; ++id) {
 		if (!clients[id].connected)
 			continue;
@@ -310,8 +286,10 @@ void Server::checkInactive() {
 		if (my::time::now() - clients[id].timeOfLastPacket > timeout) {
 			LOG(INFO, "Player " << (int) id << " timed out");
 
+			ServerMessage smsg;
+			smsg.type = CONNECTION_TIMEOUT;
 			outBuf.clear();
-			outBuf << MAGIC << CONNECTION_TIMEOUT;
+			outBuf << smsg;
 			socket.send(outBuf, &clients[id].endpoint);
 
 			disconnect(id);

@@ -14,7 +14,6 @@ class RemoteServerInterface : public ServerInterface {
 private:
 	GraphicsConf conf;
 	uint8 localPlayerId;
-	uint32 token;
 
 	my::time::time_t timeout = my::time::seconds(10); // 10 seconds
 
