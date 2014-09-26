@@ -21,6 +21,12 @@ struct SDL_Surface;
 
 class TextureManager {
 public:
+	enum TextureType {
+		SINGLE_TEXTURE,
+		TEXTURE_ATLAS,
+		WANG_TILES,
+	};
+
 	TextureManager(const GraphicsConf &);
 	~TextureManager();
 
@@ -30,14 +36,14 @@ public:
 	TextureManager &operator = (const TextureManager &) = delete;
 	TextureManager &operator = (TextureManager &&) = delete;
 
-	//GLuint loadAtlas(const char *filename, int xTiles, int yTiles, uint *blocks);
-	void loadTextures(const char *filename, int xTiles, int yTiles, uint *blocks);
-	GLuint loadTexture(const char *filename, uint block);
+	void loadTextures(uint *blocks, const char *filename, int xTiles, int yTiles);
+	GLuint loadTexture(uint block, const char *filename, TextureType type = SINGLE_TEXTURE);
 
 	void setConfig(const GraphicsConf &);
-	void reloadAll();
 
-	void bind(uint block);
+	void bind(uint block, GLenum primitive) { bind(block, primitive, true); }
+	void bind(uint block) { bind(block, 0, false); }
+	bool isWangTileBound() const;
 
 private:
 	GraphicsConf conf;
@@ -45,19 +51,16 @@ private:
 	struct Entry {
 		uint block;
 		GLuint tex;
+		TextureType type;
 		float x, y, w, h;
 	};
 	std::unordered_map<uint, Entry> textures;
-	Entry lastBound = Entry{0, 0, 0, 0, 0, 0};
+	Entry lastBound = Entry{0, 0, SINGLE_TEXTURE, 0, 0, 0};
 
 	std::list<GLuint> loadedTextures;
 
-	struct DictEntry {
-		std::string path;
-		int xTiles, yTiles;
-		uint *blocks;
-	};
-	std::vector<DictEntry> dictionary;
+	void bind(uint block, GLenum primitive, bool endPrimitive);
+	GLuint loadTexture(uint block, SDL_Surface *, TextureType type);
 };
 
 #endif // TEXTURE_MANAGER_HPP_

@@ -74,8 +74,8 @@ Client::Client() {
 
 	world = new World();
 
-	serverInterface = new RemoteServerInterface("localhost", *conf);
-	//serverInterface = new LocalServerInterface(world, 42, *conf);
+	//serverInterface = new RemoteServerInterface("localhost", *conf);
+	serverInterface = new LocalServerInterface(world, 42, *conf);
 	localClientID = serverInterface->getLocalClientID();
 
 	menu = new Menu(conf);
@@ -146,7 +146,7 @@ void Client::handleInput() {
 		case SDL_MOUSEWHEEL: {
 			auto block = player.getBlock();
 			block += event.wheel.y;
-			static const int NUMBER_OF_BLOCKS = 33;
+			static const int NUMBER_OF_BLOCKS = 35;
 			while (block > NUMBER_OF_BLOCKS) {
 				block -= NUMBER_OF_BLOCKS;
 			}

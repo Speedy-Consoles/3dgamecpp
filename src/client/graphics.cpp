@@ -170,7 +170,6 @@ void Graphics::initGL() {
 
 	// textures
 	LOG(DEBUG, "Loading textures");
-	//texManager.loadTexture("img/block.png", 1);
 	uint blocks[] = {
 		 1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15, 16,
 		17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32,
@@ -189,13 +188,9 @@ void Graphics::initGL() {
 		 0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
 		 0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
 	};
-	texManager.loadTextures("img/textures_1.png", 16, 16, blocks);
-	//texManager.loadTexture("img/textures_1.png", 34);
-
-//	glGenTextures(1, &noTexture);
-//	glBindTexture(GL_TEXTURE_2D, noTexture);
-//	const uint8 white[4] = {255, 255, 255, 255};
-//	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 1, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, &white);
+	texManager.loadTextures(blocks, "img/textures_1.png", 16, 16);
+	texManager.loadTexture(34, "img/diff_earth.png", TextureManager::WANG_TILES);
+	texManager.loadTexture(35, "img/wang_test.png", TextureManager::WANG_TILES);
 
 	// shader
 //	program = loadProgram(
