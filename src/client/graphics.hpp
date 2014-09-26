@@ -138,13 +138,15 @@ private:
 
 	void renderMenu();
 
-	void renderScene(const Player &);
-	void renderHud(const Player &);
-	void renderDebugInfo(const Player &);
-	void renderPerformance();
+	void renderScene();
+	void renderSky();
 	void renderChunks();
 	int renderChunk(const Chunk &c);
 	void renderPlayers();
+
+	void renderHud(const Player &);
+	void renderDebugInfo(const Player &);
+	void renderPerformance();
 
 	bool inFrustum(vec3i64 cc, vec3i64 pos, vec3d lookDir);
 

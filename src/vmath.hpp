@@ -135,9 +135,11 @@ using vec3i = vec<int, 3>;
 using vec3i8 = vec<int8, 3>;
 using vec3ui8 = vec<uint8, 3>;
 using vec3i64 = vec<int64, 3>;
+using vec3f = vec<float, 3>;
 using vec3d = vec<double, 3>;
 
 using vec2i = vec<int, 2>;
+using vec2f = vec<float, 2>;
 using vec2d = vec<double, 2>;
 
 #endif // VMATH_HPP

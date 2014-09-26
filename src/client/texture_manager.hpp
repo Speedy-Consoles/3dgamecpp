@@ -41,9 +41,12 @@ public:
 
 	void setConfig(const GraphicsConf &);
 
-	void bind(uint block, GLenum primitive) { bind(block, primitive, true); }
-	void bind(uint block) { bind(block, 0, false); }
 	bool isWangTileBound() const;
+
+	bool bind(uint block);
+	GLuint getTexture();
+	void getTextureVertices(vec2f out[4]) const;
+	void getTextureVertices(vec3i64 bc, uint8 dir, vec2f out[4]) const;
 
 private:
 	GraphicsConf conf;
