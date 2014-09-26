@@ -132,12 +132,13 @@ void Server::run() {
 	int tick = 0;
 	while (!closeRequested) {
 		time_t remTime;
+		inBuf.clear();
 		while ((remTime = time - now() + seconds(1) / TICK_SPEED) > 0) {
-			inBuf.clear();
 			endpoint_t endpoint;
 			switch (socket.receiveFor(&inBuf, &endpoint, remTime)) {
 			case Socket::OK:
 				handleMessage(endpoint);
+				inBuf.clear();
 				break;
 			case Socket::TIMEOUT:
 				break;
