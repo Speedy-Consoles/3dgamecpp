@@ -8,7 +8,7 @@ LocalServerInterface::LocalServerInterface(World *world, uint64 seed, const Grap
 		: conf(conf) {
 	this->world = world;
 	this->world->addPlayer(0);
-	chunkLoader = new ChunkLoader(world, seed, getLocalClientID());
+	chunkLoader = new ChunkLoader(world, seed, getLocalClientId());
 	chunkLoader->setRenderDistance(conf.render_distance);
 	chunkLoader->dispatch();
 }
@@ -22,10 +22,8 @@ ServerInterface::Status LocalServerInterface::getStatus() {
 	return CONNECTED;
 }
 
-void LocalServerInterface::togglePlayerFly() {
-	// TODO move this to client.cpp
-	if (!world->isPaused())
-		world->getPlayer(0).setFly(!world->getPlayer(0).getFly());
+void LocalServerInterface::setFly(bool fly) {
+
 }
 
 void LocalServerInterface::setPlayerMoveInput(int moveInput) {
@@ -41,9 +39,7 @@ void LocalServerInterface::setBlock(uint8 block) {
 }
 
 void LocalServerInterface::edit(vec3i64 bc, uint8 type) {
-	// TODO move this to client.cpp
-	if (!world->isPaused())
-		world->setBlock(bc, type, true);
+
 }
 
 void LocalServerInterface::receiveChunks(uint64 timeLimit) {
@@ -80,7 +76,7 @@ void LocalServerInterface::setConf(const GraphicsConf &conf) {
 	}
 }
 
-int LocalServerInterface::getLocalClientID() {
+int LocalServerInterface::getLocalClientId() {
 	return 0;
 }
 

@@ -12,8 +12,9 @@ using namespace my::net;
 using namespace boost;
 using namespace boost::asio::ip;
 
-RemoteServerInterface::RemoteServerInterface(const char *address, const GraphicsConf &conf) :
+RemoteServerInterface::RemoteServerInterface(World *world, const char *address, const GraphicsConf &conf) :
 		conf(conf),
+		world(world),
 		ios(),
 		w(new ios_t::work(ios)),
 		socket(ios),
@@ -21,7 +22,6 @@ RemoteServerInterface::RemoteServerInterface(const char *address, const Graphics
 		inBuf(1024*64),
 		outBuf(1024*64)
 {
-
 	socket.open();
 	socket.bind(udp::endpoint(udp::v4(), 0));
 
@@ -81,6 +81,7 @@ void RemoteServerInterface::asyncConnect(std::string address) {
 			switch (smsg.type) {
 			case CONNECTION_ACCEPTED:
 				localPlayerId = smsg.conAccepted.id;
+				this->world->addPlayer(localPlayerId);
 				status = CONNECTED;
 				LOG(INFO, "Connected to " << ep.address().to_string());
 				break;
@@ -131,7 +132,7 @@ ServerInterface::Status RemoteServerInterface::getStatus() {
 	return status;
 }
 
-void RemoteServerInterface::togglePlayerFly() {
+void RemoteServerInterface::setFly(bool fly) {
 
 }
 
@@ -181,7 +182,7 @@ void RemoteServerInterface::setConf(const GraphicsConf &conf) {
 	}
 }
 
-int RemoteServerInterface::getLocalClientID() {
+int RemoteServerInterface::getLocalClientId() {
 	return localPlayerId;
 }
 

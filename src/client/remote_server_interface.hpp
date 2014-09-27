@@ -9,11 +9,13 @@
 #include "net/net.hpp"
 #include "net/socket.hpp"
 #include "net/buffer.hpp"
+#include "game/world.hpp"
 
 class RemoteServerInterface : public ServerInterface {
 private:
 	GraphicsConf conf;
 	uint8 localPlayerId;
+	World *world;
 
 	my::time::time_t timeout = my::time::seconds(10); // 10 seconds
 
@@ -29,13 +31,13 @@ private:
 	Buffer outBuf;
 
 public:
-	RemoteServerInterface(const char *address, const GraphicsConf &conf);
+	RemoteServerInterface(World *world, const char *address, const GraphicsConf &conf);
 
 	~RemoteServerInterface();
 
 	Status getStatus() override;
 
-	void togglePlayerFly() override;
+	void setFly(bool fly) override;
 
 	void setPlayerMoveInput(int moveInput) override;
 
@@ -50,7 +52,7 @@ public:
 
 	void setConf(const GraphicsConf &) override;
 
-	int getLocalClientID() override;
+	int getLocalClientId() override;
 
 	void stop() override;
 

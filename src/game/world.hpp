@@ -48,7 +48,7 @@ private:
 
 	Player players[MAX_CLIENTS];
 
-	bool pause = true;
+	bool pause = false;
 
 public:
 

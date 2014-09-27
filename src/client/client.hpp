@@ -4,6 +4,12 @@
 #include "std_types.hpp"
 #include "time.hpp"
 
+enum ClientState {
+	CONNECTING,
+	PLAYING,
+	IN_MENU,
+};
+
 enum ClockId {
 	CLOCK_CLR,
 	CLOCK_NDL,

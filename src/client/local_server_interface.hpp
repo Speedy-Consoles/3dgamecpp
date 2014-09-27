@@ -19,7 +19,7 @@ public:
 
 	Status getStatus() override;
 
-	void togglePlayerFly() override;
+	void setFly(bool fly) override;
 
 	void setPlayerMoveInput(int moveInput) override;
 
@@ -34,7 +34,7 @@ public:
 
 	void setConf(const GraphicsConf &) override;
 
-	int getLocalClientID() override;
+	int getLocalClientId() override;
 
 	void stop() override;
 };

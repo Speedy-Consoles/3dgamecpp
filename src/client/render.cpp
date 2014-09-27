@@ -19,9 +19,6 @@ void Graphics::switchToOrthogonal() {
 }
 
 void Graphics::render() {
-	Player &player = world->getPlayer(localClientID);
-	if (!player.isValid())
-		return;
 
 	if (fbo) {
 		// render to the fbo and not the screen
@@ -41,38 +38,41 @@ void Graphics::render() {
 	glLoadIdentity();
 	texManager.bind(0);
 
-	// Render sky
-	glRotated(-player.getPitch(), 1, 0, 0);
-	renderSky();
+	Player &player = world->getPlayer(localClientID);
+	if (player.isValid()) {
+		// Render sky
+		glRotated(-player.getPitch(), 1, 0, 0);
+		renderSky();
 
-	// Render Scene
-	glRotatef(-player.getYaw(), 0, 1, 0);
-	glRotatef(-90, 1, 0, 0);
-	glRotatef(90, 0, 0, 1);
-	vec3i64 playerPos = player.getPos();
-	int64 m = RESOLUTION * Chunk::WIDTH;
-	glTranslatef(
-		(float) -((playerPos[0] % m + m) % m) / RESOLUTION,
-		(float) -((playerPos[1] % m + m) % m) / RESOLUTION,
-		(float) -((playerPos[2] % m + m) % m) / RESOLUTION
-	);
-	renderScene();
-
-	// copy framebuffer to screen, blend multisampling on the way
-	if (fbo) {
-		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
-		glBindFramebuffer(GL_READ_FRAMEBUFFER, fbo);
-		glDrawBuffer(GL_BACK);
-		glBlitFramebuffer(
-				0, 0, width, height,
-				0, 0, width, height,
-				GL_COLOR_BUFFER_BIT,
-				GL_NEAREST
+		// Render Scene
+		glRotatef(-player.getYaw(), 0, 1, 0);
+		glRotatef(-90, 1, 0, 0);
+		glRotatef(90, 0, 0, 1);
+		vec3i64 playerPos = player.getPos();
+		int64 m = RESOLUTION * Chunk::WIDTH;
+		glTranslatef(
+			(float) -((playerPos[0] % m + m) % m) / RESOLUTION,
+			(float) -((playerPos[1] % m + m) % m) / RESOLUTION,
+			(float) -((playerPos[2] % m + m) % m) / RESOLUTION
 		);
-		logOpenGLError();
+		renderScene();
 
-		glBindFramebuffer(GL_FRAMEBUFFER, 0);
-		glDrawBuffer(GL_BACK);
+		// copy framebuffer to screen, blend multisampling on the way
+		if (fbo) {
+			glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+			glBindFramebuffer(GL_READ_FRAMEBUFFER, fbo);
+			glDrawBuffer(GL_BACK);
+			glBlitFramebuffer(
+					0, 0, width, height,
+					0, 0, width, height,
+					GL_COLOR_BUFFER_BIT,
+					GL_NEAREST
+			);
+			logOpenGLError();
+
+			glBindFramebuffer(GL_FRAMEBUFFER, 0);
+			glDrawBuffer(GL_BACK);
+		}
 	}
 
 	// render overlay
@@ -80,13 +80,13 @@ void Graphics::render() {
 	glLoadIdentity();
 	texManager.bind(0);
 
-	if (!menuActive) {
+	if (state == PLAYING && player.isValid()) {
 		stopwatch->start(CLOCK_HUD);
 		renderHud(player);
 		if (debugActive)
 			renderDebugInfo(player);
 		stopwatch->stop(CLOCK_HUD);
-	} else {
+	} else if (state == IN_MENU){
 		renderMenu();
 	}
 }

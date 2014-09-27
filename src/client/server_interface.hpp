@@ -21,7 +21,7 @@ public:
 
 	virtual Status getStatus() = 0;
 
-	virtual void togglePlayerFly() = 0;
+	virtual void setFly(bool fly) = 0;
 	virtual void setPlayerMoveInput(int moveInput) = 0;
 	virtual void setPlayerOrientation(double yaw, double pitch) = 0;
 	virtual void setBlock(uint8 block) = 0;
@@ -34,7 +34,7 @@ public:
 
 	virtual void setConf(const GraphicsConf &) = 0;
 
-	virtual int getLocalClientID() = 0;
+	virtual int getLocalClientId() = 0;
 
 	virtual void stop() = 0;
 };

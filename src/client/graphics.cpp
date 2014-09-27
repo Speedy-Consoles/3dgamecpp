@@ -21,13 +21,15 @@ using namespace gui;
 Graphics::Graphics(
 		World *world,
 		const Menu *menu,
-		int localClientID,
+		const ClientState *state,
+		const uint8 *localClientID,
 		const GraphicsConf &conf,
 		Stopwatch *stopwatch) :
 		conf(conf),
 		world(world),
 		menu(menu),
-		localClientID(localClientID),
+		state(*state),
+		localClientID(*localClientID),
 		texManager(conf),
 		stopwatch(stopwatch) {
 	LOG(DEBUG, "Constructing Graphics");
@@ -171,7 +173,7 @@ void Graphics::initGL() {
 	// textures
 	LOG(DEBUG, "Loading textures");
 	uint blocks[] = {
-		 1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15, 16,
+		 0,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15, 16,
 		17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32,
 		33,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
 		 0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
@@ -189,7 +191,7 @@ void Graphics::initGL() {
 		 0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
 	};
 	texManager.loadTextures(blocks, "img/textures_1.png", 16, 16);
-	texManager.loadTexture(34, "img/diff_earth.png", TextureManager::WANG_TILES);
+	texManager.loadTexture(1, "img/diff_earth.png", TextureManager::WANG_TILES);
 	texManager.loadTexture(35, "img/wang_test.png", TextureManager::WANG_TILES);
 
 	// shader
@@ -345,7 +347,6 @@ void Graphics::calcDrawArea() {
 void Graphics::setMenu(bool menuActive) {
 	SDL_SetWindowGrab(window, (SDL_bool) !menuActive);
 	SDL_SetRelativeMouseMode((SDL_bool) !menuActive);
-	this->menuActive = menuActive;
 	if (menuActive) {
 		SDL_WarpMouseInWindow(window, (int) (oldRelMouseX * width), (int) (oldRelMouseY * height));
 	} else {
@@ -355,10 +356,6 @@ void Graphics::setMenu(bool menuActive) {
 		oldRelMouseX = x / (double) width;
 		oldRelMouseY = y / (double) height;
 	}
-}
-
-bool Graphics::isMenu() {
-	return menuActive;
 }
 
 void Graphics::setDebug(bool debugActive) {
@@ -625,6 +622,15 @@ float Graphics::getScalingFactor() const {
 }
 
 void Graphics::tick() {
+
+
+	if (oldState != state) {
+		if (state == IN_MENU)
+			setMenu(true);
+		else if (oldState == IN_MENU)
+			setMenu(false);
+		oldState = state;
+	}
 
 	render();
 

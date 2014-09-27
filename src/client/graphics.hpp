@@ -45,7 +45,9 @@ private:
 	GraphicsConf conf;
 	World *world;
 	const Menu *menu;
-	uint localClientID;
+	const ClientState &state;
+	ClientState oldState;
+	const uint8 &localClientID;
 
 	int prevFPS[20];
 	int fpsCounter = 0;
@@ -83,7 +85,6 @@ private:
 
 //	bool fxaa = false;
 
-	bool menuActive = true;
 	bool debugActive = false;
 	double oldRelMouseX = 0.5;
 	double oldRelMouseY = 0.5;
@@ -91,15 +92,12 @@ private:
 	Stopwatch *stopwatch;
 
 public:
-	Graphics(World *world, const Menu *menu, int localClientID, const GraphicsConf &conf, Stopwatch *stopwatch = nullptr);
+	Graphics(World *world, const Menu *menu, const ClientState *state, const uint8 *localClientId, const GraphicsConf &conf, Stopwatch *stopwatch = nullptr);
 	~Graphics();
 
 	void tick();
 
 	void resize(int width, int height);
-
-	void setMenu(bool menuActive);
-	bool isMenu();
 
 	void setDebug(bool debugActive);
 	bool isDebug();
@@ -119,7 +117,9 @@ private:
 
 //	GLuint loadShader(const char *, GLenum);
 //	GLuint loadProgram(const char *, const char *);
-//
+
+	void setMenu(bool menuActive);
+
 	void createFBO();
 	void destroyFBO();
 

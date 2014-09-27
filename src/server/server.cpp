@@ -278,7 +278,6 @@ void Server::handleClientMessage(const ClientMessage &cmsg, uint8 id) {
 }
 
 void Server::checkInactive() {
-	return;
 	for (uint8 id = 0; id < MAX_CLIENTS; ++id) {
 		if (!clients[id].connected)
 			continue;
