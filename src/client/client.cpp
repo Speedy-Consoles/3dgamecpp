@@ -76,8 +76,8 @@ Client::Client() {
 
 	world = new World();
 
-	serverInterface = new RemoteServerInterface(world, "localhost", *conf);
-	//serverInterface = new LocalServerInterface(world, 42, *conf);
+	//serverInterface = new RemoteServerInterface(world, "localhost", *conf);
+	serverInterface = new LocalServerInterface(world, 42, *conf);
 
 	menu = new Menu(conf);
 	frame = menu->getFrame();
@@ -299,7 +299,7 @@ void Client::handleInput() {
 					if (event.button.button == SDL_BUTTON_LEFT) {
 						vec3i64 rbc = bc + DIRS[d];
 						serverInterface->edit(rbc, player.getBlock());
-						world->setBlock(bc, player.getBlock(), true);
+						world->setBlock(rbc, player.getBlock(), true);
 					} else if (event.button.button == SDL_BUTTON_RIGHT) {
 						serverInterface->edit(bc, 0);
 						world->setBlock(bc, 0, true);
