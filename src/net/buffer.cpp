@@ -16,7 +16,7 @@ Buffer::~Buffer() {
 }
 
 Buffer::Buffer() :
-	_capacity(0), _data(nullptr), _whead(_data), _rhead(_data)
+	_capacity(0), _data(nullptr), _whead(nullptr), _rhead(nullptr)
 {
 	// nothing
 }
@@ -26,6 +26,32 @@ Buffer::Buffer(size_t capacity) :
 	_whead(_data), _rhead(_data)
 {
 	// nothing
+}
+
+Buffer::Buffer(Buffer &&that) {
+	this->_capacity = that._capacity;
+	this->_data = that._data;
+	this->_whead = that._whead;
+	this->_rhead = that._rhead;
+
+	that._capacity = 0;
+	that._data = nullptr;
+	that._whead = nullptr;
+	that._rhead = nullptr;
+}
+
+Buffer &Buffer::operator = (Buffer &&rhs) {
+	this->_capacity = rhs._capacity;
+	this->_data = rhs._data;
+	this->_whead = rhs._whead;
+	this->_rhead = rhs._rhead;
+
+	rhs._capacity = 0;
+	rhs._data = nullptr;
+	rhs._whead = nullptr;
+	rhs._rhead = nullptr;
+
+	return *this;
 }
 
 void Buffer::clear() {

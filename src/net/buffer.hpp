@@ -16,6 +16,10 @@ public:
 	Buffer();
 	Buffer(size_t capacity);
 
+	//moving
+	Buffer(Buffer &&that);
+	Buffer &operator = (Buffer &&rhs);
+
 	void clear();
 	void resize(size_t);
 
@@ -42,7 +46,6 @@ public:
 	void rSeek(size_t pos) const { _rhead = _data + pos; }
 
 	void read(char *data, size_t len) const;
-
 
 private:
 	size_t _capacity = 0;

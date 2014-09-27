@@ -70,12 +70,17 @@ void RemoteServerInterface::asyncConnect(std::string address) {
 		cmsg.type = CONNECTION_REQUEST;
 		outBuf.clear();
 		outBuf << cmsg;
-		socket.send(outBuf);
+
+		socket.acquireWriteBuffer(outBuf);
+		socket.send();
+		socket.releaseWriteBuffer(outBuf);
 
 		inBuf.clear();
-		switch (socket.receiveFor(&inBuf, timeout)) {
+		socket.acquireReadBuffer(inBuf);
+		switch (socket.receiveFor(timeout)) {
 		case Socket::OK:
 		{
+			socket.releaseReadBuffer(inBuf);
 			ServerMessage smsg;
 			inBuf >> smsg;
 			switch (smsg.type) {
@@ -124,6 +129,7 @@ void RemoteServerInterface::asyncConnect(std::string address) {
 			LOG(ERROR, "Error while connecting");
 			break;
 		}
+		socket.acquireReadBuffer(inBuf);
 	});
 }
 
@@ -155,11 +161,15 @@ void RemoteServerInterface::receiveChunks(uint64 timeLimit) {
 	if (status != CONNECTED)
 		return;
 	inBuf.clear();
-	while (socket.receiveNow(&inBuf) == Socket::OK) {
+	socket.acquireReadBuffer(inBuf);
+	while (socket.receiveNow() == Socket::OK) {
+		socket.releaseReadBuffer(inBuf);
 		inBuf.rSeek(5);
 		printf("%s\n", inBuf.rBegin());
 		inBuf.clear();
+		socket.acquireReadBuffer(inBuf);
 	}
+	socket.releaseReadBuffer(inBuf);
 }
 
 void RemoteServerInterface::sendInput() {
@@ -169,7 +179,9 @@ void RemoteServerInterface::sendInput() {
 	cmsg.type = ECHO_REQUEST;
 	outBuf.clear();
 	outBuf << cmsg << "wurst" << '\0';
-	socket.send(outBuf);
+	socket.acquireWriteBuffer(outBuf);
+	socket.send();
+	socket.releaseWriteBuffer(outBuf);
 }
 
 void RemoteServerInterface::setConf(const GraphicsConf &conf) {
