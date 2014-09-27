@@ -9,6 +9,8 @@
 
 #include "io/logging.hpp"
 
+#include <utility>
+
 using namespace boost;
 using namespace boost::asio::ip;
 
@@ -61,67 +63,68 @@ Socket::ErrorCode Socket::bind(const endpoint_t &endpoint) {
 	return _error ? SYSTEM_ERROR : OK;
 }
 
-Socket::ErrorCode Socket::receive(
-		Buffer *b, endpoint_t *e)
-{
+Socket::ErrorCode Socket::receive(endpoint_t *e) {
 	// try to acquire next package synchronously
-	switch (receiveNow(b, e)) {
-	case OK:
-		return OK;
-	case WOULD_BLOCK:
-		startAsyncReceive(b, e);
-		break;
-	case TIMEOUT:
-		break;
-	default:
-		LOG(ERROR, "While waiting for packages");
-		return SYSTEM_ERROR;
+	auto error = receiveNow(e);
+	switch (error) {
+		case OK:
+		case SYSTEM_ERROR:
+		case INVALID_BUFFER:
+			return error;
+
+		case WOULD_BLOCK:
+			startAsyncReceive(e);
+		case TIMEOUT:
+			_error = _recvFuture.get();
+			return _error ? SYSTEM_ERROR : OK;
+
+		default:
+			return UNKNOWN_ERROR;
 	}
 
-	// wait for the specified time
-	_error = _recvFuture.get();
-	return _error ? SYSTEM_ERROR : OK;
 }
 
-Socket::ErrorCode Socket::receiveNow(
-		Buffer *b, endpoint_t *e)
-{
-	if (!_recvFuture.valid()) {
-		auto buf = asio::buffer((void *) b->wBegin(), b->wSize());
-		size_t bytesRead;
-		if (e)
-			bytesRead = _socket.receive_from(buf, *e, 0, _error);
-		else
-			bytesRead = _socket.receive(buf, 0, _error);
+Socket::ErrorCode Socket::receiveNow(endpoint_t *e) {
+	if (_readBuffer.data() == nullptr)
+		return INVALID_BUFFER;
 
-		if (!_error) {
-			b->wSeekRel(bytesRead);
-			return OK;
-		} else if (_error == asio::error::would_block) {
-			return WOULD_BLOCK;
-		} else {
-			LOG(ERROR, "While looking for packages");
-			return SYSTEM_ERROR;
-		}
-	} else {
+	if (_recvFuture.valid())
 		return TIMEOUT;
+
+	auto buf = asio::buffer((void *) _readBuffer.wBegin(), _readBuffer.wSize());
+	size_t bytesRead;
+	if (e)
+		bytesRead = _socket.receive_from(buf, *e, 0, _error);
+	else
+		bytesRead = _socket.receive(buf, 0, _error);
+
+	if (!_error) {
+		_readBuffer.wSeekRel(bytesRead);
+		return OK;
+	} else if (_error == asio::error::would_block) {
+		return WOULD_BLOCK;
+	} else {
+		return SYSTEM_ERROR;
 	}
+
 }
 
-Socket::ErrorCode Socket::receiveFor(
-		Buffer *b, endpoint_t *e, uint64 dur)
-{
+Socket::ErrorCode Socket::receiveFor(uint64 dur, endpoint_t *e) {
 	// try to acquire next package synchronously
-	switch (receiveNow(b, e)) {
-	case OK:
-		return OK;
-	case WOULD_BLOCK:
-		startAsyncReceive(b, e);
-		break;
-	case TIMEOUT:
-		break;
-	default:
-		return SYSTEM_ERROR;
+	auto error = receiveNow(e);
+	switch (error) {
+		case OK:
+		case SYSTEM_ERROR:
+		case INVALID_BUFFER:
+			return error;
+
+		case WOULD_BLOCK:
+			startAsyncReceive(e);
+		case TIMEOUT:
+			break;
+
+		default:
+			return UNKNOWN_ERROR;
 	}
 
 	// wait for the specified time
@@ -138,20 +141,22 @@ Socket::ErrorCode Socket::receiveFor(
 	}
 }
 
-Socket::ErrorCode Socket::receiveUntil(
-		Buffer *b, endpoint_t *e, uint64 time)
-{
+Socket::ErrorCode Socket::receiveUntil(uint64 time, endpoint_t *e) {
 	time_t now = my::time::now();
-	return receiveFor(b, e, time - now);
+	return receiveFor(time - now, e);
 }
 
-void Socket::startAsyncReceive(Buffer *b, endpoint_t *e) {
+void Socket::startAsyncReceive(endpoint_t *e) {
+	if (_recvFuture.valid()) {
+		LOG(ERROR, "Tried to start new receive, but last one is still active");
+	}
+
 	_recvPromise = std::promise<error_t>();
 	_recvFuture = _recvPromise.get_future();
-	auto buf = asio::buffer((void *) b->wBegin(), b->wSize());
-	auto lambda = [this, b](const error_t &err, size_t size) {
+	auto buf = asio::buffer((void *) _readBuffer.wBegin(), _readBuffer.wSize());
+	auto lambda = [this](const error_t &err, size_t size) {
 		if (!err) {
-			b->wSeekRel(size);
+			_readBuffer.wSeekRel(size);
 		}
 		_recvPromise.set_value(err);
 	};
@@ -162,67 +167,68 @@ void Socket::startAsyncReceive(Buffer *b, endpoint_t *e) {
 	}
 }
 
-Socket::ErrorCode Socket::send(
-		const Buffer &b, const endpoint_t *e)
-{
+Socket::ErrorCode Socket::send(const endpoint_t *e) {
 	// try to send packet synchronously
-	switch (sendNow(b, e)) {
+	auto error = sendNow(e);
+	switch (error) {
 	case OK:
-		return OK;
+	case SYSTEM_ERROR:
+	case INVALID_BUFFER:
+		return error;
+
 	case WOULD_BLOCK:
-		startAsyncSend(b, e);
-		break;
+		startAsyncSend(e);
 	case TIMEOUT:
-		break;
+		_error = _sendFuture.get();
+		return _error ? SYSTEM_ERROR : OK;
+
 	default:
-		LOG(ERROR, "While trying to send packet");
-		return SYSTEM_ERROR;
+		return UNKNOWN_ERROR;
 	}
 
-	// wait for the specified time
-	_error = _sendFuture.get();
-	return _error ? SYSTEM_ERROR : OK;
 }
 
-Socket::ErrorCode Socket::sendNow(
-		const Buffer &b, const endpoint_t *e)
-{
-	if (!_sendFuture.valid()) {
-		auto buf = asio::buffer((const void *) b.rBegin(), b.rSize());
-		size_t bytesSent;
-		if (e)
-			bytesSent = _socket.send_to(buf, *e, 0, _error);
-		else
-			bytesSent = _socket.send(buf, 0, _error);
+Socket::ErrorCode Socket::sendNow(const endpoint_t *e) {
+	if (_writeBuffer.data() == nullptr)
+		return INVALID_BUFFER;
 
-		if (!_error) {
-			b.rSeekRel(bytesSent);
-			return OK;
-		} else if (_error == asio::error::would_block) {
-			return WOULD_BLOCK;
-		} else {
-			LOG(ERROR, "While sending packets");
-			return SYSTEM_ERROR;
-		}
-	} else {
+	if (_sendFuture.valid())
 		return TIMEOUT;
+
+	auto buf = asio::buffer((const void *) _writeBuffer.rBegin(), _writeBuffer.rSize());
+	size_t bytesSent;
+	if (e)
+		bytesSent = _socket.send_to(buf, *e, 0, _error);
+	else
+		bytesSent = _socket.send(buf, 0, _error);
+
+	if (!_error) {
+		_writeBuffer.rSeekRel(bytesSent);
+		return OK;
+	} else if (_error == asio::error::would_block) {
+		return WOULD_BLOCK;
+	} else {
+		return SYSTEM_ERROR;
 	}
+
 }
 
-Socket::ErrorCode Socket::sendFor(
-		const Buffer &b, const endpoint_t *e, uint64 duration)
-{
+Socket::ErrorCode Socket::sendFor(uint64 duration, const endpoint_t *e) {
 	// try to send packet synchronously
-	switch (sendNow(b, e)) {
-	case OK:
-		return OK;
-	case WOULD_BLOCK:
-		startAsyncSend(b, e);
-		break;
-	case TIMEOUT:
-		break;
-	default:
-		return SYSTEM_ERROR;
+	auto error = sendNow(e);
+	switch (error) {
+		case OK:
+		case SYSTEM_ERROR:
+		case INVALID_BUFFER:
+			return OK;
+
+		case WOULD_BLOCK:
+			startAsyncSend(e);
+		case TIMEOUT:
+			break;
+
+		default:
+			return UNKNOWN_ERROR;
 	}
 
 	// wait for the specified time
@@ -239,22 +245,22 @@ Socket::ErrorCode Socket::sendFor(
 	}
 }
 
-Socket::ErrorCode Socket::sendUntil(
-		const Buffer &b, const endpoint_t *e, uint64 time)
-{
+Socket::ErrorCode Socket::sendUntil(uint64 time, const endpoint_t *e) {
 	time_t now = my::time::now();
-	return sendFor(b, e, time - now);
+	return sendFor(time - now, e);
 }
 
-void Socket::startAsyncSend(
-		const Buffer &b, const endpoint_t *e)
-{
+void Socket::startAsyncSend(const endpoint_t *e) {
+	if (_sendFuture.valid()) {
+		LOG(ERROR, "Tried to start new send, but last one is still active");
+	}
+
 	_sendPromise = std::promise<error_t>();
 	_sendFuture = _sendPromise.get_future();
-	auto buf = asio::buffer((const void *) b.rBegin(), b.rSize());
-	auto lambda = [this, &b](const error_t &err, size_t size) {
+	auto buf = asio::buffer((const void *) _writeBuffer.rBegin(), _writeBuffer.rSize());
+	auto lambda = [this](const error_t &err, size_t size) {
 		if (!err) {
-			b.rSeekRel(size);
+			_writeBuffer.rSeekRel(size);
 		}
 		_sendPromise.set_value(err);
 	};
@@ -262,6 +268,95 @@ void Socket::startAsyncSend(
 		_socket.async_send_to(buf, *e, lambda);
 	else
 		_socket.async_send(buf, lambda);
+}
+
+void Socket::acquireReadBuffer(Buffer &buffer) {
+	_readBuffer = std::move(buffer);
+}
+
+void Socket::releaseReadBuffer(Buffer &buffer) {
+	buffer = std::move(_readBuffer);
+}
+
+void Socket::acquireWriteBuffer(Buffer &buffer) {
+	_writeBuffer = std::move(buffer);
+}
+
+void Socket::releaseWriteBuffer(Buffer &buffer) {
+	buffer = std::move(_writeBuffer);
+}
+
+std::string getBoostErrorString(error_t e) {
+	// basic errors
+	if (e == asio::error::access_denied)
+		return "Permission denied";
+	if (e == asio::error::address_family_not_supported)
+		return "Address family not supported by protocol";
+	if (e == asio::error::address_in_use)
+		return "Address already in use";
+	if (e == asio::error::already_connected)
+		return "Transport endpoint is already connected";
+	if (e == asio::error::already_started)
+		return "Operation already in progress";
+	if (e == asio::error::broken_pipe)
+		return "Broken pipe";
+	if (e == asio::error::connection_aborted)
+		return "A connection has been aborted";
+	if (e == asio::error::connection_refused)
+		return "Connection refused";
+	if (e == asio::error::connection_reset)
+		return "Connection reset by peer";
+	if (e == asio::error::bad_descriptor)
+		return "Bad file descriptor";
+	if (e == asio::error::fault)
+		return "Bad address";
+	if (e == asio::error::host_unreachable)
+		return "No route to host";
+	if (e == asio::error::in_progress)
+		return "Operation now in progress";
+	if (e == asio::error::interrupted)
+		return "Interrupted system call";
+	if (e == asio::error::invalid_argument)
+		return "Invalid argument";
+	if (e == asio::error::message_size)
+		return "Message too long";
+	if (e == asio::error::name_too_long)
+		return "The name was too long";
+	if (e == asio::error::network_down)
+		return "Network is down";
+	if (e == asio::error::network_reset)
+		return "Network dropped connection on reset";
+	if (e == asio::error::network_unreachable)
+		return "Network is unreachable";
+	if (e == asio::error::no_descriptors)
+		return "Too many open files";
+	if (e == asio::error::no_buffer_space)
+		return "No buffer space available";
+	if (e == asio::error::no_memory)
+		return "Cannot allocate memory";
+	if (e == asio::error::no_permission)
+		return "Operation not permitted";
+	if (e == asio::error::no_protocol_option)
+		return "Protocol not available";
+	if (e == asio::error::not_connected)
+		return "Transport endpoint is not connected";
+	if (e == asio::error::not_socket)
+		return "Socket operation on non-socket";
+	if (e == asio::error::operation_aborted)
+		return "Operation cancelled";
+	if (e == asio::error::operation_not_supported)
+		return "Operation not supported";
+	if (e == asio::error::shut_down)
+		return "Cannot send after transport endpoint shutdown";
+	if (e == asio::error::timed_out)
+		return "Connection timed out";
+	if (e == asio::error::try_again)
+		return "Resource temporarily unavailable";
+	if (e == asio::error::would_block)
+		return "The socket is marked non-blocking "
+		       "and the requested operation would block";
+
+	return "Unknown error";
 }
 
 }} // namespace my::net

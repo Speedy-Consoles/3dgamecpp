@@ -36,7 +36,7 @@ private:
 
 	Client clients[MAX_CLIENTS];
 
-	time_t timeout = my::time::seconds(10); // 10 seconds
+	time_t timeout = my::time::seconds(10);
 
 	Buffer inBuf;
 	Buffer outBuf;
@@ -103,7 +103,10 @@ Server::Server(uint16 port) :
 	socket.bind(udp::endpoint(udp::v4(), port));
 
 	// this will make sure our async_recv calls get handled
-	f = async(launch::async, [this]{ ios.run(); });
+	f = async(launch::async, [this]{
+		ios.run();
+		LOG(INFO, "ASIO Thread returned");
+	});
 }
 
 Server::~Server() {
@@ -129,22 +132,26 @@ void Server::run() {
 
 	time = my::time::now();
 
+	inBuf.clear();
+	socket.acquireReadBuffer(inBuf);
 	int tick = 0;
 	while (!closeRequested) {
 		time_t remTime;
-		inBuf.clear();
 		while ((remTime = time - now() + seconds(1) / TICK_SPEED) > 0) {
+			// TODO this can be overridden asynchronously
 			endpoint_t endpoint;
-			switch (socket.receiveFor(&inBuf, &endpoint, remTime)) {
+			switch (socket.receiveFor(remTime, &endpoint)) {
 			case Socket::OK:
+				socket.releaseReadBuffer(inBuf);
 				handleMessage(endpoint);
 				inBuf.clear();
+				socket.acquireReadBuffer(inBuf);
 				break;
 			case Socket::TIMEOUT:
 				break;
 			case Socket::SYSTEM_ERROR:
-				LOG(ERROR, "boost::asio error " << socket.getSystemError()
-						<< "while receiving packets");
+				LOG(ERROR, "Could not receive on socket: "
+						<< getBoostErrorString(socket.getSystemError()));
 				break;
 			default:
 				LOG(ERROR, "Unknown error while receiving packets");
@@ -157,10 +164,12 @@ void Server::run() {
 
 		checkInactive();
 	}
+	LOG(INFO, "Server is shutting down");
 }
 
 void Server::handleMessage(const endpoint_t &endpoint) {
-	LOG(TRACE, "Received message of length " << inBuf.rSize());
+	size_t size = inBuf.rSize();
+	LOG(TRACE, "Received message of length " << size);
 
 	ClientMessage cmsg;
 	inBuf >> cmsg;
@@ -168,21 +177,31 @@ void Server::handleMessage(const endpoint_t &endpoint) {
 	case MALFORMED_CLIENT_MESSAGE:
 		switch (cmsg.malformed.error) {
 		case MESSAGE_TOO_SHORT:
-			LOG(DEBUG, "Message too short");
+			LOG(WARNING, "Message too short (" << size << ")");
 			break;
 		case WRONG_MAGIC:
-			LOG(DEBUG, "Incorrect magic");
+			LOG(WARNING, "Incorrect magic");
 			break;
 		default:
-			LOG(DEBUG, "Unknown error reading message");
+			LOG(WARNING, "Unknown error reading message");
 			break;
+		}
+		{
+			char formatter[1024];
+			char *head = formatter;
+			for (const char *c = inBuf.data(); c < inBuf.rEnd(); ++c ) {
+				sprintf(head, "%02x ", *c);
+				head += 3;
+			}
+			head = '\0';
+			LOG(DEBUG, formatter);
 		}
 		break;
 	case CONNECTION_REQUEST:
 		handleConnectionRequest(endpoint);
 		break;
 	default:
-		uint8 id = -1;
+		int8 id = -1;
 		for (int i = 0; i < (int) MAX_CLIENTS; ++i) {
 			if (clients[i].connected && clients[i].endpoint == endpoint) {
 				id = i;
@@ -200,17 +219,19 @@ void Server::handleMessage(const endpoint_t &endpoint) {
 			smsg.type = CONNECTION_RESET;
 			outBuf.clear();
 			outBuf << smsg;
-			switch (socket.send(outBuf, &endpoint)) {
+			socket.acquireWriteBuffer(outBuf);
+			switch (socket.send(&endpoint)) {
 			case Socket::OK:
 				break;
 			case Socket::SYSTEM_ERROR:
-				LOG(ERROR, "boost::asio error " << socket.getSystemError()
-						<< " while sending packet");
+				LOG(ERROR, "Could not send on socket: "
+						<< getBoostErrorString(socket.getSystemError()));
 				break;
 			default:
 				LOG(ERROR, "Unknown error while sending packet");
 				break;
 			}
+			socket.releaseWriteBuffer(outBuf);
 		}
 		break;
 	}
@@ -257,7 +278,9 @@ void Server::handleConnectionRequest(const endpoint_t &endpoint) {
 	// send response
 	outBuf.clear();
 	outBuf << smsg;
-	socket.send(outBuf, &endpoint);
+	socket.acquireWriteBuffer(outBuf);
+	socket.send(&endpoint);
+	socket.releaseWriteBuffer(outBuf);
 }
 
 void Server::handleClientMessage(const ClientMessage &cmsg, uint8 id) {
@@ -269,7 +292,9 @@ void Server::handleClientMessage(const ClientMessage &cmsg, uint8 id) {
 		smsg.type = ECHO_RESPONSE;
 		outBuf.clear();
 		outBuf << smsg << inBuf;
-		socket.send(outBuf, &clients[id].endpoint);
+		socket.acquireWriteBuffer(outBuf);
+		socket.send(&clients[id].endpoint);
+		socket.releaseWriteBuffer(outBuf);
 		break;
 	}
 	default:
@@ -289,7 +314,9 @@ void Server::checkInactive() {
 			smsg.type = CONNECTION_TIMEOUT;
 			outBuf.clear();
 			outBuf << smsg;
-			socket.send(outBuf, &clients[id].endpoint);
+			socket.acquireWriteBuffer(outBuf);
+			socket.send(&clients[id].endpoint);
+			socket.releaseWriteBuffer(outBuf);
 
 			disconnect(id);
 		}

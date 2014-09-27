@@ -32,6 +32,7 @@ public:
 		WOULD_BLOCK,
 		TIMEOUT,
 		BUFFER_TOO_SMALL,
+		INVALID_BUFFER,
 	};
 
 	~Socket();
@@ -48,19 +49,21 @@ public:
 	ErrorCode connect(const endpoint_t &endpoint);
 	ErrorCode bind(const endpoint_t &endpoint);
 
-	ErrorCode receive(Buffer *, endpoint_t * = nullptr);
-	ErrorCode receiveNow(Buffer *, endpoint_t * = nullptr);
-	ErrorCode receiveFor(Buffer *, endpoint_t *, uint64 duration);
-	ErrorCode receiveFor(Buffer *buf, uint64 duration) {return receiveFor(buf, nullptr, duration);}
-	ErrorCode receiveUntil(Buffer *, endpoint_t *, uint64 time);
-	ErrorCode receiveUntil(Buffer *buf, uint64 time) {return receiveUntil(buf, nullptr, time);}
+	ErrorCode receive(endpoint_t * = nullptr);
+	ErrorCode receiveNow(endpoint_t * = nullptr);
+	ErrorCode receiveFor(uint64 duration, endpoint_t * = nullptr);
+	ErrorCode receiveUntil(uint64 time, endpoint_t * = nullptr);
 
-	ErrorCode send(const Buffer &, const endpoint_t * = nullptr);
-	ErrorCode sendNow(const Buffer &, const endpoint_t * = nullptr);
-	ErrorCode sendFor(const Buffer &, const endpoint_t *, uint64 duration);
-	ErrorCode sendFor(const Buffer &buf, uint64 duration) {return sendFor(buf, nullptr, duration);}
-	ErrorCode sendUntil(const Buffer &, const endpoint_t *, uint64 time);
-	ErrorCode sendUntil(const Buffer &buf, uint64 time) {return sendUntil(buf, nullptr, time);}
+	ErrorCode send(const endpoint_t * = nullptr);
+	ErrorCode sendNow(const endpoint_t * = nullptr);
+	ErrorCode sendFor(uint64 duration, const endpoint_t * = nullptr);
+	ErrorCode sendUntil(uint64 time, const endpoint_t * = nullptr);
+
+	void acquireReadBuffer(Buffer &);
+	void releaseReadBuffer(Buffer &);
+
+	void acquireWriteBuffer(Buffer &);
+	void releaseWriteBuffer(Buffer &);
 
 private:
 	socket_t _socket;
@@ -72,9 +75,14 @@ private:
 	std::future<error_t> _sendFuture;
 	std::promise<error_t> _sendPromise;
 
-	void startAsyncReceive(Buffer *, endpoint_t *);
-	void startAsyncSend(const Buffer &, const endpoint_t *);
+	Buffer _readBuffer;
+	Buffer _writeBuffer;
+
+	void startAsyncReceive(endpoint_t *);
+	void startAsyncSend(const endpoint_t *);
 };
+
+std::string getBoostErrorString(error_t);
 
 }} // namespace my::net
 
