@@ -136,6 +136,9 @@ void Server::run() {
 	socket.acquireReadBuffer(inBuf);
 	int tick = 0;
 	while (!closeRequested) {
+		world->tick(tick, -1);
+
+		time += seconds(1) / TICK_SPEED;
 		time_t remTime;
 		while ((remTime = time - now() + seconds(1) / TICK_SPEED) > 0) {
 			// TODO this can be overridden asynchronously
@@ -158,11 +161,8 @@ void Server::run() {
 			}
 		}
 
-		world->tick(tick, -1);
-		tick++;
-		time += seconds(1) / TICK_SPEED;
-
 		checkInactive();
+		tick++;
 	}
 	LOG(INFO, "Server is shutting down");
 }

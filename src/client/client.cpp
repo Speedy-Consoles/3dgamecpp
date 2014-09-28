@@ -76,13 +76,12 @@ Client::Client() {
 
 	world = new World();
 
-	//serverInterface = new RemoteServerInterface(world, "localhost", *conf);
-	serverInterface = new LocalServerInterface(world, 42, *conf);
-
 	menu = new Menu(conf);
 	frame = menu->getFrame();
 	graphics = new Graphics(world, menu, &state, &localClientId, *conf, stopwatch);
 
+	//serverInterface = new RemoteServerInterface(world, "localhost", *conf);
+	serverInterface = new LocalServerInterface(world, 42, *conf);
 }
 
 Client::~Client() {
