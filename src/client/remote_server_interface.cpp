@@ -130,7 +130,6 @@ void RemoteServerInterface::asyncConnect(std::string address) {
 			LOG(ERROR, "Error while connecting");
 			break;
 		}
-		socket.acquireReadBuffer(inBuf);
 	});
 }
 
@@ -163,12 +162,16 @@ void RemoteServerInterface::receiveChunks(uint64 timeLimit) {
 		return;
 	inBuf.clear();
 	socket.acquireReadBuffer(inBuf);
-	while (socket.receiveNow() == Socket::OK) {
+	Socket::ErrorCode error = Socket::OK;
+	while ((error = socket.receiveNow()) == Socket::OK) {
 		socket.releaseReadBuffer(inBuf);
 		inBuf.rSeek(5);
 		printf("%s\n", inBuf.rBegin());
 		inBuf.clear();
 		socket.acquireReadBuffer(inBuf);
+	}
+	if (error != Socket::WOULD_BLOCK) {
+		LOG(ERROR, "Socket error number " << error << " while receiving chunks");
 	}
 	socket.releaseReadBuffer(inBuf);
 }
