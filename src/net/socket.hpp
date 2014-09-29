@@ -65,6 +65,11 @@ public:
 	void acquireWriteBuffer(Buffer &);
 	void releaseWriteBuffer(Buffer &);
 
+	ErrorCode receive(Buffer &, endpoint_t * = nullptr);
+	ErrorCode receiveNow(Buffer &, endpoint_t * = nullptr);
+	ErrorCode send(Buffer &, const endpoint_t * = nullptr);
+	ErrorCode sendNow(Buffer &, const endpoint_t * = nullptr);
+
 private:
 	socket_t _socket;
 	error_t _error;

@@ -286,6 +286,34 @@ void Socket::releaseWriteBuffer(Buffer &buffer) {
 	buffer = std::move(_writeBuffer);
 }
 
+Socket::ErrorCode Socket::receive(Buffer &buffer, endpoint_t *e) {
+	acquireReadBuffer(buffer);
+	auto error = receive(e);
+	releaseReadBuffer(buffer);
+	return error;
+}
+
+Socket::ErrorCode Socket::receiveNow(Buffer &buffer, endpoint_t *e) {
+	acquireReadBuffer(buffer);
+	auto error = receiveNow(e);
+	releaseReadBuffer(buffer);
+	return error;
+}
+
+Socket::ErrorCode Socket::send(Buffer &buffer, const endpoint_t *e) {
+	acquireWriteBuffer(buffer);
+	auto error = send(e);
+	releaseWriteBuffer(buffer);
+	return error;
+}
+
+Socket::ErrorCode Socket::sendNow(Buffer &buffer, const endpoint_t *e) {
+	acquireWriteBuffer(buffer);
+	auto error = sendNow(e);
+	releaseWriteBuffer(buffer);
+	return error;
+}
+
 std::string getBoostErrorString(error_t e) {
 	// basic errors
 	if (e == asio::error::access_denied)

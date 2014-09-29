@@ -164,6 +164,7 @@ void Server::run() {
 		checkInactive();
 		tick++;
 	}
+	socket.releaseReadBuffer(inBuf);
 	LOG(INFO, "Server is shutting down");
 }
 
@@ -219,8 +220,7 @@ void Server::handleMessage(const endpoint_t &endpoint) {
 			smsg.type = CONNECTION_RESET;
 			outBuf.clear();
 			outBuf << smsg;
-			socket.acquireWriteBuffer(outBuf);
-			switch (socket.send(&endpoint)) {
+			switch (socket.send(outBuf, &endpoint)) {
 			case Socket::OK:
 				break;
 			case Socket::SYSTEM_ERROR:
@@ -231,7 +231,6 @@ void Server::handleMessage(const endpoint_t &endpoint) {
 				LOG(ERROR, "Unknown error while sending packet");
 				break;
 			}
-			socket.releaseWriteBuffer(outBuf);
 		}
 		break;
 	}
@@ -278,9 +277,7 @@ void Server::handleConnectionRequest(const endpoint_t &endpoint) {
 	// send response
 	outBuf.clear();
 	outBuf << smsg;
-	socket.acquireWriteBuffer(outBuf);
-	socket.send(&endpoint);
-	socket.releaseWriteBuffer(outBuf);
+	socket.send(outBuf, &endpoint);
 }
 
 void Server::handleClientMessage(const ClientMessage &cmsg, uint8 id) {
@@ -292,9 +289,7 @@ void Server::handleClientMessage(const ClientMessage &cmsg, uint8 id) {
 		smsg.type = ECHO_RESPONSE;
 		outBuf.clear();
 		outBuf << smsg << inBuf;
-		socket.acquireWriteBuffer(outBuf);
-		socket.send(&clients[id].endpoint);
-		socket.releaseWriteBuffer(outBuf);
+		socket.send(outBuf, &clients[id].endpoint);
 		break;
 	}
 	default:
@@ -314,9 +309,7 @@ void Server::checkInactive() {
 			smsg.type = CONNECTION_TIMEOUT;
 			outBuf.clear();
 			outBuf << smsg;
-			socket.acquireWriteBuffer(outBuf);
-			socket.send(&clients[id].endpoint);
-			socket.releaseWriteBuffer(outBuf);
+			socket.send(outBuf, &clients[id].endpoint);
 
 			disconnect(id);
 		}
