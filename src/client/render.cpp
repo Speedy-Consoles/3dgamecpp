@@ -223,11 +223,11 @@ void Graphics::renderChunks() {
 		for (int d = 0; d < 6; d++) {
 			glNormal3d(DIRS[d][0], DIRS[d][1], DIRS[d][2]);
 			for (int j = 0; j < 4; j++) {
-				vec3d dirOff = DIRS[d].cast<double>() * 0.00005;
+				vec3d dirOff = DIRS[d].cast<double>() * 0.0005;
 				vec3d vOff[4];
 				vOff[0] = QUAD_CYCLES_3D[d][j].cast<double>() - pointFive;
-				vOff[0][OTHER_DIR_DIMS[d][0]] *= 1.0001;
-				vOff[0][OTHER_DIR_DIMS[d][1]] *= 1.0001;
+				vOff[0][OTHER_DIR_DIMS[d][0]] *= 1.001;
+				vOff[0][OTHER_DIR_DIMS[d][1]] *= 1.001;
 				vOff[1] = QUAD_CYCLES_3D[d][j].cast<double>() - pointFive;
 				vOff[1][OTHER_DIR_DIMS[d][0]] *= 0.97;
 				vOff[1][OTHER_DIR_DIMS[d][1]] *= 0.97;
@@ -235,8 +235,8 @@ void Graphics::renderChunks() {
 				vOff[2][OTHER_DIR_DIMS[d][0]] *= 0.97;
 				vOff[2][OTHER_DIR_DIMS[d][1]] *= 0.97;
 				vOff[3] = QUAD_CYCLES_3D[d][(j + 3) % 4].cast<double>() - pointFive;
-				vOff[3][OTHER_DIR_DIMS[d][0]] *= 1.0001;
-				vOff[3][OTHER_DIR_DIMS[d][1]] *= 1.0001;
+				vOff[3][OTHER_DIR_DIMS[d][0]] *= 1.001;
+				vOff[3][OTHER_DIR_DIMS[d][1]] *= 1.001;
 
 				for (int k = 0; k < 4; k++) {
 					vec3d vertex = (tbc - pc * Chunk::WIDTH).cast<double>() + dirOff + vOff[k] + pointFive;

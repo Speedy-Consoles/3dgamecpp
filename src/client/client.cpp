@@ -113,7 +113,8 @@ void Client::run() {
 			stopwatch->start(CLOCK_NET);
 			serverInterface->sendInput();
 			stopwatch->stop(CLOCK_NET);
-
+		}
+		if (state == PLAYING || state == IN_MENU) {
 			stopwatch->start(CLOCK_TIC);
 			world->tick(tick, localClientId);
 			stopwatch->stop(CLOCK_TIC);
@@ -123,7 +124,7 @@ void Client::run() {
 			graphics->tick();
 
 #endif
-		if (state == PLAYING) {
+		if (state == PLAYING || state == IN_MENU) {
 			stopwatch->start(CLOCK_NET);
 			serverInterface->receiveChunks(time + 200000);
 			stopwatch->stop(CLOCK_NET);
