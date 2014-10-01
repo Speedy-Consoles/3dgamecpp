@@ -9,6 +9,7 @@
 
 #include <cstring>
 
+#include "util.hpp"
 #include "logging.hpp"
 
 using namespace std;
@@ -20,18 +21,20 @@ static const int32 ENDIANESS_BYTES_FLIPPED = 0x04030201;
 
 static const uint8 ESCAPE_CHAR = (uint8) (-1);
 
+PACKED(
 struct Header {
 	char magic[4];
 	int32 endianess_bytes;
 	int32 version;
 	uint32 size;
 	uint32 directory_offset;
-} __attribute__((__packed__ ));
+});
 
+PACKED(
 struct DirectoryEntry {
 	uint32 offset;
 	uint32 size;
-} __attribute__((__packed__ ));
+});
 
 ArchiveFile::~ArchiveFile() {
 	_file.close();
