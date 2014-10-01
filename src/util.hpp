@@ -21,7 +21,7 @@ extern const vec3i8 CUBE_CYCLE[8];
 extern const size_t DIR_2_CUBE_CYCLE[6];
 extern const size_t BASE_NINE_CUBE_CYCLE;
 
-const uint8 TEST_CORNERS[6] { 0b00000111, 0b11000001, 0, 0b11000001, 0b00000111, 0 };
+const uint8 TEST_CORNERS[6] { 0x07, 0xC1, 0x00, 0xC1, 0x07, 0x00 };
 
 extern std::vector<vec3i8> LOADING_ORDER;
 
