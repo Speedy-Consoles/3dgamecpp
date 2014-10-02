@@ -39,7 +39,6 @@ bool World::isPaused() {
 int World::shootRay(vec3i64 start, vec3d ray, double maxDist,
 		vec3i boxCorner, vec3d *outHit, vec3i64 outHitBlock[3],
 		int outFaceDir[3]) const {
-	using namespace vec_auto_cast;
 	int dirs[3];
 	for (int i = 0; i < 3; i++) {
 		if (ray[i] == 0)
@@ -83,12 +82,12 @@ int World::shootRay(vec3i64 start, vec3d ray, double maxDist,
 					&& diff[0] <= RESOLUTION
 					&& diff[1] >= 0
 					&& diff[1] <= RESOLUTION) {
-				double dist = (start - hit).norm();
+				double dist = (start.cast<double>() - hit).norm();
 				if (dist > maxDist)
 					return 0;
 
 				vec3i8 dir = DIRS[d];
-				vec3i64 nextBlock = block + dir;
+				vec3i64 nextBlock = block + dir.cast<int64>();
 				if (getBlock(nextBlock)) {
 					if (outHit != nullptr)
 						*outHit = hit;
@@ -136,7 +135,6 @@ uint8 World::getBlock(vec3i64 bc) const {
 }
 
 bool World::setBlock(vec3i64 bc, uint8 type, bool updateFaces) {
-	using namespace vec_auto_cast;
 	vec3i64 cc = bc2cc(bc);
 	auto it = chunks.find(bc2cc(bc));
 	if (it == chunks.end())
@@ -152,7 +150,7 @@ bool World::setBlock(vec3i64 bc, uint8 type, bool updateFaces) {
 		for (uint8 d = 0; d < 6; d++) {
 			uint8 invD = (d + 3) % 6;
 			vec3i8 dir = DIRS[d];
-			vec3i64 nbc = bc + dir;
+			vec3i64 nbc = bc + dir.cast<int64>();
 			vec3i64 ncc = bc2cc(nbc);
 			vec3i8 dcc = (ncc - cc).cast<int8>();
 
@@ -162,7 +160,7 @@ bool World::setBlock(vec3i64 bc, uint8 type, bool updateFaces) {
 				chunkChanged[vec2CubeCycle(dcc)] = true;
 
 			for (int i = 0; i < 8; i++) {
-				vec3i64 obc = bc + EIGHT_CYCLES_3D[d][i];
+				vec3i64 obc = bc + EIGHT_CYCLES_3D[d][i].cast<int64>();
 				if (updateFace(obc, invD)) {
 					vec3i64 occ = bc2cc(obc);
 					vec3i8 occd = (occ - cc).cast<int8>();
@@ -173,7 +171,7 @@ bool World::setBlock(vec3i64 bc, uint8 type, bool updateFaces) {
 
 		for (int i = 0; i < 27; i++) {
 			if(chunkChanged[i])
-				changedChunks.push_front(c->getCC() + NINE_CUBE_CYCLE[i]);
+				changedChunks.push_front(c->getCC() + NINE_CUBE_CYCLE[i].cast<int64>());
 		}
 
 		return true;
@@ -182,11 +180,10 @@ bool World::setBlock(vec3i64 bc, uint8 type, bool updateFaces) {
 }
 
 bool World::updateFace(vec3i64 bc, uint8 faceDir) {
-	using namespace vec_auto_cast;
 	vec3i64 cc = bc2cc(bc);
 	vec3ui8 icc = bc2icc(bc);
 	vec3i8 dir = DIRS[faceDir];
-	vec3i64 nbc = bc + dir;
+	vec3i64 nbc = bc + dir.cast<int64>();
 	vec3i64 ncc = bc2cc(nbc);
 	vec3ui8 nicc = bc2icc(nbc);
 
@@ -199,7 +196,7 @@ bool World::updateFace(vec3i64 bc, uint8 faceDir) {
 	uint8 thatType = nc->getBlock(nicc);
 
 	if (thisType != 0 && thatType == 0) {
-		c->addFace(Face{icc, faceDir, getFaceCorners(cc * Chunk::WIDTH + icc, faceDir)});
+		c->addFace(Face{icc, faceDir, getFaceCorners(cc * Chunk::WIDTH + icc.cast<int64>(), faceDir)});
 		return true;
 	} else if((thisType != 0) == (thatType != 0))
 		return c->removeFace(Face{icc, faceDir, 0});
@@ -208,11 +205,10 @@ bool World::updateFace(vec3i64 bc, uint8 faceDir) {
 }
 
 uint8 World::getFaceCorners(vec3i64 bc, uint8 faceDir) const {
-	using namespace vec_auto_cast;
 	uint8 corners = 0;
 	for (int j = 0; j < 8; ++j) {
 		vec3i v = EIGHT_CYCLES_3D[faceDir][j];
-		vec3i64 dbc = bc + v;
+		vec3i64 dbc = bc + v.cast<int64>();
 		if (getBlock(dbc)) {
 			corners |= 1 << j;
 		}
@@ -228,14 +224,12 @@ Chunk *World::getChunk(vec3i64 cc) {
 }
 
 void World::insertChunk(Chunk *chunk) {
-	using namespace vec_auto_cast;
 	chunks.insert({chunk->getCC(), chunk});
 	patchBorders(chunk);
 	changedChunks.push_back(chunk->getCC());
 }
 
 void World::patchBorders(Chunk *c) {
-	using namespace vec_auto_cast;
 	bool chunkChanged[27];
 	for (int i = 0; i < 27; i++) {
 		chunkChanged[i] = false;
@@ -243,13 +237,13 @@ void World::patchBorders(Chunk *c) {
 
 	// TODO make more efficient
 	for (int i = 0; i < 27; i++) {
-		vec3i64 ncc = c->getCC() + NINE_CUBE_CYCLE[i];
+		vec3i64 ncc = c->getCC() + NINE_CUBE_CYCLE[i].cast<int64>();
 		Chunk *nc = getChunk(ncc);
 		if (!nc)
 			continue;
 		for (Face f : nc->getBorderFaces()) {
-			vec3i64 nbc = ncc * Chunk::WIDTH + f.block;
-			if (bc2cc(nbc - NINE_CUBE_CYCLE[i]) != c->getCC())
+			vec3i64 nbc = ncc * Chunk::WIDTH + f.block.cast<int64>();
+			if (bc2cc(nbc - NINE_CUBE_CYCLE[i].cast<int64>()) != c->getCC())
 				continue;
 			if (updateFace(nbc, f.dir))
 				chunkChanged[i] = true;
@@ -259,7 +253,7 @@ void World::patchBorders(Chunk *c) {
 	for (uint8 d = 0; d < 6; d++) {
 		uint8 invD = (d + 3) % 6;
 		int dim = DIR_DIMS[d];
-		vec3i64 ncc = c->getCC() + DIRS[d];
+		vec3i64 ncc = c->getCC() + DIRS[d].cast<int64>();
 		Chunk *nc = getChunk(ncc);
 		if (!nc)
 			continue;
@@ -279,13 +273,13 @@ void World::patchBorders(Chunk *c) {
 				uint8 type = c->getBlock(icc);
 				if (nc->getBlock(nicc) != 0) {
 					if (type == 0) {
-						nc->addFace(Face{nicc, invD, getFaceCorners(ncc * Chunk::WIDTH + nicc, invD)});
+						nc->addFace(Face{ nicc, invD, getFaceCorners(ncc * Chunk::WIDTH + nicc.cast<int64>(), invD) });
 						chunkChanged[DIR_2_CUBE_CYCLE[d]] = true;
 					} else if (nc->removeFace(Face{nicc, invD, 0}))
 						chunkChanged[DIR_2_CUBE_CYCLE[d]] = true;
 				} else {
 					if (type != 0)
-						c->addFace(Face{icc, d, getFaceCorners(c->getCC() * Chunk::WIDTH + icc, d)});
+						c->addFace(Face{ icc, d, getFaceCorners(c->getCC() * Chunk::WIDTH + icc.cast<int64>(), d) });
 					else
 						c->removeFace(Face{icc, d, 0});
 				}
@@ -294,7 +288,7 @@ void World::patchBorders(Chunk *c) {
 	}
 	for (int i = 0; i < 27; i++) {
 		if(chunkChanged[i])
-			changedChunks.push_back(c->getCC() + NINE_CUBE_CYCLE[i]);
+			changedChunks.push_back(c->getCC() + NINE_CUBE_CYCLE[i].cast<int64>());
 	}
 }
 

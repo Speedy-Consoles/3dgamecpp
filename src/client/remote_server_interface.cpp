@@ -54,7 +54,7 @@ void RemoteServerInterface::asyncConnect(std::string address) {
 		udp::resolver r(ios);
 		udp::resolver::query q(udp::v4(), address, "");
 		my::net::error_t err;
-		auto iter = r.resolve(q, err);
+		udp::resolver::iterator iter = r.resolve(q, err);
 		if (err || iter == udp::resolver::iterator()) {
 			status = COULD_NOT_RESOLVE;
 			return;

@@ -30,7 +30,6 @@ bool operator == (const Face &lhs, const Face &rhs) {
 const double World::GRAVITY = -9.81 * RESOLUTION / 60.0 / 60.0 * 4;
 
 void Chunk::initFaces() {
-	using namespace vec_auto_cast;
 	uint i = 0;
 
 	uint ds[3];
@@ -68,7 +67,7 @@ void Chunk::initFaces() {
 						uint8 corners = 0;
 						for (int j = 0; j < 8; ++j) {
 							vec3i v = EIGHT_CYCLES_3D[faceDir][j];
-							vec3i dIcc = faceBlock + v;
+							vec3i dIcc = faceBlock.cast<int>() + v;
 							if (		dIcc[0] < 0 || dIcc[0] >= (int) WIDTH
 									||	dIcc[1] < 0 || dIcc[1] >= (int) WIDTH
 									||	dIcc[2] < 0 || dIcc[2] >= (int) WIDTH)

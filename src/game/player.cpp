@@ -47,7 +47,6 @@ void Player::tick(int tick, bool isLocalPlayer) {
 }
 
 void Player::collide() {
-	using namespace vec_auto_cast;
 	vec3i64 newPos = pos;
 	vec3d remVel = vel;
 	double remDist = remVel.norm();
@@ -73,10 +72,10 @@ void Player::collide() {
 			int numHitFaces = world->shootRay(start, remVel, remDist,
 					corner, &hitPos, nullptr, faceDirs);
 			if (numHitFaces > 0) {
-				double dist = (hitPos - start).norm();
+				double dist = (hitPos - start.cast<double>()).norm();
 				if (dist < lowestDist) {
 					lowestDist = dist;
-					firstHitPos = hitPos - off;
+					firstHitPos = hitPos - off.cast<double>();
 					memcpy(firstHitFaceDirs, faceDirs, 3 * sizeof(int));
 					numFirstHitFaces = numHitFaces;
 				}
@@ -89,7 +88,7 @@ void Player::collide() {
 			break;
 		}
 
-		remVel -= firstHitPos - newPos;
+		remVel -= firstHitPos - newPos.cast<double>();
 
 		for (int i = 0; i < numFirstHitFaces; i++) {
 			remVel[DIR_DIMS[firstHitFaceDirs[i]]] = 0;
@@ -278,7 +277,6 @@ void Player::calcVel() {
 }
 
 bool Player::isGrounded() const {
-	using namespace vec_auto_cast;
 	if (vel[2] > 0)
 		return false;
 	for (int i = 0; i < 4; i++) {
@@ -287,7 +285,7 @@ bool Player::isGrounded() const {
 			(QUAD_CYCLE_2D[i % 4][1] * 2 - 1) * RADIUS,
 			-EYE_HEIGHT - 1
 		);
-		vec3i64 corner = pos + off;
+		vec3i64 corner = pos + off.cast<int64>();
 		if (world->hasCollision(corner))
 			return true;
 	}
