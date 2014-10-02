@@ -373,7 +373,7 @@ void Graphics::renderDebugInfo(const Player &player) {
 	glColor3f(1.0f, 1.0f, 1.0f);
 	glTranslatef(-drawWidth / 2 + 3, drawHeight / 2, 0);
 	char buffer[1024];
-	#define RENDER_LINE(args...) sprintf(buffer, args);\
+	#define RENDER_LINE(...) sprintf(buffer, __VA_ARGS__);\
 			glTranslatef(0, -16, 0);\
 			font->Render(buffer)
 
