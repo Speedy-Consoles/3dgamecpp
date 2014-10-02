@@ -123,7 +123,7 @@ void Graphics::renderScene() {
 	glEnable(GL_LIGHTING);
 	if (conf.fog != Fog::NONE) glEnable(GL_FOG);
 
-	glLightfv(GL_LIGHT0, GL_POSITION, sunLightPosition);
+	glLightfv(GL_LIGHT0, GL_POSITION, sunLightPosition.ptr());
 
 	// render chunks
 	stopwatch->start(CLOCK_CHR);
