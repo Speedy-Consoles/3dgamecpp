@@ -24,6 +24,8 @@ public:
 	// access
 	T          & operator [] (size_t i);
 	T            operator [] (size_t i) const;
+	T          * ptr() { return _t; }
+	const T    * ptr() const { return _t; }
 
 	// comparison
 	bool         operator == (vec<T, N, Derived> const &rhs) const;
@@ -80,6 +82,14 @@ public:
 	vec3(T t1, T t2, T t3);
 };
 
+template <typename T>
+class vec4 : public vec<T, 4, vec4> {
+public:
+	vec4() = default;
+	vec4(T t) : vec<T, 4, ::vec4>::vec(t) {};
+	vec4(T t1, T t2, T t3, T t4);
+};
+
 // instanciation
 
 extern template class vec2<int8>;
@@ -100,6 +110,19 @@ extern template class vec3<uint64>;
 extern template class vec3<float>;
 extern template class vec3<double>;
 
+extern template class vec4<int8>;
+extern template class vec4<uint8>;
+extern template class vec4<int32>;
+extern template class vec4<uint32>;
+extern template class vec4<int64>;
+extern template class vec4<uint64>;
+extern template class vec4<float>;
+extern template class vec4<double>;
+
+using vec2i = vec2<int>;
+using vec2f = vec2<float>;
+using vec2d = vec2<double>;
+
 using vec3i = vec3<int>;
 using vec3i8 = vec3<int8>;
 using vec3ui8 = vec3<uint8>;
@@ -107,8 +130,7 @@ using vec3i64 = vec3<int64>;
 using vec3f = vec3<float>;
 using vec3d = vec3<double>;
 
-using vec2i = vec2<int>;
-using vec2f = vec2<float>;
-using vec2d = vec2<double>;
+using vec4f = vec4<float>;
+using vec4d = vec4<double>;
 
 #endif // VMATH_HPP

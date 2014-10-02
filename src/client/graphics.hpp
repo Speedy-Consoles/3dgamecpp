@@ -65,9 +65,9 @@ private:
 	bool *dlHasChunk;
 	int *dlFaces;
 
-	float fogColor[3] = {0.6, 0.6, 0.8};
-	float skyColor[3] = {0.15, 0.15, 0.9};
-	float sunLightPosition[4] = {3.0, 2.0, 9.0, 0.0};
+	vec3f fogColor{ 0.6f, 0.6f, 0.8f };
+	vec3f skyColor{ 0.15f, 0.15f, 0.9f };
+	vec4f sunLightPosition{ 3.0f, 2.0f, 9.0f, 0.0f };
 
 	TextureManager texManager;
 	FTFont *font;

@@ -207,7 +207,7 @@ void Graphics::initGL() {
 	else
 		LOG(INFO, "GL_NV_fog_distance not available, falling back to z fog");
 
-	glFogfv(GL_FOG_COLOR, fogColor);
+	glFogfv(GL_FOG_COLOR, fogColor.ptr());
 	glFogi(GL_FOG_MODE, GL_LINEAR);
 	makeFog();
 

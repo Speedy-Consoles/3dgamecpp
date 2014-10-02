@@ -188,6 +188,14 @@ vec3<T>::vec3(T t1, T t2, T t3) {
 	_t[2] = t3;
 }
 
+template <typename T>
+vec4<T>::vec4(T t1, T t2, T t3, T t4) {
+	_t[0] = t1;
+	_t[1] = t2;
+	_t[2] = t3;
+	_t[3] = t4;
+}
+
 // instanciation
 
 template class vec2<int8>;
@@ -207,3 +215,12 @@ template class vec3<int64>;
 template class vec3<uint64>;
 template class vec3<float>;
 template class vec3<double>;
+
+template class vec4<int8>;
+template class vec4<uint8>;
+template class vec4<int32>;
+template class vec4<uint32>;
+template class vec4<int64>;
+template class vec4<uint64>;
+template class vec4<float>;
+template class vec4<double>;

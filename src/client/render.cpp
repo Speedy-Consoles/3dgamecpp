@@ -101,7 +101,7 @@ void Graphics::renderSky() {
 	glDepthMask(false);
 	glBegin(GL_QUADS);
 
-	glColor3fv(fogColor);
+	glColor3fv(fogColor.ptr());
 	glVertex3d(-2, -2, 2);
 	glVertex3d(2, -2, 2);
 	glVertex3d(2, 0.3, -1);
@@ -109,7 +109,7 @@ void Graphics::renderSky() {
 
 	glVertex3d(-2, 0.3, -1);
 	glVertex3d(2, 0.3, -1);
-	glColor3fv(skyColor);
+	glColor3fv(skyColor.ptr());
 	glVertex3d(2, 2, 2);
 	glVertex3d(-2, 2, 2);
 
