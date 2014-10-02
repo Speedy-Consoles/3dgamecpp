@@ -35,7 +35,7 @@ RemoteServerInterface::RemoteServerInterface(World *world, const char *address, 
 	}
 
 	// this will make sure our async_recv calls get handled
-	f = async(launch::async, [this]{ ios.run(); });
+	f = async(launch::async, [this]{ this->ios.run(); });
 	asyncConnect(std::string(address));
 }
 
