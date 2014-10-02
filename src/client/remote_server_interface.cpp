@@ -51,7 +51,7 @@ void RemoteServerInterface::asyncConnect(std::string address) {
 	connectFuture = std::async(std::launch::async, [this, address]() {
 		status = RESOLVING;
 		LOG(INFO, "Resolving " << address);
-		udp::resolver r(ios);
+		udp::resolver r(this->ios);
 		udp::resolver::query q(udp::v4(), address, "");
 		my::net::error_t err;
 		udp::resolver::iterator iter = r.resolve(q, err);
