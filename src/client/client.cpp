@@ -291,13 +291,12 @@ void Client::handleInput() {
 			break;
 		case SDL_MOUSEBUTTONDOWN:
 			if (state == PLAYING && !world->isPaused()) {
-				using namespace vec_auto_cast;
 				vec3i64 bc;
 				int d;
 				bool target = player.getTargetedFace(&bc, &d);
 				if (target) {
 					if (event.button.button == SDL_BUTTON_LEFT) {
-						vec3i64 rbc = bc + DIRS[d];
+						vec3i64 rbc = bc + DIRS[d].cast<int64>();
 						serverInterface->edit(rbc, player.getBlock());
 						world->setBlock(rbc, player.getBlock(), true);
 					} else if (event.button.button == SDL_BUTTON_RIGHT) {

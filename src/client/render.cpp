@@ -137,8 +137,6 @@ void Graphics::renderScene() {
 }
 
 void Graphics::renderChunks() {
-	using namespace vec_auto_cast;
-
 	Player &localPlayer = world->getPlayer(localClientID);
 	vec3i64 pc = localPlayer.getChunkPos();
 	vec3d lookDir = getVectorFromAngles(localPlayer.getYaw(), localPlayer.getPitch());
@@ -189,7 +187,7 @@ void Graphics::renderChunks() {
 			continue;
 		renderedChunks++;
 
-		vec3i64 cc = pc + cd;
+		vec3i64 cc = pc + cd.cast<int64>();
 
 		uint index = ((((cc[2] % length) + length) % length) * length
 				+ (((cc[1] % length) + length) % length)) * length
@@ -251,7 +249,6 @@ void Graphics::renderChunks() {
 }
 
 int Graphics::renderChunk(const Chunk &c) {
-	using namespace vec_auto_cast;
 	int faces = 0;
 
 	texManager.bind(0);
@@ -287,7 +284,7 @@ int Graphics::renderChunk(const Chunk &c) {
 			if (m && !(s1 && s2))
 				light -= 0.2;
 			glColor3f(color[0] * light, color[1] * light, color[2] * light);
-			vec3f vertex = (f.block + QUAD_CYCLES_3D[f.dir][j]).cast<float>();
+			vec3f vertex = (f.block.cast<int>() + QUAD_CYCLES_3D[f.dir][j]).cast<float>();
 			glVertex3f(vertex[0], vertex[1], vertex[2]);
 		}
 		faces++;
@@ -297,7 +294,6 @@ int Graphics::renderChunk(const Chunk &c) {
 }
 
 void Graphics::renderPlayers() {
-	using namespace vec_auto_cast;
 	glBindTexture(GL_TEXTURE_2D, 0);
 	glBegin(GL_QUADS);
 	for (uint i = 0; i < MAX_CLIENTS; i++) {
@@ -319,7 +315,7 @@ void Graphics::renderPlayers() {
 					QUAD_CYCLES_3D[d][j][2] * Player::HEIGHT - Player::EYE_HEIGHT
 				);
 				glTexCoord2d(QUAD_CYCLE_2D[j][0], QUAD_CYCLE_2D[j][1]);
-				vec3d vertex = (pos + off).cast<double>() * (1.0 / RESOLUTION);
+				vec3d vertex = (pos + off.cast<int64>()).cast<double>() * (1.0 / RESOLUTION);
 				glVertex3d(vertex[0], vertex[1], vertex[2]);
 			}
 		}
@@ -494,7 +490,7 @@ void Graphics::renderPerformance() {
 		"ALL"
 	};
 
-	vec<float, 3> rel_colors[] {
+	vec3f rel_colors[] {
 		{0.6f, 0.6f, 1.0f},
 		{0.0f, 0.0f, 0.8f},
 		{0.6f, 0.0f, 0.8f},
@@ -576,7 +572,6 @@ void Graphics::renderPerformance() {
 }
 
 bool Graphics::inFrustum(vec3i64 cc, vec3i64 pos, vec3d lookDir) {
-	using namespace vec_auto_cast;
 	double chunkDia = sqrt(3) * Chunk::WIDTH * RESOLUTION;
 	vec3d cp = (cc * Chunk::WIDTH * RESOLUTION - pos).cast<double>();
 	double chunkLookDist = lookDir * cp + chunkDia;
