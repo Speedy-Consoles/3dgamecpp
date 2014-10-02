@@ -13,3 +13,5 @@ region
 *.profile
 *.log
 *.log.*
+deps
+3dgame
