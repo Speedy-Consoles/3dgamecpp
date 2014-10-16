@@ -38,7 +38,6 @@ SHARED_OBJECT_FILES = \
 	stopwatch.cpp.o\
 	time.cpp.o\
 	util.cpp.o\
-	vmath.cpp.o\
 	world_generator.cpp.o
 
 # what programs to use

@@ -262,23 +262,23 @@ Derived<S> vec<T, N, Derived>::cast() const {
 
 template <typename T>
 vec2<T>::vec2(T t1, T t2) {
-	_t[0] = t1;
-	_t[1] = t2;
+	this->_t[0] = t1;
+	this->_t[1] = t2;
 }
 
 template <typename T>
 vec3<T>::vec3(T t1, T t2, T t3) {
-	_t[0] = t1;
-	_t[1] = t2;
-	_t[2] = t3;
+	this->_t[0] = t1;
+	this->_t[1] = t2;
+	this->_t[2] = t3;
 }
 
 template <typename T>
 vec4<T>::vec4(T t1, T t2, T t3, T t4) {
-	_t[0] = t1;
-	_t[1] = t2;
-	_t[2] = t3;
-	_t[3] = t4;
+	this->_t[0] = t1;
+	this->_t[1] = t2;
+	this->_t[2] = t3;
+	this->_t[3] = t4;
 }
 
 // abbreviations
