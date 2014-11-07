@@ -8,6 +8,7 @@
 class LocalServerInterface : public ServerInterface {
 private:
 	World *world;
+	Player *player;
 	ChunkLoader *chunkLoader;
 
 	GraphicsConf conf;
@@ -19,7 +20,7 @@ public:
 
 	Status getStatus() override;
 
-	void setFly(bool fly) override;
+	void toggleFly() override;
 
 	void setPlayerMoveInput(int moveInput) override;
 
@@ -28,7 +29,7 @@ public:
 
 	void edit(vec3i64 bc, uint8 type) override;
 
-	void receiveChunks(uint64 timeLimit) override;
+	void receive(uint64 timeLimit) override;
 
 	void sendInput() override;
 

@@ -87,6 +87,7 @@ void RemoteServerInterface::asyncConnect(std::string address) {
 			case CONNECTION_ACCEPTED:
 				localPlayerId = smsg.conAccepted.id;
 				this->world->addPlayer(localPlayerId);
+				this->world->getPlayer(localPlayerId).setFly(true);
 				status = CONNECTED;
 				LOG(INFO, "Connected to " << ep.address().to_string());
 				break;
@@ -137,12 +138,12 @@ ServerInterface::Status RemoteServerInterface::getStatus() {
 	return status;
 }
 
-void RemoteServerInterface::setFly(bool fly) {
+void RemoteServerInterface::toggleFly() {
 
 }
 
 void RemoteServerInterface::setPlayerMoveInput(int moveInput) {
-
+	this->moveInput = moveInput;
 }
 
 void RemoteServerInterface::setPlayerOrientation(double yaw, double pitch) {
@@ -157,29 +158,52 @@ void RemoteServerInterface::edit(vec3i64 bc, uint8 type) {
 
 }
 
-void RemoteServerInterface::receiveChunks(uint64 timeLimit) {
+void RemoteServerInterface::receive(uint64 timeLimit) {
 	if (status != CONNECTED)
 		return;
 	Socket::ErrorCode error;
 	inBuf.clear();
 	while ((error = socket.receiveNow(inBuf)) == Socket::OK) {
-		inBuf.rSeek(5);
-		printf("%s\n", inBuf.rBegin());
+		ServerMessage smsg;
+		inBuf >> smsg;
+		switch (smsg.type) {
+		case ECHO_RESPONSE:
+			printf("%s\n", inBuf.rBegin());
+			break;
+		case PLAYER_SNAPSHOT:
+			// TODO also update other values
+			printf("snapshot: %d\n", smsg.playerSnapshot.snapshot.moveInput);
+			world->getPlayer(smsg.playerSnapshot.id).setMoveInput(smsg.playerSnapshot.snapshot.moveInput);
+			break;
+		default:
+			printf("eh?\n");
+			;//TODO
+		}
 		inBuf.clear();
 	}
 	if (error != Socket::WOULD_BLOCK) {
-		LOG(ERROR, "Socket error number " << error << " while receiving chunks");
+		LOG(ERROR, "Socket error number " << error << " while receiving");
 	}
 }
 
 void RemoteServerInterface::sendInput() {
 	if (status != CONNECTED)
 		return;
-	ClientMessage cmsg;
-	cmsg.type = ECHO_REQUEST;
-	outBuf.clear();
-	outBuf << cmsg << "wurst" << '\0';
-	socket.send(outBuf);
+	{
+		ClientMessage cmsg;
+		cmsg.type = ECHO_REQUEST;
+		outBuf.clear();
+		outBuf << cmsg << "wurst" << '\0';
+		socket.send(outBuf);
+	}
+	{
+		ClientMessage cmsg;
+		cmsg.type = PLAYER_INPUT;
+		cmsg.playerInput.input = moveInput;
+		outBuf.clear();
+		outBuf << cmsg;
+		socket.send(outBuf);
+	}
 }
 
 void RemoteServerInterface::setConf(const GraphicsConf &conf) {

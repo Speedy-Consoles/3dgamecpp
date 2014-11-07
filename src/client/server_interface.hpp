@@ -21,14 +21,14 @@ public:
 
 	virtual Status getStatus() = 0;
 
-	virtual void setFly(bool fly) = 0;
+	virtual void toggleFly() = 0;
 	virtual void setPlayerMoveInput(int moveInput) = 0;
 	virtual void setPlayerOrientation(double yaw, double pitch) = 0;
 	virtual void setBlock(uint8 block) = 0;
 
 	virtual void edit(vec3i64 block, uint8 type) = 0;
 
-	virtual void receiveChunks(uint64 timeLimit) = 0;
+	virtual void receive(uint64 timeLimit) = 0;
 
 	virtual void sendInput() = 0;
 

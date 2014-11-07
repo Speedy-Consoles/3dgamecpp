@@ -15,6 +15,8 @@ Buffer &operator << (Buffer &lhs, const ServerMessage &rhs) {
 		return lhs << MAGIC << rhs.conReset;
 	case ECHO_RESPONSE:
 		return lhs << MAGIC << rhs.echoResp;
+	case PLAYER_SNAPSHOT:
+		return lhs << MAGIC << rhs.playerSnapshot;
 	default:
 		LOG(ERROR, "Tried to send server message of unknown type");
 		return lhs;
@@ -48,6 +50,9 @@ const Buffer &operator >> (const Buffer &lhs, ServerMessage &rhs) {
 		case ECHO_RESPONSE:
 			lhs >> rhs.echoResp;
 			break;
+		case PLAYER_SNAPSHOT:
+			lhs >> rhs.playerSnapshot;
+			break;
 		default:
 			LOG(ERROR, "Received server message of unknown type");
 			break;
@@ -66,6 +71,8 @@ Buffer &operator << (Buffer &lhs, const ClientMessage &rhs) {
 		return lhs << MAGIC << rhs.conRequest;
 	case ECHO_REQUEST:
 		return lhs << MAGIC << rhs.echoRequest;
+	case PLAYER_INPUT:
+		return lhs << MAGIC << rhs.playerInput;
 	default:
 		LOG(ERROR, "Tried to send client message of unknown type");
 		return lhs;
@@ -89,6 +96,9 @@ const Buffer &operator >> (const Buffer &lhs, ClientMessage &rhs) {
 			break;
 		case ECHO_REQUEST:
 			lhs >> rhs.echoRequest;
+			break;
+		case PLAYER_INPUT:
+			lhs >> rhs.playerInput;
 			break;
 		default:
 			LOG(ERROR, "Received client message of unknown type");

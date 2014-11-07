@@ -201,7 +201,7 @@ void Player::setSnapshot(const PlayerSnapshot &snapshot) {
 }
 
 PlayerSnapshot Player::makeSnapshot(int tick) const {
-	return PlayerSnapshot{tick, isFlying, pos, vel, yaw, pitch, moveInput};
+	return PlayerSnapshot{tick, pos, vel, (uint16) round(yaw * 100), (int16) round(pitch * 100), moveInput, isFlying};
 }
 
 Monitor &Player::getValidPosMonitor() {

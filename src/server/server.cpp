@@ -63,6 +63,8 @@ private:
 	void handleConnectionRequest(const endpoint_t &);
 	void handleClientMessage(const ClientMessage &cmsg, uint8 id);
 
+	void sendSnapshots(int tick);
+
 	void disconnect(uint8 id);
 };
 
@@ -160,6 +162,9 @@ void Server::run() {
 				LOG(ERROR, "Unknown error while receiving packets");
 			}
 		}
+
+		//TODO use makeSnapshot
+		sendSnapshots(tick);
 
 		checkInactive();
 		tick++;
@@ -265,6 +270,8 @@ void Server::handleConnectionRequest(const endpoint_t &endpoint) {
 	} else {
 		uint8 id = (uint) newPlayer;
 
+		world->addPlayer(id);
+
 		clients[id].connected = true;
 		clients[id].endpoint = endpoint;
 		clients[id].timeOfLastPacket = my::time::now();
@@ -292,8 +299,39 @@ void Server::handleClientMessage(const ClientMessage &cmsg, uint8 id) {
 		socket.send(outBuf, &clients[id].endpoint);
 		break;
 	}
+	case PLAYER_INPUT:
+		world->getPlayer(id).setMoveInput(cmsg.playerInput.input);
+		break;
 	default:
 		break;
+	}
+}
+
+void Server::sendSnapshots(int tick) {
+	for (uint8 id = 0; id < MAX_CLIENTS; ++id) {
+		if (!clients[id].connected)
+			continue;
+
+		ServerMessage smsg;
+		smsg.type = PLAYER_SNAPSHOT;
+		smsg.playerSnapshot.id = id;
+		smsg.playerSnapshot.snapshot.tick = tick;
+		smsg.playerSnapshot.snapshot.pos = world->getPlayer(id).getPos();
+		smsg.playerSnapshot.snapshot.vel = world->getPlayer(id).getVel();
+		smsg.playerSnapshot.snapshot.yaw = (uint16) round(world->getPlayer(id).getYaw() * 100);
+		smsg.playerSnapshot.snapshot.pitch = (int16) round(world->getPlayer(id).getPitch() * 100);
+		smsg.playerSnapshot.snapshot.moveInput = world->getPlayer(id).getMoveInput();
+		smsg.playerSnapshot.snapshot.isFlying = world->getPlayer(id).getFly();
+
+		outBuf.clear();
+		outBuf << smsg << inBuf;
+
+		for (uint8 id2 = 0; id2 < MAX_CLIENTS; ++id2) {
+			if (!clients[id2].connected)
+				continue;
+			socket.send(outBuf, &clients[id2].endpoint);
+			outBuf.rSeek(0);
+		}
 	}
 }
 
@@ -317,6 +355,8 @@ void Server::checkInactive() {
 }
 
 void Server::disconnect(uint8 id) {
+	world->deletePlayer(id);
+
 	LOG(INFO, "Player " << (int) id << " disconnected");
 	clients[id].connected = false;
 }

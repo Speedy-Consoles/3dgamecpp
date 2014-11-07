@@ -3,6 +3,7 @@
 
 #include "std_types.hpp"
 #include "buffer.hpp"
+#include "game/player.hpp"
 
 static const uint8 MAGIC[4] = {0xaa, 0x0d, 0xbe, 0x15};
 
@@ -15,6 +16,7 @@ enum ClientMessageType : uint8 {
 	MALFORMED_CLIENT_MESSAGE,
 	CONNECTION_REQUEST,
 	ECHO_REQUEST,
+	PLAYER_INPUT,
 };
 
 enum ServerMessageType : uint8 {
@@ -23,6 +25,7 @@ enum ServerMessageType : uint8 {
 	CONNECTION_REJECTED,
 	CONNECTION_TIMEOUT,
 	CONNECTION_RESET,
+	PLAYER_SNAPSHOT,
 	ECHO_RESPONSE,
 };
 
@@ -39,6 +42,7 @@ union ServerMessage {
 	struct { ServerMessageType type; } conTimeout;
 	struct { ServerMessageType type; } conReset;
 	struct { ServerMessageType type; } echoResp;
+	struct { ServerMessageType type; uint8 id; PlayerSnapshot snapshot; } playerSnapshot;
 };
 
 union ClientMessage {
@@ -46,6 +50,7 @@ union ClientMessage {
 	struct { ClientMessageType type; MessageError error; } malformed;
 	struct { ClientMessageType type; } conRequest;
 	struct { ClientMessageType type; } echoRequest;
+	struct { ClientMessageType type; int input; } playerInput;
 };
 
 Buffer &operator << (Buffer &lhs, const ServerMessage &rhs);

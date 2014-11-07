@@ -8,6 +8,7 @@ LocalServerInterface::LocalServerInterface(World *world, uint64 seed, const Grap
 		: conf(conf) {
 	this->world = world;
 	this->world->addPlayer(0);
+	player = &world->getPlayer(0);
 	chunkLoader = new ChunkLoader(world, seed, getLocalClientId());
 	chunkLoader->setRenderDistance(conf.render_distance);
 	chunkLoader->dispatch();
@@ -22,27 +23,28 @@ ServerInterface::Status LocalServerInterface::getStatus() {
 	return CONNECTED;
 }
 
-void LocalServerInterface::setFly(bool fly) {
-
+void LocalServerInterface::toggleFly() {
+	player->setFly(!player->getFly());
 }
 
 void LocalServerInterface::setPlayerMoveInput(int moveInput) {
-
+	if (player->isValid())
+		player->setMoveInput(moveInput);
 }
 
 void LocalServerInterface::setPlayerOrientation(double yaw, double pitch) {
-
+	player->setOrientation(yaw, pitch);
 }
 
 void LocalServerInterface::setBlock(uint8 block) {
-
+	player->setBlock(block);
 }
 
 void LocalServerInterface::edit(vec3i64 bc, uint8 type) {
-
+	world->setBlock(bc, type, true);
 }
 
-void LocalServerInterface::receiveChunks(uint64 timeLimit) {
+void LocalServerInterface::receive(uint64 timeLimit) {
 	Chunk *chunk = nullptr;
 	while ((chunk = chunkLoader->getNextLoadedChunk()) != nullptr) {
 		world->insertChunk(chunk);

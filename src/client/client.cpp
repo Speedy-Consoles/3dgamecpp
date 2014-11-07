@@ -80,8 +80,8 @@ Client::Client() {
 	frame = menu->getFrame();
 	graphics = new Graphics(world, menu, &state, &localClientId, *conf, stopwatch);
 
-	//serverInterface = new RemoteServerInterface(world, "localhost", *conf);
-	serverInterface = new LocalServerInterface(world, 42, *conf);
+	serverInterface = new RemoteServerInterface(world, "localhost", *conf);
+	//serverInterface = new LocalServerInterface(world, 42, *conf);
 }
 
 Client::~Client() {
@@ -115,6 +115,10 @@ void Client::run() {
 			stopwatch->stop(CLOCK_NET);
 		}
 		if (state == PLAYING || state == IN_MENU) {
+			stopwatch->start(CLOCK_NET);
+			serverInterface->receive(time + 200000);
+			stopwatch->stop(CLOCK_NET);
+
 			stopwatch->start(CLOCK_TIC);
 			world->tick(tick, localClientId);
 			stopwatch->stop(CLOCK_TIC);
@@ -124,11 +128,8 @@ void Client::run() {
 			graphics->tick();
 
 #endif
-		if (state == PLAYING || state == IN_MENU) {
-			stopwatch->start(CLOCK_NET);
-			serverInterface->receiveChunks(time + 200000);
-			stopwatch->stop(CLOCK_NET);
-		}
+
+		// TODO finish here
 
 		stopwatch->start(CLOCK_SYN);
 		sync(TICK_SPEED);
@@ -161,7 +162,6 @@ void Client::handleInput() {
 					block += NUMBER_OF_BLOCKS;
 				}
 				serverInterface->setBlock(block);
-				player.setBlock(block);
 			}
 			break;
 		}
@@ -199,9 +199,7 @@ void Client::handleInput() {
 					break;
 				case SDL_SCANCODE_F:
 					if (!world->isPaused()) {
-						bool fly = !world->getPlayer(localClientId).getFly();
-						world->getPlayer(localClientId).setFly(fly);
-						serverInterface->setFly(fly);
+						serverInterface->toggleFly();
 					}
 					break;
 				case SDL_SCANCODE_M:
@@ -281,7 +279,6 @@ void Client::handleInput() {
 				pitch = std::max(pitch, -90.0);
 				pitch = std::min(pitch, 90.0);
 				serverInterface->setPlayerOrientation(yaw, pitch);
-				player.setOrientation(yaw, pitch);
 			} else if (state == IN_MENU) {
 				int x = event.motion.x;
 				int y = graphics->getHeight() - event.motion.y;
@@ -298,10 +295,8 @@ void Client::handleInput() {
 					if (event.button.button == SDL_BUTTON_LEFT) {
 						vec3i64 rbc = bc + DIRS[d].cast<int64>();
 						serverInterface->edit(rbc, player.getBlock());
-						world->setBlock(rbc, player.getBlock(), true);
 					} else if (event.button.button == SDL_BUTTON_RIGHT) {
 						serverInterface->edit(bc, 0);
-						world->setBlock(bc, 0, true);
 					}
 				}
 			} else if (state == IN_MENU){
@@ -344,7 +339,5 @@ void Client::handleInput() {
 			moveInput |= Player::MOVE_INPUT_FLAG_SPRINT;
 
 		serverInterface->setPlayerMoveInput(moveInput);
-		if (player.isValid())
-			player.setMoveInput(moveInput);
 	}
 }

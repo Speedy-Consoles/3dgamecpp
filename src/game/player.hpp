@@ -6,12 +6,12 @@
 
 struct PlayerSnapshot {
 	int tick;
-	bool isFlying;
 	vec3i64 pos;
 	vec3d vel;
-	double yaw;
-	double pitch;
+	uint16 yaw;
+	int16 pitch;
 	int moveInput;
+	bool isFlying;
 
 /*
 	public void write(ByteBuffer buffer) {

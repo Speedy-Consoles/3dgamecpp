@@ -64,8 +64,8 @@ int World::shootRay(vec3i64 start, vec3d ray, double maxDist,
 			int dirDim = DIR_DIMS[d];
 			const int *otherDims = OTHER_DIR_DIMS[d];
 			int sign = DIRS[d][dirDim];
-			long facePlane = (block[dirDim] + (sign + 1) / 2) * RESOLUTION;
-			long planeDist = facePlane - start[dirDim];
+			int64 facePlane = (block[dirDim] + (sign + 1) / 2) * RESOLUTION;
+			int64 planeDist = facePlane - start[dirDim];
 			double factor = planeDist / ray[dirDim];
 			vec3d hit;
 			hit[dirDim] = facePlane;

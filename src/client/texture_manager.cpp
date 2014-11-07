@@ -245,7 +245,7 @@ void TextureManager::getTextureVertices(vec3i64 bc, uint8 dir, vec2f out[4]) con
 
 	if (lastBound.type == WANG_TILES) {
 		enum { RIGHT, BACK, TOP, LEFT, FRONT, BOTTOM };
-		uint8 left, right,  top, bot;
+		uint8 left = 0, right = 0, top = 0, bot = 0;
 		switch (dir) {
 		case RIGHT:
 			left   = scramble(bc + vec3i64(1, 0, 0)) & 0x01;
