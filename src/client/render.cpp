@@ -6,6 +6,8 @@
 
 #include "io/logging.hpp"
 
+#include <cinttypes>
+
 void Graphics::switchToPerspective() {
 	glMatrixMode(GL_PROJECTION);
 	glLoadMatrixd(perspectiveMatrix);
@@ -380,16 +382,16 @@ void Graphics::renderDebugInfo(const Player &player) {
 	RENDER_LINE("fps: %d", fpsSum);
 	RENDER_LINE("new faces: %d", newFaces);
 	RENDER_LINE("faces: %d", faces);
-	RENDER_LINE("x: %ld (%ld)", playerPos[0], playerPos[0] / RESOLUTION);
-	RENDER_LINE("y: %ld (%ld)", playerPos[1], playerPos[1] / RESOLUTION);
-	RENDER_LINE("z: %ld (%ld)", playerPos[2],
+	RENDER_LINE("x: %" PRId64 "(%" PRId64 ")", playerPos[0], playerPos[0] / RESOLUTION);
+	RENDER_LINE("y: %" PRId64 " (%" PRId64 ")", playerPos[1], playerPos[1] / RESOLUTION);
+	RENDER_LINE("z: %" PRId64 " (%" PRId64 ")", playerPos[2],
 			(playerPos[2] - Player::EYE_HEIGHT - 1) / RESOLUTION);
 	RENDER_LINE("yaw:   %6.1f", player.getYaw());
 	RENDER_LINE("pitch: %6.1f", player.getPitch());
 	RENDER_LINE("xvel: %8.1f", playerVel[0]);
 	RENDER_LINE("yvel: %8.1f", playerVel[1]);
 	RENDER_LINE("zvel: %8.1f", playerVel[2]);
-	RENDER_LINE("chunks loaded: %lu", world->getNumChunks());
+	RENDER_LINE("chunks loaded: %" PRIuPTR "", world->getNumChunks());
 	RENDER_LINE("block: %d", player.getBlock());
 	if ((SDL_WINDOW_FULLSCREEN & windowFlags) > 0)
 		glColor3f(1.0f, 0.0f, 0.0f);

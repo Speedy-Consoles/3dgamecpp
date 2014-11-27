@@ -8,6 +8,7 @@
 #include "archive.hpp"
 
 #include <cstring>
+#include <cinttypes>
 
 #include "util.hpp"
 #include "logging.hpp"
@@ -246,7 +247,11 @@ void ArchiveFile::storeChunk(const Chunk &chunk) {
 	delete buffer;
 
 	if (!_file.good()) {
-		LOG(ERROR, "Safe operation failed");
+		LOG(ERROR, "Safe operation failed for chunk "
+				<< cc[0] << " " << cc[1] << " "<< cc[2]);
+	} else {
+		LOG(TRACE, "Safe operation successful for chunk "
+				<< cc[0] << " " << cc[1] << " "<< cc[2]);
 	}
 }
 
@@ -301,7 +306,8 @@ ArchiveFile *ChunkArchive::getArchiveFile(vec3i64 cc) {
 	auto iter = _file_map.find(rc);
 	if (iter == _file_map.end()) {
 		char buffer[200];
-		sprintf(buffer, "%ld_%ld_%ld.region", rc[0], rc[1], rc[2]);
+		sprintf(buffer, "%" PRId64 "_%" PRId64 "_%" PRId64 ".region",
+				rc[0], rc[1], rc[2]);
 		std::string filename = _path + std::string(buffer);
 		ArchiveFile *archive_file = new ArchiveFile(filename.c_str(), REGION_SIZE);
 		_file_map.insert({rc, archive_file});
