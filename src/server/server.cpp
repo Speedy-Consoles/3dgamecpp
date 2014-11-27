@@ -26,7 +26,7 @@ struct Client {
 	bool connected;
 	udp::endpoint endpoint;
 	uint32 token;
-	time_t timeOfLastPacket;
+	my::time::time_t timeOfLastPacket;
 };
 
 class Server {
@@ -36,13 +36,13 @@ private:
 
 	Client clients[MAX_CLIENTS];
 
-	time_t timeout = my::time::seconds(10);
+	my::time::time_t timeout = my::time::seconds(10);
 
 	Buffer inBuf;
 	Buffer outBuf;
 
 	// time keeping
-	time_t time = 0;
+	my::time::time_t time = 0;
 
 	// our listening socket
 	my::net::ios_t ios;
@@ -141,7 +141,7 @@ void Server::run() {
 		world->tick(tick, -1);
 
 		time += seconds(1) / TICK_SPEED;
-		time_t remTime;
+		my::time::time_t remTime;
 		while ((remTime = time - now() + seconds(1) / TICK_SPEED) > 0) {
 			// TODO this can be overridden asynchronously
 			endpoint_t endpoint;

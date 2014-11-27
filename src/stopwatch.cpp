@@ -48,11 +48,11 @@ void Stopwatch::stop(uint id) {
 	}
 }
 
-time_t Stopwatch::get(uint id) {
+time::time_t Stopwatch::get(uint id) {
 	return _clocks[id].dur;
 }
 
-time_t Stopwatch::getTotal() {
+time::time_t Stopwatch::getTotal() {
 	return _total;
 }
 
