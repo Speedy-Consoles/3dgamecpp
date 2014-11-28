@@ -83,7 +83,7 @@ ArchiveFile::ArchiveFile(const char *filename, size_t region_size) :
 		bool is_version_ok = _version == 1;
 		bool is_size_ok = size == _region_size * _region_size * _region_size;
 
-		all_ok = is_magic_ok && is_endianess_ok && is_version_ok & is_size_ok;
+		all_ok = is_magic_ok && is_endianess_ok && is_version_ok && is_size_ok;
 	}
 
 	if (!all_ok) {
