@@ -11,6 +11,7 @@
 #include <boost/asio.hpp>
 #include <thread>
 #include <future>
+#include <string>
 
 using namespace std;
 using namespace boost;
@@ -31,6 +32,7 @@ struct Client {
 
 class Server {
 private:
+	std::string id;
 	bool closeRequested = false;
 	World *world = nullptr;
 
@@ -51,7 +53,7 @@ private:
 	my::net::Socket socket;
 
 public:
-	Server(uint16 port);
+	Server(uint16 port, const char *worldId = "region");
 	~Server();
 
 	void run();
@@ -87,7 +89,7 @@ int main(int argc, char *argv[]) {
 
 }
 
-Server::Server(uint16 port) :
+Server::Server(uint16 port, const char *worldId) :
 	inBuf(1024*64),
 	outBuf(1024*64),
 	ios(),
@@ -95,7 +97,7 @@ Server::Server(uint16 port) :
 	socket(ios)
 {
 	LOG(INFO, "Creating Server");
-	world = new World();
+	world = new World(worldId);
 	for (uint8 i = 0; i < MAX_CLIENTS; i++) {
 		clients[i].connected = false;
 		clients[i].timeOfLastPacket = 0;

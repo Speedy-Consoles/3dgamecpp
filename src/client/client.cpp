@@ -4,6 +4,7 @@
 #include <thread>
 #include <cmath>
 #include <cstdio>
+#include <cstring>
 
 #include "util.hpp"
 #include "constants.hpp"
@@ -43,7 +44,7 @@ private:
 
 public:
 	Client(const Client &) = delete;
-	Client();
+	Client(const char *worldId, const char *serverAdress);
 	~Client();
 
 	void run();
@@ -60,28 +61,52 @@ int main(int argc, char *argv[]) {
 	LOG(INFO, "Starting client");
 	LOG(TRACE, "Trace enabled");
 
+	const char *worldId = "region";
+	const char *serverAdress = nullptr;
+
+	argv++;
+	argc--;
+
+	while (argc > 0) {
+		if (strcmp(*argv, "-f") == 0) {
+			worldId = *++argv;
+			argc--;
+		} else if (strcmp(*argv, "-a") == 0) {
+			serverAdress = *++argv;
+			argc--;
+		}
+		argv++;
+		argc--;
+	}
+
 	initUtil();
-	Client client;
+	Client client(worldId, serverAdress);
 	client.run();
 
 	return 0;
 }
 
-Client::Client() {
+Client::Client(const char *worldId, const char *serverAdress) {
 	stopwatch = new Stopwatch(CLOCK_ID_NUM);
 	stopwatch->start(CLOCK_ALL);
 
 	conf = new GraphicsConf();
 	load("graphics-default.profile", conf);
 
-	world = new World();
+	LOG(INFO, "Opening world '" << worldId << "'");
+	world = new World(worldId);
 
 	menu = new Menu(conf);
 	frame = menu->getFrame();
 	graphics = new Graphics(world, menu, &state, &localClientId, *conf, stopwatch);
 
-	serverInterface = new RemoteServerInterface(world, "localhost", *conf);
-	//serverInterface = new LocalServerInterface(world, 42, *conf);
+	if (serverAdress) {
+		LOG(INFO, "Connecting to remote server '" << serverAdress << "'");
+		serverInterface = new RemoteServerInterface(world, serverAdress, *conf);
+	} else {
+		LOG(INFO, "Connecting to local server");
+		serverInterface = new LocalServerInterface(world, 42, *conf);
+	}
 }
 
 Client::~Client() {

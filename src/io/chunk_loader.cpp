@@ -8,7 +8,7 @@ using namespace std;
 
 ChunkLoader::ChunkLoader(World *world, uint64 seed, uint localPlayer) :
 	isLoaded(0, vec3i64HashFunc), queue(1000),
-	chunkArchive("./region/")
+	chunkArchive((string("./") + world->getId() + "/").c_str())
 {
 	this->gen = new WorldGenerator(seed);
 	this->world = world;

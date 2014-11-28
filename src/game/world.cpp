@@ -9,7 +9,7 @@
 #include <cstdio>
 
 
-World::World() : chunks(0, vec3i64HashFunc) {
+World::World(std::string id) : id(id), chunks(0, vec3i64HashFunc) {
 }
 
 World::~World() {

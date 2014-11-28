@@ -3,6 +3,7 @@
 
 #include <queue>
 #include <unordered_map>
+#include <string>
 
 #include "constants.hpp"
 #include "player.hpp"
@@ -43,6 +44,7 @@ public:
 	using ChunkMap = std::unordered_map<vec3i64, Chunk *, size_t(*)(vec3i64)>;
 
 private:
+	std::string id;
 	ChunkMap chunks;
 	std::deque<vec3i64> changedChunks;
 
@@ -52,8 +54,10 @@ private:
 
 public:
 
-	World();
+	World(std::string id);
 	~World();
+
+	std::string getId() const { return id; }
 
 	void tick(int tick, uint localPlayerID);
 
