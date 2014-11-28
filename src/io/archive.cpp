@@ -10,6 +10,8 @@
 #include <cstring>
 #include <cinttypes>
 
+#include <boost/filesystem.hpp>
+
 #include "util.hpp"
 #include "logging.hpp"
 
@@ -259,10 +261,20 @@ ChunkArchive::~ChunkArchive() {
 	clearHandles();
 }
 
-ChunkArchive::ChunkArchive(const char *path) :
-	_path(path), _file_map(0, vec3i64HashFunc)
+ChunkArchive::ChunkArchive(const char *str) :
+	_path(str), _file_map(0, vec3i64HashFunc)
 {
-	// nothing
+	using namespace boost::filesystem;
+	path p(str);
+	if (!exists(status(p))) {
+		if (!create_directory(p)) {
+			LOG(ERROR, "Could not create world directory");
+		}
+	} else {
+		if (!is_directory(p)) {
+			LOG(ERROR, "World path is not a directory");
+		}
+	}
 }
 
 void ChunkArchive::clearHandles() {
