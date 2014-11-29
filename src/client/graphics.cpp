@@ -192,8 +192,9 @@ void Graphics::initGL() {
 	};
 	texManager.loadTextures(blocks, "img/textures_1.png", 16, 16);
 	texManager.loadTexture(1, "img/diff_earth.png", TextureManager::WANG_TILES);
-	texManager.loadTexture(35, "img/wang_test.png", TextureManager::WANG_TILES);
 	texManager.loadTexture(34, "img/multi4_test.png", TextureManager::MULTI_x4);
+	texManager.loadTexture(35, "img/wang_test.png", TextureManager::WANG_TILES);
+	texManager.loadTexture(36, "img/stone_diff.png", TextureManager::MULTI_x4);
 
 	// shader
 //	program = loadProgram(

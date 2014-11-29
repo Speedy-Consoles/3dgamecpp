@@ -179,7 +179,7 @@ void Client::handleInput() {
 			if (state == PLAYING) {
 				auto block = player.getBlock();
 				block += event.wheel.y;
-				static const int NUMBER_OF_BLOCKS = 35;
+				static const int NUMBER_OF_BLOCKS = 36;
 				while (block > NUMBER_OF_BLOCKS) {
 					block -= NUMBER_OF_BLOCKS;
 				}
