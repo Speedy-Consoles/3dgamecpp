@@ -181,7 +181,7 @@ void TextureManager::getTextureVertices(vec2f out[4]) const {
 	float w = lastBound.w;
 	float h = lastBound.h;
 
-	if (lastBound.type == WANG_TILES) {
+	if (lastBound.type == WANG_TILES || lastBound.type == MULTI_x4) {
 		w *= 0.25;
 		h *= 0.25;
 	}
