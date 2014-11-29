@@ -174,6 +174,7 @@ GLuint TextureManager::getTexture() {
 	return lastBound.tex;
 }
 
+// used for rendering a single tile of texture onto the hud
 void TextureManager::getTextureVertices(vec2f out[4]) const {
 	float x = lastBound.x;
 	float y = lastBound.y;
@@ -243,58 +244,100 @@ void TextureManager::getTextureVertices(vec3i64 bc, uint8 dir, vec2f out[4]) con
 	float w = lastBound.w;
 	float h = lastBound.h;
 
-	if (lastBound.type == WANG_TILES) {
+	if (lastBound.type == WANG_TILES || lastBound.type == MULTI_x4) {
 		enum { RIGHT, BACK, TOP, LEFT, FRONT, BOTTOM };
-		uint8 left = 0, right = 0, top = 0, bot = 0;
+		vec3i64 vl, vr, vb, vt;
 		switch (dir) {
 		case RIGHT:
-			left   = scramble(bc + vec3i64(1, 0, 0)) & 0x01;
-			right  = scramble(bc + vec3i64(1, 1, 0)) & 0x01;
-			bot    = scramble(bc + vec3i64(0, 0, 0)) & 0x02;
-			top    = scramble(bc + vec3i64(0, 0, 1)) & 0x02;
+			vl = bc + vec3i64(1, 0, 0);
+			vr = bc + vec3i64(1, 1, 0);
+			vb = bc + vec3i64(0, 0, 0);
+			vt = bc + vec3i64(0, 0, 1);
 			break;
 		case LEFT:
-			left   = scramble(bc + vec3i64(0, 1, 0)) & 0x01;
-			right  = scramble(bc + vec3i64(0, 0, 0)) & 0x01;
-			bot    = scramble(bc + vec3i64(0, 0, 0)) & 0x02;
-			top    = scramble(bc + vec3i64(0, 0, 1)) & 0x02;
+			vl = bc + vec3i64(0, 1, 0);
+			vr = bc + vec3i64(0, 0, 0);
+			vb = bc + vec3i64(0, 0, 0);
+			vt = bc + vec3i64(0, 0, 1);
 			break;
 		case BACK:
-			left   = scramble(bc + vec3i64(1, 1, 0)) & 0x01;
-			right  = scramble(bc + vec3i64(0, 1, 0)) & 0x01;
-			bot    = scramble(bc + vec3i64(0, 0, 0)) & 0x02;
-			top    = scramble(bc + vec3i64(0, 0, 1)) & 0x02;
+			vl = bc + vec3i64(1, 1, 0);
+			vr = bc + vec3i64(0, 1, 0);
+			vb = bc + vec3i64(0, 0, 0);
+			vt = bc + vec3i64(0, 0, 1);
 			break;
 		case FRONT:
-			left   = scramble(bc + vec3i64(0, 0, 0)) & 0x01;
-			right  = scramble(bc + vec3i64(1, 0, 0)) & 0x01;
-			bot    = scramble(bc + vec3i64(0, 0, 0)) & 0x02;
-			top    = scramble(bc + vec3i64(0, 0, 1)) & 0x02;
+			vl = bc + vec3i64(0, 0, 0);
+			vr = bc + vec3i64(1, 0, 0);
+			vb = bc + vec3i64(0, 0, 0);
+			vt = bc + vec3i64(0, 0, 1);
 			break;
 		case TOP:
-			left   = scramble(bc + vec3i64(0, 0, 0)) & 0x04;
-			right  = scramble(bc + vec3i64(1, 0, 0)) & 0x04;
-			bot    = scramble(bc + vec3i64(0, 0, 0)) & 0x08;
-			top    = scramble(bc + vec3i64(0, 1, 0)) & 0x08;
+			vl = bc + vec3i64(0, 0, 0);
+			vr = bc + vec3i64(1, 0, 0);
+			vb = bc + vec3i64(0, 0, 0);
+			vt = bc + vec3i64(0, 1, 0);
 			break;
 		case BOTTOM:
-			left   = scramble(bc + vec3i64(1, 0, 0)) & 0x10;
-			right  = scramble(bc + vec3i64(0, 0, 0)) & 0x10;
-			bot    = scramble(bc + vec3i64(0, 0, 0)) & 0x20;
-			top    = scramble(bc + vec3i64(0, 1, 0)) & 0x20;
+			vl = bc + vec3i64(1, 0, 0);
+			vr = bc + vec3i64(0, 0, 0);
+			vb = bc + vec3i64(0, 0, 0);
+			vt = bc + vec3i64(0, 1, 0);
+			break;
+		default:
+			vl = bc;
+			vr = bc;
+			vb = bc;
+			vt = bc;
 			break;
 		}
 
-		w *= 0.25;
-		h *= 0.25;
+		if (lastBound.type == WANG_TILES) {
+			uint8 left, right, top, bot;
+			switch (dir) {
+			default:
+				left  = scramble(vl) & 0x01;
+				right = scramble(vr) & 0x01;
+				bot   = scramble(vb) & 0x02;
+				top   = scramble(vt) & 0x02;
+				break;
+			case BOTTOM:
+				left  = scramble(vl) & 0x10;
+				right = scramble(vr) & 0x10;
+				bot   = scramble(vb) & 0x20;
+				top   = scramble(vt) & 0x20;
+				break;
+			case TOP:
+				left  = scramble(vl) & 0x04;
+				right = scramble(vr) & 0x04;
+				bot   = scramble(vb) & 0x08;
+				top   = scramble(vt) & 0x08;
+				break;
+			}
 
-		if      ( left && !right) x += w * 1;
-		else if (!left && !right) x += w * 2;
-		else if (!left &&  right) x += w * 3;
-		if      ( bot  && !top)   y += h * 1;
-		else if (!bot  && !top)   y += h * 2;
-		else if (!bot  &&  top)   y += h * 3;
-	} // wang tiles
+			w *= 0.25;
+			h *= 0.25;
+
+			if      ( left && !right) x += w * 1;
+			else if (!left && !right) x += w * 2;
+			else if (!left &&  right) x += w * 3;
+			if      ( bot  && !top)   y += h * 1;
+			else if (!bot  && !top)   y += h * 2;
+			else if (!bot  &&  top)   y += h * 3;
+		} // wang tiles
+		else if (lastBound.type == MULTI_x4) {
+			w *= 0.25;
+			h *= 0.25;
+
+			auto clamp = [](int64 i, int64 a, int64 b) -> int64 {
+				auto tmp = (i - a) % (b - a);
+				return tmp < 0 ? tmp + b : tmp + a;
+			};
+
+			x += w * clamp((vr - vl) * vl, 0, 4);
+			y += h * clamp((vt - vb) * vb, 0, 4);
+		} // multi tiles x4
+	} // wang tiles or multi-tiles
 
 	out[0] = {x    , y    };
 	out[1] = {x + w, y    };

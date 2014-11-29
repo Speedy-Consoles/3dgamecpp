@@ -25,6 +25,7 @@ public:
 		SINGLE_TEXTURE,
 		TEXTURE_ATLAS,
 		WANG_TILES,
+		MULTI_x4,
 	};
 
 	TextureManager(const GraphicsConf &);
