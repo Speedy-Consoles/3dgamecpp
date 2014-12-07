@@ -15,3 +15,6 @@ region
 *.log.*
 deps
 3dgame
+*.exe
+*.dll
+*.pdb
