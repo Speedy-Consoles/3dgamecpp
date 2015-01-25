@@ -90,33 +90,36 @@ void Chunk::initFaces() {
 }
 
 void Chunk::makePassThroughs() {
+	passThroughs = 0;
 	bool visited[WIDTH * WIDTH * WIDTH];
 
 	for (uint i = 0; i < WIDTH * WIDTH * WIDTH; i++) {
 		visited[i] = false;
 	}
 
-	uint index = 0;
+	size_t index = 0;
 	for (uint8 z = 0; z < WIDTH; z++) {
 		for (uint8 y = 0; y < WIDTH; y++) {
 			for (uint8 x = 0; x < WIDTH; x++) {
 				visited[index] = true;
-				if (blocks[index] != 0)
+				if (blocks[index] != 0) {
+					index++;
 					continue;
+				}
 
 				vec3ui8 fringe[WIDTH * WIDTH * WIDTH];
 				fringe[0] = vec3ui8(x, y, z);
 				int fringeSize = 1;
-				uint8 borderSet = 0;
+				int borderSet = 0;
 				while (fringeSize > 0) {
 					vec3ui8 icc = fringe[--fringeSize];
 					for (int d = 0; d < 6; d++) {
-						if (icc[DIR_DIMS[d]] == (1-d/3) * (WIDTH - 1))
+						if (icc[DIR_DIMS[d]] == (1 - d / 3) * (WIDTH - 1))
 							borderSet |= (1 << d);
 						else {
 							vec3ui8 nIcc = icc + DIRS[d].cast<uint8>();
-							uint nIndex = getBlockIndex(nIcc);
-							if (blocks[nIndex] != 0 && !visited[nIndex]) {
+							size_t nIndex = getBlockIndex(nIcc);
+							if (blocks[nIndex] == 0 && !visited[nIndex]) {
 								visited[nIndex] = true;
 								fringe[fringeSize++] = nIcc;
 							}
@@ -129,7 +132,7 @@ void Chunk::makePassThroughs() {
 					if (borderSet & (1 << d1)) {
 						for (int d2 = d1 + 1; d2 < 6; d2++) {
 							if (borderSet & (1 << d2))
-								pathThroughs |= (1 << shift);
+								passThroughs |= (1 << shift);
 							shift++;
 						}
 					} else
@@ -229,7 +232,7 @@ static Chunk Chunk::readChunk(ByteBuffer buffer) {
 	return Chunk(cc, blocks);
 }
 */
-int Chunk::getBlockIndex(vec3ui8 icc) {
+size_t Chunk::getBlockIndex(vec3ui8 icc) {
 	return (icc[2] * WIDTH + icc[1]) * WIDTH + icc[0];
 }
 

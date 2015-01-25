@@ -147,34 +147,36 @@ bool World::setBlock(vec3i64 bc, uint8 type, bool updateFaces) {
 			chunkChanged[i] = false;
 		}
 
-		for (uint8 d = 0; d < 6; d++) {
-			uint8 invD = (d + 3) % 6;
-			vec3i8 dir = DIRS[d];
-			vec3i64 nbc = bc + dir.cast<int64>();
-			vec3i64 ncc = bc2cc(nbc);
-			vec3i8 dcc = (ncc - cc).cast<int8>();
+		if (updateFaces) {
+			for (uint8 d = 0; d < 6; d++) {
+				uint8 invD = (d + 3) % 6;
+				vec3i8 dir = DIRS[d];
+				vec3i64 nbc = bc + dir.cast<int64>();
+				vec3i64 ncc = bc2cc(nbc);
+				vec3i8 dcc = (ncc - cc).cast<int8>();
 
-			if (updateFace(bc, d))
-				chunkChanged[BASE_NINE_CUBE_CYCLE] = true;
-			else if (updateFace(nbc, invD))
-				chunkChanged[vec2CubeCycle(dcc)] = true;
+				if (updateFace(bc, d))
+					chunkChanged[BASE_NINE_CUBE_CYCLE] = true;
+				else if (updateFace(nbc, invD))
+					chunkChanged[vec2CubeCycle(dcc)] = true;
 
-			for (int i = 0; i < 8; i++) {
-				vec3i64 obc = bc + EIGHT_CYCLES_3D[d][i].cast<int64>();
-				if (updateFace(obc, invD)) {
-					vec3i64 occ = bc2cc(obc);
-					vec3i8 occd = (occ - cc).cast<int8>();
-					chunkChanged[vec2CubeCycle(occd)] = true;
+				for (int i = 0; i < 8; i++) {
+					vec3i64 obc = bc + EIGHT_CYCLES_3D[d][i].cast<int64>();
+					if (updateFace(obc, invD)) {
+						vec3i64 occ = bc2cc(obc);
+						vec3i8 occd = (occ - cc).cast<int8>();
+						chunkChanged[vec2CubeCycle(occd)] = true;
+					}
 				}
 			}
+
+			c->makePassThroughs();
 		}
 
 		for (int i = 0; i < 27; i++) {
 			if(chunkChanged[i])
 				changedChunks.push_front(c->getCC() + NINE_CUBE_CYCLE[i].cast<int64>());
 		}
-
-		c->makePassThroughs();
 
 		return true;
 	}
