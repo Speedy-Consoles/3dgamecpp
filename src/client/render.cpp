@@ -155,6 +155,7 @@ void Graphics::renderChunks() {
 
 	newFaces = 0;
 	int length = conf.render_distance * 2 + 3;
+	int chunkNumber = length * length * length;
 
 	stopwatch->start(CLOCK_NDL);
 	vec3i64 ccc;
@@ -181,7 +182,96 @@ void Graphics::renderChunks() {
 
 	logOpenGLError();
 
-	uint maxChunks = length * length * length;
+	int exits[chunkNumber];
+	int visited[chunkNumber];
+	for (int i = 0; i < chunkNumber; i++) {
+		exits[i] = 0;
+		visited[i] = false;
+	}
+	size_t fringeCapacity = length * length * 6;
+	vec3i64 fringe[fringeCapacity];
+	int indices[fringeCapacity];
+	fringe[0] = pc;
+	indices[0] = ((((pc[2] % length) + length) % length) * length
+			+ (((pc[1] % length) + length) % length)) * length
+			+ (((pc[0] % length) + length) % length);
+	exits[indices[0]] = 0|0b111111;
+	visited[indices[0]] = true;
+	int fringeSize = 1;
+	size_t fringeStart = 0;
+	size_t fringeEnd = 1;
+
+	while (fringeSize > 0) {
+		vec3i64 cc = fringe[fringeStart];
+		vec3i64 cd = cc - pc;
+		int index = indices[fringeStart];
+		fringeStart = (fringeStart + 1) % fringeCapacity;
+		fringeSize--;
+
+		GLuint lid = firstDL + index;
+		if (lid != 0
+				&& dlFaces[index] > 0
+				&& dlHasChunk[index]
+				&& dlChunks[index] == cc) {
+			stopwatch->start(CLOCK_DLC);
+			glPushMatrix();
+			logOpenGLError();
+			glTranslatef(cd[0] * (int) Chunk::WIDTH, cd[1] * (int) Chunk::WIDTH, cd[2] * (int) Chunk::WIDTH);
+			glCallList(lid);
+			logOpenGLError();
+			glPopMatrix();
+			logOpenGLError();
+			stopwatch->stop(CLOCK_DLC);
+		}
+
+		uint16 passThroughs = 0|0b111111111111111;
+		Chunk *c = world->getChunk(cc);
+		if (c)
+			passThroughs = c->getPassThroughs();
+
+		for (int d = 0; d < 6; d++) {
+			if ((exits[index] & (1 << d)) == 0)
+				continue;
+
+			int dim = DIR_DIMS[d];
+			vec3i8 dir = DIRS[d];
+			vec3i64 ncc = cc + dir.cast<int64>();
+			vec3i64 ncd = ncc - pc;
+
+			if (ncd[dim] * dir[dim] < 0)
+				continue;
+
+			if (abs(ncd[0]) > conf.render_distance + 1
+					|| abs(ncd[1]) > conf.render_distance + 1
+					|| abs(ncd[2]) > conf.render_distance + 1
+					|| !inFrustum(ncc, localPlayer.getPos(), lookDir))
+				continue;
+
+			int nIndex = ((((ncc[2] % length) + length) % length) * length
+					+ (((ncc[1] % length) + length) % length)) * length
+					+ (((ncc[0] % length) + length) % length);
+
+			if (!visited[nIndex]) {
+				visited[nIndex] = true;
+				fringe[fringeEnd] = ncc;
+				indices[fringeEnd] = nIndex;
+				fringeEnd = (fringeEnd + 1) % fringeCapacity;
+				fringeSize++;
+			}
+
+			int shift = 0;
+			int invD = (d + 3) % 3;
+			for (int d1 = 0; d1 < invD; d1++) {
+				exits[nIndex] |= ((passThroughs & (1 << (shift + invD - d1 - 1))) > 0) << d1;
+				shift += 5 - d1;
+			}
+			for (int d2 = invD + 1; d2 < 6; d2++) {
+				exits[nIndex] |= ((passThroughs & (1 << (shift + d2 - invD - 1))) > 0) << d2;
+			}
+		}
+	}
+
+	/*uint maxChunks = chunkNumber;
 	uint renderedChunks = 0;
 	for (uint i = 0; i < LOADING_ORDER.size() && renderedChunks < maxChunks; i++) {
 		vec3i8 cd = LOADING_ORDER[i];
@@ -211,7 +301,7 @@ void Graphics::renderChunks() {
 			logOpenGLError();
 			stopwatch->stop(CLOCK_DLC);
 		}
-	}
+	}*/
 
 	logOpenGLError();
 
