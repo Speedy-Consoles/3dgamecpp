@@ -97,8 +97,10 @@ void ChunkLoader::tryToLoadChunk(vec3i64 cc) {
 		Chunk *chunk = allocateChunk(cc);
 		if (!chunkArchive.loadChunk(cc, *chunk))
 			gen->generateChunk(cc, *chunk);
-		if (updateFaces)
+		if (updateFaces) {
 			chunk->initFaces();
+			chunk->makePassThroughs();
+		}
 		while (!queue.push(chunk) && !shouldHalt.load(memory_order_seq_cst)) {
 			LOG(WARNING, "Output queue is full");
 			my::time::sleepFor(my::time::millis(100));

@@ -382,10 +382,10 @@ void Graphics::renderDebugInfo(const Player &player) {
 	RENDER_LINE("fps: %d", fpsSum);
 	RENDER_LINE("new faces: %d", newFaces);
 	RENDER_LINE("faces: %d", faces);
-	RENDER_LINE("x: %" PRId64 "(%" PRId64 ")", playerPos[0], playerPos[0] / RESOLUTION);
-	RENDER_LINE("y: %" PRId64 " (%" PRId64 ")", playerPos[1], playerPos[1] / RESOLUTION);
+	RENDER_LINE("x: %" PRId64 "(%" PRId64 ")", playerPos[0], (int64) floor(playerPos[0] / (double) RESOLUTION));
+	RENDER_LINE("y: %" PRId64 " (%" PRId64 ")", playerPos[1], (int64) floor(playerPos[1] / (double) RESOLUTION));
 	RENDER_LINE("z: %" PRId64 " (%" PRId64 ")", playerPos[2],
-			(playerPos[2] - Player::EYE_HEIGHT - 1) / RESOLUTION);
+			(int64) floor((playerPos[2] - Player::EYE_HEIGHT - 1) / (double) RESOLUTION));
 	RENDER_LINE("yaw:   %6.1f", player.getYaw());
 	RENDER_LINE("pitch: %6.1f", player.getPitch());
 	RENDER_LINE("xvel: %8.1f", playerVel[0]);

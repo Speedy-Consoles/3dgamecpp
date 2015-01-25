@@ -174,6 +174,8 @@ bool World::setBlock(vec3i64 bc, uint8 type, bool updateFaces) {
 				changedChunks.push_front(c->getCC() + NINE_CUBE_CYCLE[i].cast<int64>());
 		}
 
+		c->makePassThroughs();
+
 		return true;
 	}
 	return false;

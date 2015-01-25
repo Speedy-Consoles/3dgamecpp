@@ -31,10 +31,13 @@ private:
 
 	uint8 blocks[WIDTH * WIDTH * WIDTH];
 
+	uint16 pathThroughs = 0;
+
 public:
 	Chunk(vec3i64 cc, ChunkLoader *chunkLoader = nullptr);
 
 	void initFaces();
+	void makePassThroughs();
 	vec3i64 getCC() const { return cc; }
 	void setCC(vec3i64 cc) { this->cc = cc; }
 	void initBlock(size_t index, uint8 type);
