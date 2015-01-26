@@ -201,7 +201,9 @@ void Graphics::renderChunks() {
 	size_t fringeStart = 0;
 	size_t fringeEnd = 1;
 
+	visibleChunks = 0;
 	while (fringeSize > 0) {
+		visibleChunks++;
 		vec3i64 cc = fringe[fringeStart];
 		vec3i64 cd = cc - pc;
 		int index = indices[fringeStart];
@@ -482,6 +484,7 @@ void Graphics::renderDebugInfo(const Player &player) {
 	RENDER_LINE("yvel: %8.1f", playerVel[1]);
 	RENDER_LINE("zvel: %8.1f", playerVel[2]);
 	RENDER_LINE("chunks loaded: %" PRIuPTR "", world->getNumChunks());
+	RENDER_LINE("chunks visible: %" PRIuPTR "", visibleChunks);
 	RENDER_LINE("block: %d", player.getBlock());
 	if ((SDL_WINDOW_FULLSCREEN & windowFlags) > 0)
 		glColor3f(1.0f, 0.0f, 0.0f);

@@ -57,6 +57,7 @@ private:
 	time_t lastStopWatchSave = 0;
 	int newFaces = 0;
 	int faces = 0;
+	int visibleChunks = 0;
 
 	vec3i64 oldPlayerChunk;
 
