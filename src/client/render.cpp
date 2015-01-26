@@ -155,7 +155,6 @@ void Graphics::renderChunks() {
 
 	newFaces = 0;
 	int length = conf.render_distance * 2 + 3;
-	int chunkNumber = length * length * length;
 
 	stopwatch->start(CLOCK_NDL);
 	vec3i64 ccc;
@@ -183,14 +182,6 @@ void Graphics::renderChunks() {
 
 	logOpenGLError();
 
-	uint8 exits[chunkNumber];
-	bool visited[chunkNumber];
-	for (int i = 0; i < chunkNumber; i++) {
-		visited[i] = false;
-	}
-	size_t fringeCapacity = length * length * 6;
-	vec3i64 fringe[fringeCapacity];
-	int indices[fringeCapacity];
 	fringe[0] = pc;
 	indices[0] = ((((pc[2] % length) + length) % length) * length
 			+ (((pc[1] % length) + length) % length)) * length
@@ -208,6 +199,7 @@ void Graphics::renderChunks() {
 		vec3i64 cc = fringe[fringeStart];
 		vec3i64 cd = cc - pc;
 		int index = indices[fringeStart];
+		visited[index] = false;
 		fringeStart = (fringeStart + 1) % fringeCapacity;
 		fringeSize--;
 

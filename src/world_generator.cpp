@@ -55,7 +55,7 @@ void WorldGenerator::generateChunk(Chunk &chunk) {
 				int index = Chunk::getBlockIndex(vec3ui8(ix, iy, iz));
 				long z = iz + cc[2] * Chunk::WIDTH;
 				double depth = h - z;
-				/*if (perlin.octavePerlin((double)x/150, (double)y/150, (double)z/150, 4, 0.7) > 0.4)
+				/*if (perlin.octavePerlin((double)x/250, (double)y/250, (double)z/250, 4, 0.6) > 0.4)
 					chunk.initBlock(index, 1);
 				else
 					chunk.initBlock(index, 0);
