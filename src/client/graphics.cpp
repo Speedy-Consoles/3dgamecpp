@@ -99,6 +99,7 @@ Graphics::~Graphics() {
 	delete dlChunks;
 	delete dlHasChunk;
 	delete dlFaces;
+	delete passThroughs;
 
 	delete font;
 
@@ -254,9 +255,11 @@ void Graphics::initGL() {
 	dlChunks = new vec3i64[n];
 	dlHasChunk = new bool[n];
 	dlFaces = new int[n];
+	passThroughs = new uint16[n];
 	for (int i = 0; i < n; i++) {
 		dlHasChunk[i] = false;
 		dlFaces[i] = 0;
+		passThroughs[i] = 0;
 	}
 }
 

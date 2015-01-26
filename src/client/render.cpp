@@ -173,6 +173,7 @@ void Graphics::renderChunks() {
 				glEndList();
 				dlChunks[index] = ccc;
 				dlHasChunk[index] = true;
+				passThroughs[index] = chunk->getPassThroughs();
 				faces += dlFaces[index];
 				newFaces += dlFaces[index];
 			}
@@ -182,10 +183,9 @@ void Graphics::renderChunks() {
 
 	logOpenGLError();
 
-	int exits[chunkNumber];
-	int visited[chunkNumber];
+	uint8 exits[chunkNumber];
+	bool visited[chunkNumber];
 	for (int i = 0; i < chunkNumber; i++) {
-		exits[i] = 0;
 		visited[i] = false;
 	}
 	size_t fringeCapacity = length * length * 6;
@@ -202,6 +202,7 @@ void Graphics::renderChunks() {
 	size_t fringeEnd = 1;
 
 	visibleChunks = 0;
+	visibleFaces = 0;
 	while (fringeSize > 0) {
 		visibleChunks++;
 		vec3i64 cc = fringe[fringeStart];
@@ -210,65 +211,59 @@ void Graphics::renderChunks() {
 		fringeStart = (fringeStart + 1) % fringeCapacity;
 		fringeSize--;
 
-		GLuint lid = firstDL + index;
-		if (lid != 0
-				&& dlFaces[index] > 0
-				&& dlHasChunk[index]
-				&& dlChunks[index] == cc) {
-			stopwatch->start(CLOCK_DLC);
-			glPushMatrix();
-			logOpenGLError();
-			glTranslatef(cd[0] * (int) Chunk::WIDTH, cd[1] * (int) Chunk::WIDTH, cd[2] * (int) Chunk::WIDTH);
-			glCallList(lid);
-			logOpenGLError();
-			glPopMatrix();
-			logOpenGLError();
-			stopwatch->stop(CLOCK_DLC);
-		}
-
-		uint16 passThroughs = 0|0b111111111111111;
-		Chunk *c = world->getChunk(cc);
-		if (c)
-			passThroughs = c->getPassThroughs();
-
-		for (int d = 0; d < 6; d++) {
-			if ((exits[index] & (1 << d)) == 0)
-				continue;
-
-			int dim = DIR_DIMS[d];
-			vec3i8 dir = DIRS[d];
-			vec3i64 ncc = cc + dir.cast<int64>();
-			vec3i64 ncd = ncc - pc;
-
-			if (ncd[dim] * dir[dim] < 0)
-				continue;
-
-			if (abs(ncd[0]) > conf.render_distance + 1
-					|| abs(ncd[1]) > conf.render_distance + 1
-					|| abs(ncd[2]) > conf.render_distance + 1
-					|| !inFrustum(ncc, localPlayer.getPos(), lookDir))
-				continue;
-
-			int nIndex = ((((ncc[2] % length) + length) % length) * length
-					+ (((ncc[1] % length) + length) % length)) * length
-					+ (((ncc[0] % length) + length) % length);
-
-			if (!visited[nIndex]) {
-				visited[nIndex] = true;
-				fringe[fringeEnd] = ncc;
-				indices[fringeEnd] = nIndex;
-				fringeEnd = (fringeEnd + 1) % fringeCapacity;
-				fringeSize++;
+		if (dlHasChunk[index] && dlChunks[index] == cc) {
+			if (dlFaces[index] > 0) {
+				visibleFaces += dlFaces[index];
+				stopwatch->start(CLOCK_DLC);
+				glPushMatrix();
+				logOpenGLError();
+				glTranslatef(cd[0] * (int) Chunk::WIDTH, cd[1] * (int) Chunk::WIDTH, cd[2] * (int) Chunk::WIDTH);
+				glCallList(firstDL + index);
+				logOpenGLError();
+				glPopMatrix();
+				logOpenGLError();
+				stopwatch->stop(CLOCK_DLC);
 			}
 
-			int shift = 0;
-			int invD = (d + 3) % 3;
-			for (int d1 = 0; d1 < invD; d1++) {
-				exits[nIndex] |= ((passThroughs & (1 << (shift + invD - d1 - 1))) > 0) << d1;
-				shift += 5 - d1;
-			}
-			for (int d2 = invD + 1; d2 < 6; d2++) {
-				exits[nIndex] |= ((passThroughs & (1 << (shift + d2 - invD - 1))) > 0) << d2;
+			for (int d = 0; d < 6; d++) {
+				if ((exits[index] & (1 << d)) == 0)
+					continue;
+
+				vec3i64 ncc = cc + DIRS[d].cast<int64>();
+				vec3i64 ncd = ncc - pc;
+
+				if ((uint) abs(ncd[0]) > conf.render_distance + 1
+						|| (uint) abs(ncd[1]) > conf.render_distance + 1
+						|| (uint) abs(ncd[2]) > conf.render_distance + 1
+						|| !inFrustum(ncc, localPlayer.getPos(), lookDir))
+					continue;
+
+				int nIndex = ((((ncc[2] % length) + length) % length) * length
+						+ (((ncc[1] % length) + length) % length)) * length
+						+ (((ncc[0] % length) + length) % length);
+
+				if (!visited[nIndex]) {
+					visited[nIndex] = true;
+					exits[nIndex] = 0;
+					fringe[fringeEnd] = ncc;
+					indices[fringeEnd] = nIndex;
+					fringeEnd = (fringeEnd + 1) % fringeCapacity;
+					fringeSize++;
+				}
+
+				if (dlChunks[nIndex] == ncc) {
+					int shift = 0;
+					int invD = (d + 3) % 6;
+					for (int d1 = 0; d1 < invD; d1++) {
+						if (ncd[d1 % 3] * (d1 * (-2) + 5) >= 0)
+							exits[nIndex] |= ((passThroughs[nIndex] & (1 << (shift + invD - d1 - 1))) > 0) << d1;
+						shift += 5 - d1;
+					}
+					for (int d2 = invD + 1; d2 < 6; d2++) {
+						if (ncd[d2 % 3] * (d2 * (-2) + 5) >= 0)
+							exits[nIndex] |= ((passThroughs[nIndex] & (1 << (shift + d2 - invD - 1))) > 0) << d2;
+					}
+				}
 			}
 		}
 	}
@@ -484,7 +479,8 @@ void Graphics::renderDebugInfo(const Player &player) {
 	RENDER_LINE("yvel: %8.1f", playerVel[1]);
 	RENDER_LINE("zvel: %8.1f", playerVel[2]);
 	RENDER_LINE("chunks loaded: %" PRIuPTR "", world->getNumChunks());
-	RENDER_LINE("chunks visible: %" PRIuPTR "", visibleChunks);
+	RENDER_LINE("chunks visible: %d", visibleChunks);
+	RENDER_LINE("faces visible: %d", visibleFaces);
 	RENDER_LINE("block: %d", player.getBlock());
 	if ((SDL_WINDOW_FULLSCREEN & windowFlags) > 0)
 		glColor3f(1.0f, 0.0f, 0.0f);
