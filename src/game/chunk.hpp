@@ -25,6 +25,7 @@ private:
 	vec3i64 cc;
 	ChunkLoader *chunkLoader;
 	bool changed = true;
+	int airBlocks = 0;
 
 	FaceSet faces;
 	FaceSet borderFaces;

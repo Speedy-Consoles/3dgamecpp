@@ -279,14 +279,9 @@ void World::patchBorders(Chunk *c) {
 					if (type == 0) {
 						nc->addFace(Face{ nicc, invD, getFaceCorners(ncc * Chunk::WIDTH + nicc.cast<int64>(), invD) });
 						chunkChanged[DIR_2_CUBE_CYCLE[d]] = true;
-					} else if (nc->removeFace(Face{nicc, invD, 0}))
-						chunkChanged[DIR_2_CUBE_CYCLE[d]] = true;
-				} else {
-					if (type != 0)
-						c->addFace(Face{ icc, d, getFaceCorners(c->getCC() * Chunk::WIDTH + icc.cast<int64>(), d) });
-					else
-						c->removeFace(Face{icc, d, 0});
-				}
+					}
+				} else if (type != 0)
+					c->addFace(Face{ icc, d, getFaceCorners(c->getCC() * Chunk::WIDTH + icc.cast<int64>(), d) });
 			}
 		}
 	}

@@ -30,6 +30,8 @@ bool operator == (const Face &lhs, const Face &rhs) {
 const double World::GRAVITY = -9.81 * RESOLUTION / 60.0 / 60.0 * 4;
 
 void Chunk::initFaces() {
+	if (airBlocks == 0)
+		return;
 	uint ds[3];
 	vec3ui8 uDirs[3];
 	for (uint8 d = 0; d < 3; d++) {
@@ -51,18 +53,17 @@ void Chunk::initFaces() {
 
 					uint8 thisType = blocks[i];
 					uint8 thatType = blocks[ni];
-					if(thisType != thatType) {
+					if((thisType == 0) != (thatType == 0)) {
 						vec3ui8 faceBlock;
 						uint8 faceDir;
 						if (thisType == 0) {
 							vec3ui8 dir = uDirs[d];
 							faceBlock = vec3ui8(x, y, z) + dir;
 							faceDir = (uint8) (d + 3);
-						} else if (thatType == 0){
+						} else {
 							faceBlock = vec3ui8(x, y, z);
 							faceDir = d;
-						} else
-							continue;
+						}
 
 						uint8 corners = 0;
 						for (int j = 0; j < 8; ++j) {
@@ -77,10 +78,11 @@ void Chunk::initFaces() {
 							}
 						}
 						faces.insert(Face{faceBlock, faceDir, corners});
-						if (		((x == WIDTH - 1 || x == 0) && d % 3 != 0)
-								||	((y == WIDTH - 1 || y == 0) && d % 3 != 1)
-								||	((z == WIDTH - 1 || z == 0) && d % 3 != 2))
+						if (		(x == WIDTH - 1 || x == 0)
+								||	(y == WIDTH - 1 || y == 0)
+								||	(z == WIDTH - 1 || z == 0)) {
 							borderFaces.insert(Face{faceBlock, faceDir, corners});
+						}
 					}
 				}
 			}
@@ -146,12 +148,18 @@ void Chunk::makePassThroughs() {
 
 void Chunk::initBlock(size_t index, uint8 type) {
 	blocks[index] = type;
+	if (type == 0)
+		airBlocks++;
 }
 
 bool Chunk::setBlock(vec3ui8 icc, uint8 type) {
 	if (getBlock(icc) == type)
 		return true;
 	blocks[getBlockIndex(icc)] = type;
+	if (type == 0)
+		airBlocks++;
+	else
+		airBlocks--;
 	return true;
 }
 
