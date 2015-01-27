@@ -30,18 +30,18 @@ bool operator == (const Face &lhs, const Face &rhs) {
 const double World::GRAVITY = -9.81 * RESOLUTION / 60.0 / 60.0 * 4;
 
 void Chunk::initFaces() {
-	uint i = 0;
-
 	uint ds[3];
+	vec3ui8 uDirs[3];
 	for (uint8 d = 0; d < 3; d++) {
-		vec3ui8 dir = DIRS[d].cast<uint8>();
-		ds[d] = getBlockIndex(dir);
+		uDirs[d] = DIRS[d].cast<uint8>();
+		ds[d] = getBlockIndex(uDirs[d]);
 	}
 
-	for (uint8 z = 0; z < WIDTH; z++) {
-		for (uint8 y = 0; y < WIDTH; y++) {
-			for (uint8 x = 0; x < WIDTH; x++) {
-				for (uint8 d = 0; d < 3; d++) {
+	for (uint8 d = 0; d < 3; d++) {
+		uint i = 0;
+		for (uint8 z = 0; z < WIDTH; z++) {
+			for (uint8 y = 0; y < WIDTH; y++) {
+				for (uint8 x = 0; x < WIDTH; x++, i++) {
 					if ((x == WIDTH - 1 && d==0)
 							|| (y == WIDTH - 1 && d==1)
 							|| (z == WIDTH - 1 && d==2))
@@ -55,7 +55,7 @@ void Chunk::initFaces() {
 						vec3ui8 faceBlock;
 						uint8 faceDir;
 						if (thisType == 0) {
-							vec3ui8 dir = DIRS[d].cast<uint8>();
+							vec3ui8 dir = uDirs[d];
 							faceBlock = vec3ui8(x, y, z) + dir;
 							faceDir = (uint8) (d + 3);
 						} else if (thatType == 0){
@@ -83,7 +83,6 @@ void Chunk::initFaces() {
 							borderFaces.insert(Face{faceBlock, faceDir, corners});
 					}
 				}
-				i++;
 			}
 		}
 	}
