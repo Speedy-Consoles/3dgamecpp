@@ -58,7 +58,7 @@ Graphics::Graphics(
 	SDL_SetHint("SDL_VIDEO_MINIMIZE_ON_FOCUS_LOSS", "0");
 	window = SDL_CreateWindow(
 		"3dgame",
-		0, 0,
+		SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
 		conf.windowed_res[0], conf.windowed_res[1],
 		SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE
 	);
