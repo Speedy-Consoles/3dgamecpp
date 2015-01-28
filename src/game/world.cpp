@@ -147,26 +147,30 @@ bool World::setBlock(vec3i64 bc, uint8 type, bool updateFaces) {
 			chunkChanged[i] = false;
 		}
 
-		for (uint8 d = 0; d < 6; d++) {
-			uint8 invD = (d + 3) % 6;
-			vec3i8 dir = DIRS[d];
-			vec3i64 nbc = bc + dir.cast<int64>();
-			vec3i64 ncc = bc2cc(nbc);
-			vec3i8 dcc = (ncc - cc).cast<int8>();
+		if (updateFaces) {
+			for (uint8 d = 0; d < 6; d++) {
+				uint8 invD = (d + 3) % 6;
+				vec3i8 dir = DIRS[d];
+				vec3i64 nbc = bc + dir.cast<int64>();
+				vec3i64 ncc = bc2cc(nbc);
+				vec3i8 dcc = (ncc - cc).cast<int8>();
 
-			if (updateFace(bc, d))
-				chunkChanged[BASE_NINE_CUBE_CYCLE] = true;
-			else if (updateFace(nbc, invD))
-				chunkChanged[vec2CubeCycle(dcc)] = true;
+				if (updateFace(bc, d))
+					chunkChanged[BASE_NINE_CUBE_CYCLE] = true;
+				else if (updateFace(nbc, invD))
+					chunkChanged[vec2CubeCycle(dcc)] = true;
 
-			for (int i = 0; i < 8; i++) {
-				vec3i64 obc = bc + EIGHT_CYCLES_3D[d][i].cast<int64>();
-				if (updateFace(obc, invD)) {
-					vec3i64 occ = bc2cc(obc);
-					vec3i8 occd = (occ - cc).cast<int8>();
-					chunkChanged[vec2CubeCycle(occd)] = true;
+				for (int i = 0; i < 8; i++) {
+					vec3i64 obc = bc + EIGHT_CYCLES_3D[d][i].cast<int64>();
+					if (updateFace(obc, invD)) {
+						vec3i64 occ = bc2cc(obc);
+						vec3i8 occd = (occ - cc).cast<int8>();
+						chunkChanged[vec2CubeCycle(occd)] = true;
+					}
 				}
 			}
+
+			c->makePassThroughs();
 		}
 
 		for (int i = 0; i < 27; i++) {
@@ -275,14 +279,9 @@ void World::patchBorders(Chunk *c) {
 					if (type == 0) {
 						nc->addFace(Face{ nicc, invD, getFaceCorners(ncc * Chunk::WIDTH + nicc.cast<int64>(), invD) });
 						chunkChanged[DIR_2_CUBE_CYCLE[d]] = true;
-					} else if (nc->removeFace(Face{nicc, invD, 0}))
-						chunkChanged[DIR_2_CUBE_CYCLE[d]] = true;
-				} else {
-					if (type != 0)
-						c->addFace(Face{ icc, d, getFaceCorners(c->getCC() * Chunk::WIDTH + icc.cast<int64>(), d) });
-					else
-						c->removeFace(Face{icc, d, 0});
-				}
+					}
+				} else if (type != 0)
+					c->addFace(Face{ icc, d, getFaceCorners(c->getCC() * Chunk::WIDTH + icc.cast<int64>(), d) });
 			}
 		}
 	}

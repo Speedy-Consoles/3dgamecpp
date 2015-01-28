@@ -57,6 +57,8 @@ private:
 	time_t lastStopWatchSave = 0;
 	int newFaces = 0;
 	int faces = 0;
+	int visibleChunks = 0;
+	int visibleFaces = 0;
 
 	vec3i64 oldPlayerChunk;
 
@@ -64,6 +66,13 @@ private:
 	vec3i64 *dlChunks;
 	bool *dlHasChunk;
 	int *dlFaces;
+
+	uint16 *passThroughs;
+	uint8 *exits;
+	bool *visited;
+	vec3i64 *fringe;
+	int *indices;
+	int fringeCapacity;
 
 	vec3f fogColor{ 0.6f, 0.6f, 0.8f };
 	vec3f skyColor{ 0.15f, 0.15f, 0.9f };

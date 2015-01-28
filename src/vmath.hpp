@@ -16,10 +16,6 @@ public:
 	// constructor
 	vec() = default;
 	vec(T t);
-	vec(vec<T, N, Derived> const &rhs);
-
-	// assignment
-	Derived<T> & operator =  (vec<T, N, Derived> const &rhs);
 
 	// manipulation
 	void applyPW(T (*)(T));
@@ -100,21 +96,6 @@ vec<T, N, Derived>::vec(T t) {
 	for (size_t i = 0; i < N; ++i) {
 		_t[i] = t;
 	}
-}
-
-template <typename T, size_t N, template <typename T> class Derived>
-vec<T, N, Derived>::vec(vec<T, N, Derived> const &that) {
-	for (size_t i = 0; i < N; ++i) {
-		_t[i] = that[i];
-	}
-}
-
-template <typename T, size_t N, template <typename T> class Derived>
-Derived<T> & vec<T, N, Derived>::operator = (vec<T, N, Derived> const &rhs) {
-	for (size_t i = 0; i < N; ++i) {
-		this->_t[i] = rhs._t[i];
-	}
-	return *static_cast<Derived<T> *>(this);
 }
 
 template <typename T, size_t N, template <typename T> class Derived>

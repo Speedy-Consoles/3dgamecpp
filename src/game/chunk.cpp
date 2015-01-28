@@ -30,18 +30,20 @@ bool operator == (const Face &lhs, const Face &rhs) {
 const double World::GRAVITY = -9.81 * RESOLUTION / 60.0 / 60.0 * 4;
 
 void Chunk::initFaces() {
-	uint i = 0;
-
+	if (airBlocks == 0)
+		return;
 	uint ds[3];
+	vec3ui8 uDirs[3];
 	for (uint8 d = 0; d < 3; d++) {
-		vec3ui8 dir = DIRS[d].cast<uint8>();
-		ds[d] = getBlockIndex(dir);
+		uDirs[d] = DIRS[d].cast<uint8>();
+		ds[d] = getBlockIndex(uDirs[d]);
 	}
 
-	for (uint z = 0; z < WIDTH; z++) {
-		for (uint y = 0; y < WIDTH; y++) {
-			for (uint x = 0; x < WIDTH; x++) {
-				for (uint8 d = 0; d < 3; d++) {
+	for (uint8 d = 0; d < 3; d++) {
+		uint i = 0;
+		for (uint8 z = 0; z < WIDTH; z++) {
+			for (uint8 y = 0; y < WIDTH; y++) {
+				for (uint8 x = 0; x < WIDTH; x++, i++) {
 					if ((x == WIDTH - 1 && d==0)
 							|| (y == WIDTH - 1 && d==1)
 							|| (z == WIDTH - 1 && d==2))
@@ -51,18 +53,17 @@ void Chunk::initFaces() {
 
 					uint8 thisType = blocks[i];
 					uint8 thatType = blocks[ni];
-					if(thisType != thatType) {
+					if((thisType == 0) != (thatType == 0)) {
 						vec3ui8 faceBlock;
 						uint8 faceDir;
 						if (thisType == 0) {
-							vec3ui8 dir = DIRS[d].cast<uint8>();
+							vec3ui8 dir = uDirs[d];
 							faceBlock = vec3ui8(x, y, z) + dir;
 							faceDir = (uint8) (d + 3);
-						} else if (thatType == 0){
+						} else {
 							faceBlock = vec3ui8(x, y, z);
 							faceDir = d;
-						} else
-							continue;
+						}
 
 						uint8 corners = 0;
 						for (int j = 0; j < 8; ++j) {
@@ -77,13 +78,79 @@ void Chunk::initFaces() {
 							}
 						}
 						faces.insert(Face{faceBlock, faceDir, corners});
-						if (		((x == WIDTH - 1 || x == 0) && d % 3 != 0)
-								||	((y == WIDTH - 1 || y == 0) && d % 3 != 1)
-								||	((z == WIDTH - 1 || z == 0) && d % 3 != 2))
+						if (		(x == WIDTH - 1 || x == 0)
+								||	(y == WIDTH - 1 || y == 0)
+								||	(z == WIDTH - 1 || z == 0)) {
 							borderFaces.insert(Face{faceBlock, faceDir, corners});
+						}
 					}
 				}
-				i++;
+			}
+		}
+	}
+}
+
+void Chunk::makePassThroughs() {
+	const uint size = WIDTH * WIDTH * WIDTH;
+	if (airBlocks > size - WIDTH * WIDTH) {
+		passThroughs = 0x7FFF;
+		return;
+	}
+	passThroughs = 0;
+	bool visited[size];
+
+	for (uint i = 0; i < size; i++) {
+		visited[i] = false;
+	}
+
+	size_t index = 0;
+	uint foundAirBlocks = 0;
+	for (uint8 z = 0; z < WIDTH; z++) {
+		for (uint8 y = 0; y < WIDTH; y++) {
+			for (uint8 x = 0; x < WIDTH; x++) {
+				visited[index] = true;
+				if (blocks[index] != 0) {
+					index++;
+					continue;
+				}
+
+				vec3ui8 fringe[size];
+				fringe[0] = vec3ui8(x, y, z);
+				int fringeSize = 1;
+				int borderSet = 0;
+				while (fringeSize > 0) {
+					foundAirBlocks++;
+					vec3ui8 icc = fringe[--fringeSize];
+					for (int d = 0; d < 6; d++) {
+						if (icc[DIR_DIMS[d]] == (1 - d / 3) * (WIDTH - 1))
+							borderSet |= (1 << d);
+						else {
+							vec3ui8 nIcc = icc + DIRS[d].cast<uint8>();
+							size_t nIndex = getBlockIndex(nIcc);
+							if (blocks[nIndex] == 0 && !visited[nIndex]) {
+								visited[nIndex] = true;
+								fringe[fringeSize++] = nIcc;
+							}
+						}
+					}
+				}
+
+				int shift = 0;
+				for (int d1 = 0; d1 < 5; d1++) {
+					if (borderSet & (1 << d1)) {
+						for (int d2 = d1 + 1; d2 < 6; d2++) {
+							if (borderSet & (1 << d2))
+								passThroughs |= (1 << shift);
+							shift++;
+						}
+					} else
+						shift += 5 - d1;
+				}
+
+				if (foundAirBlocks >= airBlocks)
+					return;
+
+				index++;
 			}
 		}
 	}
@@ -91,12 +158,18 @@ void Chunk::initFaces() {
 
 void Chunk::initBlock(size_t index, uint8 type) {
 	blocks[index] = type;
+	if (type == 0)
+		airBlocks++;
 }
 
 bool Chunk::setBlock(vec3ui8 icc, uint8 type) {
 	if (getBlock(icc) == type)
 		return true;
 	blocks[getBlockIndex(icc)] = type;
+	if (type == 0)
+		airBlocks++;
+	else
+		airBlocks--;
 	return true;
 }
 
@@ -176,7 +249,7 @@ static Chunk Chunk::readChunk(ByteBuffer buffer) {
 	return Chunk(cc, blocks);
 }
 */
-int Chunk::getBlockIndex(vec3ui8 icc) {
+size_t Chunk::getBlockIndex(vec3ui8 icc) {
 	return (icc[2] * WIDTH + icc[1]) * WIDTH + icc[0];
 }
 

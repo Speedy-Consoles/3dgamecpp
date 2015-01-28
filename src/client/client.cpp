@@ -288,6 +288,20 @@ void Client::handleInput() {
 					menu->apply();
 					state = PLAYING;
 					world->setPause(false);
+					/*for (int z = -5; z < 37; z++) {
+						for (int y = -5; y < 37; y++) {
+							for (int x = -5; x < 37; x++) {
+								world->setBlock(vec3i64(x,y,z), 0, true);
+							}
+						}
+					}
+					for (int z = 0; z < 32; z++) {
+						for (int y = 0; y < 32; y++) {
+							for (int x = 0; x < 32; x++) {
+								world->setBlock(vec3i64(x,y,z), 1, true);
+							}
+						}
+					}*/
 					break;
 				default:
 					break;
