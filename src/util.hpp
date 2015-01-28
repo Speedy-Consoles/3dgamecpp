@@ -50,7 +50,7 @@ template<typename T> T clamp(T v, T min, T max) {
 }
 
 inline int64 cycle(int64 i, int64 divisor) {
-	return ((i % divisor) + i) % divisor;
+	return ((i % divisor) + divisor) % divisor;
 }
 
 void initUtil();
