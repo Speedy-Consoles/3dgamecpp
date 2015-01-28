@@ -49,6 +49,10 @@ template<typename T> T clamp(T v, T min, T max) {
 	return v;
 }
 
+inline int64 cycle(int64 i, int64 divisor) {
+	return ((i % divisor) + i) % divisor;
+}
+
 void initUtil();
 
 #ifdef __GNUC__
