@@ -134,7 +134,7 @@ uint8 World::getBlock(vec3i64 bc) const {
 	return it->second->getBlock(bc2icc(bc));
 }
 
-bool World::setBlock(vec3i64 bc, uint8 type, bool updateFaces) {
+bool World::setBlock(vec3i64 bc, uint8 type, bool visual) {
 	vec3i64 cc = bc2cc(bc);
 	auto it = chunks.find(bc2cc(bc));
 	if (it == chunks.end())
@@ -142,82 +142,13 @@ bool World::setBlock(vec3i64 bc, uint8 type, bool updateFaces) {
 	Chunk *c = it->second;
 	vec3ui8 icc = bc2icc(bc);
 	if (c->setBlock(icc, type)) {
-		bool chunkChanged[27];
-		for (int i = 0; i < 27; i++) {
-			chunkChanged[i] = false;
-		}
-
-		if (updateFaces) {
-			for (uint8 d = 0; d < 6; d++) {
-				uint8 invD = (d + 3) % 6;
-				vec3i8 dir = DIRS[d];
-				vec3i64 nbc = bc + dir.cast<int64>();
-				vec3i64 ncc = bc2cc(nbc);
-				vec3i8 dcc = (ncc - cc).cast<int8>();
-
-				if (updateFace(bc, d))
-					chunkChanged[BASE_NINE_CUBE_CYCLE] = true;
-				else if (updateFace(nbc, invD))
-					chunkChanged[vec2CubeCycle(dcc)] = true;
-
-				for (int i = 0; i < 8; i++) {
-					vec3i64 obc = bc + EIGHT_CYCLES_3D[d][i].cast<int64>();
-					if (updateFace(obc, invD)) {
-						vec3i64 occ = bc2cc(obc);
-						vec3i8 occd = (occ - cc).cast<int8>();
-						chunkChanged[vec2CubeCycle(occd)] = true;
-					}
-				}
-			}
-
+		if (visual)
 			c->makePassThroughs();
-		}
 
-		for (int i = 0; i < 27; i++) {
-			if(chunkChanged[i])
-				changedChunks.push_front(c->getCC() + NINE_CUBE_CYCLE[i].cast<int64>());
-		}
-
+		// TODO change change other chunks
 		return true;
 	}
 	return false;
-}
-
-bool World::updateFace(vec3i64 bc, uint8 faceDir) {
-	vec3i64 cc = bc2cc(bc);
-	vec3ui8 icc = bc2icc(bc);
-	vec3i8 dir = DIRS[faceDir];
-	vec3i64 nbc = bc + dir.cast<int64>();
-	vec3i64 ncc = bc2cc(nbc);
-	vec3ui8 nicc = bc2icc(nbc);
-
-	Chunk *c = getChunk(cc);
-	Chunk *nc = getChunk(ncc);
-	if (!c || !nc)
-		return false;
-
-	uint8 thisType = c->getBlock(icc);
-	uint8 thatType = nc->getBlock(nicc);
-
-	if (thisType != 0 && thatType == 0) {
-		c->addFace(Face{icc, faceDir, getFaceCorners(cc * Chunk::WIDTH + icc.cast<int64>(), faceDir)});
-		return true;
-	} else if((thisType != 0) == (thatType != 0))
-		return c->removeFace(Face{icc, faceDir, 0});
-
-	return false;
-}
-
-uint8 World::getFaceCorners(vec3i64 bc, uint8 faceDir) const {
-	uint8 corners = 0;
-	for (int j = 0; j < 8; ++j) {
-		vec3i v = EIGHT_CYCLES_3D[faceDir][j];
-		vec3i64 dbc = bc + v.cast<int64>();
-		if (getBlock(dbc)) {
-			corners |= 1 << j;
-		}
-	}
-	return corners;
 }
 
 Chunk *World::getChunk(vec3i64 cc) {
@@ -229,66 +160,8 @@ Chunk *World::getChunk(vec3i64 cc) {
 
 void World::insertChunk(Chunk *chunk) {
 	chunks.insert({chunk->getCC(), chunk});
-	patchBorders(chunk);
+	// TODO change change other chunks
 	changedChunks.push_back(chunk->getCC());
-}
-
-void World::patchBorders(Chunk *c) {
-	bool chunkChanged[27];
-	for (int i = 0; i < 27; i++) {
-		chunkChanged[i] = false;
-	}
-
-	// TODO make more efficient
-	for (int i = 0; i < 27; i++) {
-		vec3i64 ncc = c->getCC() + NINE_CUBE_CYCLE[i].cast<int64>();
-		Chunk *nc = getChunk(ncc);
-		if (!nc)
-			continue;
-		for (Face f : nc->getBorderFaces()) {
-			vec3i64 nbc = ncc * Chunk::WIDTH + f.block.cast<int64>();
-			if (bc2cc(nbc - NINE_CUBE_CYCLE[i].cast<int64>()) != c->getCC())
-				continue;
-			if (updateFace(nbc, f.dir))
-				chunkChanged[i] = true;
-		}
-	}
-
-	for (uint8 d = 0; d < 6; d++) {
-		uint8 invD = (d + 3) % 6;
-		int dim = DIR_DIMS[d];
-		vec3i64 ncc = c->getCC() + DIRS[d].cast<int64>();
-		Chunk *nc = getChunk(ncc);
-		if (!nc)
-			continue;
-
-		vec3ui8 icc(0, 0, 0);
-		vec3ui8 nicc(0, 0, 0);
-		icc[dim] = (1 - d / 3) * (Chunk::WIDTH - 1);
-		nicc[dim] = Chunk::WIDTH - 1 - icc[dim];
-
-		for(uint8 a = 0; a < Chunk::WIDTH; a++) {
-			for(uint8 b = 0; b < Chunk::WIDTH; b++) {
-				icc[OTHER_DIR_DIMS[d][0]] = a;
-				nicc[OTHER_DIR_DIMS[d][0]] = a;
-				icc[OTHER_DIR_DIMS[d][1]] = b;
-				nicc[OTHER_DIR_DIMS[d][1]] = b;
-
-				uint8 type = c->getBlock(icc);
-				if (nc->getBlock(nicc) != 0) {
-					if (type == 0) {
-						nc->addFace(Face{ nicc, invD, getFaceCorners(ncc * Chunk::WIDTH + nicc.cast<int64>(), invD) });
-						chunkChanged[DIR_2_CUBE_CYCLE[d]] = true;
-					}
-				} else if (type != 0)
-					c->addFace(Face{ icc, d, getFaceCorners(c->getCC() * Chunk::WIDTH + icc.cast<int64>(), d) });
-			}
-		}
-	}
-	for (int i = 0; i < 27; i++) {
-		if(chunkChanged[i])
-			changedChunks.push_back(c->getCC() + NINE_CUBE_CYCLE[i].cast<int64>());
-	}
 }
 
 Chunk *World::removeChunk(vec3i64 cc) {

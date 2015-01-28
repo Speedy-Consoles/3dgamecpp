@@ -30,6 +30,7 @@ private:
 	double ZNEAR = 0.1f;
 
 	static const int MAX_NEW_QUADS = 3000;
+	static const int MAX_NEW_CHUNKS = 50;
 
 	int width;
 	int height;
@@ -56,6 +57,7 @@ private:
 	time_t lastFPSUpdate = 0;
 	time_t lastStopWatchSave = 0;
 	int newFaces = 0;
+	int newChunks = 0;
 	int faces = 0;
 	int visibleChunks = 0;
 	int visibleFaces = 0;

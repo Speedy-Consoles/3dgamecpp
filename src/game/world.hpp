@@ -73,8 +73,6 @@ public:
 	bool setBlock(vec3i64 bc, uint8 type, bool updateFaces);
 	uint8 getBlock(vec3i64 bc) const;
 
-	uint8 getFaceCorners(vec3i64 bc, uint8 faceDir) const;
-
 	void addPlayer(int playerID);
 	void deletePlayer(int playerID);
 
@@ -90,9 +88,6 @@ public:
 	size_t getNumChunks();
 
 	WorldSnapshot makeSnapshot(int tick) const;
-private:
-	bool updateFace(vec3i64 bc, uint8 faceDir);
-	void patchBorders(Chunk *c);
 };
 
 

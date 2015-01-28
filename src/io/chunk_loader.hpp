@@ -12,14 +12,14 @@ class World;
 #include <atomic>
 #include <future>
 
-#include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 class ChunkLoader {
 private:
 	static const int MAX_LOADS_UNTIL_UNLOAD = 200;
 
-	bool updateFaces;
+	bool visual;
 	uint localPlayer;
 
 	WorldGenerator *gen = nullptr;
