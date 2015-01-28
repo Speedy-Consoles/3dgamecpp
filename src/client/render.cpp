@@ -186,7 +186,7 @@ void Graphics::renderChunks() {
 	indices[0] = ((((pc[2] % length) + length) % length) * length
 			+ (((pc[1] % length) + length) % length)) * length
 			+ (((pc[0] % length) + length) % length);
-	exits[indices[0]] = 0|0b111111;
+	exits[indices[0]] = 0x3F;
 	visited[indices[0]] = true;
 	int fringeSize = 1;
 	size_t fringeStart = 0;

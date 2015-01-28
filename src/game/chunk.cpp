@@ -91,9 +91,9 @@ void Chunk::initFaces() {
 }
 
 void Chunk::makePassThroughs() {
-	uint size = WIDTH * WIDTH * WIDTH;
+	const uint size = WIDTH * WIDTH * WIDTH;
 	if (airBlocks > size - WIDTH * WIDTH) {
-		passThroughs = 0b111111111111111;
+		passThroughs = 0x7FFF;
 		return;
 	}
 	passThroughs = 0;
