@@ -91,14 +91,20 @@ void Chunk::initFaces() {
 }
 
 void Chunk::makePassThroughs() {
+	uint size = WIDTH * WIDTH * WIDTH;
+	if (airBlocks > size - WIDTH * WIDTH) {
+		passThroughs = 0b111111111111111;
+		return;
+	}
 	passThroughs = 0;
-	bool visited[WIDTH * WIDTH * WIDTH];
+	bool visited[size];
 
-	for (uint i = 0; i < WIDTH * WIDTH * WIDTH; i++) {
+	for (uint i = 0; i < size; i++) {
 		visited[i] = false;
 	}
 
 	size_t index = 0;
+	uint foundAirBlocks = 0;
 	for (uint8 z = 0; z < WIDTH; z++) {
 		for (uint8 y = 0; y < WIDTH; y++) {
 			for (uint8 x = 0; x < WIDTH; x++) {
@@ -108,11 +114,12 @@ void Chunk::makePassThroughs() {
 					continue;
 				}
 
-				vec3ui8 fringe[WIDTH * WIDTH * WIDTH];
+				vec3ui8 fringe[size];
 				fringe[0] = vec3ui8(x, y, z);
 				int fringeSize = 1;
 				int borderSet = 0;
 				while (fringeSize > 0) {
+					foundAirBlocks++;
 					vec3ui8 icc = fringe[--fringeSize];
 					for (int d = 0; d < 6; d++) {
 						if (icc[DIR_DIMS[d]] == (1 - d / 3) * (WIDTH - 1))
@@ -139,6 +146,9 @@ void Chunk::makePassThroughs() {
 					} else
 						shift += 5 - d1;
 				}
+
+				if (foundAirBlocks >= airBlocks)
+					return;
 
 				index++;
 			}
