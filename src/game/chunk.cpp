@@ -12,9 +12,9 @@ Chunk::Chunk(vec3i64 cc, ChunkLoader *chunkLoader) :
 const double World::GRAVITY = -9.81 * RESOLUTION / 60.0 / 60.0 * 4;
 
 void Chunk::makePassThroughs() {
-	uint size = WIDTH * WIDTH * WIDTH;
+	const uint size = WIDTH * WIDTH * WIDTH;
 	if (airBlocks > size - WIDTH * WIDTH) {
-		passThroughs = 0b111111111111111;
+		passThroughs = 0x7FFF;
 		return;
 	}
 	passThroughs = 0;

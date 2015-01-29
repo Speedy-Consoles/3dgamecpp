@@ -135,9 +135,9 @@ bool ArchiveFile::loadChunk(Chunk &chunk) {
 
 bool ArchiveFile::loadChunk(vec3i64 cc, Chunk &chunk) {
 	// read directory entry
-	int64 x = (cc[0] + _region_size) % _region_size;
-	int64 y = (cc[1] + _region_size) % _region_size;
-	int64 z = (cc[2] + _region_size) % _region_size;
+	int64 x = cycle(cc[0], _region_size);
+	int64 y = cycle(cc[1], _region_size);
+	int64 z = cycle(cc[2], _region_size);
 	size_t id = x + (_region_size * (y + (_region_size * z)));
 	_file.seekg(_directory_offset + id * sizeof (DirectoryEntry));
 	DirectoryEntry dir_entry;
@@ -181,9 +181,9 @@ bool ArchiveFile::loadChunk(vec3i64 cc, Chunk &chunk) {
 void ArchiveFile::storeChunk(const Chunk &chunk) {
 	// read directory entry
 	vec3i64 cc = chunk.getCC();
-	int64 x = (cc[0] + _region_size) % _region_size;
-	int64 y = (cc[1] + _region_size) % _region_size;
-	int64 z = (cc[2] + _region_size) % _region_size;
+	int64 x = cycle(cc[0], _region_size);
+	int64 y = cycle(cc[1], _region_size);
+	int64 z = cycle(cc[2], _region_size);
 	size_t id = x + (_region_size * (y + (_region_size * z)));
 	_file.seekg(_directory_offset + id * sizeof (DirectoryEntry));
 	DirectoryEntry dir_entry;
@@ -252,8 +252,8 @@ void ArchiveFile::storeChunk(const Chunk &chunk) {
 		LOG(ERROR, "Safe operation failed for chunk "
 				<< cc[0] << " " << cc[1] << " "<< cc[2]);
 	} else {
-		LOG(TRACE, "Safe operation successful for chunk "
-				<< cc[0] << " " << cc[1] << " "<< cc[2]);
+		/*LOG(TRACE, "Safe operation successful for chunk "
+				<< cc[0] << " " << cc[1] << " "<< cc[2]);*/
 	}
 }
 
