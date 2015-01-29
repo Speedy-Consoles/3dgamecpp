@@ -87,6 +87,7 @@ bool Chunk::setBlock(vec3ui8 icc, uint8 type) {
 	if (getBlock(icc) == type)
 		return true;
 	blocks[getBlockIndex(icc)] = type;
+	changed = true;
 	if (type == 0)
 		airBlocks++;
 	else

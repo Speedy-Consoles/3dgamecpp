@@ -145,6 +145,7 @@ bool World::setBlock(vec3i64 bc, uint8 type, bool visual) {
 		if (visual)
 			c->makePassThroughs();
 
+		changedChunks.push_back(cc);
 		// TODO change change other chunks
 		return true;
 	}
