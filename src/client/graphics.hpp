@@ -154,6 +154,7 @@ private:
 	void renderChunks();
 	int renderChunk(const Chunk &c);
 	void renderPlayers();
+	void renderTarget();
 
 	void renderHud(const Player &);
 	void renderDebugInfo(const Player &);

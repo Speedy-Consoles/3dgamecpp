@@ -130,6 +130,7 @@ void Graphics::renderScene() {
 	// render chunks
 	stopwatch->start(CLOCK_CHR);
 	renderChunks();
+	renderTarget();
 	stopwatch->stop(CLOCK_CHR);
 
 	// render players
@@ -142,16 +143,6 @@ void Graphics::renderChunks() {
 	Player &localPlayer = world->getPlayer(localClientID);
 	vec3i64 pc = localPlayer.getChunkPos();
 	vec3d lookDir = getVectorFromAngles(localPlayer.getYaw(), localPlayer.getPitch());
-
-	vec3i64 tbc;
-	vec3i64 tcc;
-	vec3ui8 ticc;
-	int td;
-	bool target = localPlayer.getTargetedFace(&tbc, &td);
-	if (target) {
-		tcc = bc2cc(tbc);
-		ticc = bc2icc(tbc);
-	}
 
 	newFaces = 0;
 	newChunks = 0;
@@ -259,6 +250,21 @@ void Graphics::renderChunks() {
 				}
 			}
 		}
+	}
+}
+
+void Graphics::renderTarget() {
+	Player &localPlayer = world->getPlayer(localClientID);
+	vec3i64 pc = localPlayer.getChunkPos();
+
+	vec3i64 tbc;
+	vec3i64 tcc;
+	vec3ui8 ticc;
+	int td;
+	bool target = localPlayer.getTargetedFace(&tbc, &td);
+	if (target) {
+		tcc = bc2cc(tbc);
+		ticc = bc2icc(tbc);
 	}
 
 	logOpenGLError();
