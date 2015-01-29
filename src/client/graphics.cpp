@@ -97,7 +97,7 @@ Graphics::~Graphics() {
 	int length = conf.render_distance * 2 + 1;
 	glDeleteLists(firstDL, length * length * length);
 	delete dlChunks;
-	delete dlHasChunk;
+	delete dlStatus;
 	delete dlFaces;
 	delete passThroughs;
 	delete exits;
@@ -257,7 +257,7 @@ void Graphics::initGL() {
 	int n = length * length * length;
 	firstDL = glGenLists(n);
 	dlChunks = new vec3i64[n];
-	dlHasChunk = new bool[n];
+	dlStatus = new uint8[n];
 	dlFaces = new int[n];
 	passThroughs = new uint16[n];
 	exits = new uint8[n];
@@ -266,7 +266,7 @@ void Graphics::initGL() {
 	fringe = new vec3i64[fringeCapacity];
 	indices = new int[fringeCapacity];
 	for (int i = 0; i < n; i++) {
-		dlHasChunk[i] = false;
+		dlStatus[i] = NO_CHUNK;
 		dlFaces[i] = 0;
 		passThroughs[i] = 0;
 		visited[i] = false;
@@ -498,7 +498,7 @@ void Graphics::setConf(const GraphicsConf &conf) {
 		int length = old_conf.render_distance * 2 + 3;
 		glDeleteLists(firstDL, length * length * length);
 		delete dlChunks;
-		delete dlHasChunk;
+		delete dlStatus;
 		delete dlFaces;
 		delete passThroughs;
 		delete exits;
@@ -510,7 +510,7 @@ void Graphics::setConf(const GraphicsConf &conf) {
 		int n = length * length * length;
 		firstDL = glGenLists(n);
 		dlChunks = new vec3i64[n];
-		dlHasChunk = new bool[n];
+		dlStatus = new uint8[n];
 		dlFaces = new int[n];
 		passThroughs = new uint16[n];
 		exits = new uint8[n];
@@ -519,7 +519,7 @@ void Graphics::setConf(const GraphicsConf &conf) {
 		fringe = new vec3i64[fringeCapacity];
 		indices = new int[fringeCapacity];
 		for (int i = 0; i < n; i++) {
-			dlHasChunk[i] = false;
+			dlStatus[i] = NO_CHUNK;
 			dlFaces[i] = 0;
 			passThroughs[i] = 0;
 			visited[i] = false;

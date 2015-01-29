@@ -27,6 +27,12 @@ namespace gui {
 
 class Graphics {
 private:
+	enum DisplayListStatus {
+		NO_CHUNK = 0,
+		OUTDATED,
+		OK,
+	};
+
 	double ZNEAR = 0.1f;
 
 	static const int MAX_NEW_QUADS = 3000;
@@ -66,7 +72,7 @@ private:
 
 	GLuint firstDL;
 	vec3i64 *dlChunks;
-	bool *dlHasChunk;
+	uint8 *dlStatus;
 	int *dlFaces;
 
 	uint16 *passThroughs;
@@ -152,7 +158,7 @@ private:
 	void renderScene();
 	void renderSky();
 	void renderChunks();
-	int renderChunk(const Chunk &c);
+	void renderChunk(Chunk &c);
 	void renderPlayers();
 	void renderTarget();
 

@@ -140,39 +140,24 @@ void Graphics::renderScene() {
 }
 
 void Graphics::renderChunks() {
+
+	int length = conf.render_distance * 2 + 3;
+
+	vec3i64 ccc;
+	while (world->popChangedChunk(&ccc)) {
+		int index = ((((ccc[2] % length) + length) % length) * length
+				+ (((ccc[1] % length) + length) % length)) * length
+				+ (((ccc[0] % length) + length) % length);
+		if (dlStatus[index] != NO_CHUNK)
+			dlStatus[index] = OUTDATED;
+	}
+
 	Player &localPlayer = world->getPlayer(localClientID);
 	vec3i64 pc = localPlayer.getChunkPos();
 	vec3d lookDir = getVectorFromAngles(localPlayer.getYaw(), localPlayer.getPitch());
 
 	newFaces = 0;
 	newChunks = 0;
-	int length = conf.render_distance * 2 + 3;
-
-	stopwatch->start(CLOCK_NDL);
-	vec3i64 ccc;
-	while (newChunks < MAX_NEW_CHUNKS && newFaces < MAX_NEW_QUADS && world->popChangedChunk(&ccc)) {
-		Chunk *chunk = world->getChunk(ccc);
-		if(chunk) {
-			uint index = ((((ccc[2] % length) + length) % length) * length
-					+ (((ccc[1] % length) + length) % length)) * length
-					+ (((ccc[0] % length) + length) % length);
-			if (chunk->pollChanged() || !dlHasChunk[index] || dlChunks[index] != ccc) {
-				GLuint lid = firstDL + index;
-				faces -= dlFaces[index];
-				glNewList(lid, GL_COMPILE);
-				dlFaces[index] = renderChunk(*chunk);
-				glEndList();
-				dlChunks[index] = ccc;
-				dlHasChunk[index] = true;
-				passThroughs[index] = chunk->getPassThroughs();
-				faces += dlFaces[index];
-				newFaces += dlFaces[index];
-			}
-		}
-	}
-	stopwatch->stop(CLOCK_NDL);
-
-	logOpenGLError();
 
 	fringe[0] = pc;
 	indices[0] = ((((pc[2] % length) + length) % length) * length
@@ -195,7 +180,13 @@ void Graphics::renderChunks() {
 		fringeStart = (fringeStart + 1) % fringeCapacity;
 		fringeSize--;
 
-		if (dlHasChunk[index] && dlChunks[index] == cc) {
+		if ((dlStatus[index] != OK || dlChunks[index] != cc) && (newChunks < MAX_NEW_CHUNKS && newFaces < MAX_NEW_QUADS)) {
+			Chunk *c = world->getChunk(cc);
+			if (c)
+				renderChunk(*c);
+		}
+
+		if (dlStatus[index] != NO_CHUNK && dlChunks[index] == cc) {
 			if (dlFaces[index] > 0) {
 				visibleFaces += dlFaces[index];
 				stopwatch->start(CLOCK_DLC);
@@ -235,7 +226,7 @@ void Graphics::renderChunks() {
 					fringeSize++;
 				}
 
-				if (dlChunks[nIndex] == ncc) {
+				if (dlStatus[nIndex] != NO_CHUNK && dlChunks[nIndex] == ncc) {
 					int shift = 0;
 					int invD = (d + 3) % 6;
 					for (int d1 = 0; d1 < invD; d1++) {
@@ -304,16 +295,32 @@ void Graphics::renderTarget() {
 	logOpenGLError();
 }
 
-int Graphics::renderChunk(const Chunk &c) {
-	if (c.getAirBlocks() == 0)
-		return 0;
+void Graphics::renderChunk(Chunk &c) {
+	stopwatch->start(CLOCK_NDL);
+	vec3i64 cc = c.getCC();
+	int length = conf.render_distance * 2 + 3;
+	uint index = ((((cc[2] % length) + length) % length) * length
+			+ (((cc[1] % length) + length) % length)) * length
+			+ (((cc[0] % length) + length) % length);
 
+	if (dlStatus[index] != NO_CHUNK)
+		faces -= dlFaces[index];
+
+	dlFaces[index] = 0;
+	dlChunks[index] = cc;
+	dlStatus[index] = OK;
+	passThroughs[index] = c.getPassThroughs();
+
+	if (c.getAirBlocks() == Chunk::WIDTH * Chunk::WIDTH * Chunk::WIDTH) {
+		stopwatch->stop(CLOCK_NDL);
+		return;
+	}
+
+	glNewList(firstDL + index, GL_COMPILE);
 	newChunks++;
-	int faces = 0;
 
 	texManager.bind(0);
 	glBegin(GL_QUADS);
-	texManager.bind(1);
 
 	uint ds[3];
 	vec3ui8 uDirs[3];
@@ -396,14 +403,17 @@ int Graphics::renderChunk(const Chunk &c) {
 							vec3f vertex = (faceBlock.cast<int>() + QUAD_CYCLES_3D[faceDir][j]).cast<float>();
 							glVertex3f(vertex[0], vertex[1], vertex[2]);
 						}
-						faces++;
+						dlFaces[index]++;
 					}
 				}
 			}
 		}
 	}
 	glEnd();
-	return faces;
+	glEndList();
+	newFaces += dlFaces[index];
+	faces += dlFaces[index];
+	stopwatch->stop(CLOCK_NDL);
 }
 
 void Graphics::renderPlayers() {
