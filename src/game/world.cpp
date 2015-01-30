@@ -145,8 +145,29 @@ bool World::setBlock(vec3i64 bc, uint8 type, bool visual) {
 		if (visual)
 			c->makePassThroughs();
 
-		changedChunks.push_back(cc);
-		// TODO change change other chunks
+		for (size_t i = 0; i < 27; i++) {
+			if (i == BASE_NINE_CUBE_CYCLE){
+				changedChunks.push_back(cc);
+				continue;
+			}
+
+			vec3i64 diff = NINE_CUBE_CYCLE[i].cast<int64>();
+			bool leave = false;
+			for (int dim = 0; dim < 3; dim++) {
+				if (diff[dim] != 0 && (diff[dim] + 1) / 2 * Chunk::WIDTH != icc[dim]) {
+					leave = true;
+					break;
+				}
+			}
+			if (leave)
+				continue;
+
+			Chunk *c = getChunk(cc + diff);
+			if (c)
+				c->setChanged();
+			changedChunks.push_back(cc + diff);
+		}
+
 		return true;
 	}
 	return false;
