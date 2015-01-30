@@ -34,6 +34,7 @@ public:
 	uint getAirBlocks() const { return airBlocks; }
 
 	bool pollChanged();
+	void setChanged();
 
 	void setChunkLoader(ChunkLoader *cl) { chunkLoader = cl; }
 	void free();

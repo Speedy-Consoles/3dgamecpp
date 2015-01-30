@@ -161,8 +161,18 @@ Chunk *World::getChunk(vec3i64 cc) {
 
 void World::insertChunk(Chunk *chunk) {
 	chunks.insert({chunk->getCC(), chunk});
-	// TODO change change other chunks
-	changedChunks.push_back(chunk->getCC());
+	for (size_t i = 0; i < 27; i++) {
+		if (i == BASE_NINE_CUBE_CYCLE){
+			changedChunks.push_back(chunk->getCC());
+			continue;
+		}
+		vec3i64 cc = chunk->getCC() + NINE_CUBE_CYCLE[i].cast<int64>();
+		Chunk *c = getChunk(cc);
+		if (c) {
+			c->setChanged();
+			changedChunks.push_back(cc);
+		}
+	}
 }
 
 Chunk *World::removeChunk(vec3i64 cc) {

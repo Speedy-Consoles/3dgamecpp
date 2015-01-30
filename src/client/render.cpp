@@ -322,53 +322,68 @@ void Graphics::renderChunk(Chunk &c) {
 	texManager.bind(0);
 	glBegin(GL_QUADS);
 
-	uint ds[3];
 	vec3ui8 uDirs[3];
 	for (uint8 d = 0; d < 3; d++) {
 		uDirs[d] = DIRS[d].cast<uint8>();
-		ds[d] = Chunk::getBlockIndex(uDirs[d]);
 	}
 
 	const uint8 *blocks = c.getBlocks();
 
 	for (uint8 d = 0; d < 3; d++) {
+		vec3i64 dir = uDirs[d].cast<int64>();
 		uint i = 0;
-		for (uint8 z = 0; z < Chunk::WIDTH; z++) {
-			for (uint8 y = 0; y < Chunk::WIDTH; y++) {
-				for (uint8 x = 0; x < Chunk::WIDTH; x++, i++) {
+		uint ni = 0;
+		for (int z = (d == 2) ? -1 : 0; z < (int) Chunk::WIDTH; z++) {
+			for (int y = (d == 1) ? -1 : 0; y < (int) Chunk::WIDTH; y++) {
+				for (int x = (d == 0) ? -1 : 0; x < (int) Chunk::WIDTH; x++) {
+					uint8 thatType;
+					uint8 thisType;
 					if ((x == Chunk::WIDTH - 1 && d==0)
 							|| (y == Chunk::WIDTH - 1 && d==1)
-							|| (z == Chunk::WIDTH - 1 && d==2))
-						continue;
+							|| (z == Chunk::WIDTH - 1 && d==2)) {
+						thatType = world->getBlock(cc * Chunk::WIDTH + vec3i64(x, y, z) + dir);
+						if (thatType != 0) {
+							if (x != -1 && y != -1 && z != -1)
+								i++;
+							continue;
+						}
+					} else
+						thatType = blocks[ni++];
 
-					uint ni = i + ds[d];
+					if (x == -1 || y == -1 || z == -1) {
+						thisType = world->getBlock(cc * Chunk::WIDTH + vec3i64(x, y, z));
+						if (thisType != 0)
+							continue;
+					} else {
+						thisType = blocks[i++];
+					}
 
-					uint8 thisType = blocks[i];
-					uint8 thatType = blocks[ni];
 					if((thisType == 0) != (thatType == 0)) {
-						vec3ui8 faceBlock;
+						vec3i64 faceBlock;
 						uint8 faceType;
 						uint8 faceDir;
 						if (thisType == 0) {
-							vec3ui8 dir = uDirs[d];
-							faceBlock = vec3ui8(x, y, z) + dir;
+							faceBlock = vec3i64(x, y, z) + dir;
 							faceDir = (uint8) (d + 3);
 							faceType = thatType;
 						} else {
-							faceBlock = vec3ui8(x, y, z);
+							faceBlock = vec3i64(x, y, z);
 							faceDir = d;
 							faceType = thisType;
 						}
 
 						uint8 corners = 0;
 						for (int j = 0; j < 8; ++j) {
-							vec3i v = EIGHT_CYCLES_3D[faceDir][j];
-							vec3i dIcc = faceBlock.cast<int>() + v;
+							vec3i64 v = EIGHT_CYCLES_3D[faceDir][j].cast<int64>();
+							vec3i64 dIcc = faceBlock + v;
+							uint8 cornerBlock;
 							if (		dIcc[0] < 0 || dIcc[0] >= (int) Chunk::WIDTH
 									||	dIcc[1] < 0 || dIcc[1] >= (int) Chunk::WIDTH
 									||	dIcc[2] < 0 || dIcc[2] >= (int) Chunk::WIDTH)
-								continue;
-							if (c.getBlock(dIcc.cast<uint8>())) {
+								cornerBlock = world->getBlock(cc * Chunk::WIDTH + dIcc);
+							else
+								cornerBlock = c.getBlock(dIcc.cast<uint8>());
+							if (cornerBlock) {
 								corners |= 1 << j;
 							}
 						}

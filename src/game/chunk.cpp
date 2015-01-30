@@ -144,6 +144,10 @@ bool Chunk::pollChanged() {
 	return tmp;
 }
 
+void Chunk::setChanged() {
+	changed = true;
+}
+
 void Chunk::free() {
 	 if (chunkLoader)
 		 chunkLoader->free(this);
