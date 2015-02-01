@@ -310,17 +310,17 @@ void Graphics::renderChunk(Chunk &c) {
 	dlChunks[index] = cc;
 	dlStatus[index] = OK;
 	passThroughs[index] = c.getPassThroughs();
+	int typeFaces[255];
+	for (int i = 0; i < 255; i++) {
+		typeFaces[i] = 0;
+	}
 
 	if (c.getAirBlocks() == Chunk::WIDTH * Chunk::WIDTH * Chunk::WIDTH) {
 		stopwatch->stop(CLOCK_NDL);
 		return;
 	}
 
-	glNewList(firstDL + index, GL_COMPILE);
 	newChunks++;
-
-	texManager.bind(0);
-	glBegin(GL_QUADS);
 
 	vec3ui8 uDirs[3];
 	for (uint8 d = 0; d < 3; d++) {
@@ -328,7 +328,7 @@ void Graphics::renderChunk(Chunk &c) {
 	}
 
 	const uint8 *blocks = c.getBlocks();
-
+	int fbi = 0;
 	for (uint8 d = 0; d < 3; d++) {
 		vec3i64 dir = uDirs[d].cast<int64>();
 		uint i = 0;
@@ -388,22 +388,19 @@ void Graphics::renderChunk(Chunk &c) {
 							}
 						}
 
-						if (texManager.bind(faceType)) {
-							glEnd();
-							glBindTexture(GL_TEXTURE_2D, texManager.getTexture());
-							glBegin(GL_QUADS);
-						}
-
 						vec2f texs[4];
 						vec3i64 bc = c.getCC() * c.WIDTH + faceBlock.cast<int64>();
+						texManager.bind(faceType);
 						texManager.getTextureVertices(bc, faceDir, texs);
 
-						vec3f color = {1.0, 1.0, 1.0};
+						faceBufferIndices[faceType][typeFaces[faceType]++] = fbi;
 
-						glNormal3f(DIRS[faceDir][0], DIRS[faceDir][1], DIRS[faceDir][2]);
+						faceBuffer[fbi++] = DIRS[faceDir][0];
+						faceBuffer[fbi++] = DIRS[faceDir][1];
+						faceBuffer[fbi++] = DIRS[faceDir][2];
 						for (int j = 0; j < 4; j++) {
-							vec2f tex = texs[j];
-							glTexCoord2f(tex[0], tex[1]);
+							faceBuffer[fbi++] = texs[j][0];
+							faceBuffer[fbi++] = texs[j][1];
 							double light = 1.0;
 							bool s1 = (corners & FACE_CORNER_MASK[j][0]) > 0;
 							bool s2 = (corners & FACE_CORNER_MASK[j][2]) > 0;
@@ -414,17 +411,46 @@ void Graphics::renderChunk(Chunk &c) {
 								light -= 0.2;
 							if (m && !(s1 && s2))
 								light -= 0.2;
-							glColor3f(color[0] * light, color[1] * light, color[2] * light);
+							faceBuffer[fbi++] = light;
+							faceBuffer[fbi++] = light;
+							faceBuffer[fbi++] = light;
 							vec3f vertex = (faceBlock.cast<int>() + QUAD_CYCLES_3D[faceDir][j]).cast<float>();
-							glVertex3f(vertex[0], vertex[1], vertex[2]);
+							faceBuffer[fbi++] = vertex[0];
+							faceBuffer[fbi++] = vertex[1];
+							faceBuffer[fbi++] = vertex[2];
 						}
-						dlFaces[index]++;
 					}
 				}
 			}
 		}
 	}
-	glEnd();
+
+	texManager.bind(0);
+	glNewList(firstDL + index, GL_COMPILE);
+
+	for (int faceType = 0; faceType < 255; faceType++) {
+		if (typeFaces[faceType] == 0)
+			continue;
+		texManager.bind(faceType);
+		glBindTexture(GL_TEXTURE_2D, texManager.getTexture());
+		glBegin(GL_QUADS);
+		for (int i = 0; i < typeFaces[faceType]; i++) {
+			int fbi = faceBufferIndices[faceType][i];
+			glNormal3f(faceBuffer[fbi], faceBuffer[fbi + 1], faceBuffer[fbi + 2]);
+			fbi += 3;
+			for (int j = 0; j < 4; j++) {
+				glTexCoord2f(faceBuffer[fbi], faceBuffer[fbi + 1]);
+				fbi += 2;
+				glColor3f(faceBuffer[fbi], faceBuffer[fbi + 1], faceBuffer[fbi + 2]);
+				fbi += 3;
+				glVertex3f(faceBuffer[fbi], faceBuffer[fbi + 1], faceBuffer[fbi + 2]);
+				fbi += 3;
+			}
+			dlFaces[index]++;
+		}
+		glEnd();
+	}
+
 	glEndList();
 	newFaces += dlFaces[index];
 	faces += dlFaces[index];

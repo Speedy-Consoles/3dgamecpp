@@ -51,32 +51,48 @@ void WorldGenerator::generateChunk(Chunk &chunk) {
 					* flatLandMaxHeight;
 
 			double h = fh * fFac + mh * mFac;
-			for (uint iz = 0; iz < Chunk::WIDTH; iz++) {
+			bool solid = false;
+			int realDepth = 0;
+			for (int iz = Chunk::WIDTH + 4; iz >= 0; iz--) {
 				int index = Chunk::getBlockIndex(vec3ui8(ix, iy, iz));
 				long z = iz + cc[2] * Chunk::WIDTH;
 				double depth = h - z;
-				/*if (perlin.octavePerlin((double)x/250, (double)y/250, (double)z/250, 4, 0.6) > 0.4)
+				/*if (perlin.octavePerlin((double)x/400, (double)y/400, (double)z/400, 4, 0.5) > 0.5)
 					chunk.initBlock(index, 1);
 				else
 					chunk.initBlock(index, 0);
 				continue;*/
 				if (depth < 0) {
-					chunk.initBlock(index, 0);
-					continue;
+					solid = false;
 				} else if(depth > (h * surfaceRelDepth)) {
-					chunk.initBlock(index, 1);
-					continue;
+					solid = true;
+				} else {
+					double funPos = (1 - depth / (h * surfaceRelDepth) - 0.5) * 2 / surfaceThresholdXScale;
+					double threshold = (funPos + funPos * funPos * funPos) / surfaceThresholdYScale + 0.5;
+					double px = x / surfaceScale;
+					double py = y / surfaceScale;
+					double pz = z / surfaceScale;
+					double v = perlin.octavePerlin(px, py, pz, 6, surfaceExp);
+					if (v > threshold)
+						solid = true;
+					else
+						solid = false;
 				}
-				double funPos = (1 - depth / (h * surfaceRelDepth) - 0.5) * 2 / surfaceThresholdXScale;
-				double threshold = (funPos + funPos * funPos * funPos) / surfaceThresholdYScale + 0.5;
-				double px = x / surfaceScale;
-				double py = y / surfaceScale;
-				double pz = z / surfaceScale;
-				double v = perlin.octavePerlin(px, py, pz, 6, surfaceExp);
-				if (v > threshold)
-					chunk.initBlock(index, 1);
+				if (solid)
+					realDepth++;
 				else
-					chunk.initBlock(index, 0);
+					realDepth = 0;
+
+				if (iz < (int) Chunk::WIDTH) {
+					if (realDepth == 1)
+						chunk.initBlock(index, 2);
+					else if(realDepth >= 5)
+						chunk.initBlock(index, 36);
+					else if(solid)
+						chunk.initBlock(index, 1);
+					else
+						chunk.initBlock(index, 0);
+				}
 			}
 		}
 	}

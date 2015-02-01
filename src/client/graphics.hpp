@@ -12,9 +12,10 @@
 #include "config.hpp"
 #include "texture_manager.hpp"
 
+#include "game/chunk.hpp"
+
 class World;
 class Player;
-class Chunk;
 class Menu;
 class Stopwatch;
 
@@ -35,7 +36,7 @@ private:
 
 	double ZNEAR = 0.1f;
 
-	static const int MAX_NEW_QUADS = 3000;
+	static const int MAX_NEW_QUADS = 2500;
 	static const int MAX_NEW_CHUNKS = 50;
 
 	int width;
@@ -80,6 +81,9 @@ private:
 	bool *visited;
 	vec3i64 *fringe;
 	int *indices;
+	int faceBufferIndices[255][(Chunk::WIDTH + 1) * Chunk::WIDTH * Chunk::WIDTH * 3];
+	float faceBuffer[(Chunk::WIDTH + 1) * Chunk::WIDTH * Chunk::WIDTH * 3 * (3 + 4 * (2 + 3 + 3))];
+
 	int fringeCapacity;
 
 	vec3f fogColor{ 0.6f, 0.6f, 0.8f };
