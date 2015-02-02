@@ -665,7 +665,7 @@ void Graphics::tick() {
 	render();
 
 	stopwatch->start(CLOCK_FSH);
-	glFinish();
+	//glFinish();
 	stopwatch->stop(CLOCK_FSH);
 
 	stopwatch->start(CLOCK_FLP);

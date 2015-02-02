@@ -58,10 +58,10 @@ void WorldGenerator::generateChunk(Chunk &chunk) {
 				long z = iz + cc[2] * Chunk::WIDTH;
 				double depth = h - z;
 				/*if (perlin.octavePerlin((double)x/400, (double)y/400, (double)z/400, 4, 0.5) > 0.5)
-					chunk.initBlock(index, 1);
+					solid = true;
 				else
-					chunk.initBlock(index, 0);
-				continue;*/
+					solid = false;*/
+
 				if (depth < 0) {
 					solid = false;
 				} else if(depth > (h * surfaceRelDepth)) {

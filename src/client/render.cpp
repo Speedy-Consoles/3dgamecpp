@@ -316,6 +316,8 @@ void Graphics::renderChunk(Chunk &c) {
 	}
 
 	if (c.getAirBlocks() == Chunk::WIDTH * Chunk::WIDTH * Chunk::WIDTH) {
+		glNewList(firstDL + index, GL_COMPILE);
+		glEndList();
 		stopwatch->stop(CLOCK_NDL);
 		return;
 	}
