@@ -148,6 +148,8 @@ public:
 
 private:
 	void initGL();
+	void initRenderDistanceDependent();
+	void destroyRenderDistanceDependent();
 
 //	GLuint loadShader(const char *, GLenum);
 //	GLuint loadProgram(const char *, const char *);

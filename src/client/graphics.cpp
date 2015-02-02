@@ -93,7 +93,18 @@ Graphics::Graphics(
 
 Graphics::~Graphics() {
 	LOG(DEBUG, "Destroying Graphics");
+	destroyRenderDistanceDependent();
 
+	delete font;
+
+//	glDeleteProgram(program);
+//	glDeleteProgram(program_postproc);
+
+	SDL_GL_DeleteContext(glContext);
+	SDL_Quit();
+}
+
+void Graphics::destroyRenderDistanceDependent() {
 	int length = conf.render_distance * 2 + 1;
 	glDeleteLists(dlFirstAddress, length * length * length);
 	delete dlChunks;
@@ -105,13 +116,6 @@ Graphics::~Graphics() {
 	delete vsFringe;
 	delete vsIndices;
 
-	delete font;
-
-//	glDeleteProgram(program);
-//	glDeleteProgram(program_postproc);
-
-	SDL_GL_DeleteContext(glContext);
-	SDL_Quit();
 }
 
 void Graphics::initGL() {
@@ -252,7 +256,10 @@ void Graphics::initGL() {
 //	glUniform1f(fxaa_reduce_min_loc, 1.0/128.0);
 //	logOpenGLError();
 
-	// display lists
+	initRenderDistanceDependent();
+}
+
+void Graphics::initRenderDistanceDependent() {
 	int length = conf.render_distance * 2 + 3;
 	int n = length * length * length;
 	dlFirstAddress = glGenLists(n);
@@ -271,6 +278,7 @@ void Graphics::initGL() {
 		chunkPassThroughs[i] = 0;
 		vsVisited[i] = false;
 	}
+	faces = 0;
 }
 
 void Graphics::resize(int width, int height) {
@@ -464,8 +472,18 @@ static uint getMSLevelFromAA(AntiAliasing aa) {
 }
 
 void Graphics::setConf(const GraphicsConf &conf) {
-	GraphicsConf old_conf = this->conf;
+
+	if (conf.render_distance != this->conf.render_distance)
+		destroyRenderDistanceDependent();
+
 	this->conf = conf;
+	GraphicsConf old_conf = this->conf;
+
+	if (conf.render_distance != old_conf.render_distance) {
+		makePerspective();
+		makeFog();
+		initRenderDistanceDependent();
+	}
 
 	if (GLEW_NV_fog_distance) {
 		switch (conf.fog) {
@@ -489,42 +507,6 @@ void Graphics::setConf(const GraphicsConf &conf) {
 
 	if (conf.fullscreen != old_conf.fullscreen) {
 		SDL_SetWindowFullscreen(window, conf.fullscreen ? SDL_WINDOW_FULLSCREEN : 0);
-	}
-
-	if (conf.render_distance != old_conf.render_distance) {
-		makePerspective();
-		makeFog();
-
-		int length = old_conf.render_distance * 2 + 3;
-		glDeleteLists(dlFirstAddress, length * length * length);
-		delete dlChunks;
-		delete dlStatus;
-		delete chunkFaces;
-		delete chunkPassThroughs;
-		delete vsExits;
-		delete vsVisited;
-		delete vsFringe;
-		delete vsIndices;
-
-		length = conf.render_distance * 2 + 3;
-		int n = length * length * length;
-		dlFirstAddress = glGenLists(n);
-		dlChunks = new vec3i64[n];
-		dlStatus = new uint8[n];
-		chunkFaces = new int[n];
-		chunkPassThroughs = new uint16[n];
-		vsExits = new uint8[n];
-		vsVisited = new bool[n];
-		vsFringeCapacity = length * length * 6;
-		vsFringe = new vec3i64[vsFringeCapacity];
-		vsIndices = new int[vsFringeCapacity];
-		for (int i = 0; i < n; i++) {
-			dlStatus[i] = NO_CHUNK;
-			chunkFaces[i] = 0;
-			chunkPassThroughs[i] = 0;
-			vsVisited[i] = false;
-		}
-		faces = 0;
 	}
 
 	if (conf.fov != old_conf.fov) {
