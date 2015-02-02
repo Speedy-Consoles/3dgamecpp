@@ -159,12 +159,12 @@ void Graphics::renderChunks() {
 	newFaces = 0;
 	newChunks = 0;
 
-	fringe[0] = pc;
-	indices[0] = ((((pc[2] % length) + length) % length) * length
+	vsFringe[0] = pc;
+	vsIndices[0] = ((((pc[2] % length) + length) % length) * length
 			+ (((pc[1] % length) + length) % length)) * length
 			+ (((pc[0] % length) + length) % length);
-	exits[indices[0]] = 0x3F;
-	visited[indices[0]] = true;
+	vsExits[vsIndices[0]] = 0x3F;
+	vsVisited[vsIndices[0]] = true;
 	int fringeSize = 1;
 	size_t fringeStart = 0;
 	size_t fringeEnd = 1;
@@ -173,11 +173,11 @@ void Graphics::renderChunks() {
 	visibleFaces = 0;
 	while (fringeSize > 0) {
 		visibleChunks++;
-		vec3i64 cc = fringe[fringeStart];
+		vec3i64 cc = vsFringe[fringeStart];
 		vec3i64 cd = cc - pc;
-		int index = indices[fringeStart];
-		visited[index] = false;
-		fringeStart = (fringeStart + 1) % fringeCapacity;
+		int index = vsIndices[fringeStart];
+		vsVisited[index] = false;
+		fringeStart = (fringeStart + 1) % vsFringeCapacity;
 		fringeSize--;
 
 		if ((dlStatus[index] != OK || dlChunks[index] != cc) && (newChunks < MAX_NEW_CHUNKS && newFaces < MAX_NEW_QUADS)) {
@@ -187,13 +187,13 @@ void Graphics::renderChunks() {
 		}
 
 		if (dlStatus[index] != NO_CHUNK && dlChunks[index] == cc) {
-			if (dlFaces[index] > 0) {
-				visibleFaces += dlFaces[index];
+			if (chunkFaces[index] > 0) {
+				visibleFaces += chunkFaces[index];
 				stopwatch->start(CLOCK_DLC);
 				glPushMatrix();
 				logOpenGLError();
 				glTranslatef(cd[0] * (int) Chunk::WIDTH, cd[1] * (int) Chunk::WIDTH, cd[2] * (int) Chunk::WIDTH);
-				glCallList(firstDL + index);
+				glCallList(dlFirstAddress + index);
 				logOpenGLError();
 				glPopMatrix();
 				logOpenGLError();
@@ -201,7 +201,7 @@ void Graphics::renderChunks() {
 			}
 
 			for (int d = 0; d < 6; d++) {
-				if ((exits[index] & (1 << d)) == 0)
+				if ((vsExits[index] & (1 << d)) == 0)
 					continue;
 
 				vec3i64 ncc = cc + DIRS[d].cast<int64>();
@@ -217,12 +217,12 @@ void Graphics::renderChunks() {
 						+ (((ncc[1] % length) + length) % length)) * length
 						+ (((ncc[0] % length) + length) % length);
 
-				if (!visited[nIndex]) {
-					visited[nIndex] = true;
-					exits[nIndex] = 0;
-					fringe[fringeEnd] = ncc;
-					indices[fringeEnd] = nIndex;
-					fringeEnd = (fringeEnd + 1) % fringeCapacity;
+				if (!vsVisited[nIndex]) {
+					vsVisited[nIndex] = true;
+					vsExits[nIndex] = 0;
+					vsFringe[fringeEnd] = ncc;
+					vsIndices[fringeEnd] = nIndex;
+					fringeEnd = (fringeEnd + 1) % vsFringeCapacity;
 					fringeSize++;
 				}
 
@@ -231,12 +231,12 @@ void Graphics::renderChunks() {
 					int invD = (d + 3) % 6;
 					for (int d1 = 0; d1 < invD; d1++) {
 						if (ncd[d1 % 3] * (d1 * (-2) + 5) >= 0)
-							exits[nIndex] |= ((passThroughs[nIndex] & (1 << (shift + invD - d1 - 1))) > 0) << d1;
+							vsExits[nIndex] |= ((chunkPassThroughs[nIndex] & (1 << (shift + invD - d1 - 1))) > 0) << d1;
 						shift += 5 - d1;
 					}
 					for (int d2 = invD + 1; d2 < 6; d2++) {
 						if (ncd[d2 % 3] * (d2 * (-2) + 5) >= 0)
-							exits[nIndex] |= ((passThroughs[nIndex] & (1 << (shift + d2 - invD - 1))) > 0) << d2;
+							vsExits[nIndex] |= ((chunkPassThroughs[nIndex] & (1 << (shift + d2 - invD - 1))) > 0) << d2;
 					}
 				}
 			}
@@ -304,19 +304,19 @@ void Graphics::renderChunk(Chunk &c) {
 			+ (((cc[0] % length) + length) % length);
 
 	if (dlStatus[index] != NO_CHUNK)
-		faces -= dlFaces[index];
+		faces -= chunkFaces[index];
 
-	dlFaces[index] = 0;
+	chunkFaces[index] = 0;
 	dlChunks[index] = cc;
 	dlStatus[index] = OK;
-	passThroughs[index] = c.getPassThroughs();
+	chunkPassThroughs[index] = c.getPassThroughs();
 	int typeFaces[255];
 	for (int i = 0; i < 255; i++) {
 		typeFaces[i] = 0;
 	}
 
 	if (c.getAirBlocks() == Chunk::WIDTH * Chunk::WIDTH * Chunk::WIDTH) {
-		glNewList(firstDL + index, GL_COMPILE);
+		glNewList(dlFirstAddress + index, GL_COMPILE);
 		glEndList();
 		stopwatch->stop(CLOCK_NDL);
 		return;
@@ -428,7 +428,7 @@ void Graphics::renderChunk(Chunk &c) {
 	}
 
 	texManager.bind(0);
-	glNewList(firstDL + index, GL_COMPILE);
+	glNewList(dlFirstAddress + index, GL_COMPILE);
 
 	for (int faceType = 0; faceType < 255; faceType++) {
 		if (typeFaces[faceType] == 0)
@@ -448,14 +448,14 @@ void Graphics::renderChunk(Chunk &c) {
 				glVertex3f(faceBuffer[fbi], faceBuffer[fbi + 1], faceBuffer[fbi + 2]);
 				fbi += 3;
 			}
-			dlFaces[index]++;
+			chunkFaces[index]++;
 		}
 		glEnd();
 	}
 
 	glEndList();
-	newFaces += dlFaces[index];
-	faces += dlFaces[index];
+	newFaces += chunkFaces[index];
+	faces += chunkFaces[index];
 	stopwatch->stop(CLOCK_NDL);
 }
 

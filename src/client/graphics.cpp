@@ -95,15 +95,15 @@ Graphics::~Graphics() {
 	LOG(DEBUG, "Destroying Graphics");
 
 	int length = conf.render_distance * 2 + 1;
-	glDeleteLists(firstDL, length * length * length);
+	glDeleteLists(dlFirstAddress, length * length * length);
 	delete dlChunks;
 	delete dlStatus;
-	delete dlFaces;
-	delete passThroughs;
-	delete exits;
-	delete visited;
-	delete fringe;
-	delete indices;
+	delete chunkFaces;
+	delete chunkPassThroughs;
+	delete vsExits;
+	delete vsVisited;
+	delete vsFringe;
+	delete vsIndices;
 
 	delete font;
 
@@ -255,21 +255,21 @@ void Graphics::initGL() {
 	// display lists
 	int length = conf.render_distance * 2 + 3;
 	int n = length * length * length;
-	firstDL = glGenLists(n);
+	dlFirstAddress = glGenLists(n);
 	dlChunks = new vec3i64[n];
 	dlStatus = new uint8[n];
-	dlFaces = new int[n];
-	passThroughs = new uint16[n];
-	exits = new uint8[n];
-	visited = new bool[n];
-	fringeCapacity = length * length * 6;
-	fringe = new vec3i64[fringeCapacity];
-	indices = new int[fringeCapacity];
+	chunkFaces = new int[n];
+	chunkPassThroughs = new uint16[n];
+	vsExits = new uint8[n];
+	vsVisited = new bool[n];
+	vsFringeCapacity = length * length * 6;
+	vsFringe = new vec3i64[vsFringeCapacity];
+	vsIndices = new int[vsFringeCapacity];
 	for (int i = 0; i < n; i++) {
 		dlStatus[i] = NO_CHUNK;
-		dlFaces[i] = 0;
-		passThroughs[i] = 0;
-		visited[i] = false;
+		chunkFaces[i] = 0;
+		chunkPassThroughs[i] = 0;
+		vsVisited[i] = false;
 	}
 }
 
@@ -496,33 +496,33 @@ void Graphics::setConf(const GraphicsConf &conf) {
 		makeFog();
 
 		int length = old_conf.render_distance * 2 + 3;
-		glDeleteLists(firstDL, length * length * length);
+		glDeleteLists(dlFirstAddress, length * length * length);
 		delete dlChunks;
 		delete dlStatus;
-		delete dlFaces;
-		delete passThroughs;
-		delete exits;
-		delete visited;
-		delete fringe;
-		delete indices;
+		delete chunkFaces;
+		delete chunkPassThroughs;
+		delete vsExits;
+		delete vsVisited;
+		delete vsFringe;
+		delete vsIndices;
 
 		length = conf.render_distance * 2 + 3;
 		int n = length * length * length;
-		firstDL = glGenLists(n);
+		dlFirstAddress = glGenLists(n);
 		dlChunks = new vec3i64[n];
 		dlStatus = new uint8[n];
-		dlFaces = new int[n];
-		passThroughs = new uint16[n];
-		exits = new uint8[n];
-		visited = new bool[n];
-		fringeCapacity = length * length * 6;
-		fringe = new vec3i64[fringeCapacity];
-		indices = new int[fringeCapacity];
+		chunkFaces = new int[n];
+		chunkPassThroughs = new uint16[n];
+		vsExits = new uint8[n];
+		vsVisited = new bool[n];
+		vsFringeCapacity = length * length * 6;
+		vsFringe = new vec3i64[vsFringeCapacity];
+		vsIndices = new int[vsFringeCapacity];
 		for (int i = 0; i < n; i++) {
 			dlStatus[i] = NO_CHUNK;
-			dlFaces[i] = 0;
-			passThroughs[i] = 0;
-			visited[i] = false;
+			chunkFaces[i] = 0;
+			chunkPassThroughs[i] = 0;
+			vsVisited[i] = false;
 		}
 		faces = 0;
 	}
