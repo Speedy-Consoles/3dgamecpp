@@ -472,14 +472,11 @@ static uint getMSLevelFromAA(AntiAliasing aa) {
 }
 
 void Graphics::setConf(const GraphicsConf &conf) {
-
-	if (conf.render_distance != this->conf.render_distance)
-		destroyRenderDistanceDependent();
-
-	this->conf = conf;
 	GraphicsConf old_conf = this->conf;
+	this->conf = conf;
 
 	if (conf.render_distance != old_conf.render_distance) {
+		destroyRenderDistanceDependent();
 		makePerspective();
 		makeFog();
 		initRenderDistanceDependent();
