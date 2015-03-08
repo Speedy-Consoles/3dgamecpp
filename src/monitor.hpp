@@ -5,23 +5,23 @@
 
 class Monitor {
 public:
-	using read_access_handle = int;
+	using handle_t = int;
 
-	Monitor();
+    inline Monitor() : rev1(0), rev2(0) { }
 
-	void startWrite();
-	void finishWrite();
+    inline void startWrite() { rev1++; }
+    inline void finishWrite() { rev2++; }
 
 	// save this handle
-	int startRead();
+    inline handle_t startRead() { return rev2; }
 
 	// pass the handle back in
 	// returns true, if the read was successful
-	bool finishRead(int);
+    inline bool finishRead(handle_t handle) { return handle == rev1; }
 
 private:
-	std::atomic<int> rev1;
-	std::atomic<int> rev2;
+    std::atomic<handle_t> rev1;
+    std::atomic<handle_t> rev2;
 };
 
 #endif

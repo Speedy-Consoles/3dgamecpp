@@ -80,7 +80,6 @@
     <ClCompile Include="..\..\src\io\chunk_loader.cpp" />
     <ClCompile Include="..\..\src\io\chunk_loader_internals.cpp" />
     <ClCompile Include="..\..\src\io\logging.cpp" />
-    <ClCompile Include="..\..\src\monitor.cpp" />
     <ClCompile Include="..\..\src\net\buffer.cpp" />
     <ClCompile Include="..\..\src\net\net.cpp" />
     <ClCompile Include="..\..\src\net\socket.cpp" />

@@ -33,7 +33,6 @@ SHARED_OBJECT_FILES = \
 	net/buffer.cpp.o\
 	net/socket.cpp.o\
 	net/net.cpp.o\
-	monitor.cpp.o\
 	perlin.cpp.o\
 	stopwatch.cpp.o\
 	time.cpp.o\

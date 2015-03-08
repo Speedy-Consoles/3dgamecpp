@@ -45,9 +45,6 @@
     <ClCompile Include="..\..\src\net\socket.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\monitor.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\perlin.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
