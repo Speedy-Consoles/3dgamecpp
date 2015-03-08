@@ -37,8 +37,8 @@ private:
 
 	ClientState state = CONNECTING;
 
-	my::time::time_t time = 0;
-	my::time::time_t timeShift = 0;
+	Time time = 0;
+    Time timeShift = 0;
 
 	bool closeRequested = false;
 
@@ -124,7 +124,7 @@ Client::~Client() {
 
 void Client::run() {
 	LOG(INFO, "Running client");
-	time = my::time::now();
+	time = getCurrentTime();
 	int tick = 0;
 	while (!closeRequested) {
 		handleInput();
@@ -149,7 +149,7 @@ void Client::run() {
 			stopwatch->stop(CLOCK_TIC);
 		}
 #ifndef NO_GRAPHICS
-		if (my::time::now() < time + timeShift + my::time::seconds(1) / TICK_SPEED)
+		if (getCurrentTime() < time + timeShift + seconds(1) / TICK_SPEED)
 			graphics->tick();
 
 #endif
@@ -165,8 +165,8 @@ void Client::run() {
 }
 
 void Client::sync(int perSecond) {
-	time = time + my::time::seconds(1) / perSecond;
-	my::time::sleepUntil(time + timeShift);
+	time = time + seconds(1) / perSecond;
+	sleepUntil(time + timeShift);
 }
 
 void Client::handleInput() {

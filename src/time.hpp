@@ -10,24 +10,21 @@
 
 #include "std_types.hpp"
 
-namespace my { namespace time {
-
 // all times should be measured in this
-using time_t = int64;
+using Time = int64;
 
-// all times are measured in microseconds
-time_t now();
+inline Time micros(Time n)  { return n; }
+inline Time millis(long n)  { return n * 1000; }
+inline Time seconds(long n) { return n * 1000 * 1000; }
+inline Time mins(long n)    { return n * 1000 * 1000 * 60; }
+inline Time hours(long n)   { return n * 1000 * 1000 * 60 * 60; }
+inline Time days(long n)    { return n * 1000 * 1000 * 60 * 60 * 24; }
 
-void sleepFor(time_t);
-void sleepUntil(time_t);
+// get the current time
+Time getCurrentTime();
 
-inline time_t micros(time_t n) { return n; }
-inline time_t millis(int n)    { return n * 1000; }
-inline time_t seconds(int n)   { return n * 1000 * 1000; }
-inline time_t mins(int n )     { return n * 1000 * 1000 * 60; }
-inline time_t hours(int n )    { return n * 1000 * 1000 * 60 * 60; }
-inline time_t days(int n)      { return n * 1000 * 1000 * 60 * 60 * 24; }
-
-}} // namespace my::time
+// general waiting functions
+void sleepFor(Time);
+void sleepUntil(Time);
 
 #endif // TIME_HPP_

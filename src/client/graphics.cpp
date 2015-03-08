@@ -650,15 +650,15 @@ void Graphics::tick() {
 	SDL_GL_SwapWindow(window);
 	stopwatch->stop(CLOCK_FLP);
 
-	if (my::time::now() - lastStopWatchSave > my::time::millis(200)) {
-		lastStopWatchSave = my::time::now();
+    if (getCurrentTime() - lastStopWatchSave > millis(200)) {
+		lastStopWatchSave = getCurrentTime();
 		stopwatch->stop(CLOCK_ALL);
 		stopwatch->save();
 		stopwatch->start(CLOCK_ALL);
 	}
 
-	while (my::time::now() - lastFPSUpdate > my::time::millis(50)) {
-		lastFPSUpdate += my::time::millis(50);
+    while (getCurrentTime() - lastFPSUpdate > millis(50)) {
+		lastFPSUpdate += millis(50);
 		fpsSum -= prevFPS[fpsIndex];
 		fpsSum += fpsCounter;
 		prevFPS[fpsIndex] = fpsCounter;

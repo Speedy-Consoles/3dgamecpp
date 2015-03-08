@@ -1,10 +1,8 @@
 #include "stopwatch.hpp"
 #include "io/logging.hpp"
 
-using namespace my;
-
 Stopwatch::Stopwatch(size_t size) : _clocks(size) {
-	auto now = time::now();
+	auto now = getCurrentTime();
 	for (EntryType &entry : _clocks) {
 		entry.dur = 0;
 		entry.start = now;
@@ -14,7 +12,7 @@ Stopwatch::Stopwatch(size_t size) : _clocks(size) {
 }
 
 void Stopwatch::start(uint id) {
-	auto now = time::now();
+    auto now = getCurrentTime();
 	if (!_stack.empty()) {
 		EntryType &old_entry = _clocks[_stack.top()];
 		old_entry.dur += now - old_entry.start;
@@ -37,7 +35,7 @@ void Stopwatch::stop(uint id) {
 		LOG(DEBUG, "Stopped clock " << _stack.top()
 				<< " but " << id << " given");
 	}
-	auto now = time::now();
+	auto now = getCurrentTime();
 	EntryType &entry = _clocks[_stack.top()];
 	entry.dur += now - entry.start;
 	_total += now - entry.start;
@@ -48,11 +46,11 @@ void Stopwatch::stop(uint id) {
 	}
 }
 
-time::time_t Stopwatch::get(uint id) {
+Time Stopwatch::get(uint id) {
 	return _clocks[id].dur;
 }
 
-time::time_t Stopwatch::getTotal() {
+Time Stopwatch::getTotal() {
 	return _total;
 }
 

@@ -8,7 +8,6 @@
 #define DEFAULT_LOGGER NAMED_LOGGER("remote")
 
 using namespace std;
-using namespace my::net;
 using namespace boost;
 using namespace boost::asio::ip;
 
@@ -53,7 +52,7 @@ void RemoteServerInterface::asyncConnect(std::string address) {
 		LOG(INFO, "Resolving " << address);
 		udp::resolver r(this->ios);
 		udp::resolver::query q(udp::v4(), address, "");
-		my::net::error_t err;
+		error_t err;
 		udp::resolver::iterator iter = r.resolve(q, err);
 		if (err || iter == udp::resolver::iterator()) {
 			status = COULD_NOT_RESOLVE;

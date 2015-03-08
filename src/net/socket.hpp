@@ -16,8 +16,6 @@
 #include <boost/asio.hpp>
 #include <future>
 
-namespace my { namespace net {
-
 using ios_t = boost::asio::io_service;
 using socket_t = boost::asio::ip::udp::socket;
 using endpoint_t = boost::asio::ip::udp::endpoint;
@@ -88,7 +86,5 @@ private:
 };
 
 std::string getBoostErrorString(error_t);
-
-}} // namespace my::net
 
 #endif // SOCKET_HPP_

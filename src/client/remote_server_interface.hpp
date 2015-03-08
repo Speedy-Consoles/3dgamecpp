@@ -17,12 +17,12 @@ private:
 	uint8 localPlayerId;
 	World *world;
 
-	my::time::time_t timeout = my::time::seconds(10); // 10 seconds
+	Time timeout = seconds(10); // 10 seconds
 
-	my::net::ios_t ios;
-	my::net::ios_t::work *w;
+	ios_t ios;
+	ios_t::work *w;
 	std::future<void> f;
-	my::net::Socket socket;
+	Socket socket;
 
 	std::future<void> connectFuture;
 	std::atomic<Status> status;

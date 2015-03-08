@@ -14,8 +14,6 @@
 using namespace boost;
 using namespace boost::asio::ip;
 
-namespace my { namespace net {
-
 Socket::~Socket() {
 	if (_socket.is_open()) {
 		_socket.close();
@@ -142,7 +140,7 @@ Socket::ErrorCode Socket::receiveFor(uint64 dur, endpoint_t *e) {
 }
 
 Socket::ErrorCode Socket::receiveUntil(uint64 time, endpoint_t *e) {
-	time_t now = my::time::now();
+    Time now = getCurrentTime();
 	return receiveFor(time - now, e);
 }
 
@@ -246,7 +244,7 @@ Socket::ErrorCode Socket::sendFor(uint64 duration, const endpoint_t *e) {
 }
 
 Socket::ErrorCode Socket::sendUntil(uint64 time, const endpoint_t *e) {
-	time_t now = my::time::now();
+    time_t now = getCurrentTime();
 	return sendFor(time - now, e);
 }
 
@@ -386,5 +384,3 @@ std::string getBoostErrorString(error_t e) {
 
 	return "Unknown error";
 }
-
-}} // namespace my::net

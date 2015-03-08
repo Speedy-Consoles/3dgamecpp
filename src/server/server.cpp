@@ -17,9 +17,6 @@ using namespace std;
 using namespace boost;
 using namespace boost::asio::ip;
 
-using namespace my::time;
-using namespace my::net;
-
 #undef DEFAULT_LOGGER
 #define DEFAULT_LOGGER NAMED_LOGGER("server")
 
@@ -27,7 +24,7 @@ struct Client {
 	bool connected;
 	udp::endpoint endpoint;
 	uint32 token;
-	my::time::time_t timeOfLastPacket;
+	Time timeOfLastPacket;
 };
 
 class Server {
@@ -38,19 +35,19 @@ private:
 
 	Client clients[MAX_CLIENTS];
 
-	my::time::time_t timeout = my::time::seconds(10);
+    Time timeout = seconds(10);
 
 	Buffer inBuf;
 	Buffer outBuf;
 
 	// time keeping
-	my::time::time_t time = 0;
+    Time time = 0;
 
 	// our listening socket
-	my::net::ios_t ios;
+	ios_t ios;
 	ios_t::work *w;
 	future<void> f;
-	my::net::Socket socket;
+	Socket socket;
 
 public:
 	Server(uint16 port, const char *worldId = "region");
@@ -134,7 +131,7 @@ void Server::run() {
 		return;
 	}
 
-	time = my::time::now();
+	time = getCurrentTime();
 
 	inBuf.clear();
 	socket.acquireReadBuffer(inBuf);
@@ -143,8 +140,8 @@ void Server::run() {
 		world->tick(tick, -1);
 
 		time += seconds(1) / TICK_SPEED;
-		my::time::time_t remTime;
-		while ((remTime = time - now() + seconds(1) / TICK_SPEED) > 0) {
+		Time remTime;
+		while ((remTime = time - getCurrentTime() + seconds(1) / TICK_SPEED) > 0) {
 			// TODO this can be overridden asynchronously
 			endpoint_t endpoint;
 			switch (socket.receiveFor(remTime, &endpoint)) {
@@ -218,7 +215,7 @@ void Server::handleMessage(const endpoint_t &endpoint) {
 		}
 
 		if (id >= 0) {
-			clients[id].timeOfLastPacket = my::time::now();
+			clients[id].timeOfLastPacket = getCurrentTime();
 			handleClientMessage(cmsg, id);
 		} else {
 			LOG(DEBUG, "Unknown remote address");
@@ -276,7 +273,7 @@ void Server::handleConnectionRequest(const endpoint_t &endpoint) {
 
 		clients[id].connected = true;
 		clients[id].endpoint = endpoint;
-		clients[id].timeOfLastPacket = my::time::now();
+		clients[id].timeOfLastPacket = getCurrentTime();
 
 		smsg.type = CONNECTION_ACCEPTED;
 		smsg.conAccepted.id = id;
@@ -342,7 +339,7 @@ void Server::checkInactive() {
 		if (!clients[id].connected)
 			continue;
 
-		if (my::time::now() - clients[id].timeOfLastPacket > timeout) {
+		if (getCurrentTime() - clients[id].timeOfLastPacket > timeout) {
 			LOG(INFO, "Player " << (int) id << " timed out");
 
 			ServerMessage smsg;

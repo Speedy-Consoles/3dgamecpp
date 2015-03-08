@@ -14,8 +14,8 @@ public:
 	void start(uint);
 	void stop(uint id = -1);
 
-	my::time::time_t get(uint);
-	my::time::time_t getTotal();
+	Time get(uint);
+	Time getTotal();
 	float getRel(uint);
 
 	void save();
@@ -23,14 +23,14 @@ public:
 private:
 
 	struct EntryType {
-		my::time::time_t start;
-		my::time::time_t dur;
+        Time start;
+        Time dur;
 		float rel;
 	};
 
 	std::vector<EntryType> _clocks;
 	std::stack<uint> _stack;
-	my::time::time_t _total = 0;
+    Time _total = 0;
 };
 
 #endif // STOPWATCH_HPP
