@@ -8,7 +8,7 @@ obj_win
 datasrc
 SDL*
 build_windows.sh
-3dgame.zip
+3dgame*.zip
 region
 *.profile
 *.log
@@ -16,5 +16,11 @@ region
 deps
 3dgame
 *.exe
+*.lib
 *.dll
-*.pdb
+
+msvc/**/Debug
+msvc/**/Release
+msvc/**/*.sdf
+msvc/**/*.opensdf
+msvc/**/*.suo

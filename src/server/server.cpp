@@ -108,7 +108,7 @@ Server::Server(uint16 port, const char *worldId) :
 
 	// this will make sure our async_recv calls get handled
 	f = async(launch::async, [this]{
-		ios.run();
+		this->ios.run();
 		LOG(INFO, "ASIO Thread returned");
 	});
 }
