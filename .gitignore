@@ -23,4 +23,3 @@ msvc/**/Debug
 msvc/**/Release
 msvc/**/*.sdf
 msvc/**/*.suo
-msvc/**/*.vcxproj.user
