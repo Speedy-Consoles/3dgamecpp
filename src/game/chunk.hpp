@@ -3,32 +3,17 @@
 
 #include "vmath.hpp"
 
-#include <unordered_set>
-
 class ChunkLoader;
-
-struct Face {
-	vec3ui8 block;
-	uint8 dir;
-	mutable uint8 corners;
-};
-
-bool operator == (const Face &lhs, const Face &rhs);
 
 class Chunk {
 public:
 	static const uint WIDTH = 32;
-
-	using FaceSet = std::unordered_set<Face, size_t(*)(Face)>;
 
 private:
 	vec3i64 cc;
 	ChunkLoader *chunkLoader;
 	bool changed = true;
 	uint airBlocks = 0;
-
-	FaceSet faces;
-	FaceSet borderFaces;
 
 	uint8 blocks[WIDTH * WIDTH * WIDTH];
 
@@ -37,7 +22,6 @@ private:
 public:
 	Chunk(vec3i64 cc, ChunkLoader *chunkLoader = nullptr);
 
-	void initFaces();
 	void makePassThroughs();
 	vec3i64 getCC() const { return cc; }
 	void setCC(vec3i64 cc) { this->cc = cc; }
@@ -46,15 +30,11 @@ public:
 	uint8 getBlock(vec3ui8 icc) const;
 
 	const uint8 *getBlocks() const { return blocks; }
-	const uint16 getPassThroughs() { return passThroughs; }
-
-	void addFace(Face face);
-	bool removeFace(Face face);
-
-	const FaceSet &getFaces() const;
-	const FaceSet &getBorderFaces() const;
+	uint16 getPassThroughs() const { return passThroughs; }
+	uint getAirBlocks() const { return airBlocks; }
 
 	bool pollChanged();
+	void setChanged();
 
 	void setChunkLoader(ChunkLoader *cl) { chunkLoader = cl; }
 	void free();

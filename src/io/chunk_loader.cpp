@@ -12,7 +12,7 @@ ChunkLoader::ChunkLoader(World *world, uint64 seed, uint localPlayer) :
 {
 	this->gen = new WorldGenerator(seed);
 	this->world = world;
-	this->updateFaces = true;
+	this->visual = true;
 	this->localPlayer = localPlayer;
 }
 

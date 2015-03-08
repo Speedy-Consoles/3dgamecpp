@@ -12,9 +12,10 @@
 #include "config.hpp"
 #include "texture_manager.hpp"
 
+#include "game/chunk.hpp"
+
 class World;
 class Player;
-class Chunk;
 class Menu;
 class Stopwatch;
 
@@ -27,9 +28,16 @@ namespace gui {
 
 class Graphics {
 private:
+	enum DisplayListStatus {
+		NO_CHUNK = 0,
+		OUTDATED,
+		OK,
+	};
+
 	double ZNEAR = 0.1f;
 
-	static const int MAX_NEW_QUADS = 3000;
+	static const int MAX_NEW_QUADS = 6000;
+	static const int MAX_NEW_CHUNKS = 500;
 
 	int width;
 	int height;
@@ -40,15 +48,25 @@ private:
 	double maxFOV;
 
 	SDL_GLContext glContext;
-	SDL_Window *window;
 
 	GraphicsConf conf;
+
+	SDL_Window *window;
 	World *world;
 	const Menu *menu;
+
 	const ClientState &state;
 	ClientState oldState;
+
 	const uint8 &localClientID;
 
+	// rendering helpers
+	TextureManager texManager;
+	FTFont *font;
+
+	// performance info
+	bool debugActive = false;
+	Stopwatch *stopwatch;
 	int prevFPS[20];
 	int fpsCounter = 0;
 	int fpsSum = 0;
@@ -56,37 +74,46 @@ private:
 	time_t lastFPSUpdate = 0;
 	time_t lastStopWatchSave = 0;
 	int newFaces = 0;
+	int newChunks = 0;
 	int faces = 0;
 	int visibleChunks = 0;
 	int visibleFaces = 0;
 
+	// display lists
+	GLuint dlFirstAddress;
+	vec3i64 *dlChunks;
+	uint8 *dlStatus;
+
+	// chunk data
+	int *chunkFaces;
+	uint16 *chunkPassThroughs;
+
+	// visibility search for rendering
+	uint8 *vsExits;
+	bool *vsVisited;
+	int vsFringeCapacity;
+	vec3i64 *vsFringe;
+	int *vsIndices;
+
 	vec3i64 oldPlayerChunk;
 
-	GLuint firstDL;
-	vec3i64 *dlChunks;
-	bool *dlHasChunk;
-	int *dlFaces;
+	// face buffer for chunk rendering
+	int faceBufferIndices[255][(Chunk::WIDTH + 1) * Chunk::WIDTH * Chunk::WIDTH * 3];
+	float faceBuffer[(Chunk::WIDTH + 1) * Chunk::WIDTH * Chunk::WIDTH * 3 * (3 + 4 * (2 + 3 + 3))];
 
-	uint16 *passThroughs;
-	uint8 *exits;
-	bool *visited;
-	vec3i64 *fringe;
-	int *indices;
-	int fringeCapacity;
+	// transformation matrices
+	GLdouble perspectiveMatrix[16];
+	GLdouble orthogonalMatrix[16];
 
+	// colors
 	vec3f fogColor{ 0.6f, 0.6f, 0.8f };
 	vec3f skyColor{ 0.15f, 0.15f, 0.9f };
 	vec4f sunLightPosition{ 3.0f, 2.0f, 9.0f, 0.0f };
 
-	TextureManager texManager;
-	FTFont *font;
-
 //	GLuint program = 0;
 //	GLuint program_postproc = 0;
 
-	GLdouble perspectiveMatrix[16];
-	GLdouble orthogonalMatrix[16];
-
+	// frame buffers for anti-aliasing
 	GLuint fbo = 0;
 	GLuint fbo_color_buffer = 0;
 //	GLuint fbo_texture = 0;
@@ -94,11 +121,9 @@ private:
 
 //	bool fxaa = false;
 
-	bool debugActive = false;
+	// for saving mouse position in menu
 	double oldRelMouseX = 0.5;
 	double oldRelMouseY = 0.5;
-
-	Stopwatch *stopwatch;
 
 public:
 	Graphics(World *world, const Menu *menu, const ClientState *state, const uint8 *localClientId, const GraphicsConf &conf, Stopwatch *stopwatch = nullptr);
@@ -123,6 +148,8 @@ public:
 
 private:
 	void initGL();
+	void initRenderDistanceDependent();
+	void destroyRenderDistanceDependent();
 
 //	GLuint loadShader(const char *, GLenum);
 //	GLuint loadProgram(const char *, const char *);
@@ -150,8 +177,9 @@ private:
 	void renderScene();
 	void renderSky();
 	void renderChunks();
-	int renderChunk(const Chunk &c);
+	void renderChunk(Chunk &c);
 	void renderPlayers();
+	void renderTarget();
 
 	void renderHud(const Player &);
 	void renderDebugInfo(const Player &);

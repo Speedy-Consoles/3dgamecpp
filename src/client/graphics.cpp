@@ -93,17 +93,7 @@ Graphics::Graphics(
 
 Graphics::~Graphics() {
 	LOG(DEBUG, "Destroying Graphics");
-
-	int length = conf.render_distance * 2 + 1;
-	glDeleteLists(firstDL, length * length * length);
-	delete dlChunks;
-	delete dlHasChunk;
-	delete dlFaces;
-	delete passThroughs;
-	delete exits;
-	delete visited;
-	delete fringe;
-	delete indices;
+	destroyRenderDistanceDependent();
 
 	delete font;
 
@@ -112,6 +102,20 @@ Graphics::~Graphics() {
 
 	SDL_GL_DeleteContext(glContext);
 	SDL_Quit();
+}
+
+void Graphics::destroyRenderDistanceDependent() {
+	int length = conf.render_distance * 2 + 1;
+	glDeleteLists(dlFirstAddress, length * length * length);
+	delete dlChunks;
+	delete dlStatus;
+	delete chunkFaces;
+	delete chunkPassThroughs;
+	delete vsExits;
+	delete vsVisited;
+	delete vsFringe;
+	delete vsIndices;
+
 }
 
 void Graphics::initGL() {
@@ -252,25 +256,29 @@ void Graphics::initGL() {
 //	glUniform1f(fxaa_reduce_min_loc, 1.0/128.0);
 //	logOpenGLError();
 
-	// display lists
+	initRenderDistanceDependent();
+}
+
+void Graphics::initRenderDistanceDependent() {
 	int length = conf.render_distance * 2 + 3;
 	int n = length * length * length;
-	firstDL = glGenLists(n);
+	dlFirstAddress = glGenLists(n);
 	dlChunks = new vec3i64[n];
-	dlHasChunk = new bool[n];
-	dlFaces = new int[n];
-	passThroughs = new uint16[n];
-	exits = new uint8[n];
-	visited = new bool[n];
-	fringeCapacity = length * length * 6;
-	fringe = new vec3i64[fringeCapacity];
-	indices = new int[fringeCapacity];
+	dlStatus = new uint8[n];
+	chunkFaces = new int[n];
+	chunkPassThroughs = new uint16[n];
+	vsExits = new uint8[n];
+	vsVisited = new bool[n];
+	vsFringeCapacity = length * length * 6;
+	vsFringe = new vec3i64[vsFringeCapacity];
+	vsIndices = new int[vsFringeCapacity];
 	for (int i = 0; i < n; i++) {
-		dlHasChunk[i] = false;
-		dlFaces[i] = 0;
-		passThroughs[i] = 0;
-		visited[i] = false;
+		dlStatus[i] = NO_CHUNK;
+		chunkFaces[i] = 0;
+		chunkPassThroughs[i] = 0;
+		vsVisited[i] = false;
 	}
+	faces = 0;
 }
 
 void Graphics::resize(int width, int height) {
@@ -467,6 +475,13 @@ void Graphics::setConf(const GraphicsConf &conf) {
 	GraphicsConf old_conf = this->conf;
 	this->conf = conf;
 
+	if (conf.render_distance != old_conf.render_distance) {
+		destroyRenderDistanceDependent();
+		makePerspective();
+		makeFog();
+		initRenderDistanceDependent();
+	}
+
 	if (GLEW_NV_fog_distance) {
 		switch (conf.fog) {
 		default:
@@ -489,42 +504,6 @@ void Graphics::setConf(const GraphicsConf &conf) {
 
 	if (conf.fullscreen != old_conf.fullscreen) {
 		SDL_SetWindowFullscreen(window, conf.fullscreen ? SDL_WINDOW_FULLSCREEN : 0);
-	}
-
-	if (conf.render_distance != old_conf.render_distance) {
-		makePerspective();
-		makeFog();
-
-		int length = old_conf.render_distance * 2 + 3;
-		glDeleteLists(firstDL, length * length * length);
-		delete dlChunks;
-		delete dlHasChunk;
-		delete dlFaces;
-		delete passThroughs;
-		delete exits;
-		delete visited;
-		delete fringe;
-		delete indices;
-
-		length = conf.render_distance * 2 + 3;
-		int n = length * length * length;
-		firstDL = glGenLists(n);
-		dlChunks = new vec3i64[n];
-		dlHasChunk = new bool[n];
-		dlFaces = new int[n];
-		passThroughs = new uint16[n];
-		exits = new uint8[n];
-		visited = new bool[n];
-		fringeCapacity = length * length * 6;
-		fringe = new vec3i64[fringeCapacity];
-		indices = new int[fringeCapacity];
-		for (int i = 0; i < n; i++) {
-			dlHasChunk[i] = false;
-			dlFaces[i] = 0;
-			passThroughs[i] = 0;
-			visited[i] = false;
-		}
-		faces = 0;
 	}
 
 	if (conf.fov != old_conf.fov) {
@@ -665,7 +644,7 @@ void Graphics::tick() {
 	render();
 
 	stopwatch->start(CLOCK_FSH);
-	glFinish();
+	//glFinish();
 	stopwatch->stop(CLOCK_FSH);
 
 	stopwatch->start(CLOCK_FLP);

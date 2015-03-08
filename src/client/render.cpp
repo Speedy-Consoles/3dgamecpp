@@ -130,6 +130,7 @@ void Graphics::renderScene() {
 	// render chunks
 	stopwatch->start(CLOCK_CHR);
 	renderChunks();
+	renderTarget();
 	stopwatch->stop(CLOCK_CHR);
 
 	// render players
@@ -139,55 +140,31 @@ void Graphics::renderScene() {
 }
 
 void Graphics::renderChunks() {
+
+	int length = conf.render_distance * 2 + 3;
+
+	vec3i64 ccc;
+	while (world->popChangedChunk(&ccc)) {
+		int index = ((((ccc[2] % length) + length) % length) * length
+				+ (((ccc[1] % length) + length) % length)) * length
+				+ (((ccc[0] % length) + length) % length);
+		if (dlStatus[index] != NO_CHUNK)
+			dlStatus[index] = OUTDATED;
+	}
+
 	Player &localPlayer = world->getPlayer(localClientID);
 	vec3i64 pc = localPlayer.getChunkPos();
 	vec3d lookDir = getVectorFromAngles(localPlayer.getYaw(), localPlayer.getPitch());
 
-	vec3i64 tbc;
-	vec3i64 tcc;
-	vec3ui8 ticc;
-	int td;
-	bool target = localPlayer.getTargetedFace(&tbc, &td);
-	if (target) {
-		tcc = bc2cc(tbc);
-		ticc = bc2icc(tbc);
-	}
-
 	newFaces = 0;
-	int length = conf.render_distance * 2 + 3;
+	newChunks = 0;
 
-	stopwatch->start(CLOCK_NDL);
-	vec3i64 ccc;
-	while (newFaces < MAX_NEW_QUADS && world->popChangedChunk(&ccc)) {
-		Chunk *chunk = world->getChunk(ccc);
-		if(chunk) {
-			uint index = ((((ccc[2] % length) + length) % length) * length
-					+ (((ccc[1] % length) + length) % length)) * length
-					+ (((ccc[0] % length) + length) % length);
-			if (chunk->pollChanged() || !dlHasChunk[index] || dlChunks[index] != ccc) {
-				GLuint lid = firstDL + index;
-				faces -= dlFaces[index];
-				glNewList(lid, GL_COMPILE);
-				dlFaces[index] = renderChunk(*chunk);
-				glEndList();
-				dlChunks[index] = ccc;
-				dlHasChunk[index] = true;
-				passThroughs[index] = chunk->getPassThroughs();
-				faces += dlFaces[index];
-				newFaces += dlFaces[index];
-			}
-		}
-	}
-	stopwatch->stop(CLOCK_NDL);
-
-	logOpenGLError();
-
-	fringe[0] = pc;
-	indices[0] = ((((pc[2] % length) + length) % length) * length
+	vsFringe[0] = pc;
+	vsIndices[0] = ((((pc[2] % length) + length) % length) * length
 			+ (((pc[1] % length) + length) % length)) * length
 			+ (((pc[0] % length) + length) % length);
-	exits[indices[0]] = 0x3F;
-	visited[indices[0]] = true;
+	vsExits[vsIndices[0]] = 0x3F;
+	vsVisited[vsIndices[0]] = true;
 	int fringeSize = 1;
 	size_t fringeStart = 0;
 	size_t fringeEnd = 1;
@@ -196,21 +173,27 @@ void Graphics::renderChunks() {
 	visibleFaces = 0;
 	while (fringeSize > 0) {
 		visibleChunks++;
-		vec3i64 cc = fringe[fringeStart];
+		vec3i64 cc = vsFringe[fringeStart];
 		vec3i64 cd = cc - pc;
-		int index = indices[fringeStart];
-		visited[index] = false;
-		fringeStart = (fringeStart + 1) % fringeCapacity;
+		int index = vsIndices[fringeStart];
+		vsVisited[index] = false;
+		fringeStart = (fringeStart + 1) % vsFringeCapacity;
 		fringeSize--;
 
-		if (dlHasChunk[index] && dlChunks[index] == cc) {
-			if (dlFaces[index] > 0) {
-				visibleFaces += dlFaces[index];
+		if ((dlStatus[index] != OK || dlChunks[index] != cc) && (newChunks < MAX_NEW_CHUNKS && newFaces < MAX_NEW_QUADS)) {
+			Chunk *c = world->getChunk(cc);
+			if (c)
+				renderChunk(*c);
+		}
+
+		if (dlStatus[index] != NO_CHUNK && dlChunks[index] == cc) {
+			if (chunkFaces[index] > 0) {
+				visibleFaces += chunkFaces[index];
 				stopwatch->start(CLOCK_DLC);
 				glPushMatrix();
 				logOpenGLError();
 				glTranslatef(cd[0] * (int) Chunk::WIDTH, cd[1] * (int) Chunk::WIDTH, cd[2] * (int) Chunk::WIDTH);
-				glCallList(firstDL + index);
+				glCallList(dlFirstAddress + index);
 				logOpenGLError();
 				glPopMatrix();
 				logOpenGLError();
@@ -218,7 +201,7 @@ void Graphics::renderChunks() {
 			}
 
 			for (int d = 0; d < 6; d++) {
-				if ((exits[index] & (1 << d)) == 0)
+				if ((vsExits[index] & (1 << d)) == 0)
 					continue;
 
 				vec3i64 ncc = cc + DIRS[d].cast<int64>();
@@ -234,63 +217,46 @@ void Graphics::renderChunks() {
 						+ (((ncc[1] % length) + length) % length)) * length
 						+ (((ncc[0] % length) + length) % length);
 
-				if (!visited[nIndex]) {
-					visited[nIndex] = true;
-					exits[nIndex] = 0;
-					fringe[fringeEnd] = ncc;
-					indices[fringeEnd] = nIndex;
-					fringeEnd = (fringeEnd + 1) % fringeCapacity;
+				if (!vsVisited[nIndex]) {
+					vsVisited[nIndex] = true;
+					vsExits[nIndex] = 0;
+					vsFringe[fringeEnd] = ncc;
+					vsIndices[fringeEnd] = nIndex;
+					fringeEnd = (fringeEnd + 1) % vsFringeCapacity;
 					fringeSize++;
 				}
 
-				if (dlChunks[nIndex] == ncc) {
+				if (dlStatus[nIndex] != NO_CHUNK && dlChunks[nIndex] == ncc) {
 					int shift = 0;
 					int invD = (d + 3) % 6;
 					for (int d1 = 0; d1 < invD; d1++) {
 						if (ncd[d1 % 3] * (d1 * (-2) + 5) >= 0)
-							exits[nIndex] |= ((passThroughs[nIndex] & (1 << (shift + invD - d1 - 1))) > 0) << d1;
+							vsExits[nIndex] |= ((chunkPassThroughs[nIndex] & (1 << (shift + invD - d1 - 1))) > 0) << d1;
 						shift += 5 - d1;
 					}
 					for (int d2 = invD + 1; d2 < 6; d2++) {
 						if (ncd[d2 % 3] * (d2 * (-2) + 5) >= 0)
-							exits[nIndex] |= ((passThroughs[nIndex] & (1 << (shift + d2 - invD - 1))) > 0) << d2;
+							vsExits[nIndex] |= ((chunkPassThroughs[nIndex] & (1 << (shift + d2 - invD - 1))) > 0) << d2;
 					}
 				}
 			}
 		}
 	}
+}
 
-	/*uint maxChunks = chunkNumber;
-	uint renderedChunks = 0;
-	for (uint i = 0; i < LOADING_ORDER.size() && renderedChunks < maxChunks; i++) {
-		vec3i8 cd = LOADING_ORDER[i];
-		if (cd.maxAbs() > (int) conf.render_distance)
-			continue;
-		renderedChunks++;
+void Graphics::renderTarget() {
+	Player &localPlayer = world->getPlayer(localClientID);
+	vec3i64 pc = localPlayer.getChunkPos();
 
-		vec3i64 cc = pc + cd.cast<int64>();
-
-		uint index = ((((cc[2] % length) + length) % length) * length
-				+ (((cc[1] % length) + length) % length)) * length
-				+ (((cc[0] % length) + length) % length);
-		GLuint lid = firstDL + index;
-
-		if (lid != 0
-				&& dlFaces[index] > 0
-				&& inFrustum(cc, localPlayer.getPos(), lookDir)
-				&& dlHasChunk[index]
-				&& dlChunks[index] == cc) {
-			stopwatch->start(CLOCK_DLC);
-			glPushMatrix();
-			logOpenGLError();
-			glTranslatef(cd[0] * (int) Chunk::WIDTH, cd[1] * (int) Chunk::WIDTH, cd[2] * (int) Chunk::WIDTH);
-			glCallList(lid);
-			logOpenGLError();
-			glPopMatrix();
-			logOpenGLError();
-			stopwatch->stop(CLOCK_DLC);
-		}
-	}*/
+	vec3i64 tbc;
+	vec3i64 tcc;
+	vec3ui8 ticc;
+	int td;
+	bool target = localPlayer.getTargetedFace(&tbc, &td);
+	if (target) {
+		tcc = bc2cc(tbc);
+		ticc = bc2icc(tbc);
+	}
 
 	logOpenGLError();
 
@@ -329,49 +295,168 @@ void Graphics::renderChunks() {
 	logOpenGLError();
 }
 
-int Graphics::renderChunk(const Chunk &c) {
-	int faces = 0;
+void Graphics::renderChunk(Chunk &c) {
+	stopwatch->start(CLOCK_NDL);
+	vec3i64 cc = c.getCC();
+	int length = conf.render_distance * 2 + 3;
+	uint index = ((((cc[2] % length) + length) % length) * length
+			+ (((cc[1] % length) + length) % length)) * length
+			+ (((cc[0] % length) + length) % length);
+
+	if (dlStatus[index] != NO_CHUNK)
+		faces -= chunkFaces[index];
+
+	chunkFaces[index] = 0;
+	dlChunks[index] = cc;
+	dlStatus[index] = OK;
+	chunkPassThroughs[index] = c.getPassThroughs();
+	int typeFaces[255];
+	for (int i = 0; i < 255; i++) {
+		typeFaces[i] = 0;
+	}
+
+	if (c.getAirBlocks() == Chunk::WIDTH * Chunk::WIDTH * Chunk::WIDTH) {
+		glNewList(dlFirstAddress + index, GL_COMPILE);
+		glEndList();
+		stopwatch->stop(CLOCK_NDL);
+		return;
+	}
+
+	newChunks++;
+
+	vec3ui8 uDirs[3];
+	for (uint8 d = 0; d < 3; d++) {
+		uDirs[d] = DIRS[d].cast<uint8>();
+	}
+
+	const uint8 *blocks = c.getBlocks();
+	int fbi = 0;
+	for (uint8 d = 0; d < 3; d++) {
+		vec3i64 dir = uDirs[d].cast<int64>();
+		uint i = 0;
+		uint ni = 0;
+		for (int z = (d == 2) ? -1 : 0; z < (int) Chunk::WIDTH; z++) {
+			for (int y = (d == 1) ? -1 : 0; y < (int) Chunk::WIDTH; y++) {
+				for (int x = (d == 0) ? -1 : 0; x < (int) Chunk::WIDTH; x++) {
+					uint8 thatType;
+					uint8 thisType;
+					if ((x == Chunk::WIDTH - 1 && d==0)
+							|| (y == Chunk::WIDTH - 1 && d==1)
+							|| (z == Chunk::WIDTH - 1 && d==2)) {
+						thatType = world->getBlock(cc * Chunk::WIDTH + vec3i64(x, y, z) + dir);
+						if (thatType != 0) {
+							if (x != -1 && y != -1 && z != -1)
+								i++;
+							continue;
+						}
+					} else
+						thatType = blocks[ni++];
+
+					if (x == -1 || y == -1 || z == -1) {
+						thisType = world->getBlock(cc * Chunk::WIDTH + vec3i64(x, y, z));
+						if (thisType != 0)
+							continue;
+					} else {
+						thisType = blocks[i++];
+					}
+
+					if((thisType == 0) != (thatType == 0)) {
+						vec3i64 faceBlock;
+						uint8 faceType;
+						uint8 faceDir;
+						if (thisType == 0) {
+							faceBlock = vec3i64(x, y, z) + dir;
+							faceDir = (uint8) (d + 3);
+							faceType = thatType;
+						} else {
+							faceBlock = vec3i64(x, y, z);
+							faceDir = d;
+							faceType = thisType;
+						}
+
+						uint8 corners = 0;
+						for (int j = 0; j < 8; ++j) {
+							vec3i64 v = EIGHT_CYCLES_3D[faceDir][j].cast<int64>();
+							vec3i64 dIcc = faceBlock + v;
+							uint8 cornerBlock;
+							if (		dIcc[0] < 0 || dIcc[0] >= (int) Chunk::WIDTH
+									||	dIcc[1] < 0 || dIcc[1] >= (int) Chunk::WIDTH
+									||	dIcc[2] < 0 || dIcc[2] >= (int) Chunk::WIDTH)
+								cornerBlock = world->getBlock(cc * Chunk::WIDTH + dIcc);
+							else
+								cornerBlock = c.getBlock(dIcc.cast<uint8>());
+							if (cornerBlock) {
+								corners |= 1 << j;
+							}
+						}
+
+						vec2f texs[4];
+						vec3i64 bc = c.getCC() * c.WIDTH + faceBlock.cast<int64>();
+						texManager.bind(faceType);
+						texManager.getTextureVertices(bc, faceDir, texs);
+
+						faceBufferIndices[faceType][typeFaces[faceType]++] = fbi;
+
+						faceBuffer[fbi++] = DIRS[faceDir][0];
+						faceBuffer[fbi++] = DIRS[faceDir][1];
+						faceBuffer[fbi++] = DIRS[faceDir][2];
+						for (int j = 0; j < 4; j++) {
+							faceBuffer[fbi++] = texs[j][0];
+							faceBuffer[fbi++] = texs[j][1];
+							double light = 1.0;
+							bool s1 = (corners & FACE_CORNER_MASK[j][0]) > 0;
+							bool s2 = (corners & FACE_CORNER_MASK[j][2]) > 0;
+							bool m = (corners & FACE_CORNER_MASK[j][1]) > 0;
+							if (s1)
+								light -= 0.2;
+							if (s2)
+								light -= 0.2;
+							if (m && !(s1 && s2))
+								light -= 0.2;
+							faceBuffer[fbi++] = light;
+							faceBuffer[fbi++] = light;
+							faceBuffer[fbi++] = light;
+							vec3f vertex = (faceBlock.cast<int>() + QUAD_CYCLES_3D[faceDir][j]).cast<float>();
+							faceBuffer[fbi++] = vertex[0];
+							faceBuffer[fbi++] = vertex[1];
+							faceBuffer[fbi++] = vertex[2];
+						}
+					}
+				}
+			}
+		}
+	}
 
 	texManager.bind(0);
-	glBegin(GL_QUADS);
-	const Chunk::FaceSet &faceSet = c.getFaces();
-	for (Face f : faceSet) {
-		auto nextBlock = c.getBlock(f.block);
+	glNewList(dlFirstAddress + index, GL_COMPILE);
 
-		if (texManager.bind(nextBlock)) {
-			glEnd();
-			glBindTexture(GL_TEXTURE_2D, texManager.getTexture());
-			glBegin(GL_QUADS);
+	for (int faceType = 0; faceType < 255; faceType++) {
+		if (typeFaces[faceType] == 0)
+			continue;
+		texManager.bind(faceType);
+		glBindTexture(GL_TEXTURE_2D, texManager.getTexture());
+		glBegin(GL_QUADS);
+		for (int i = 0; i < typeFaces[faceType]; i++) {
+			int fbi = faceBufferIndices[faceType][i];
+			glNormal3f(faceBuffer[fbi], faceBuffer[fbi + 1], faceBuffer[fbi + 2]);
+			fbi += 3;
+			for (int j = 0; j < 4; j++) {
+				glTexCoord2f(faceBuffer[fbi], faceBuffer[fbi + 1]);
+				fbi += 2;
+				glColor3f(faceBuffer[fbi], faceBuffer[fbi + 1], faceBuffer[fbi + 2]);
+				fbi += 3;
+				glVertex3f(faceBuffer[fbi], faceBuffer[fbi + 1], faceBuffer[fbi + 2]);
+				fbi += 3;
+			}
+			chunkFaces[index]++;
 		}
-
-		vec2f texs[4];
-		vec3i64 bc = c.getCC() * c.WIDTH + f.block.cast<int64>();
-		texManager.getTextureVertices(bc, f.dir, texs);
-
-		vec3f color = {1.0, 1.0, 1.0};
-
-		glNormal3f(DIRS[f.dir][0], DIRS[f.dir][1], DIRS[f.dir][2]);
-		for (int j = 0; j < 4; j++) {
-			vec2f tex = texs[j];
-			glTexCoord2f(tex[0], tex[1]);
-			double light = 1.0;
-			bool s1 = (f.corners & FACE_CORNER_MASK[j][0]) > 0;
-			bool s2 = (f.corners & FACE_CORNER_MASK[j][2]) > 0;
-			bool m = (f.corners & FACE_CORNER_MASK[j][1]) > 0;
-			if (s1)
-				light -= 0.2;
-			if (s2)
-				light -= 0.2;
-			if (m && !(s1 && s2))
-				light -= 0.2;
-			glColor3f(color[0] * light, color[1] * light, color[2] * light);
-			vec3f vertex = (f.block.cast<int>() + QUAD_CYCLES_3D[f.dir][j]).cast<float>();
-			glVertex3f(vertex[0], vertex[1], vertex[2]);
-		}
-		faces++;
+		glEnd();
 	}
-	glEnd();
-	return faces;
+
+	glEndList();
+	newFaces += chunkFaces[index];
+	faces += chunkFaces[index];
+	stopwatch->stop(CLOCK_NDL);
 }
 
 void Graphics::renderPlayers() {
