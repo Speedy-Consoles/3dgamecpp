@@ -22,4 +22,5 @@ deps
 msvc/**/Debug
 msvc/**/Release
 msvc/**/*.sdf
+msvc/**/*.opensdf
 msvc/**/*.suo
