@@ -3,7 +3,6 @@
 
 #include <cmath>
 #include <type_traits>
-#include "std_types.hpp"
 
 static const double TAU = atan(1) * 8;
 
