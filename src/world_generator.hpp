@@ -11,6 +11,7 @@
 #include "game/chunk.hpp"
 #include "perlin.hpp"
 #include "util.hpp"
+#include "macros.hpp"
 
 class WorldGenerator {
 public:

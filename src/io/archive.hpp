@@ -14,6 +14,7 @@
 
 #include "vmath.hpp"
 #include "util.hpp"
+#include "macros.hpp"
 #include "game/chunk.hpp"
 
 class ArchiveFile {
@@ -49,7 +50,7 @@ private:
 
 	Endianess _endianess;
 	int32 _version;
-	size_t _region_size;
+	int64 _region_size;
 	size_t _directory_offset;
 };
 

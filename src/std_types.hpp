@@ -1,7 +1,9 @@
 #ifndef STD_TYPES_HPP
 #define STD_TYPES_HPP
 
+#define __STDC_CONSTANT_MACROS
 #include <cstddef>
+#include <cinttypes>
 
 typedef signed char schar;
 typedef unsigned char uchar;

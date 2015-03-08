@@ -1,10 +1,8 @@
 #include "util.hpp"
-#include <cmath>
+#include "math.hpp"
 #include <algorithm>
 #include "constants.hpp"
 #include "game/chunk.hpp"
-
-const double TAU = atan(1) * 8;
 
 const vec3i8 DIRS[6] = {
 	{ 1, 0, 0 }, { 0, 1, 0 }, { 0, 0, 1 },

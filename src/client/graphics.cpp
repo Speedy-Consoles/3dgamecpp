@@ -7,12 +7,11 @@
 #include "time.hpp"
 
 #include "util.hpp"
+#include "math.hpp"
 #include "constants.hpp"
 #include "io/logging.hpp"
 
 #include "gui/frame.hpp"
-
-#include <cmath>
 
 #include <SDL2/SDL_image.h>
 

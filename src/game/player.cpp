@@ -4,6 +4,7 @@
 #include <cstring>
 
 #include "util.hpp"
+#include "math.hpp"
 #include "world.hpp"
 #include "player.hpp"
 

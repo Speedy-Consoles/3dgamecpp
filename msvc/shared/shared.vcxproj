@@ -98,6 +98,8 @@
     <ClInclude Include="..\..\src\io\archive.hpp" />
     <ClInclude Include="..\..\src\io\chunk_loader.hpp" />
     <ClInclude Include="..\..\src\io\logging.hpp" />
+    <ClInclude Include="..\..\src\macros.hpp" />
+    <ClInclude Include="..\..\src\math.hpp" />
     <ClInclude Include="..\..\src\monitor.hpp" />
     <ClInclude Include="..\..\src\net\buffer.hpp" />
     <ClInclude Include="..\..\src\net\net.hpp" />

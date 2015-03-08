@@ -8,11 +8,11 @@
 #include "archive.hpp"
 
 #include <cstring>
-#include <cinttypes>
 
 #include <boost/filesystem.hpp>
 
 #include "util.hpp"
+#include "math.hpp"
 #include "logging.hpp"
 
 using namespace std;
