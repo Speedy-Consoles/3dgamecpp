@@ -42,16 +42,16 @@
     <ClCompile Include="..\..\src\client\texture_manager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\gui\button.cpp">
+    <ClCompile Include="..\..\src\client\gui\button.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\gui\frame.cpp">
+    <ClCompile Include="..\..\src\client\gui\frame.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\gui\label.cpp">
+    <ClCompile Include="..\..\src\client\gui\label.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\gui\widget.cpp">
+    <ClCompile Include="..\..\src\client\gui\widget.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -80,19 +80,19 @@
     <ClInclude Include="..\..\src\client\texture_manager.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\gui\button.hpp">
+    <ClInclude Include="..\..\src\client\gui\button.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\gui\cycle_button.hpp">
+    <ClInclude Include="..\..\src\client\gui\cycle_button.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\gui\frame.hpp">
+    <ClInclude Include="..\..\src\client\gui\frame.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\gui\label.hpp">
+    <ClInclude Include="..\..\src\client\gui\label.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\gui\widget.hpp">
+    <ClInclude Include="..\..\src\client\gui\widget.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

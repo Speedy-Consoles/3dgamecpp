@@ -10,10 +10,10 @@ CLIENT_OBJECT_FILES = \
 	client/render.cpp.o\
 	client/render_menu.cpp.o\
 	client/texture_manager.cpp.o\
-	gui/button.cpp.o\
-	gui/frame.cpp.o\
-	gui/label.cpp.o\
-	gui/widget.cpp.o
+	client/gui/button.cpp.o\
+	client/gui/frame.cpp.o\
+	client/gui/label.cpp.o\
+	client/gui/widget.cpp.o
 
 # server stuff
 SERVER_EXECUTABLE_NAME = 3dgame_srv
