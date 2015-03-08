@@ -8,7 +8,7 @@ obj_win
 datasrc
 SDL*
 build_windows.sh
-3dgame.zip
+3dgame*.zip
 region
 *.profile
 *.log
