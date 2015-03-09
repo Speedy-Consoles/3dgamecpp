@@ -44,8 +44,8 @@ private:
     Time time = 0;
 
 	// our listening socket
-	ios_t ios;
-	ios_t::work *w;
+	boost::asio::io_service ios;
+	boost::asio::io_service::work *w;
 	future<void> f;
 	Socket socket;
 
@@ -56,10 +56,10 @@ public:
 	void run();
 
 private:
-	void handleMessage(const endpoint_t &);
+	void handleMessage(const Endpoint &);
 	void checkInactive();
 
-	void handleConnectionRequest(const endpoint_t &);
+	void handleConnectionRequest(const Endpoint &);
 	void handleClientMessage(const ClientMessage &cmsg, uint8 id);
 
 	void sendSnapshots(int tick);
@@ -90,7 +90,7 @@ Server::Server(uint16 port, const char *worldId) :
 	inBuf(1024*64),
 	outBuf(1024*64),
 	ios(),
-	w(new ios_t::work(ios)),
+	w(new boost::asio::io_service::work(ios)),
 	socket(ios)
 {
 	LOG(INFO, "Creating Server");
@@ -143,7 +143,7 @@ void Server::run() {
 		Time remTime;
 		while ((remTime = time - getCurrentTime() + seconds(1) / TICK_SPEED) > 0) {
 			// TODO this can be overridden asynchronously
-			endpoint_t endpoint;
+			Endpoint endpoint;
 			switch (socket.receiveFor(remTime, &endpoint)) {
 			case Socket::OK:
 				socket.releaseReadBuffer(inBuf);
@@ -172,7 +172,7 @@ void Server::run() {
 	LOG(INFO, "Server is shutting down");
 }
 
-void Server::handleMessage(const endpoint_t &endpoint) {
+void Server::handleMessage(const Endpoint &endpoint) {
 	size_t size = inBuf.rSize();
 	LOG(TRACE, "Received message of length " << size);
 
@@ -240,7 +240,7 @@ void Server::handleMessage(const endpoint_t &endpoint) {
 	}
 }
 
-void Server::handleConnectionRequest(const endpoint_t &endpoint) {
+void Server::handleConnectionRequest(const Endpoint &endpoint) {
 	LOG(INFO, "New connection from " << endpoint.address().to_string() << ":" << endpoint.port());
 
 	// find a free spot for the new player

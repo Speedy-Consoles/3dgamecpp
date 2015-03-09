@@ -16,10 +16,7 @@
 #include <boost/asio.hpp>
 #include <future>
 
-using ios_t = boost::asio::io_service;
-using socket_t = boost::asio::ip::udp::socket;
-using endpoint_t = boost::asio::ip::udp::endpoint;
-using error_t = boost::system::error_code;
+using Endpoint = boost::asio::ip::udp::endpoint;
 
 class Socket {
 public:
@@ -34,28 +31,28 @@ public:
 	};
 
 	~Socket();
-	Socket(ios_t &ios);
-	Socket(ios_t &ios, const endpoint_t &endpoint);
+	Socket(boost::asio::io_service &ios);
+	Socket(boost::asio::io_service &ios, const Endpoint &endpoint);
 
-	const error_t &getSystemError() const;
+	const boost::system::error_code &getSystemError() const;
 
 	ErrorCode open();
 	void close();
 
 	bool isOpen() const;
 
-	ErrorCode connect(const endpoint_t &endpoint);
-	ErrorCode bind(const endpoint_t &endpoint);
+	ErrorCode connect(const Endpoint &endpoint);
+	ErrorCode bind(const Endpoint &endpoint);
 
-	ErrorCode receive(endpoint_t * = nullptr);
-	ErrorCode receiveNow(endpoint_t * = nullptr);
-	ErrorCode receiveFor(uint64 duration, endpoint_t * = nullptr);
-	ErrorCode receiveUntil(uint64 time, endpoint_t * = nullptr);
+	ErrorCode receive(Endpoint * = nullptr);
+	ErrorCode receiveNow(Endpoint * = nullptr);
+	ErrorCode receiveFor(uint64 duration, Endpoint * = nullptr);
+	ErrorCode receiveUntil(uint64 time, Endpoint * = nullptr);
 
-	ErrorCode send(const endpoint_t * = nullptr);
-	ErrorCode sendNow(const endpoint_t * = nullptr);
-	ErrorCode sendFor(uint64 duration, const endpoint_t * = nullptr);
-	ErrorCode sendUntil(uint64 time, const endpoint_t * = nullptr);
+	ErrorCode send(const Endpoint * = nullptr);
+	ErrorCode sendNow(const Endpoint * = nullptr);
+	ErrorCode sendFor(uint64 duration, const Endpoint * = nullptr);
+	ErrorCode sendUntil(uint64 time, const Endpoint * = nullptr);
 
 	void acquireReadBuffer(Buffer &);
 	void releaseReadBuffer(Buffer &);
@@ -63,28 +60,28 @@ public:
 	void acquireWriteBuffer(Buffer &);
 	void releaseWriteBuffer(Buffer &);
 
-	ErrorCode receive(Buffer &, endpoint_t * = nullptr);
-	ErrorCode receiveNow(Buffer &, endpoint_t * = nullptr);
-	ErrorCode send(Buffer &, const endpoint_t * = nullptr);
-	ErrorCode sendNow(Buffer &, const endpoint_t * = nullptr);
+	ErrorCode receive(Buffer &, Endpoint * = nullptr);
+	ErrorCode receiveNow(Buffer &, Endpoint * = nullptr);
+	ErrorCode send(Buffer &, const Endpoint * = nullptr);
+	ErrorCode sendNow(Buffer &, const Endpoint * = nullptr);
 
 private:
-	socket_t _socket;
-	error_t _error;
+	boost::asio::ip::udp::socket _socket;
+	boost::system::error_code _error;
 
-	std::future<error_t> _recvFuture;
-	std::promise<error_t> _recvPromise;
+	std::future<boost::system::error_code> _recvFuture;
+	std::promise<boost::system::error_code> _recvPromise;
 
-	std::future<error_t> _sendFuture;
-	std::promise<error_t> _sendPromise;
+	std::future<boost::system::error_code> _sendFuture;
+	std::promise<boost::system::error_code> _sendPromise;
 
 	Buffer _readBuffer;
 	Buffer _writeBuffer;
 
-	void startAsyncReceive(endpoint_t *);
-	void startAsyncSend(const endpoint_t *);
+	void startAsyncReceive(Endpoint *);
+	void startAsyncSend(const Endpoint *);
 };
 
-std::string getBoostErrorString(error_t);
+std::string getBoostErrorString(boost::system::error_code);
 
 #endif // SOCKET_HPP_

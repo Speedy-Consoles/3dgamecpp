@@ -20,19 +20,19 @@ Socket::~Socket() {
 	}
 }
 
-Socket::Socket(ios_t &ios) :
+Socket::Socket(boost::asio::io_service &ios) :
 	_socket(ios)
 {
 	// nothing
 }
 
-Socket::Socket(ios_t &ios, const endpoint_t &endpoint) :
+Socket::Socket(boost::asio::io_service &ios, const Endpoint &endpoint) :
 	_socket(ios, endpoint)
 {
 	_socket.non_blocking(true, _error);
 }
 
-const error_t &Socket::getSystemError() const {
+const boost::system::error_code &Socket::getSystemError() const {
 	return _error;
 }
 
@@ -51,17 +51,17 @@ bool Socket::isOpen() const {
 	return _socket.is_open();
 }
 
-Socket::ErrorCode Socket::connect(const endpoint_t &endpoint) {
+Socket::ErrorCode Socket::connect(const Endpoint &endpoint) {
 	_socket.connect(endpoint, _error);
 	return _error ? SYSTEM_ERROR : OK;
 }
 
-Socket::ErrorCode Socket::bind(const endpoint_t &endpoint) {
+Socket::ErrorCode Socket::bind(const Endpoint &endpoint) {
 	_socket.bind(endpoint, _error);
 	return _error ? SYSTEM_ERROR : OK;
 }
 
-Socket::ErrorCode Socket::receive(endpoint_t *e) {
+Socket::ErrorCode Socket::receive(Endpoint *e) {
 	// try to acquire next package synchronously
 	auto error = receiveNow(e);
 	switch (error) {
@@ -82,7 +82,7 @@ Socket::ErrorCode Socket::receive(endpoint_t *e) {
 
 }
 
-Socket::ErrorCode Socket::receiveNow(endpoint_t *e) {
+Socket::ErrorCode Socket::receiveNow(Endpoint *e) {
 	if (_readBuffer.data() == nullptr)
 		return INVALID_BUFFER;
 
@@ -107,7 +107,7 @@ Socket::ErrorCode Socket::receiveNow(endpoint_t *e) {
 
 }
 
-Socket::ErrorCode Socket::receiveFor(uint64 dur, endpoint_t *e) {
+Socket::ErrorCode Socket::receiveFor(uint64 dur, Endpoint *e) {
 	// try to acquire next package synchronously
 	auto error = receiveNow(e);
 	switch (error) {
@@ -139,20 +139,20 @@ Socket::ErrorCode Socket::receiveFor(uint64 dur, endpoint_t *e) {
 	}
 }
 
-Socket::ErrorCode Socket::receiveUntil(uint64 time, endpoint_t *e) {
+Socket::ErrorCode Socket::receiveUntil(uint64 time, Endpoint *e) {
     Time now = getCurrentTime();
 	return receiveFor(time - now, e);
 }
 
-void Socket::startAsyncReceive(endpoint_t *e) {
+void Socket::startAsyncReceive(Endpoint *e) {
 	if (_recvFuture.valid()) {
 		LOG(ERROR, "Tried to start new receive, but last one is still active");
 	}
 
-	_recvPromise = std::promise<error_t>();
+	_recvPromise = std::promise<boost::system::error_code>();
 	_recvFuture = _recvPromise.get_future();
 	auto buf = asio::buffer((void *) _readBuffer.wBegin(), _readBuffer.wSize());
-	auto lambda = [this](const error_t &err, size_t size) {
+	auto lambda = [this](const boost::system::error_code &err, size_t size) {
 		if (!err) {
 			_readBuffer.wSeekRel(size);
 		}
@@ -165,7 +165,7 @@ void Socket::startAsyncReceive(endpoint_t *e) {
 	}
 }
 
-Socket::ErrorCode Socket::send(const endpoint_t *e) {
+Socket::ErrorCode Socket::send(const Endpoint *e) {
 	// try to send packet synchronously
 	auto error = sendNow(e);
 	switch (error) {
@@ -186,7 +186,7 @@ Socket::ErrorCode Socket::send(const endpoint_t *e) {
 
 }
 
-Socket::ErrorCode Socket::sendNow(const endpoint_t *e) {
+Socket::ErrorCode Socket::sendNow(const Endpoint *e) {
 	if (_writeBuffer.data() == nullptr)
 		return INVALID_BUFFER;
 
@@ -211,7 +211,7 @@ Socket::ErrorCode Socket::sendNow(const endpoint_t *e) {
 
 }
 
-Socket::ErrorCode Socket::sendFor(uint64 duration, const endpoint_t *e) {
+Socket::ErrorCode Socket::sendFor(uint64 duration, const Endpoint *e) {
 	// try to send packet synchronously
 	auto error = sendNow(e);
 	switch (error) {
@@ -243,20 +243,20 @@ Socket::ErrorCode Socket::sendFor(uint64 duration, const endpoint_t *e) {
 	}
 }
 
-Socket::ErrorCode Socket::sendUntil(uint64 time, const endpoint_t *e) {
+Socket::ErrorCode Socket::sendUntil(uint64 time, const Endpoint *e) {
     time_t now = getCurrentTime();
 	return sendFor(time - now, e);
 }
 
-void Socket::startAsyncSend(const endpoint_t *e) {
+void Socket::startAsyncSend(const Endpoint *e) {
 	if (_sendFuture.valid()) {
 		LOG(ERROR, "Tried to start new send, but last one is still active");
 	}
 
-	_sendPromise = std::promise<error_t>();
+	_sendPromise = std::promise<boost::system::error_code>();
 	_sendFuture = _sendPromise.get_future();
 	auto buf = asio::buffer((const void *) _writeBuffer.rBegin(), _writeBuffer.rSize());
-	auto lambda = [this](const error_t &err, size_t size) {
+	auto lambda = [this](const boost::system::error_code &err, size_t size) {
 		if (!err) {
 			_writeBuffer.rSeekRel(size);
 		}
@@ -284,35 +284,35 @@ void Socket::releaseWriteBuffer(Buffer &buffer) {
 	buffer = std::move(_writeBuffer);
 }
 
-Socket::ErrorCode Socket::receive(Buffer &buffer, endpoint_t *e) {
+Socket::ErrorCode Socket::receive(Buffer &buffer, Endpoint *e) {
 	acquireReadBuffer(buffer);
 	auto error = receive(e);
 	releaseReadBuffer(buffer);
 	return error;
 }
 
-Socket::ErrorCode Socket::receiveNow(Buffer &buffer, endpoint_t *e) {
+Socket::ErrorCode Socket::receiveNow(Buffer &buffer, Endpoint *e) {
 	acquireReadBuffer(buffer);
 	auto error = receiveNow(e);
 	releaseReadBuffer(buffer);
 	return error;
 }
 
-Socket::ErrorCode Socket::send(Buffer &buffer, const endpoint_t *e) {
+Socket::ErrorCode Socket::send(Buffer &buffer, const Endpoint *e) {
 	acquireWriteBuffer(buffer);
 	auto error = send(e);
 	releaseWriteBuffer(buffer);
 	return error;
 }
 
-Socket::ErrorCode Socket::sendNow(Buffer &buffer, const endpoint_t *e) {
+Socket::ErrorCode Socket::sendNow(Buffer &buffer, const Endpoint *e) {
 	acquireWriteBuffer(buffer);
 	auto error = sendNow(e);
 	releaseWriteBuffer(buffer);
 	return error;
 }
 
-std::string getBoostErrorString(error_t e) {
+std::string getBoostErrorString(boost::system::error_code e) {
 	// basic errors
 	if (e == asio::error::access_denied)
 		return "Permission denied";

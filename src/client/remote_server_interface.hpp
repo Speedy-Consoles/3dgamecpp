@@ -19,8 +19,8 @@ private:
 
 	Time timeout = seconds(10); // 10 seconds
 
-	ios_t ios;
-	ios_t::work *w;
+	boost::asio::io_service ios;
+	boost::asio::io_service::work *w;
 	std::future<void> f;
 	Socket socket;
 

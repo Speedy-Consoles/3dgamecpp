@@ -15,7 +15,7 @@ RemoteServerInterface::RemoteServerInterface(World *world, const char *address, 
 		conf(conf),
 		world(world),
 		ios(),
-		w(new ios_t::work(ios)),
+		w(new boost::asio::io_service::work(ios)),
 		socket(ios),
 		status(NOT_CONNECTED),
 		inBuf(1024*64),
@@ -52,7 +52,7 @@ void RemoteServerInterface::asyncConnect(std::string address) {
 		LOG(INFO, "Resolving " << address);
 		udp::resolver r(this->ios);
 		udp::resolver::query q(udp::v4(), address, "");
-		error_t err;
+		boost::system::error_code err;
 		udp::resolver::iterator iter = r.resolve(q, err);
 		if (err || iter == udp::resolver::iterator()) {
 			status = COULD_NOT_RESOLVE;
