@@ -25,7 +25,7 @@ cycle(T i, T range) {
 
 template <typename T> inline
 typename std::enable_if<std::is_floating_point<T>::value, T>::type
-cycle(T i, T range) {
+cycle(T d, T range) {
     return d - std::floor(d / range) * range;
 }
 
