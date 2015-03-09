@@ -7,7 +7,7 @@
 
 #include "socket.hpp"
 
-#include "io/logging.hpp"
+#include "logging.hpp"
 
 #include <utility>
 

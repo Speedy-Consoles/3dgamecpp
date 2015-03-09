@@ -1,12 +1,12 @@
 #include "graphics.hpp"
 
-#include "math.hpp"
+#include "engine/math.hpp"
 
 #include "game/world.hpp"
 #include "game/chunk.hpp"
 #include "stopwatch.hpp"
 
-#include "io/logging.hpp"
+#include "engine/logging.hpp"
 
 void Graphics::switchToPerspective() {
 	glMatrixMode(GL_PROJECTION);

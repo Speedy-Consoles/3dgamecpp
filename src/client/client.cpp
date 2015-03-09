@@ -13,12 +13,12 @@
 #include "graphics.hpp"
 #include "config.hpp"
 #include "stopwatch.hpp"
-#include "time.hpp"
+#include "engine/time.hpp"
 #include "game/world.hpp"
 #include "menu.hpp"
 #include "gui/frame.hpp"
-#include "io/logging.hpp"
-#include "net/socket.hpp"
+#include "engine/logging.hpp"
+#include "engine/socket.hpp"
 
 #undef DEFAULT_LOGGER
 #define DEFAULT_LOGGER NAMED_LOGGER("client")

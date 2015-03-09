@@ -10,6 +10,47 @@
       <Platform>Win32</Platform>
     </ProjectConfiguration>
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\src\constants.hpp" />
+    <ClInclude Include="..\..\src\engine\buffer.hpp" />
+    <ClInclude Include="..\..\src\engine\logging.hpp" />
+    <ClInclude Include="..\..\src\engine\macros.hpp" />
+    <ClInclude Include="..\..\src\engine\math.hpp" />
+    <ClInclude Include="..\..\src\engine\monitor.hpp" />
+    <ClInclude Include="..\..\src\engine\net.hpp" />
+    <ClInclude Include="..\..\src\engine\queue.hpp" />
+    <ClInclude Include="..\..\src\engine\socket.hpp" />
+    <ClInclude Include="..\..\src\engine\stack.hpp" />
+    <ClInclude Include="..\..\src\engine\std_types.hpp" />
+    <ClInclude Include="..\..\src\engine\time.hpp" />
+    <ClInclude Include="..\..\src\engine\vmath.hpp" />
+    <ClInclude Include="..\..\src\game\chunk.hpp" />
+    <ClInclude Include="..\..\src\game\perlin.hpp" />
+    <ClInclude Include="..\..\src\game\player.hpp" />
+    <ClInclude Include="..\..\src\game\world.hpp" />
+    <ClInclude Include="..\..\src\game\world_generator.hpp" />
+    <ClInclude Include="..\..\src\io\archive.hpp" />
+    <ClInclude Include="..\..\src\io\chunk_loader.hpp" />
+    <ClInclude Include="..\..\src\stopwatch.hpp" />
+    <ClInclude Include="..\..\src\util.hpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\src\engine\buffer.cpp" />
+    <ClCompile Include="..\..\src\engine\logging.cpp" />
+    <ClCompile Include="..\..\src\engine\net.cpp" />
+    <ClCompile Include="..\..\src\engine\socket.cpp" />
+    <ClCompile Include="..\..\src\engine\time.cpp" />
+    <ClCompile Include="..\..\src\game\chunk.cpp" />
+    <ClCompile Include="..\..\src\game\perlin.cpp" />
+    <ClCompile Include="..\..\src\game\player.cpp" />
+    <ClCompile Include="..\..\src\game\world.cpp" />
+    <ClCompile Include="..\..\src\game\world_generator.cpp" />
+    <ClCompile Include="..\..\src\io\archive.cpp" />
+    <ClCompile Include="..\..\src\io\chunk_loader.cpp" />
+    <ClCompile Include="..\..\src\io\chunk_loader_internals.cpp" />
+    <ClCompile Include="..\..\src\stopwatch.cpp" />
+    <ClCompile Include="..\..\src\util.cpp" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{FBCF5514-8FC8-47DB-A218-915245EDCF28}</ProjectGuid>
     <RootNamespace>shared</RootNamespace>
@@ -72,47 +113,6 @@
       <OptimizeReferences>true</OptimizeReferences>
     </Link>
   </ItemDefinitionGroup>
-  <ItemGroup>
-    <ClCompile Include="..\..\src\game\chunk.cpp" />
-    <ClCompile Include="..\..\src\game\player.cpp" />
-    <ClCompile Include="..\..\src\game\world.cpp" />
-    <ClCompile Include="..\..\src\io\archive.cpp" />
-    <ClCompile Include="..\..\src\io\chunk_loader.cpp" />
-    <ClCompile Include="..\..\src\io\chunk_loader_internals.cpp" />
-    <ClCompile Include="..\..\src\io\logging.cpp" />
-    <ClCompile Include="..\..\src\net\buffer.cpp" />
-    <ClCompile Include="..\..\src\net\net.cpp" />
-    <ClCompile Include="..\..\src\net\socket.cpp" />
-    <ClCompile Include="..\..\src\perlin.cpp" />
-    <ClCompile Include="..\..\src\stopwatch.cpp" />
-    <ClCompile Include="..\..\src\time.cpp" />
-    <ClCompile Include="..\..\src\util.cpp" />
-    <ClCompile Include="..\..\src\world_generator.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="..\..\src\constants.hpp" />
-    <ClInclude Include="..\..\src\game\chunk.hpp" />
-    <ClInclude Include="..\..\src\game\player.hpp" />
-    <ClInclude Include="..\..\src\game\world.hpp" />
-    <ClInclude Include="..\..\src\io\archive.hpp" />
-    <ClInclude Include="..\..\src\io\chunk_loader.hpp" />
-    <ClInclude Include="..\..\src\io\logging.hpp" />
-    <ClInclude Include="..\..\src\macros.hpp" />
-    <ClInclude Include="..\..\src\math.hpp" />
-    <ClInclude Include="..\..\src\monitor.hpp" />
-    <ClInclude Include="..\..\src\net\buffer.hpp" />
-    <ClInclude Include="..\..\src\net\net.hpp" />
-    <ClInclude Include="..\..\src\net\socket.hpp" />
-    <ClInclude Include="..\..\src\perlin.hpp" />
-    <ClInclude Include="..\..\src\queue.hpp" />
-    <ClInclude Include="..\..\src\stack.hpp" />
-    <ClInclude Include="..\..\src\std_types.hpp" />
-    <ClInclude Include="..\..\src\stopwatch.hpp" />
-    <ClInclude Include="..\..\src\time.hpp" />
-    <ClInclude Include="..\..\src\util.hpp" />
-    <ClInclude Include="..\..\src\vmath.hpp" />
-    <ClInclude Include="..\..\src\world_generator.hpp" />
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

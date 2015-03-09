@@ -1,8 +1,8 @@
 #ifndef CLIENT_HPP
 #define CLIENT_HPP
 
-#include "std_types.hpp"
-#include "time.hpp"
+#include "engine/std_types.hpp"
+#include "engine/time.hpp"
 
 enum ClientState {
 	CONNECTING,

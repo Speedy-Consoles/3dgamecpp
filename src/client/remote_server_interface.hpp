@@ -5,10 +5,10 @@
 #include <string>
 
 #include "server_interface.hpp"
-#include "time.hpp"
-#include "net/net.hpp"
-#include "net/socket.hpp"
-#include "net/buffer.hpp"
+#include "engine/time.hpp"
+#include "engine/net.hpp"
+#include "engine/socket.hpp"
+#include "engine/buffer.hpp"
 #include "game/world.hpp"
 
 class RemoteServerInterface : public ServerInterface {

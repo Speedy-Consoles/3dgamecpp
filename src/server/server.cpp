@@ -1,12 +1,12 @@
 #include "game/world.hpp"
-#include "io/logging.hpp"
-#include "std_types.hpp"
+#include "engine/logging.hpp"
+#include "engine/std_types.hpp"
 #include "util.hpp"
 #include "constants.hpp"
-#include "time.hpp"
-#include "net/net.hpp"
-#include "net/socket.hpp"
-#include "net/buffer.hpp"
+#include "engine/time.hpp"
+#include "engine/net.hpp"
+#include "engine/socket.hpp"
+#include "engine/buffer.hpp"
 
 #include <boost/asio.hpp>
 #include <thread>

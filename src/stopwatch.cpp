@@ -1,5 +1,5 @@
 #include "stopwatch.hpp"
-#include "io/logging.hpp"
+#include "engine/logging.hpp"
 
 Stopwatch::Stopwatch(size_t size) : _clocks(size) {
 	auto now = getCurrentTime();

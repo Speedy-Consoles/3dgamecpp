@@ -1,8 +1,8 @@
 #ifndef PLAYER_HPP
 #define PLAYER_HPP
 
-#include "vmath.hpp"
-#include "monitor.hpp"
+#include "engine/vmath.hpp"
+#include "engine/monitor.hpp"
 
 struct PlayerSnapshot {
 	int tick;

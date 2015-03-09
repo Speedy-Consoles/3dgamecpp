@@ -1,7 +1,7 @@
 #ifndef CONSTANTS_HPP
 #define CONSTANTS_HPP
 
-#include "std_types.hpp"
+#include "engine/std_types.hpp"
 
 static const uint RESOLUTION = 1024;
 static const uint8 MAX_CLIENTS = 16;

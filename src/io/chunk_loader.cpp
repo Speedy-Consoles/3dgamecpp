@@ -2,7 +2,9 @@
 
 #include "game/world.hpp"
 #include "game/chunk.hpp"
-#include "world_generator.hpp"
+#include "game/world_generator.hpp"
+
+#include "util.hpp"
 
 using namespace std;
 

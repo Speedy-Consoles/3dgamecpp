@@ -1,7 +1,7 @@
 #ifndef SERVER_INTERFACE_HPP
 #define SERVER_INTERFACE_HPP
 
-#include "vmath.hpp"
+#include "engine/vmath.hpp"
 #include "config.hpp"
 
 class ServerInterface {

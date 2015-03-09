@@ -4,12 +4,12 @@
 #include "game/chunk.hpp"
 #include "menu.hpp"
 #include "stopwatch.hpp"
-#include "time.hpp"
+#include "engine/time.hpp"
 
 #include "util.hpp"
-#include "math.hpp"
+#include "engine/math.hpp"
 #include "constants.hpp"
-#include "io/logging.hpp"
+#include "engine/logging.hpp"
 
 #include "gui/frame.hpp"
 

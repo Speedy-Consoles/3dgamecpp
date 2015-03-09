@@ -5,7 +5,7 @@
 #include <SDL2/SDL.h>
 #include <FTGL/ftgl.h>
 
-#include "vmath.hpp"
+#include "engine/vmath.hpp"
 #include "util.hpp"
 #include "constants.hpp"
 #include "client.hpp"

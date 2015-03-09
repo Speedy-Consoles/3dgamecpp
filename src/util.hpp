@@ -2,9 +2,8 @@
 #define UTIL_HPP
 
 #include <vector>
-#include "vmath.hpp"
 
-//using namespace std;
+#include "engine/vmath.hpp"
 
 extern const vec3i8 DIRS[6];
 extern const int DIR_DIMS[6];

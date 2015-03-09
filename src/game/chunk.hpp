@@ -1,7 +1,7 @@
 #ifndef CHUNK_HPP
 #define CHUNK_HPP
 
-#include "vmath.hpp"
+#include "engine/vmath.hpp"
 
 class ChunkLoader;
 

@@ -1,7 +1,7 @@
 #ifndef CONFIG_HPP_
 #define CONFIG_HPP_
 
-#include "vmath.hpp"
+#include "engine/vmath.hpp"
 
 enum class RenderBackend {
 	UNSUPPORTED = -1,

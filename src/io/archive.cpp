@@ -11,9 +11,10 @@
 
 #include <boost/filesystem.hpp>
 
+#include "engine/math.hpp"
+#include "engine/logging.hpp"
+
 #include "util.hpp"
-#include "math.hpp"
-#include "logging.hpp"
 
 using namespace std;
 

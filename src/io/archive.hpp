@@ -12,9 +12,9 @@
 #include <string>
 #include <unordered_map>
 
-#include "vmath.hpp"
-#include "util.hpp"
-#include "macros.hpp"
+#include "engine/vmath.hpp"
+#include "engine/macros.hpp"
+
 #include "game/chunk.hpp"
 
 class ArchiveFile {

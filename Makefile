@@ -24,20 +24,20 @@ SERVER_OBJECT_FILES = \
 SHARED_ARCHIVE_NAME = shared_archive
 SHARED_OBJECT_FILES = \
 	game/chunk.cpp.o\
+	game/perlin.cpp.o\
 	game/player.cpp.o\
 	game/world.cpp.o\
+	game/world_generator.cpp.o\
+	engine/buffer.cpp.o\
+	engine/logging.cpp.o\
+	engine/net.cpp.o\
+	engine/socket.cpp.o\
+	engine/time.cpp.o\
 	io/archive.cpp.o\
 	io/chunk_loader.cpp.o\
 	io/chunk_loader_internals.cpp.o\
-	io/logging.cpp.o\
-	net/buffer.cpp.o\
-	net/socket.cpp.o\
-	net/net.cpp.o\
-	perlin.cpp.o\
 	stopwatch.cpp.o\
-	time.cpp.o\
-	util.cpp.o\
-	world_generator.cpp.o
+	util.cpp.o
 
 # what programs to use
 CXX = g++

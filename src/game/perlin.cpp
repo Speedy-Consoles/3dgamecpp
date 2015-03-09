@@ -1,6 +1,8 @@
 #include "perlin.hpp"
-#include <cmath>
+
 #include <random>
+
+#include "engine/math.hpp"
 
 using namespace std;
 

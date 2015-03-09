@@ -1,8 +1,10 @@
 #include "util.hpp"
-#include "math.hpp"
+
 #include <algorithm>
-#include "constants.hpp"
+
+#include "engine/math.hpp"
 #include "game/chunk.hpp"
+#include "constants.hpp"
 
 const vec3i8 DIRS[6] = {
 	{ 1, 0, 0 }, { 0, 1, 0 }, { 0, 0, 1 },

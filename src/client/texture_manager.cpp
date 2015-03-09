@@ -9,7 +9,7 @@
 
 #include <SDL2/SDL_image.h>
 
-#include "io/logging.hpp"
+#include "engine/logging.hpp"
 
 static const auto TEX2D = GL_TEXTURE_2D;
 

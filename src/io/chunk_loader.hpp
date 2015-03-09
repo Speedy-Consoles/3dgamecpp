@@ -1,19 +1,21 @@
 #ifndef CHUNK_LOADER_HPP
 #define CHUNK_LOADER_HPP
 
-#include "vmath.hpp"
-#include "archive.hpp"
-#include "queue.hpp"
-#include "stack.hpp"
-
-class WorldGenerator;
-class World;
-
 #include <atomic>
 #include <future>
 
 #include <unordered_set>
 #include <vector>
+
+#include "engine/vmath.hpp"
+#include "engine/queue.hpp"
+#include "engine/stack.hpp"
+#include "engine/monitor.hpp"
+
+#include "archive.hpp"
+
+class WorldGenerator;
+class World;
 
 class ChunkLoader {
 private:
@@ -64,7 +66,6 @@ private:
 
 	void storeChunksOnDisk();
 	void sendOffloadQueries();
-
 
 	bool loadNextChunks();
 	vec3i64 getNextChunkToLoad();

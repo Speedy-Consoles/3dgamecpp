@@ -7,14 +7,16 @@
 
 #include "chunk_loader.hpp"
 
-#include "world_generator.hpp"
-#include "game/world.hpp"
-
-#include "time.hpp"
-
-#include "logging.hpp"
+#include "engine/logging.hpp"
 #undef DEFAULT_LOGGER
 #define DEFAULT_LOGGER NAMED_LOGGER("chunk")
+
+#include "engine/time.hpp"
+
+#include "game/world.hpp"
+#include "game/world_generator.hpp"
+
+#include "util.hpp"
 
 using namespace std;
 

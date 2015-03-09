@@ -1,13 +1,16 @@
 #include "world.hpp"
 
+#include <cstdio>
+
+#include "engine/logging.hpp"
+
 #include "chunk.hpp"
 
 #include "constants.hpp"
 #include "util.hpp"
-#include "io/logging.hpp"
 
-#include <cstdio>
 
+const double World::GRAVITY = -9.81 * RESOLUTION / 60.0 / 60.0 * 4;
 
 World::World(std::string id) : id(id), chunks(0, vec3i64HashFunc) {
 }

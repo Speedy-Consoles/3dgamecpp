@@ -1,7 +1,7 @@
 #include "net.hpp"
 
 #include <cstring>
-#include "io/logging.hpp"
+#include "logging.hpp"
 
 Buffer &operator << (Buffer &lhs, const ServerMessage &rhs) {
 	switch (rhs.type) {
