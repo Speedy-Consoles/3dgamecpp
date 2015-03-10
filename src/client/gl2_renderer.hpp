@@ -1,5 +1,5 @@
-#ifndef GL_20_RENDERER_HPP
-#define GL_20_RENDERER_HPP
+#ifndef GL_2_RENDERER_HPP
+#define GL_2_RENDERER_HPP
 
 #include <GL/glew.h>
 #include <SDL2/SDL.h>
@@ -7,6 +7,7 @@
 
 #include "renderer.hpp"
 
+#include "graphics.hpp"
 #include "engine/vmath.hpp"
 #include "util.hpp"
 #include "constants.hpp"
@@ -28,7 +29,7 @@ namespace gui {
 	class Button;
 }
 
-class GL20Renderer : public Renderer {
+class GL2Renderer : public Renderer {
 private:
 	enum DisplayListStatus {
 		NO_CHUNK = 0,
@@ -41,22 +42,16 @@ private:
 	static const int MAX_NEW_QUADS = 6000;
 	static const int MAX_NEW_CHUNKS = 500;
 
-	int width;
-	int height;
-
-	double drawWidth;
-	double drawHeight;
-
 	double maxFOV;
+
+	Graphics *graphics;
 
 	GraphicsConf conf;
 
 	SDL_Window *window;
 	World *world;
 	const Menu *menu;
-
 	const ClientState &state;
-	ClientState oldState;
 
 	const uint8 &localClientID;
 
@@ -119,13 +114,11 @@ private:
 
 //	bool fxaa = false;
 
-	// for saving mouse position in menu
-	double oldRelMouseX = 0.5;
-	double oldRelMouseY = 0.5;
-
 public:
-	GL20Renderer(SDL_Window *window, World *world, const Menu *menu, const ClientState *state, const uint8 *localClientId, const GraphicsConf &conf, Stopwatch *stopwatch = nullptr);
-	~GL20Renderer();
+	GL2Renderer(Graphics *graphics, SDL_Window *window, World *world, const Menu *menu,
+				const ClientState *state, const uint8 *localClientId,
+				const GraphicsConf &conf, Stopwatch *stopwatch = nullptr);
+	~GL2Renderer();
 
 	void tick();
 
@@ -139,17 +132,10 @@ public:
 	const GraphicsConf &getConf() const { return conf; }
 	void setConf(const GraphicsConf &);
 
-	int getHeight() const;
-	int getWidth() const;
-
-	float getScalingFactor() const;
-
 private:
 	void initGL();
 	void initRenderDistanceDependent();
 	void destroyRenderDistanceDependent();
-
-	void setMenu(bool menuActive);
 
 	void createFBO();
 	void destroyFBO();
@@ -162,8 +148,6 @@ private:
 
 	void switchToPerspective();
 	void switchToOrthogonal();
-
-	void calcDrawArea();
 
 	void render();
 
@@ -189,4 +173,4 @@ private:
 	void renderText(const char *text);
 };
 
-#endif // GL_20_RENDERER_HPP
+#endif // GL_2_RENDERER_HPP

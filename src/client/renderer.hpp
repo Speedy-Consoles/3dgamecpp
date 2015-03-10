@@ -16,11 +16,6 @@ public:
 
 	virtual const GraphicsConf &getConf() const = 0;
 	virtual void setConf(const GraphicsConf &) = 0;
-
-	virtual int getHeight() const = 0;
-	virtual int getWidth() const = 0;
-
-	virtual float getScalingFactor() const = 0;
 };
 
 #endif // RENDERER_HPP

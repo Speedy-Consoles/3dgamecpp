@@ -24,8 +24,23 @@ private:
 	SDL_Window *window;
 	Renderer *renderer;
 	GraphicsConf conf;
+
+	const ClientState &state;
+	ClientState oldState;
+
+	int width;
+	int height;
+
+	double drawWidth;
+	double drawHeight;
+
+	// for saving mouse position in menu
+	double oldRelMouseX = 0.5;
+	double oldRelMouseY = 0.5;
+
 public:
-	Graphics(World *world, const Menu *menu, const ClientState *state, const uint8 *localClientId, const GraphicsConf &conf, Stopwatch *stopwatch = nullptr);
+	Graphics(World *world, const Menu *menu, const ClientState *state,
+				const uint8 *localClientId, const GraphicsConf &conf, Stopwatch *stopwatch = nullptr);
 	~Graphics();
 
 	void tick();
@@ -43,7 +58,14 @@ public:
 	int getHeight() const;
 	int getWidth() const;
 
+	int getDrawHeight() const;
+	int getDrawWidth() const;
+
 	float getScalingFactor() const;
+
+private:
+	void calcDrawArea();
+	void setMenu(bool menuActive);
 };
 
 #endif // GRAPHICS_HPP

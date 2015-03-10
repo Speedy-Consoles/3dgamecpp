@@ -2,9 +2,9 @@
 
 #include <SDL2/SDL_image.h>
 
-#include "gl_20_renderer.hpp"
-#include "gl_30_renderer.hpp"
 #include "engine/logging.hpp"
+#include "gl2_renderer.hpp"
+#include "gl3_renderer.hpp"
 
 using namespace gui;
 
@@ -14,7 +14,7 @@ Graphics::Graphics(
 		const ClientState *state,
 		const uint8 *localClientID,
 		const GraphicsConf &conf,
-		Stopwatch *stopwatch) {
+		Stopwatch *stopwatch) : state(*state) {
 	LOG(DEBUG, "Constructing Graphics");
 
 	LOG(DEBUG, "Initializing SDL");
@@ -33,7 +33,7 @@ Graphics::Graphics(
 	}
 
 	LOG(DEBUG, "Creating window");
-	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
 	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
@@ -60,10 +60,10 @@ Graphics::Graphics(
 		LOG(FATAL, glewGetErrorString(glew_error));
 	if (!GLEW_VERSION_2_0)
 		LOG(FATAL, "OpenGL version 2.0 not available");
-	if (GLEW_VERSION_3_0) {
-		renderer = new GL30Renderer(window, world, menu, state, localClientID, conf, stopwatch);
+	if (GLEW_VERSION_3_0 && conf.render_backend == RenderBackend::OGL_3) {
+		renderer = new GL3Renderer(this, window, world, menu, state, localClientID, conf, stopwatch);
 	} else {
-		renderer = new GL20Renderer(window, world, menu, state, localClientID, conf, stopwatch);
+		renderer = new GL2Renderer(this, window, world, menu, state, localClientID, conf, stopwatch);
 	}
 }
 
@@ -75,7 +75,57 @@ Graphics::~Graphics() {
 }
 
 void Graphics::resize(int width, int height) {
+	LOG(INFO, "Resize to " << width << "x" << height);
+	this->width = width;
+	this->height = height;
+	calcDrawArea();
 	renderer->resize(width, height);
+}
+
+void Graphics::calcDrawArea() {
+	double normalRatio = DEFAULT_WINDOWED_RES[0] / (double) DEFAULT_WINDOWED_RES[1];
+	double currentRatio = width / (double) height;
+	if (currentRatio > normalRatio) {
+		drawWidth = DEFAULT_WINDOWED_RES[0];
+		drawHeight = DEFAULT_WINDOWED_RES[0] / currentRatio;
+	} else {
+		drawWidth = DEFAULT_WINDOWED_RES[1] * currentRatio;
+		drawHeight = DEFAULT_WINDOWED_RES[1];
+	}
+}
+
+void Graphics::setMenu(bool menuActive) {
+	SDL_SetWindowGrab(window, (SDL_bool) !menuActive);
+	SDL_SetRelativeMouseMode((SDL_bool) !menuActive);
+	if (menuActive) {
+		SDL_WarpMouseInWindow(window, (int) (oldRelMouseX * width), (int) (oldRelMouseY * height));
+	} else {
+		int x = width / 2;
+		int y = height / 2;
+		SDL_GetMouseState(&x, &y);
+		oldRelMouseX = x / (double) width;
+		oldRelMouseY = y / (double) height;
+	}
+}
+
+int Graphics::getWidth() const {
+	return width;
+}
+
+int Graphics::getHeight() const {
+	return height;
+}
+
+int Graphics::getDrawWidth() const {
+	return drawWidth;
+}
+
+int Graphics::getDrawHeight() const {
+	return drawHeight;
+}
+
+float Graphics::getScalingFactor() const {
+	return (float) drawWidth / width;
 }
 
 void Graphics::setDebug(bool debugActive) {
@@ -91,18 +141,13 @@ void Graphics::setConf(const GraphicsConf &conf) {
 	renderer->setConf(conf);
 }
 
-int Graphics::getWidth() const {
-	return renderer->getWidth();
-}
-
-int Graphics::getHeight() const {
-	return renderer->getHeight();
-}
-
-float Graphics::getScalingFactor() const {
-	return renderer->getScalingFactor();
-}
-
 void Graphics::tick() {
+	if (oldState != state) {
+		if (state == IN_MENU)
+			setMenu(true);
+		else if (oldState == IN_MENU)
+			setMenu(false);
+		oldState = state;
+	}
 	renderer->tick();
 }

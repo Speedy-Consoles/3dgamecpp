@@ -1,4 +1,4 @@
-#include "gl_30_renderer.hpp"
+#include "gl2_renderer.hpp"
 
 #include "game/world.hpp"
 #include "game/chunk.hpp"
@@ -17,7 +17,8 @@
 
 using namespace gui;
 
-GL30Renderer::GL30Renderer(
+GL2Renderer::GL2Renderer(
+		Graphics *graphics,
 		SDL_Window *window,
 		World *world,
 		const Menu *menu,
@@ -25,6 +26,7 @@ GL30Renderer::GL30Renderer(
 		const uint8 *localClientID,
 		const GraphicsConf &conf,
 		Stopwatch *stopwatch) :
+		graphics(graphics),
 		conf(conf),
 		window(window),
 		world(world),
@@ -44,19 +46,14 @@ GL30Renderer::GL30Renderer(
 	}
 }
 
-GL30Renderer::~GL30Renderer() {
+GL2Renderer::~GL2Renderer() {
 	LOG(DEBUG, "Destroying Graphics");
 	destroyRenderDistanceDependent();
 
 	delete font;
-
-//	glDeleteProgram(program);
-//	glDeleteProgram(program_postproc);
-
-	SDL_Quit();
 }
 
-void GL30Renderer::destroyRenderDistanceDependent() {
+void GL2Renderer::destroyRenderDistanceDependent() {
 	int length = conf.render_distance * 2 + 1;
 	glDeleteLists(dlFirstAddress, length * length * length);
 	delete dlChunks;
@@ -70,7 +67,7 @@ void GL30Renderer::destroyRenderDistanceDependent() {
 
 }
 
-void GL30Renderer::initGL() {
+void GL2Renderer::initGL() {
 	glClearDepth(1);
 	glDepthFunc(GL_LEQUAL);
 	glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
@@ -157,12 +154,6 @@ void GL30Renderer::initGL() {
 	texManager.loadTexture(35, "img/wang_test.png", TextureManager::WANG_TILES);
 	texManager.loadTexture(36, "img/stone_diff.png", TextureManager::MULTI_x4);
 
-	// shader
-//	program = loadProgram(
-//			"shaders/vertex_shader.vert", "shaders/fragment_shader.frag");
-//	program_postproc = loadProgram(
-//			"shaders/postproc.vert", "shaders/postproc.frag");
-
 	// fog
 	glEnable(GL_FOG);
 	if (GLEW_NV_fog_distance)
@@ -173,22 +164,6 @@ void GL30Renderer::initGL() {
 	glFogfv(GL_FOG_COLOR, fogColor.ptr());
 	glFogi(GL_FOG_MODE, GL_LINEAR);
 	makeFog();
-
-//	glUseProgram(program);
-//
-//	GLuint fog_color_loc = glGetUniformLocation(program, "fog_color");
-//	logOpenGLError();
-//	glUniform3f(fog_color_loc, 0.5, 0.5, 0.5);
-//	logOpenGLError();
-//
-//	glUseProgram(program);
-//	GLuint fog_end_loc = glGetUniformLocation(program, "fog_end");
-//	glUniform1f(fog_end_loc, fogStart - ZNEAR);
-//
-//	GLuint fog_width_loc = glGetUniformLocation(program, "fog_width");
-//	logOpenGLError();
-//	glUniform1f(fog_width_loc, 192.0);
-//	logOpenGLError();
 
 	// fxaa
 //	glUseProgram(program_postproc);
@@ -211,7 +186,7 @@ void GL30Renderer::initGL() {
 	initRenderDistanceDependent();
 }
 
-void GL30Renderer::initRenderDistanceDependent() {
+void GL2Renderer::initRenderDistanceDependent() {
 	int length = conf.render_distance * 2 + 3;
 	int n = length * length * length;
 	dlFirstAddress = glGenLists(n);
@@ -233,31 +208,21 @@ void GL30Renderer::initRenderDistanceDependent() {
 	faces = 0;
 }
 
-void GL30Renderer::resize(int width, int height) {
-	LOG(INFO, "Resize to " << width << "x" << height);
-	this->width = width;
-	this->height = height;
+void GL2Renderer::resize(int width, int height) {
 	glViewport(0, 0, width, height);
 	makePerspective();
 	makeOrthogonal();
-	calcDrawArea();
 
 	// update framebuffer object
 	if (fbo)
 		destroyFBO();
 	if (conf.aa != AntiAliasing::NONE)
 		createFBO();
-
-//	glUseProgram(program_postproc);
-//	GLuint pixel_size_loc = glGetUniformLocation(program_postproc, "pixel_size");
-//	logOpenGLError();
-//	glUniform2f(pixel_size_loc, 1.0 / width, 1.0 / height);
-//	logOpenGLError();
 }
 
-void GL30Renderer::makePerspective() {
+void GL2Renderer::makePerspective() {
 	double normalRatio = DEFAULT_WINDOWED_RES[0] / (double) DEFAULT_WINDOWED_RES[1];
-	double currentRatio = width / (double) height;
+	double currentRatio = graphics->getWidth() / (double) graphics->getHeight();
 	double angle;
 
 	float yfov = conf.fov / normalRatio * TAU / 360.0;
@@ -275,9 +240,9 @@ void GL30Renderer::makePerspective() {
 	glMatrixMode(GL_MODELVIEW);
 }
 
-void GL30Renderer::makeOrthogonal() {
+void GL2Renderer::makeOrthogonal() {
 	double normalRatio = DEFAULT_WINDOWED_RES[0] / (double) DEFAULT_WINDOWED_RES[1];
-	double currentRatio = width / (double) height;
+	double currentRatio = graphics->getWidth() / (double) graphics->getHeight();
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 	if (currentRatio > normalRatio)
@@ -292,13 +257,13 @@ void GL30Renderer::makeOrthogonal() {
 	glMatrixMode(GL_MODELVIEW);
 }
 
-void GL30Renderer::makeFog() {
+void GL2Renderer::makeFog() {
 	double fogEnd = std::max(0.0, Chunk::WIDTH * (conf.render_distance - 1.0));
 	glFogf(GL_FOG_START, fogEnd - ZNEAR - fogEnd / 3.0);
 	glFogf(GL_FOG_END, fogEnd - ZNEAR);
 }
 
-void GL30Renderer::makeMaxFOV() {
+void GL2Renderer::makeMaxFOV() {
 	float ratio = (float) DEFAULT_WINDOWED_RES[0] / DEFAULT_WINDOWED_RES[1];
 	float yfov = conf.fov / ratio * TAU / 360.0;
 	if (ratio < 1.0)
@@ -307,110 +272,13 @@ void GL30Renderer::makeMaxFOV() {
 		maxFOV = atan(ratio * tan(yfov / 2)) * 2;
 }
 
-void GL30Renderer::calcDrawArea() {
-	double normalRatio = DEFAULT_WINDOWED_RES[0] / (double) DEFAULT_WINDOWED_RES[1];
-	double currentRatio = width / (double) height;
-	if (currentRatio > normalRatio) {
-		drawWidth = DEFAULT_WINDOWED_RES[0];
-		drawHeight = DEFAULT_WINDOWED_RES[0] / currentRatio;
-	} else {
-		drawWidth = DEFAULT_WINDOWED_RES[1] * currentRatio;
-		drawHeight = DEFAULT_WINDOWED_RES[1];
-	}
-}
-
-void GL30Renderer::setMenu(bool menuActive) {
-	SDL_SetWindowGrab(window, (SDL_bool) !menuActive);
-	SDL_SetRelativeMouseMode((SDL_bool) !menuActive);
-	if (menuActive) {
-		SDL_WarpMouseInWindow(window, (int) (oldRelMouseX * width), (int) (oldRelMouseY * height));
-	} else {
-		int x = width / 2;
-		int y = height / 2;
-		SDL_GetMouseState(&x, &y);
-		oldRelMouseX = x / (double) width;
-		oldRelMouseY = y / (double) height;
-	}
-}
-
-void GL30Renderer::setDebug(bool debugActive) {
+void GL2Renderer::setDebug(bool debugActive) {
 	this->debugActive = debugActive;
 }
 
-bool GL30Renderer::isDebug() {
+bool GL2Renderer::isDebug() {
 	return debugActive;
 }
-
-//GLuint GL30Renderer::loadShader(const char *path, GLenum type) {
-//	LOG(INFO) << "Loading shader source '" << path << "'";
-//	std::ifstream f(path);
-//	LOG_IF(!f.good(), error) << "Could not open '" << path << "'";
-//	std::stringstream ss;
-//	ss << f.rdbuf();
-//	std::string s = ss.str();
-//	const char *source = s.c_str();
-//	f.close();
-//	LOG(INFO) << "Compiling '" << path << "'";
-//	GLenum shader = glCreateShaderObjectARB(type);
-//	logOpenGLError();
-//	glShaderSourceARB(shader, 1, &source, NULL);
-//	logOpenGLError();
-//	glCompileShaderARB(shader);
-//	logOpenGLError();
-//
-//	GLint logSize = 0;
-//	glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &logSize);
-//	logOpenGLError();
-//
-//	if(logSize > 0) {
-//		GLsizei length;
-//		GLchar infoLog[logSize];
-//		glGetShaderInfoLog(shader, logSize, &length, infoLog);
-//		logOpenGLError();
-//		if (length > 0)
-//			LOG(WARNING) << "Shader log: " << (char *) infoLog;
-//	}
-//
-//	return shader;
-//}
-//
-//GLuint GL30Renderer::loadProgram(const char *vert_src, const char *frag_src) {
-//	GLuint vertex_shader = loadShader(vert_src, GL_VERTEX_SHADER_ARB);
-//	GLuint fragment_shader = loadShader(frag_src, GL_FRAGMENT_SHADER_ARB);
-//
-//	LOG(INFO) << "Assembling shader program";
-//	GLuint program = glCreateProgramObjectARB();
-//	logOpenGLError();
-//	glAttachObjectARB(program, vertex_shader);
-//	logOpenGLError();
-//	glAttachObjectARB(program, fragment_shader);
-//	logOpenGLError();
-//	glLinkProgramARB(program);
-//	logOpenGLError();
-//	glValidateProgram(program);
-//
-//	GLint logSize = 0;
-//	glGetProgramiv(program, GL_INFO_LOG_LENGTH, &logSize);
-//	logOpenGLError();
-//
-//	if(logSize > 0) {
-//		GLsizei length;
-//		GLchar infoLog[logSize];
-//		glGetProgramInfoLog(program, logSize, &length, infoLog);
-//		logOpenGLError();
-//		if (length > 0)
-//			LOG(WARNING) << "Shader program log: " << (char *) infoLog;
-//	}
-//
-//	int validate_ok;
-//	glGetProgramiv(program, GL_VALIDATE_STATUS, &validate_ok);
-//	if (!validate_ok) {
-//		LOG(FATAL) << "Shader program failed validation";
-//	}
-//	logOpenGLError();
-//
-//	return program;
-//}
 
 static uint getMSLevelFromAA(AntiAliasing aa) {
 	switch (aa) {
@@ -423,7 +291,7 @@ static uint getMSLevelFromAA(AntiAliasing aa) {
 	}
 }
 
-void GL30Renderer::setConf(const GraphicsConf &conf) {
+void GL2Renderer::setConf(const GraphicsConf &conf) {
 	GraphicsConf old_conf = this->conf;
 	this->conf = conf;
 
@@ -466,7 +334,7 @@ void GL30Renderer::setConf(const GraphicsConf &conf) {
 	texManager.setConfig(conf);
 }
 
-void GL30Renderer::createFBO() {
+void GL2Renderer::createFBO() {
 	uint msLevel = getMSLevelFromAA(conf.aa);
 //	LOG(INFO) << "Creating framebuffer with MSAA=" << msaa
 //			<< " and fxaa " << (fxaa ? "enabled" : "disabled");
@@ -494,7 +362,7 @@ void GL30Renderer::createFBO() {
 	glBindRenderbuffer(GL_RENDERBUFFER, fbo_color_buffer);
 	logOpenGLError();
 	glRenderbufferStorageMultisample(
-			GL_RENDERBUFFER, msLevel, GL_RGB, width, height
+			GL_RENDERBUFFER, msLevel, GL_RGB, graphics->getWidth(), graphics->getHeight()
 	);
 	logOpenGLError();
 //	}
@@ -505,12 +373,12 @@ void GL30Renderer::createFBO() {
 	logOpenGLError();
 	if (conf.aa != AntiAliasing::NONE) {
 		glRenderbufferStorageMultisample(
-				GL_RENDERBUFFER, msLevel, GL_DEPTH_COMPONENT24, width, height
+				GL_RENDERBUFFER, msLevel, GL_DEPTH_COMPONENT24, graphics->getWidth(), graphics->getHeight()
 		);
 	} else {
 		glRenderbufferStorage(
 				GL_RENDERBUFFER, GL_DEPTH_COMPONENT24,
-				width, height
+				graphics->getWidth(), graphics->getHeight()
 		);
 	}
 	logOpenGLError();
@@ -562,7 +430,7 @@ void GL30Renderer::createFBO() {
 	logOpenGLError();
 }
 
-void GL30Renderer::destroyFBO() {
+void GL2Renderer::destroyFBO() {
 //	glDeleteTextures(1, &fbo_texture);
 	glDeleteRenderbuffers(1, &fbo_color_buffer);
 	glDeleteRenderbuffers(1, &fbo_depth_buffer);
@@ -570,29 +438,7 @@ void GL30Renderer::destroyFBO() {
 	fbo = fbo_color_buffer = fbo_depth_buffer = /*fbo_texture = */0;
 }
 
-int GL30Renderer::getWidth() const {
-	return width;
-}
-
-int GL30Renderer::getHeight() const {
-	return height;
-}
-
-float GL30Renderer::getScalingFactor() const {
-	return (float) drawWidth / width;
-}
-
-void GL30Renderer::tick() {
-
-
-	if (oldState != state) {
-		if (state == IN_MENU)
-			setMenu(true);
-		else if (oldState == IN_MENU)
-			setMenu(false);
-		oldState = state;
-	}
-
+void GL2Renderer::tick() {
 	render();
 
 	stopwatch->start(CLOCK_FSH);
