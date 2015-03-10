@@ -4,6 +4,8 @@ CLIENT_OBJECT_FILES = \
 	client/client.cpp.o\
 	client/config.cpp.o\
 	client/graphics.cpp.o\
+	client/gl_20_renderer.cpp.o\
+	client/gl_30_renderer.cpp.o\
 	client/local_server_interface.cpp.o\
 	client/remote_server_interface.cpp.o\
 	client/menu.cpp.o\

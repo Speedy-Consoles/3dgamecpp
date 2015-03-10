@@ -5,7 +5,7 @@
  *      Author: lars
  */
 
-#include "graphics.hpp"
+#include "gl_20_renderer.hpp"
 
 #include "menu.hpp"
 #include "stopwatch.hpp"
@@ -23,7 +23,7 @@ using namespace std;
 void renderFrame(const Frame *frame);
 void renderLabel(const Label *label);
 
-void Graphics::renderMenu() {
+void GL20Renderer::renderMenu() {
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	glDrawBuffer(GL_BACK);
 
@@ -53,7 +53,7 @@ void Graphics::renderMenu() {
 	glPopMatrix();
 }
 
-void Graphics::renderWidget(const Widget *widget) {
+void GL20Renderer::renderWidget(const Widget *widget) {
 	glPushMatrix();
 	glTranslatef(widget->x(), widget->y(), 0);
 
@@ -72,18 +72,18 @@ void Graphics::renderWidget(const Widget *widget) {
 	glPopMatrix();
 }
 
-void Graphics::renderFrame(const Frame *frame) {
+void GL20Renderer::renderFrame(const Frame *frame) {
 	for (const Widget *widget : frame->widgets()) {
 		renderWidget(widget);
 	}
 }
 
-void Graphics::renderLabel(const Label *label) {
+void GL20Renderer::renderLabel(const Label *label) {
 	glColor3f(1.0f, 1.0f, 1.0f);
 	renderText(label->text().c_str());
 }
 
-void Graphics::renderButton(const Button *button) {
+void GL20Renderer::renderButton(const Button *button) {
 	if (button->hover())
 		glColor3f(1.0f, 1.0f, 0.0f);
 	else
@@ -92,7 +92,7 @@ void Graphics::renderButton(const Button *button) {
 	renderText(button->text().c_str());
 }
 
-void Graphics::renderText(const char *text) {
+void GL20Renderer::renderText(const char *text) {
 	glTranslatef(0, -font->Descender(), 0);
 	font->Render(text);
 }

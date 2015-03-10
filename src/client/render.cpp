@@ -1,4 +1,4 @@
-#include "graphics.hpp"
+#include "gl_20_renderer.hpp"
 
 #include "engine/math.hpp"
 
@@ -8,19 +8,19 @@
 
 #include "engine/logging.hpp"
 
-void Graphics::switchToPerspective() {
+void GL20Renderer::switchToPerspective() {
 	glMatrixMode(GL_PROJECTION);
 	glLoadMatrixd(perspectiveMatrix);
 	glMatrixMode(GL_MODELVIEW);
 }
 
-void Graphics::switchToOrthogonal() {
+void GL20Renderer::switchToOrthogonal() {
 	glMatrixMode(GL_PROJECTION);
 	glLoadMatrixd(orthogonalMatrix);
 	glMatrixMode(GL_MODELVIEW);
 }
 
-void Graphics::render() {
+void GL20Renderer::render() {
 
 	if (fbo) {
 		// render to the fbo and not the screen
@@ -93,7 +93,7 @@ void Graphics::render() {
 	}
 }
 
-void Graphics::renderSky() {
+void GL20Renderer::renderSky() {
 	glDisable(GL_DEPTH_TEST);
 	glDisable(GL_TEXTURE_2D);
 	glDisable(GL_LIGHTING);
@@ -119,7 +119,7 @@ void Graphics::renderSky() {
 	glDepthMask(true);
 }
 
-void Graphics::renderScene() {
+void GL20Renderer::renderScene() {
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_TEXTURE_2D);
 	glEnable(GL_LIGHTING);
@@ -139,7 +139,7 @@ void Graphics::renderScene() {
 	stopwatch->stop(CLOCK_PLA);
 }
 
-void Graphics::renderChunks() {
+void GL20Renderer::renderChunks() {
 
 	int length = conf.render_distance * 2 + 3;
 
@@ -244,7 +244,7 @@ void Graphics::renderChunks() {
 	}
 }
 
-void Graphics::renderTarget() {
+void GL20Renderer::renderTarget() {
 	Player &localPlayer = world->getPlayer(localClientID);
 	vec3i64 pc = localPlayer.getChunkPos();
 
@@ -295,7 +295,7 @@ void Graphics::renderTarget() {
 	logOpenGLError();
 }
 
-void Graphics::renderChunk(Chunk &c) {
+void GL20Renderer::renderChunk(Chunk &c) {
 	stopwatch->start(CLOCK_NDL);
 	vec3i64 cc = c.getCC();
 	int length = conf.render_distance * 2 + 3;
@@ -459,7 +459,7 @@ void Graphics::renderChunk(Chunk &c) {
 	stopwatch->stop(CLOCK_NDL);
 }
 
-void Graphics::renderPlayers() {
+void GL20Renderer::renderPlayers() {
 	glBindTexture(GL_TEXTURE_2D, 0);
 	glBegin(GL_QUADS);
 	for (uint i = 0; i < MAX_CLIENTS; i++) {
@@ -489,7 +489,7 @@ void Graphics::renderPlayers() {
 	glEnd();
 }
 
-void Graphics::renderHud(const Player &player) {
+void GL20Renderer::renderHud(const Player &player) {
 	glDisable(GL_LIGHTING);
 	glDisable(GL_FOG);
 	glDisable(GL_DEPTH_TEST);
@@ -529,7 +529,7 @@ void Graphics::renderHud(const Player &player) {
 	glPopMatrix();
 }
 
-void Graphics::renderDebugInfo(const Player &player) {
+void GL20Renderer::renderDebugInfo(const Player &player) {
 	vec3i64 playerPos = player.getPos();
 	vec3d playerVel = player.getVel();
 	uint32 windowFlags = SDL_GetWindowFlags(window);
@@ -641,7 +641,7 @@ void Graphics::renderDebugInfo(const Player &player) {
 		renderPerformance();
 }
 
-void Graphics::renderPerformance() {
+void GL20Renderer::renderPerformance() {
 	const char *rel_names[] = {
 		"CLR",
 		"NDL",
@@ -739,7 +739,7 @@ void Graphics::renderPerformance() {
 	glPopMatrix();
 }
 
-bool Graphics::inFrustum(vec3i64 cc, vec3i64 pos, vec3d lookDir) {
+bool GL20Renderer::inFrustum(vec3i64 cc, vec3i64 pos, vec3d lookDir) {
 	double chunkDia = sqrt(3) * Chunk::WIDTH * RESOLUTION;
 	vec3d cp = (cc * Chunk::WIDTH * RESOLUTION - pos).cast<double>();
 	double chunkLookDist = lookDir * cp + chunkDia;
