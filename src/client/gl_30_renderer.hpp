@@ -1,5 +1,5 @@
-#ifndef GL_20_RENDERER_HPP
-#define GL_20_RENDERER_HPP
+#ifndef GL_30_RENDERER_HPP
+#define GL_30_RENDERER_HPP
 
 #include <GL/glew.h>
 #include <SDL2/SDL.h>
@@ -28,7 +28,7 @@ namespace gui {
 	class Button;
 }
 
-class GL20Renderer : public Renderer {
+class GL30Renderer : public Renderer {
 private:
 	enum DisplayListStatus {
 		NO_CHUNK = 0,
@@ -110,6 +110,8 @@ private:
 	vec3f skyColor{ 0.15f, 0.15f, 0.9f };
 	vec4f sunLightPosition{ 3.0f, 2.0f, 9.0f, 0.0f };
 
+//	GLuint program = 0;
+//	GLuint program_postproc = 0;
 
 	// frame buffers for anti-aliasing
 	GLuint fbo = 0;
@@ -124,8 +126,8 @@ private:
 	double oldRelMouseY = 0.5;
 
 public:
-	GL20Renderer(SDL_Window *window, World *world, const Menu *menu, const ClientState *state, const uint8 *localClientId, const GraphicsConf &conf, Stopwatch *stopwatch = nullptr);
-	~GL20Renderer();
+	GL30Renderer(SDL_Window *window, World *world, const Menu *menu, const ClientState *state, const uint8 *localClientId, const GraphicsConf &conf, Stopwatch *stopwatch = nullptr);
+	~GL30Renderer();
 
 	void tick();
 
@@ -148,6 +150,9 @@ private:
 	void initGL();
 	void initRenderDistanceDependent();
 	void destroyRenderDistanceDependent();
+
+//	GLuint loadShader(const char *, GLenum);
+//	GLuint loadProgram(const char *, const char *);
 
 	void setMenu(bool menuActive);
 
@@ -189,4 +194,4 @@ private:
 	void renderText(const char *text);
 };
 
-#endif // GL_20_RENDERER_HPP
+#endif // GL_30_RENDERER_HPP

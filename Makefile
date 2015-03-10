@@ -9,8 +9,10 @@ CLIENT_OBJECT_FILES = \
 	client/local_server_interface.cpp.o\
 	client/remote_server_interface.cpp.o\
 	client/menu.cpp.o\
-	client/render.cpp.o\
-	client/render_menu.cpp.o\
+	client/render_20.cpp.o\
+	client/render_menu_20.cpp.o\
+	client/render_30.cpp.o\
+	client/render_menu_30.cpp.o\
 	client/texture_manager.cpp.o\
 	client/gui/button.cpp.o\
 	client/gui/frame.cpp.o\

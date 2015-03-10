@@ -4,7 +4,11 @@
 #include <GL/glew.h>
 #include <SDL2/SDL.h>
 
-#include "gl_20_renderer.hpp"
+#include "game/world.hpp"
+#include "stopwatch.hpp"
+#include "menu.hpp"
+#include "client.hpp"
+#include "renderer.hpp"
 #include "config.hpp"
 
 namespace gui {
@@ -18,7 +22,7 @@ class Graphics {
 private:
 	SDL_GLContext glContext;
 	SDL_Window *window;
-	GL20Renderer *renderer;
+	Renderer *renderer;
 	GraphicsConf conf;
 public:
 	Graphics(World *world, const Menu *menu, const ClientState *state, const uint8 *localClientId, const GraphicsConf &conf, Stopwatch *stopwatch = nullptr);

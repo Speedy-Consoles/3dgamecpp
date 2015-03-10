@@ -2,6 +2,8 @@
 
 #include <SDL2/SDL_image.h>
 
+#include "gl_20_renderer.hpp"
+#include "gl_30_renderer.hpp"
 #include "engine/logging.hpp"
 
 using namespace gui;
@@ -59,8 +61,7 @@ Graphics::Graphics(
 	if (!GLEW_VERSION_2_0)
 		LOG(FATAL, "OpenGL version 2.0 not available");
 	if (GLEW_VERSION_3_0) {
-		renderer = new GL20Renderer(window, world, menu, state, localClientID, conf, stopwatch);
-		//renderer = new GL30Renderer(world, *menu, *state, *localClientID, &conf, *stopwatch);
+		renderer = new GL30Renderer(window, world, menu, state, localClientID, conf, stopwatch);
 	} else {
 		renderer = new GL20Renderer(window, world, menu, state, localClientID, conf, stopwatch);
 	}
