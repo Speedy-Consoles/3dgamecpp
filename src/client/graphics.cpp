@@ -65,6 +65,8 @@ Graphics::Graphics(
 	} else {
 		renderer = new GL2Renderer(this, window, world, menu, state, localClientID, conf, stopwatch);
 	}
+
+	resize(conf.windowed_res[0], conf.windowed_res[1]);
 }
 
 Graphics::~Graphics() {

@@ -36,8 +36,6 @@ GL2Renderer::GL2Renderer(
 		texManager(conf),
 		stopwatch(stopwatch) {
 
-	resize(conf.windowed_res[0], conf.windowed_res[1]);
-
 	makeMaxFOV();
 
 	initGL();

@@ -1,6 +1,10 @@
 #ifndef GL3_RENDERER_HPP
 #define GL3_RENDERER_HPP
 
+#include <GL/glew.h>
+#include <glm/mat4x4.hpp>
+#include <glm/vec3.hpp>
+
 #include "renderer.hpp"
 
 #include "client.hpp"
@@ -31,7 +35,26 @@ private:
 	const uint8 &localClientID;
 	Stopwatch *stopwatch;
 
-	double maxFOV;
+	// 3D values
+	float ZNEAR = 0.1f;
+	float maxFOV;
+
+	// transformation matrices
+	glm::mat4 perspectiveMatrix;
+	glm::mat4 orthogonalMatrix;
+	glm::mat4 viewMatrix;
+	glm::mat4 modelMatrix;
+
+	// program Location
+	GLuint progLoc;
+
+	// uniform locations
+	GLuint projMatLoc;
+	GLuint viewMatLoc;
+	GLuint modelMatLoc;
+
+	// This will identify our vertex buffer
+	GLuint vertexBuffer;
 
 public:
 	GL3Renderer(Graphics *graphics, SDL_Window *window, World *world, const Menu *menu,
@@ -42,7 +65,14 @@ public:
 	void tick();
 
 	void resize(int width, int height);
+	void makePerspectiveMatrix();
+	void makeOrthogonalMatrix();
 	void makeMaxFOV();
+
+	void setViewMatrix();
+	void setModelMatrix();
+	void setPerspectiveMatrix();
+	void setOrthogonalMatrix();
 
 	void setDebug(bool debugActive);
 	bool isDebug();
@@ -51,6 +81,9 @@ public:
 
 	const GraphicsConf &getConf() const { return conf; }
 	void setConf(const GraphicsConf &);
+
+private:
+	void loadShaders();
 };
 
 #endif // GL_3_RENDERER_HPP
