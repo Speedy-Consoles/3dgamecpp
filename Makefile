@@ -4,11 +4,13 @@ CLIENT_OBJECT_FILES = \
 	client/client.cpp.o\
 	client/config.cpp.o\
 	client/graphics.cpp.o\
+	client/gl2_renderer.cpp.o\
+	client/gl3_renderer.cpp.o\
 	client/local_server_interface.cpp.o\
 	client/remote_server_interface.cpp.o\
 	client/menu.cpp.o\
-	client/render.cpp.o\
-	client/render_menu.cpp.o\
+	client/render_2.cpp.o\
+	client/render_menu_2.cpp.o\
 	client/texture_manager.cpp.o\
 	client/gui/button.cpp.o\
 	client/gui/frame.cpp.o\

@@ -13,6 +13,8 @@
   <ItemGroup>
     <ClCompile Include="..\..\src\client\client.cpp" />
     <ClCompile Include="..\..\src\client\config.cpp" />
+    <ClCompile Include="..\..\src\client\gl2_renderer.cpp" />
+    <ClCompile Include="..\..\src\client\gl3_renderer.cpp" />
     <ClCompile Include="..\..\src\client\graphics.cpp" />
     <ClCompile Include="..\..\src\client\gui\button.cpp" />
     <ClCompile Include="..\..\src\client\gui\frame.cpp" />
@@ -21,13 +23,15 @@
     <ClCompile Include="..\..\src\client\local_server_interface.cpp" />
     <ClCompile Include="..\..\src\client\menu.cpp" />
     <ClCompile Include="..\..\src\client\remote_server_interface.cpp" />
-    <ClCompile Include="..\..\src\client\render.cpp" />
-    <ClCompile Include="..\..\src\client\render_menu.cpp" />
+    <ClCompile Include="..\..\src\client\render_2.cpp" />
+    <ClCompile Include="..\..\src\client\render_menu_2.cpp" />
     <ClCompile Include="..\..\src\client\texture_manager.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\client\client.hpp" />
     <ClInclude Include="..\..\src\client\config.hpp" />
+    <ClInclude Include="..\..\src\client\gl2_renderer.hpp" />
+    <ClInclude Include="..\..\src\client\gl3_renderer.hpp" />
     <ClInclude Include="..\..\src\client\graphics.hpp" />
     <ClInclude Include="..\..\src\client\gui\button.hpp" />
     <ClInclude Include="..\..\src\client\gui\cycle_button.hpp" />
@@ -37,6 +41,7 @@
     <ClInclude Include="..\..\src\client\local_server_interface.hpp" />
     <ClInclude Include="..\..\src\client\menu.hpp" />
     <ClInclude Include="..\..\src\client\remote_server_interface.hpp" />
+    <ClInclude Include="..\..\src\client\renderer.hpp" />
     <ClInclude Include="..\..\src\client\server_interface.hpp" />
     <ClInclude Include="..\..\src\client\texture_manager.hpp" />
   </ItemGroup>

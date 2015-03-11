@@ -1,5 +1,3 @@
-#include "graphics.hpp"
-
 #include "engine/math.hpp"
 
 #include "game/world.hpp"
@@ -7,20 +5,21 @@
 #include "stopwatch.hpp"
 
 #include "engine/logging.hpp"
+#include "gl2_renderer.hpp"
 
-void Graphics::switchToPerspective() {
+void GL2Renderer::switchToPerspective() {
 	glMatrixMode(GL_PROJECTION);
 	glLoadMatrixd(perspectiveMatrix);
 	glMatrixMode(GL_MODELVIEW);
 }
 
-void Graphics::switchToOrthogonal() {
+void GL2Renderer::switchToOrthogonal() {
 	glMatrixMode(GL_PROJECTION);
 	glLoadMatrixd(orthogonalMatrix);
 	glMatrixMode(GL_MODELVIEW);
 }
 
-void Graphics::render() {
+void GL2Renderer::render() {
 
 	if (fbo) {
 		// render to the fbo and not the screen
@@ -65,8 +64,8 @@ void Graphics::render() {
 			glBindFramebuffer(GL_READ_FRAMEBUFFER, fbo);
 			glDrawBuffer(GL_BACK);
 			glBlitFramebuffer(
-					0, 0, width, height,
-					0, 0, width, height,
+					0, 0, graphics->getWidth(), graphics->getHeight(),
+					0, 0, graphics->getWidth(), graphics->getHeight(),
 					GL_COLOR_BUFFER_BIT,
 					GL_NEAREST
 			);
@@ -93,7 +92,7 @@ void Graphics::render() {
 	}
 }
 
-void Graphics::renderSky() {
+void GL2Renderer::renderSky() {
 	glDisable(GL_DEPTH_TEST);
 	glDisable(GL_TEXTURE_2D);
 	glDisable(GL_LIGHTING);
@@ -119,7 +118,7 @@ void Graphics::renderSky() {
 	glDepthMask(true);
 }
 
-void Graphics::renderScene() {
+void GL2Renderer::renderScene() {
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_TEXTURE_2D);
 	glEnable(GL_LIGHTING);
@@ -139,7 +138,7 @@ void Graphics::renderScene() {
 	stopwatch->stop(CLOCK_PLA);
 }
 
-void Graphics::renderChunks() {
+void GL2Renderer::renderChunks() {
 
 	int length = conf.render_distance * 2 + 3;
 
@@ -244,7 +243,7 @@ void Graphics::renderChunks() {
 	}
 }
 
-void Graphics::renderTarget() {
+void GL2Renderer::renderTarget() {
 	Player &localPlayer = world->getPlayer(localClientID);
 	vec3i64 pc = localPlayer.getChunkPos();
 
@@ -295,7 +294,7 @@ void Graphics::renderTarget() {
 	logOpenGLError();
 }
 
-void Graphics::renderChunk(Chunk &c) {
+void GL2Renderer::renderChunk(Chunk &c) {
 	stopwatch->start(CLOCK_NDL);
 	vec3i64 cc = c.getCC();
 	int length = conf.render_distance * 2 + 3;
@@ -459,7 +458,7 @@ void Graphics::renderChunk(Chunk &c) {
 	stopwatch->stop(CLOCK_NDL);
 }
 
-void Graphics::renderPlayers() {
+void GL2Renderer::renderPlayers() {
 	glBindTexture(GL_TEXTURE_2D, 0);
 	glBegin(GL_QUADS);
 	for (uint i = 0; i < MAX_CLIENTS; i++) {
@@ -489,7 +488,7 @@ void Graphics::renderPlayers() {
 	glEnd();
 }
 
-void Graphics::renderHud(const Player &player) {
+void GL2Renderer::renderHud(const Player &player) {
 	glDisable(GL_LIGHTING);
 	glDisable(GL_FOG);
 	glDisable(GL_DEPTH_TEST);
@@ -517,9 +516,9 @@ void Graphics::renderHud(const Player &player) {
 
 	glColor4f(1, 1, 1, 1);
 
-	float d = (width < height ? width : height) * 0.05;
+	float d = (graphics->getWidth() < graphics->getHeight() ? graphics->getWidth() : graphics->getHeight()) * 0.05;
 	glPushMatrix();
-	glTranslatef(-drawWidth * 0.48, -drawHeight * 0.48, 0);
+	glTranslatef(-graphics->getDrawWidth() * 0.48, -graphics->getDrawHeight() * 0.48, 0);
 	glBegin(GL_QUADS);
 		glTexCoord2f(texs[0][0], texs[0][1]); glVertex2f(0, 0);
 		glTexCoord2f(texs[1][0], texs[1][1]); glVertex2f(d, 0);
@@ -529,7 +528,7 @@ void Graphics::renderHud(const Player &player) {
 	glPopMatrix();
 }
 
-void Graphics::renderDebugInfo(const Player &player) {
+void GL2Renderer::renderDebugInfo(const Player &player) {
 	vec3i64 playerPos = player.getPos();
 	vec3d playerVel = player.getVel();
 	uint32 windowFlags = SDL_GetWindowFlags(window);
@@ -537,7 +536,7 @@ void Graphics::renderDebugInfo(const Player &player) {
 	glDisable(GL_TEXTURE_2D);
 	glPushMatrix();
 	glColor3f(1.0f, 1.0f, 1.0f);
-	glTranslatef(-drawWidth / 2 + 3, drawHeight / 2, 0);
+	glTranslatef(-graphics->getDrawWidth() / 2 + 3, graphics->getDrawHeight() / 2, 0);
 	char buffer[1024];
 	#define RENDER_LINE(...) sprintf(buffer, __VA_ARGS__);\
 			glTranslatef(0, -16, 0);\
@@ -641,7 +640,7 @@ void Graphics::renderDebugInfo(const Player &player) {
 		renderPerformance();
 }
 
-void Graphics::renderPerformance() {
+void GL2Renderer::renderPerformance() {
 	const char *rel_names[] = {
 		"CLR",
 		"NDL",
@@ -680,8 +679,8 @@ void Graphics::renderPerformance() {
 	float center_positions[CLOCK_ID_NUM];
 
 	glPushMatrix();
-	glTranslatef(+drawWidth / 2.0, -drawHeight / 2, 0);
-	glScalef(10.0, drawHeight, 1.0);
+	glTranslatef(+graphics->getDrawWidth() / 2.0, -graphics->getDrawHeight() / 2, 0);
+	glScalef(10.0, graphics->getDrawHeight(), 1.0);
 	glTranslatef(-1, 0, 0);
 	glBegin(GL_QUADS);
 	for (uint i = 0; i < CLOCK_ID_NUM; ++i) {
@@ -722,13 +721,13 @@ void Graphics::renderPerformance() {
 	}
 
 	glPushMatrix();
-	glTranslatef(+drawWidth / 2.0, -drawHeight / 2, 0);
+	glTranslatef(+graphics->getDrawWidth() / 2.0, -graphics->getDrawHeight() / 2, 0);
 	glTranslatef(-15, 0, 0);
 	glRotatef(90.0, 0.0, 0.0, 1.0);
 	for (int i = 0; i < num_displayed_labels; ++i) {
 		int id = labeled_ids[i];
 		glPushMatrix();
-		glTranslatef(used_positions[i + 1] * drawHeight - 14, 0, 0);
+		glTranslatef(used_positions[i + 1] * graphics->getDrawHeight() - 14, 0, 0);
 		char buffer[1024];
 		sprintf(buffer, "%s", rel_names[id]);
 		auto color = rel_colors[id];
@@ -739,7 +738,7 @@ void Graphics::renderPerformance() {
 	glPopMatrix();
 }
 
-bool Graphics::inFrustum(vec3i64 cc, vec3i64 pos, vec3d lookDir) {
+bool GL2Renderer::inFrustum(vec3i64 cc, vec3i64 pos, vec3d lookDir) {
 	double chunkDia = sqrt(3) * Chunk::WIDTH * RESOLUTION;
 	vec3d cp = (cc * Chunk::WIDTH * RESOLUTION - pos).cast<double>();
 	double chunkLookDist = lookDir * cp + chunkDia;

@@ -5,8 +5,6 @@
  *      Author: lars
  */
 
-#include "graphics.hpp"
-
 #include "menu.hpp"
 #include "stopwatch.hpp"
 
@@ -17,13 +15,15 @@
 
 #include <stack>
 
+#include "gl2_renderer.hpp"
+
 using namespace gui;
 using namespace std;
 
 void renderFrame(const Frame *frame);
 void renderLabel(const Label *label);
 
-void Graphics::renderMenu() {
+void GL2Renderer::renderMenu() {
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	glDrawBuffer(GL_BACK);
 
@@ -35,16 +35,16 @@ void Graphics::renderMenu() {
 
 	glPushMatrix();
 	glLoadIdentity();
-	glTranslatef(-drawWidth / 2, -drawHeight / 2, 0);
+	glTranslatef(-graphics->getDrawWidth() / 2, -graphics->getDrawHeight() / 2, 0);
 	glPushMatrix();
-	glTranslatef(0, drawHeight, 0);
+	glTranslatef(0, graphics->getDrawHeight(), 0);
 
 	glColor4f(0.0f, 0.0f, 0.0f, 0.4f);
 	glBegin(GL_QUADS);
 		glVertex2f(0.0f, 0.0f);
-		glVertex2f(0.0f, -drawHeight);
-		glVertex2f(drawWidth, -drawHeight);
-		glVertex2f(drawWidth, 0.0f);
+		glVertex2f(0.0f, -graphics->getDrawHeight());
+		glVertex2f(graphics->getDrawWidth(), -graphics->getDrawHeight());
+		glVertex2f(graphics->getDrawWidth(), 0.0f);
 	glEnd();
 	glPopMatrix();
 
@@ -53,7 +53,7 @@ void Graphics::renderMenu() {
 	glPopMatrix();
 }
 
-void Graphics::renderWidget(const Widget *widget) {
+void GL2Renderer::renderWidget(const Widget *widget) {
 	glPushMatrix();
 	glTranslatef(widget->x(), widget->y(), 0);
 
@@ -72,18 +72,18 @@ void Graphics::renderWidget(const Widget *widget) {
 	glPopMatrix();
 }
 
-void Graphics::renderFrame(const Frame *frame) {
+void GL2Renderer::renderFrame(const Frame *frame) {
 	for (const Widget *widget : frame->widgets()) {
 		renderWidget(widget);
 	}
 }
 
-void Graphics::renderLabel(const Label *label) {
+void GL2Renderer::renderLabel(const Label *label) {
 	glColor3f(1.0f, 1.0f, 1.0f);
 	renderText(label->text().c_str());
 }
 
-void Graphics::renderButton(const Button *button) {
+void GL2Renderer::renderButton(const Button *button) {
 	if (button->hover())
 		glColor3f(1.0f, 1.0f, 0.0f);
 	else
@@ -92,7 +92,7 @@ void Graphics::renderButton(const Button *button) {
 	renderText(button->text().c_str());
 }
 
-void Graphics::renderText(const char *text) {
+void GL2Renderer::renderText(const char *text) {
 	glTranslatef(0, -font->Descender(), 0);
 	font->Render(text);
 }
