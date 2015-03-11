@@ -11,7 +11,7 @@
 #include "config.hpp"
 
 class Graphics;
-class SDL_Window;
+struct SDL_Window;
 class World;
 class Player;
 class Menu;
