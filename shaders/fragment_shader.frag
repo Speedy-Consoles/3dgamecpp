@@ -1,6 +1,8 @@
 #version 330 core
+
+in float brightness;
 out vec3 color;
  
 void main(){
-    color = vec3(1,0,0);
+    color = vec3(brightness);
 }

@@ -139,7 +139,13 @@ bool Graphics::isDebug() {
 }
 
 void Graphics::setConf(const GraphicsConf &conf) {
+	GraphicsConf old_conf = this->conf;
 	this->conf = conf;
+
+	if (conf.fullscreen != old_conf.fullscreen) {
+		SDL_SetWindowFullscreen(window, conf.fullscreen ? SDL_WINDOW_FULLSCREEN : 0);
+	}
+
 	renderer->setConf(conf);
 }
 
