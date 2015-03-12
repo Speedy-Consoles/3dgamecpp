@@ -13,7 +13,6 @@
 #include "stopwatch.hpp"
 
 #include "game/world.hpp"
-#include "game/chunk.hpp"
 
 using namespace gui;
 
@@ -36,6 +35,7 @@ GL3Renderer::GL3Renderer(
 		stopwatch(stopwatch) {
 	loadShaders();
 	initRenderDistanceDependent();
+	makeMaxFOV();
 
 	/*// generate and bind new vao
 	glGenVertexArrays(1, &vao);
@@ -250,7 +250,7 @@ void GL3Renderer::initRenderDistanceDependent() {
 		glBindVertexArray(vaos[i]);
 		glBindBuffer(GL_ARRAY_BUFFER, vbos[i]);
 		glBufferData(GL_ARRAY_BUFFER, 0, 0, GL_STATIC_DRAW);
-		glVertexAttribIPointer(0, 1, GL_SHORT, 0, (void*)0);
+		glVertexAttribIPointer(0, 1, GL_UNSIGNED_SHORT, 0, (void*)0);
 		glEnableVertexAttribArray(0);
 		vaoStatus[i] = NO_CHUNK;
 		chunkFaces[i] = 0;
@@ -307,6 +307,7 @@ void GL3Renderer::tick() {
 
 void GL3Renderer::render() {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glEnable(GL_DEPTH_TEST);
 
 	setPerspectiveMatrix();
 
@@ -520,7 +521,6 @@ void GL3Renderer::renderChunk(Chunk &c) {
 		uDirs[d] = DIRS[d].cast<uint8>();
 	}
 
-	ushort vertexBufferData[Chunk::WIDTH * (Chunk::WIDTH + 1) * 3 * 2 * 3];
 	size_t bufferSize = 0;
 
 	const uint8 *blocks = c.getBlocks();
@@ -600,8 +600,15 @@ void GL3Renderer::renderChunk(Chunk &c) {
 								light[j] -= 0.2;
 							if (m && !(s1 && s2))
 								light[j] -= 0.2;
-							vec3f vertex = (faceBlock.cast<int>() + QUAD_CYCLES_3D[faceDir][j]).cast<float>();
-							posIndices[j] = (vertex[2] * Chunk::WIDTH + vertex[1]) * Chunk::WIDTH + vertex[0];
+							vec3ui8 vertex = faceBlock.cast<uint8>() + QUAD_CYCLES_3D[faceDir][j].cast<uint8>();
+							posIndices[j] = (vertex[2] * (Chunk::WIDTH + 1) + vertex[1]) * (Chunk::WIDTH + 1) + vertex[0];
+							vec3i asdf = faceBlock.cast<int>() + QUAD_CYCLES_3D[faceDir][j];
+							if (asdf[0] < 0 || asdf[0] > 32)
+								printf("bla\n");
+							if (asdf[1] < 0 ||asdf[1] > 32)
+								printf("bla\n");
+							if (asdf[2] < 0 ||asdf[2] > 32)
+								printf("bla\n");
 						}
 						vertexBufferData[bufferSize++] = posIndices[0];
 						vertexBufferData[bufferSize++] = posIndices[1];
@@ -615,7 +622,7 @@ void GL3Renderer::renderChunk(Chunk &c) {
 		}
 	}
 
-	glBufferData(GL_ARRAY_BUFFER, sizeof(ushort) * bufferSize, vertexBufferData, GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(GLushort) * bufferSize, vertexBufferData, GL_STATIC_DRAW);
 
 	chunkFaces[index] = bufferSize / 3;
 	newFaces += chunkFaces[index];

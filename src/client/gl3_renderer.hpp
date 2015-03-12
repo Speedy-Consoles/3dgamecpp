@@ -7,6 +7,7 @@
 
 #include "renderer.hpp"
 
+#include "game/chunk.hpp"
 #include "util.hpp"
 #include "client.hpp"
 #include "config.hpp"
@@ -14,7 +15,6 @@
 class Graphics;
 struct SDL_Window;
 class World;
-class Chunk;
 class Player;
 class Menu;
 class Stopwatch;
@@ -98,6 +98,9 @@ private:
 	int faces = 0;
 	int visibleChunks = 0;
 	int visibleFaces = 0;
+
+	// buffer for chunk vertices
+	GLushort vertexBufferData[Chunk::WIDTH * Chunk::WIDTH * (Chunk::WIDTH + 1) * 3 * 2 * 3];
 
 public:
 	GL3Renderer(Graphics *graphics, SDL_Window *window, World *world, const Menu *menu,

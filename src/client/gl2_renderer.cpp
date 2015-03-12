@@ -302,6 +302,7 @@ void GL2Renderer::setConf(const GraphicsConf &conf) {
 	}
 
 	if (conf.fov != old_conf.fov || conf.render_distance != old_conf.render_distance) {
+		makeMaxFOV();
 		makePerspective();
 		makeFog();
 	}
