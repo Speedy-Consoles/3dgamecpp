@@ -37,25 +37,17 @@ GL3Renderer::GL3Renderer(
 	initRenderDistanceDependent();
 	makeMaxFOV();
 
-	/*// generate and bind new vao
-	glGenVertexArrays(1, &vao);
-	glBindVertexArray(vao);
+	// save uniform locations
+	diffDirLoc = glGetUniformLocation(progLoc, "diffuseLightDirection");
+	diffColorLoc = glGetUniformLocation(progLoc, "diffuseLightColor");
 
-	// generate and bind new vbo
-	GLuint vertexBuffer;
-	glGenBuffers(1, &vertexBuffer);
-	glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
+	projMatLoc = glGetUniformLocation(progLoc, "projectionMatrix");
+	viewMatLoc = glGetUniformLocation(progLoc, "viewMatrix");
+	modelMatLoc = glGetUniformLocation(progLoc, "modelMatrix");
 
-	// fill vbo with data
-	GLshort vertexBufferData[] = {1, 3200, 5578};
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertexBufferData), vertexBufferData, GL_STATIC_DRAW);
-
-	// make attribute pointer for vao
-	glVertexAttribIPointer(0, 1, GL_SHORT, 0, (void*)0);
-	glEnableVertexAttribArray(0);
-
-	// unbind vao
-	glBindVertexArray(0);*/
+	// make light
+	glUniform3fv(diffDirLoc, 1, glm::value_ptr(glm::vec3(1.0f, 0.5f, 3.0f)));
+	glUniform3fv(diffColorLoc, 1, glm::value_ptr(glm::vec3(1.0f, 1.0f, 1.0f)));
 }
 
 GL3Renderer::~GL3Renderer() {
@@ -139,14 +131,6 @@ void GL3Renderer::loadShaders() {
 	glDeleteShader(fragmentShaderID);
 
 	glUseProgram(progLoc);
-
-	// save uniform locations
-	mvpMatLoc = glGetUniformLocation(progLoc, "mvpMatrix");
-	diffDirLoc = glGetUniformLocation(progLoc, "diffuseLightDirection");
-	diffColorLoc = glGetUniformLocation(progLoc, "diffuseLightColor");
-
-	glUniform3fv(diffDirLoc, 1, glm::value_ptr(glm::vec3(1.0f, 0.5f, 3.0f)));
-	glUniform3fv(diffColorLoc, 1, glm::value_ptr(glm::vec3(1.0f, 1.0f, 1.0f)));
 }
 
 void GL3Renderer::resize(int width, int height) {
@@ -184,17 +168,20 @@ void GL3Renderer::makeOrthogonalMatrix() {
 				DEFAULT_WINDOWED_RES[1] / 2.0f, 1.0f, -1.0f);
 }
 
-void GL3Renderer::uploadMVPMatrix(ProjectionMode pm) {
-	glm::mat4 mvpMat;
-	switch (pm) {
-	case ORTHOGONAL:
-		mvpMat = orthogonalMatrix * viewMatrix * modelMatrix;
-		break;
-	case PERSPECTIVE:
-		mvpMat = perspectiveMatrix * viewMatrix * modelMatrix;
-		break;
-	}
-	glUniformMatrix4fv(mvpMatLoc, 1, GL_FALSE, glm::value_ptr(mvpMat));
+void GL3Renderer::setPerspectiveMatrix() {
+	glUniformMatrix4fv(projMatLoc, 1, GL_FALSE, glm::value_ptr(perspectiveMatrix));
+}
+
+void GL3Renderer::setOrthogonalMatrix() {
+	glUniformMatrix4fv(projMatLoc, 1, GL_FALSE, glm::value_ptr(orthogonalMatrix));
+}
+
+void GL3Renderer::setViewMatrix() {
+	glUniformMatrix4fv(viewMatLoc, 1, GL_FALSE, glm::value_ptr(viewMatrix));
+}
+
+void GL3Renderer::setModelMatrix() {
+	glUniformMatrix4fv(modelMatLoc, 1, GL_FALSE, glm::value_ptr(modelMatrix));
 }
 
 void GL3Renderer::makeMaxFOV() {
@@ -311,14 +298,17 @@ void GL3Renderer::render() {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glEnable(GL_DEPTH_TEST);
 
+	setPerspectiveMatrix();
+
 	Player &player = world->getPlayer(localClientID);
 	if (player.isValid()) {
 
 		modelMatrix = glm::mat4(1.0f);
+		setModelMatrix();
 
 		// Render sky
 		viewMatrix = glm::rotate(glm::mat4(1.0f), (float) (-player.getPitch() / 360.0 * TAU), glm::vec3(1.0f, 0.0f, 0.0f));
-		uploadMVPMatrix(PERSPECTIVE);
+		setViewMatrix();
 		//renderSky();
 
 		// Render Scene
@@ -332,11 +322,12 @@ void GL3Renderer::render() {
 			(float) -((playerPos[1] % m + m) % m) / RESOLUTION,
 			(float) -((playerPos[2] % m + m) % m) / RESOLUTION)
 		);
-		uploadMVPMatrix(PERSPECTIVE);
+		setViewMatrix();
 		renderScene();
 	}
 
 	// render overlay
+	setOrthogonalMatrix();
 	modelMatrix = glm::mat4(1.0);
 
 	if (state == PLAYING && player.isValid()) {
@@ -422,7 +413,7 @@ void GL3Renderer::renderChunks() {
 				stopwatch->start(CLOCK_DLC);
 				glm::mat4 oldModelMatrix = modelMatrix;
 				modelMatrix = glm::translate(modelMatrix, glm::vec3((float) (cd[0] * (int) Chunk::WIDTH), (float) (cd[1] * (int) Chunk::WIDTH), (float) (cd[2] * (int) Chunk::WIDTH)));
-				uploadMVPMatrix(PERSPECTIVE);
+				setModelMatrix();
 				glBindVertexArray(vaos[index]);
 				glDrawArrays(GL_TRIANGLES, 0, chunkFaces[index] * 3);
 				logOpenGLError();

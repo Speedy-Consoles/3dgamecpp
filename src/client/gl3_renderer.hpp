@@ -58,18 +58,16 @@ private:
 	glm::mat4 viewMatrix;
 	glm::mat4 modelMatrix;
 
-	enum ProjectionMode {
-		ORTHOGONAL = 0,
-		PERSPECTIVE,
-	};
-
 	// program Location
 	GLuint progLoc;
 
 	// uniform locations
-	GLuint mvpMatLoc;
 	GLuint diffDirLoc;
 	GLuint diffColorLoc;
+
+	GLuint projMatLoc;
+	GLuint viewMatLoc;
+	GLuint modelMatLoc;
 
 	// vao, vbo locations
 	GLuint *vaos;
@@ -128,7 +126,10 @@ public:
 	void makeOrthogonalMatrix();
 	void makeMaxFOV();
 
-	void uploadMVPMatrix(ProjectionMode pm);
+	void setViewMatrix();
+	void setModelMatrix();
+	void setPerspectiveMatrix();
+	void setOrthogonalMatrix();
 
 	void setDebug(bool debugActive);
 	bool isDebug();
