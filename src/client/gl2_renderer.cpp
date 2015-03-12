@@ -52,7 +52,7 @@ GL2Renderer::~GL2Renderer() {
 }
 
 void GL2Renderer::destroyRenderDistanceDependent() {
-	int length = conf.render_distance * 2 + 1;
+	int length = conf.render_distance * 2 + 3;
 	glDeleteLists(dlFirstAddress, length * length * length);
 	delete dlChunks;
 	delete dlStatus;
@@ -62,7 +62,6 @@ void GL2Renderer::destroyRenderDistanceDependent() {
 	delete vsVisited;
 	delete vsFringe;
 	delete vsIndices;
-
 }
 
 void GL2Renderer::initGL() {
@@ -291,13 +290,20 @@ static uint getMSLevelFromAA(AntiAliasing aa) {
 
 void GL2Renderer::setConf(const GraphicsConf &conf) {
 	GraphicsConf old_conf = this->conf;
-	this->conf = conf;
 
 	if (conf.render_distance != old_conf.render_distance) {
 		destroyRenderDistanceDependent();
+	}
+
+	this->conf = conf;
+
+	if (conf.render_distance != old_conf.render_distance) {
+		initRenderDistanceDependent();
+	}
+
+	if (conf.fov != old_conf.fov || conf.render_distance != old_conf.render_distance) {
 		makePerspective();
 		makeFog();
-		initRenderDistanceDependent();
 	}
 
 	if (GLEW_NV_fog_distance) {
@@ -318,15 +324,6 @@ void GL2Renderer::setConf(const GraphicsConf &conf) {
 			destroyFBO();
 		if (conf.aa != AntiAliasing::NONE)
 			createFBO();
-	}
-
-	if (conf.fullscreen != old_conf.fullscreen) {
-		SDL_SetWindowFullscreen(window, conf.fullscreen ? SDL_WINDOW_FULLSCREEN : 0);
-	}
-
-	if (conf.fov != old_conf.fov) {
-		makePerspective();
-		makeMaxFOV();
 	}
 
 	texManager.setConfig(conf);
