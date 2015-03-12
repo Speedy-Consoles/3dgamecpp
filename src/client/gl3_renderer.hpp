@@ -62,6 +62,7 @@ private:
 	GLuint progLoc;
 
 	// uniform locations
+	GLuint ambientColorLoc;
 	GLuint diffDirLoc;
 	GLuint diffColorLoc;
 

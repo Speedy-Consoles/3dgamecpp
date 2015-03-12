@@ -1,8 +1,8 @@
 #version 330 core
 
-in float brightness;
+in vec3 gl_Color;
 out vec3 color;
  
 void main(){
-    color = vec3(brightness);
+    color = gl_Color;
 }

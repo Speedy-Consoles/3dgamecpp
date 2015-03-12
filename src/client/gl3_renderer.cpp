@@ -38,6 +38,7 @@ GL3Renderer::GL3Renderer(
 	makeMaxFOV();
 
 	// save uniform locations
+	ambientColorLoc = glGetUniformLocation(progLoc, "ambientLightColor");
 	diffDirLoc = glGetUniformLocation(progLoc, "diffuseLightDirection");
 	diffColorLoc = glGetUniformLocation(progLoc, "diffuseLightColor");
 
@@ -46,8 +47,9 @@ GL3Renderer::GL3Renderer(
 	modelMatLoc = glGetUniformLocation(progLoc, "modelMatrix");
 
 	// make light
+	glUniform3fv(ambientColorLoc, 1, glm::value_ptr(glm::vec3(0.3f, 0.3f, 0.27f)));
 	glUniform3fv(diffDirLoc, 1, glm::value_ptr(glm::vec3(1.0f, 0.5f, 3.0f)));
-	glUniform3fv(diffColorLoc, 1, glm::value_ptr(glm::vec3(1.0f, 1.0f, 1.0f)));
+	glUniform3fv(diffColorLoc, 1, glm::value_ptr(glm::vec3(0.2f, 0.2f, 0.17f)));
 }
 
 GL3Renderer::~GL3Renderer() {
