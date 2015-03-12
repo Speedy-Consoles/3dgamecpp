@@ -1,6 +1,17 @@
 #version 330 core
 
+const vec3 NORMALS[6] = vec3[6](
+		vec3( 1.0,  0.0,  0.0),
+		vec3( 0.0,  1.0,  0.0),
+		vec3( 1.0,  0.0,  1.0),
+		vec3(-1.0,  0.0,  0.0),
+		vec3( 0.0, -1.0,  0.0),
+		vec3( 0.0,  0.0, -1.0)
+);
+
 uniform mat4 mvpMatrix;
+uniform vec3 diffuseLightDirection;
+uniform vec3 diffuseLightColor;
 
 layout(location = 0) in uint posIndex;
 layout(location = 1) in uint dirIndexShadowLevel;

@@ -66,8 +66,10 @@ private:
 	// program Location
 	GLuint progLoc;
 
-	// uniform location
+	// uniform locations
 	GLuint mvpMatLoc;
+	GLuint diffDirLoc;
+	GLuint diffColorLoc;
 
 	// vao, vbo locations
 	GLuint *vaos;

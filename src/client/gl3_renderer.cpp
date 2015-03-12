@@ -142,6 +142,11 @@ void GL3Renderer::loadShaders() {
 
 	// save uniform locations
 	mvpMatLoc = glGetUniformLocation(progLoc, "mvpMatrix");
+	diffDirLoc = glGetUniformLocation(progLoc, "diffuseLightDirection");
+	diffColorLoc = glGetUniformLocation(progLoc, "diffuseLightColor");
+
+	glUniform3fv(diffDirLoc, 1, glm::value_ptr(glm::vec3(1.0f, 0.5f, 3.0f)));
+	glUniform3fv(diffColorLoc, 1, glm::value_ptr(glm::vec3(1.0f, 1.0f, 1.0f)));
 }
 
 void GL3Renderer::resize(int width, int height) {
