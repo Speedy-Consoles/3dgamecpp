@@ -99,8 +99,16 @@ private:
 	int visibleChunks = 0;
 	int visibleFaces = 0;
 
+#pragma pack(push)
+#pragma pack(1)
 	// buffer for chunk vertices
-	GLushort vertexBufferData[Chunk::WIDTH * Chunk::WIDTH * (Chunk::WIDTH + 1) * 3 * 2 * 3];
+	struct ChunkVertexData {
+		GLushort positionIndex;
+		GLubyte dirIndexShadowLevel;
+	};
+#pragma pack(pop)
+
+	ChunkVertexData vertexBufferData[Chunk::WIDTH * Chunk::WIDTH * (Chunk::WIDTH + 1) * 3 * 2 * 3];
 
 public:
 	GL3Renderer(Graphics *graphics, SDL_Window *window, World *world, const Menu *menu,

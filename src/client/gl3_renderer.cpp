@@ -250,8 +250,10 @@ void GL3Renderer::initRenderDistanceDependent() {
 		glBindVertexArray(vaos[i]);
 		glBindBuffer(GL_ARRAY_BUFFER, vbos[i]);
 		glBufferData(GL_ARRAY_BUFFER, 0, 0, GL_STATIC_DRAW);
-		glVertexAttribIPointer(0, 1, GL_UNSIGNED_SHORT, 0, (void*)0);
+		glVertexAttribIPointer(0, 1, GL_UNSIGNED_SHORT, 3, 0);
+		glVertexAttribIPointer(1, 1, GL_UNSIGNED_BYTE, 3, (void *) 2);
 		glEnableVertexAttribArray(0);
+		glEnableVertexAttribArray(1);
 		vaoStatus[i] = NO_CHUNK;
 		chunkFaces[i] = 0;
 		chunkPassThroughs[i] = 0;
@@ -588,18 +590,18 @@ void GL3Renderer::renderChunk(Chunk &c) {
 						vec3i64 bc = c.getCC() * c.WIDTH + faceBlock.cast<int64>();
 
 						ushort posIndices[4];
-						float light[4];
+						int shadowLevel[4];
 						for (int j = 0; j < 4; j++) {
-							light[j] = 1.0;
+							shadowLevel[j] = 0;
 							bool s1 = (corners & FACE_CORNER_MASK[j][0]) > 0;
 							bool s2 = (corners & FACE_CORNER_MASK[j][2]) > 0;
 							bool m = (corners & FACE_CORNER_MASK[j][1]) > 0;
 							if (s1)
-								light[j] -= 0.2;
+								shadowLevel[j]++;
 							if (s2)
-								light[j] -= 0.2;
+								shadowLevel[j]++;
 							if (m && !(s1 && s2))
-								light[j] -= 0.2;
+								shadowLevel[j]++;
 							vec3ui8 vertex = faceBlock.cast<uint8>() + QUAD_CYCLES_3D[faceDir][j].cast<uint8>();
 							posIndices[j] = (vertex[2] * (Chunk::WIDTH + 1) + vertex[1]) * (Chunk::WIDTH + 1) + vertex[0];
 							vec3i asdf = faceBlock.cast<int>() + QUAD_CYCLES_3D[faceDir][j];
@@ -610,19 +612,31 @@ void GL3Renderer::renderChunk(Chunk &c) {
 							if (asdf[2] < 0 ||asdf[2] > 32)
 								printf("bla\n");
 						}
-						vertexBufferData[bufferSize++] = posIndices[0];
-						vertexBufferData[bufferSize++] = posIndices[1];
-						vertexBufferData[bufferSize++] = posIndices[2];
-						vertexBufferData[bufferSize++] = posIndices[2];
-						vertexBufferData[bufferSize++] = posIndices[3];
-						vertexBufferData[bufferSize++] = posIndices[0];
+						vertexBufferData[bufferSize].positionIndex = posIndices[0];
+						vertexBufferData[bufferSize].dirIndexShadowLevel = faceDir | (shadowLevel[0] << 3);
+						bufferSize++;
+						vertexBufferData[bufferSize].positionIndex = posIndices[1];
+						vertexBufferData[bufferSize].dirIndexShadowLevel = faceDir | (shadowLevel[1] << 3);
+						bufferSize++;
+						vertexBufferData[bufferSize].positionIndex = posIndices[2];
+						vertexBufferData[bufferSize].dirIndexShadowLevel = faceDir | (shadowLevel[2] << 3);
+						bufferSize++;
+						vertexBufferData[bufferSize].positionIndex = posIndices[2];
+						vertexBufferData[bufferSize].dirIndexShadowLevel = faceDir | (shadowLevel[2] << 3);
+						bufferSize++;
+						vertexBufferData[bufferSize].positionIndex = posIndices[3];
+						vertexBufferData[bufferSize].dirIndexShadowLevel = faceDir | (shadowLevel[3] << 3);
+						bufferSize++;
+						vertexBufferData[bufferSize].positionIndex = posIndices[0];
+						vertexBufferData[bufferSize].dirIndexShadowLevel = faceDir | (shadowLevel[0] << 3);
+						bufferSize++;
 					}
 				}
 			}
 		}
 	}
 
-	glBufferData(GL_ARRAY_BUFFER, sizeof(GLushort) * bufferSize, vertexBufferData, GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(ChunkVertexData) * bufferSize, vertexBufferData, GL_STATIC_DRAW);
 
 	chunkFaces[index] = bufferSize / 3;
 	newFaces += chunkFaces[index];
