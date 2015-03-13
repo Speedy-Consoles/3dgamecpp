@@ -58,8 +58,9 @@ private:
 	glm::mat4 viewMatrix;
 	glm::mat4 modelMatrix;
 
-	// program Location
-	GLuint progLoc;
+	// program locations
+	GLuint blockProgLoc;
+	GLuint defaultProgLoc;
 
 	// uniform locations
 	GLuint ambientColorLoc;
@@ -105,14 +106,14 @@ private:
 
 #pragma pack(push)
 #pragma pack(1)
-	// buffer for chunk vertices
-	struct ChunkVertexData {
+	// buffer for block vertices
+	struct BlockVertexData {
 		GLushort positionIndex;
 		GLubyte dirIndexShadowLevel;
 	};
 #pragma pack(pop)
 
-	ChunkVertexData vertexBufferData[Chunk::WIDTH * Chunk::WIDTH * (Chunk::WIDTH + 1) * 3 * 2 * 3];
+	BlockVertexData blockVertexBuffer[Chunk::WIDTH * Chunk::WIDTH * (Chunk::WIDTH + 1) * 3 * 2 * 3];
 
 public:
 	GL3Renderer(Graphics *graphics, SDL_Window *window, World *world, const Menu *menu,
@@ -141,7 +142,9 @@ public:
 	void setConf(const GraphicsConf &);
 
 private:
-	void loadShaders();
+	void loadShaderPrograms();
+	void buildShader(GLuint shaderLoc, const char* fileName);
+	void buildProgram(GLuint programLoc, GLuint *shaders, int numShaders);
 
 	void render();
 	void renderScene();

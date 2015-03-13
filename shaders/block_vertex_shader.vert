@@ -33,4 +33,4 @@ void main() {
     float shadowBrightness = 1.0 - float(shadowLevel) / 3.0 * 0.2;
     vec3 diffuseLight = max(0, dot(NORMALS[dirIndex], normalize(diffuseLightDirection))) * diffuseLightColor;
     gl_Color = (ambientLightColor + diffuseLight) * shadowBrightness;
- }
+}

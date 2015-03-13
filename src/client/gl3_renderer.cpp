@@ -33,20 +33,21 @@ GL3Renderer::GL3Renderer(
 		state(*state),
 		localClientID(*localClientID),
 		stopwatch(stopwatch) {
-	loadShaders();
+	loadShaderPrograms();
 	initRenderDistanceDependent();
 	makeMaxFOV();
 
 	// save uniform locations
-	ambientColorLoc = glGetUniformLocation(progLoc, "ambientLightColor");
-	diffDirLoc = glGetUniformLocation(progLoc, "diffuseLightDirection");
-	diffColorLoc = glGetUniformLocation(progLoc, "diffuseLightColor");
+	ambientColorLoc = glGetUniformLocation(blockProgLoc, "ambientLightColor");
+	diffDirLoc = glGetUniformLocation(blockProgLoc, "diffuseLightDirection");
+	diffColorLoc = glGetUniformLocation(blockProgLoc, "diffuseLightColor");
 
-	projMatLoc = glGetUniformLocation(progLoc, "projectionMatrix");
-	viewMatLoc = glGetUniformLocation(progLoc, "viewMatrix");
-	modelMatLoc = glGetUniformLocation(progLoc, "modelMatrix");
+	projMatLoc = glGetUniformLocation(blockProgLoc, "projectionMatrix");
+	viewMatLoc = glGetUniformLocation(blockProgLoc, "viewMatrix");
+	modelMatLoc = glGetUniformLocation(blockProgLoc, "modelMatrix");
 
 	// make light
+	glUseProgram(blockProgLoc);
 	glUniform3fv(ambientColorLoc, 1, glm::value_ptr(glm::vec3(0.3f, 0.3f, 0.27f)));
 	glUniform3fv(diffDirLoc, 1, glm::value_ptr(glm::vec3(1.0f, 0.5f, 3.0f)));
 	glUniform3fv(diffColorLoc, 1, glm::value_ptr(glm::vec3(0.2f, 0.2f, 0.17f)));
@@ -57,82 +58,82 @@ GL3Renderer::~GL3Renderer() {
 	destroyRenderDistanceDependent();
 }
 
-void GL3Renderer::loadShaders() {
+void GL3Renderer::loadShaderPrograms() {
 	// Create the shaders
-	GLuint vertexShaderID = glCreateShader(GL_VERTEX_SHADER);
-	GLuint fragmentShaderID = glCreateShader(GL_FRAGMENT_SHADER);
+	GLuint blockVertexShaderLoc = glCreateShader(GL_VERTEX_SHADER);
+	GLuint defaultVertexShaderLoc = glCreateShader(GL_VERTEX_SHADER);
+	GLuint fragmentShaderLoc = glCreateShader(GL_FRAGMENT_SHADER);
 
+	LOG(DEBUG, "Building block vertex shader");
+	buildShader(blockVertexShaderLoc, "shaders/block_vertex_shader.vert");
+	LOG(DEBUG, "Building default vertex shader");
+	buildShader(defaultVertexShaderLoc, "shaders/default_vertex_shader.vert");
+	LOG(DEBUG, "Building fragment shader");
+	buildShader(fragmentShaderLoc, "shaders/fragment_shader.frag");
+
+	// create the programs
+	blockProgLoc = glCreateProgram();
+	defaultProgLoc = glCreateProgram();
+
+	GLuint blockProgramShaderLocs[2] = {blockVertexShaderLoc, fragmentShaderLoc};
+	GLuint defaultProgramShaderLocs[2] = {defaultVertexShaderLoc, fragmentShaderLoc};
+
+	LOG(DEBUG, "Building block program");
+	buildProgram(blockProgLoc, blockProgramShaderLocs, 2);
+	LOG(DEBUG, "Building default program");
+	buildProgram(defaultProgLoc, defaultProgramShaderLocs, 2);
+
+	// delete the shaders
+	glDeleteShader(blockVertexShaderLoc);
+	glDeleteShader(defaultVertexShaderLoc);
+	glDeleteShader(fragmentShaderLoc);
+	logOpenGLError();
+}
+
+void GL3Renderer::buildShader(GLuint shaderLoc, const char* fileName) {
 	// Read the Vertex Shader code from the file
-	std::string vertexShaderCode;
-	std::ifstream vertexShaderStream("shaders/vertex_shader.vert", std::ios::in);
-	if(vertexShaderStream.is_open())
+	std::string shaderCode;
+	std::ifstream shaderStream(fileName, std::ios::in);
+	if(shaderStream.is_open())
 	{
 		std::string Line = "";
-		while(getline(vertexShaderStream, Line))
-			vertexShaderCode += "\n" + Line;
-		vertexShaderStream.close();
+		while(getline(shaderStream, Line))
+			shaderCode += "\n" + Line;
+		shaderStream.close();
 	}
 
-	// Read the Fragment Shader code from the file
-	std::string fragmentShaderCode;
-	std::ifstream fragmentShaderStream("shaders/fragment_shader.frag", std::ios::in);
-	if(fragmentShaderStream.is_open()){
-		std::string Line = "";
-		while(getline(fragmentShaderStream, Line))
-			fragmentShaderCode += "\n" + Line;
-		fragmentShaderStream.close();
-	}
-
-	GLint Result = GL_FALSE;
-	int InfoLogLength;
-
-	// Compile Vertex Shader
-	LOG(DEBUG, "Compiling vertex shader");
-	char const * VertexSourcePointer = vertexShaderCode.c_str();
-	glShaderSource(vertexShaderID, 1, &VertexSourcePointer , NULL);
-	glCompileShader(vertexShaderID);
+	// Compile Shader
+	char const * sourcePointer = shaderCode.c_str();
+	glShaderSource(shaderLoc, 1, &sourcePointer , NULL);
+	glCompileShader(shaderLoc);
 
 	// Check Vertex Shader
-	glGetShaderiv(vertexShaderID, GL_COMPILE_STATUS, &Result);
-	glGetShaderiv(vertexShaderID, GL_INFO_LOG_LENGTH, &InfoLogLength);
-	std::vector<char> VertexShaderErrorMessage(InfoLogLength);
-	glGetShaderInfoLog(vertexShaderID, InfoLogLength, NULL, &VertexShaderErrorMessage[0]);
+	GLint Result = GL_FALSE;
+	int InfoLogLength;
+	glGetShaderiv(shaderLoc, GL_COMPILE_STATUS, &Result);
+	glGetShaderiv(shaderLoc, GL_INFO_LOG_LENGTH, &InfoLogLength);
+	std::vector<char> shaderErrorMessage(InfoLogLength);
+	glGetShaderInfoLog(shaderLoc, InfoLogLength, NULL, &shaderErrorMessage[0]);
 	// TODO use logging
-	fprintf(stdout, "%s\n", &VertexShaderErrorMessage[0]);
+	fprintf(stdout, "%s\n", &shaderErrorMessage[0]);
+}
 
-	// Compile Fragment Shader
-	LOG(DEBUG, "Compiling fragment shader");
-	char const * FragmentSourcePointer = fragmentShaderCode.c_str();
-	glShaderSource(fragmentShaderID, 1, &FragmentSourcePointer , NULL);
-	glCompileShader(fragmentShaderID);
-
-	// Check Fragment Shader
-	glGetShaderiv(fragmentShaderID, GL_COMPILE_STATUS, &Result);
-	glGetShaderiv(fragmentShaderID, GL_INFO_LOG_LENGTH, &InfoLogLength);
-	std::vector<char> FragmentShaderErrorMessage(InfoLogLength);
-	glGetShaderInfoLog(fragmentShaderID, InfoLogLength, NULL, &FragmentShaderErrorMessage[0]);
-	// TODO use logging
-	fprintf(stdout, "%s\n", &FragmentShaderErrorMessage[0]);
-
+void GL3Renderer::buildProgram(GLuint programLoc, GLuint *shaders, int numShaders) {
 	// Link the program
-	LOG(DEBUG, "Linking program");
-	progLoc = glCreateProgram();
-	glAttachShader(progLoc, vertexShaderID);
-	glAttachShader(progLoc, fragmentShaderID);
-	glLinkProgram(progLoc);
+	for (int i = 0; i < numShaders; i++) {
+		glAttachShader(programLoc, shaders[i]);
+	}
+	glLinkProgram(programLoc);
 
 	// Check the program
-	glGetProgramiv(progLoc, GL_LINK_STATUS, &Result);
-	glGetProgramiv(progLoc, GL_INFO_LOG_LENGTH, &InfoLogLength);
+	GLint Result = GL_FALSE;
+	int InfoLogLength;
+	glGetProgramiv(programLoc, GL_LINK_STATUS, &Result);
+	glGetProgramiv(programLoc, GL_INFO_LOG_LENGTH, &InfoLogLength);
 	std::vector<char> programErrorMessage(std::max(InfoLogLength, int(1)));
-	glGetProgramInfoLog(progLoc, InfoLogLength, NULL, &programErrorMessage[0]);
+	glGetProgramInfoLog(programLoc, InfoLogLength, NULL, &programErrorMessage[0]);
 	// TODO use logging
 	fprintf(stdout, "%s\n", &programErrorMessage[0]);
-
-	glDeleteShader(vertexShaderID);
-	glDeleteShader(fragmentShaderID);
-
-	glUseProgram(progLoc);
 }
 
 void GL3Renderer::resize(int width, int height) {
@@ -171,18 +172,22 @@ void GL3Renderer::makeOrthogonalMatrix() {
 }
 
 void GL3Renderer::setPerspectiveMatrix() {
+	glUseProgram(blockProgLoc);
 	glUniformMatrix4fv(projMatLoc, 1, GL_FALSE, glm::value_ptr(perspectiveMatrix));
 }
 
 void GL3Renderer::setOrthogonalMatrix() {
+	glUseProgram(blockProgLoc);
 	glUniformMatrix4fv(projMatLoc, 1, GL_FALSE, glm::value_ptr(orthogonalMatrix));
 }
 
 void GL3Renderer::setViewMatrix() {
+	glUseProgram(blockProgLoc);
 	glUniformMatrix4fv(viewMatLoc, 1, GL_FALSE, glm::value_ptr(viewMatrix));
 }
 
 void GL3Renderer::setModelMatrix() {
+	glUseProgram(blockProgLoc);
 	glUniformMatrix4fv(modelMatLoc, 1, GL_FALSE, glm::value_ptr(modelMatrix));
 }
 
@@ -267,6 +272,7 @@ void GL3Renderer::destroyRenderDistanceDependent() {
 	delete vsFringe;
 	delete vsIndices;
 }
+
 void GL3Renderer::tick() {
 	render();
 
@@ -299,6 +305,7 @@ void GL3Renderer::tick() {
 void GL3Renderer::render() {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glEnable(GL_DEPTH_TEST);
+	logOpenGLError();
 
 	setPerspectiveMatrix();
 
@@ -364,6 +371,9 @@ void GL3Renderer::renderScene() {
 }
 
 void GL3Renderer::renderChunks() {
+	glUseProgram(blockProgLoc);
+	logOpenGLError();
+
 	int length = conf.render_distance * 2 + 1;
 
 	vec3i64 ccc;
@@ -466,6 +476,7 @@ void GL3Renderer::renderChunks() {
 		}
 	}
 	glBindVertexArray(0);
+	logOpenGLError();
 }
 
 bool GL3Renderer::inFrustum(vec3i64 cc, vec3i64 pos, vec3d lookDir) {
@@ -497,6 +508,7 @@ void GL3Renderer::renderChunk(Chunk &c) {
 	chunkPassThroughs[index] = c.getPassThroughs();
 
 	glBindBuffer(GL_ARRAY_BUFFER, vbos[index]);
+	logOpenGLError();
 
 	if (c.getAirBlocks() == Chunk::WIDTH * Chunk::WIDTH * Chunk::WIDTH) {
 		glBufferData(GL_ARRAY_BUFFER, 0, 0, GL_STATIC_DRAW);
@@ -515,7 +527,6 @@ void GL3Renderer::renderChunk(Chunk &c) {
 	size_t bufferSize = 0;
 
 	const uint8 *blocks = c.getBlocks();
-	int fbi = 0;
 	for (uint8 d = 0; d < 3; d++) {
 		vec3i64 dir = uDirs[d].cast<int64>();
 		uint i = 0;
@@ -574,8 +585,6 @@ void GL3Renderer::renderChunk(Chunk &c) {
 								corners |= 1 << j;
 							}
 						}
-
-						vec2f texs[4];
 						vec3i64 bc = c.getCC() * c.WIDTH + faceBlock.cast<int64>();
 
 						ushort posIndices[4];
@@ -593,31 +602,24 @@ void GL3Renderer::renderChunk(Chunk &c) {
 								shadowLevel[j]++;
 							vec3ui8 vertex = faceBlock.cast<uint8>() + QUAD_CYCLES_3D[faceDir][j].cast<uint8>();
 							posIndices[j] = (vertex[2] * (Chunk::WIDTH + 1) + vertex[1]) * (Chunk::WIDTH + 1) + vertex[0];
-							vec3i asdf = faceBlock.cast<int>() + QUAD_CYCLES_3D[faceDir][j];
-							if (asdf[0] < 0 || asdf[0] > 32)
-								printf("bla\n");
-							if (asdf[1] < 0 ||asdf[1] > 32)
-								printf("bla\n");
-							if (asdf[2] < 0 ||asdf[2] > 32)
-								printf("bla\n");
 						}
-						vertexBufferData[bufferSize].positionIndex = posIndices[0];
-						vertexBufferData[bufferSize].dirIndexShadowLevel = faceDir | (shadowLevel[0] << 3);
+						blockVertexBuffer[bufferSize].positionIndex = posIndices[0];
+						blockVertexBuffer[bufferSize].dirIndexShadowLevel = faceDir | (shadowLevel[0] << 3);
 						bufferSize++;
-						vertexBufferData[bufferSize].positionIndex = posIndices[1];
-						vertexBufferData[bufferSize].dirIndexShadowLevel = faceDir | (shadowLevel[1] << 3);
+						blockVertexBuffer[bufferSize].positionIndex = posIndices[1];
+						blockVertexBuffer[bufferSize].dirIndexShadowLevel = faceDir | (shadowLevel[1] << 3);
 						bufferSize++;
-						vertexBufferData[bufferSize].positionIndex = posIndices[2];
-						vertexBufferData[bufferSize].dirIndexShadowLevel = faceDir | (shadowLevel[2] << 3);
+						blockVertexBuffer[bufferSize].positionIndex = posIndices[2];
+						blockVertexBuffer[bufferSize].dirIndexShadowLevel = faceDir | (shadowLevel[2] << 3);
 						bufferSize++;
-						vertexBufferData[bufferSize].positionIndex = posIndices[2];
-						vertexBufferData[bufferSize].dirIndexShadowLevel = faceDir | (shadowLevel[2] << 3);
+						blockVertexBuffer[bufferSize].positionIndex = posIndices[2];
+						blockVertexBuffer[bufferSize].dirIndexShadowLevel = faceDir | (shadowLevel[2] << 3);
 						bufferSize++;
-						vertexBufferData[bufferSize].positionIndex = posIndices[3];
-						vertexBufferData[bufferSize].dirIndexShadowLevel = faceDir | (shadowLevel[3] << 3);
+						blockVertexBuffer[bufferSize].positionIndex = posIndices[3];
+						blockVertexBuffer[bufferSize].dirIndexShadowLevel = faceDir | (shadowLevel[3] << 3);
 						bufferSize++;
-						vertexBufferData[bufferSize].positionIndex = posIndices[0];
-						vertexBufferData[bufferSize].dirIndexShadowLevel = faceDir | (shadowLevel[0] << 3);
+						blockVertexBuffer[bufferSize].positionIndex = posIndices[0];
+						blockVertexBuffer[bufferSize].dirIndexShadowLevel = faceDir | (shadowLevel[0] << 3);
 						bufferSize++;
 					}
 				}
@@ -625,23 +627,31 @@ void GL3Renderer::renderChunk(Chunk &c) {
 		}
 	}
 
-	glBufferData(GL_ARRAY_BUFFER, sizeof(ChunkVertexData) * bufferSize, vertexBufferData, GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(BlockVertexData) * bufferSize, blockVertexBuffer, GL_STATIC_DRAW);
+	logOpenGLError();
 
 	chunkFaces[index] = bufferSize / 3;
 	newFaces += chunkFaces[index];
 	faces += chunkFaces[index];
 	stopwatch->stop(CLOCK_NDL);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	logOpenGLError();
 }
 
 void GL3Renderer::renderMenu() {
+	glUseProgram(defaultProgLoc);
+	logOpenGLError();
 
 }
 
 void GL3Renderer::renderTarget() {
+	glUseProgram(defaultProgLoc);
+	logOpenGLError();
 
 }
 
 void GL3Renderer::renderPlayers() {
+	glUseProgram(defaultProgLoc);
+	logOpenGLError();
 
 }
