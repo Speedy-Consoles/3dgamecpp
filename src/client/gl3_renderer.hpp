@@ -6,6 +6,7 @@
 #include <glm/vec3.hpp>
 
 #include "renderer.hpp"
+#include "shaders.hpp"
 
 #include "game/chunk.hpp"
 #include "util.hpp"
@@ -52,24 +53,12 @@ private:
 	static const int MAX_NEW_QUADS = 6000;
 	static const int MAX_NEW_CHUNKS = 500;
 
-	// transformation matrices
+	// projection matrices
 	glm::mat4 perspectiveMatrix;
 	glm::mat4 orthogonalMatrix;
-	glm::mat4 viewMatrix;
-	glm::mat4 modelMatrix;
 
-	// program locations
-	GLuint blockProgLoc;
-	GLuint defaultProgLoc;
-
-	// uniform locations
-	GLuint ambientColorLoc;
-	GLuint diffDirLoc;
-	GLuint diffColorLoc;
-
-	GLuint projMatLoc;
-	GLuint viewMatLoc;
-	GLuint modelMatLoc;
+	// shaders
+	Shaders shaders;
 
 	// vao, vbo locations
 	GLuint *vaos;
@@ -128,11 +117,6 @@ public:
 	void makeOrthogonalMatrix();
 	void makeMaxFOV();
 
-	void setViewMatrix();
-	void setModelMatrix();
-	void setPerspectiveMatrix();
-	void setOrthogonalMatrix();
-
 	void setDebug(bool debugActive);
 	bool isDebug();
 
@@ -147,7 +131,6 @@ private:
 	void buildProgram(GLuint programLoc, GLuint *shaders, int numShaders);
 
 	void render();
-	void renderScene();
 	void renderChunks();
 	void renderChunk(Chunk &c);
 	void renderMenu();

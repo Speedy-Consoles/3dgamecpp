@@ -1,8 +1,6 @@
 #include "gl3_renderer.hpp"
 
-#include <fstream>
 #include <SDL2/SDL.h>
-#include <glm/gtc/type_ptr.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
 #include "engine/logging.hpp"
@@ -33,107 +31,22 @@ GL3Renderer::GL3Renderer(
 		state(*state),
 		localClientID(*localClientID),
 		stopwatch(stopwatch) {
-	loadShaderPrograms();
 	initRenderDistanceDependent();
 	makeMaxFOV();
 
-	// save uniform locations
-	ambientColorLoc = glGetUniformLocation(blockProgLoc, "ambientLightColor");
-	diffDirLoc = glGetUniformLocation(blockProgLoc, "diffuseLightDirection");
-	diffColorLoc = glGetUniformLocation(blockProgLoc, "diffuseLightColor");
+	// light
+	glm::vec3 ambientColor = glm::vec3(0.3f, 0.3f, 0.27f);
+	glm::vec3 diffuseDirection = glm::vec3(1.0f, 0.5f, 3.0f);
+	glm::vec3 diffuseColor = glm::vec3(0.2f, 0.2f, 0.17f);
 
-	projMatLoc = glGetUniformLocation(blockProgLoc, "projectionMatrix");
-	viewMatLoc = glGetUniformLocation(blockProgLoc, "viewMatrix");
-	modelMatLoc = glGetUniformLocation(blockProgLoc, "modelMatrix");
-
-	// make light
-	glUseProgram(blockProgLoc);
-	glUniform3fv(ambientColorLoc, 1, glm::value_ptr(glm::vec3(0.3f, 0.3f, 0.27f)));
-	glUniform3fv(diffDirLoc, 1, glm::value_ptr(glm::vec3(1.0f, 0.5f, 3.0f)));
-	glUniform3fv(diffColorLoc, 1, glm::value_ptr(glm::vec3(0.2f, 0.2f, 0.17f)));
+	shaders.setAmbientLightColor(ambientColor);
+	shaders.setDiffuseLightDirection(diffuseDirection);
+	shaders.setDiffuseLightColor(diffuseColor);
 }
 
 GL3Renderer::~GL3Renderer() {
-	LOG(DEBUG, "Destroying Graphics");
+	LOG(DEBUG, "Destroying GL3 renderer");
 	destroyRenderDistanceDependent();
-}
-
-void GL3Renderer::loadShaderPrograms() {
-	// Create the shaders
-	GLuint blockVertexShaderLoc = glCreateShader(GL_VERTEX_SHADER);
-	GLuint defaultVertexShaderLoc = glCreateShader(GL_VERTEX_SHADER);
-	GLuint fragmentShaderLoc = glCreateShader(GL_FRAGMENT_SHADER);
-
-	LOG(DEBUG, "Building block vertex shader");
-	buildShader(blockVertexShaderLoc, "shaders/block_vertex_shader.vert");
-	LOG(DEBUG, "Building default vertex shader");
-	buildShader(defaultVertexShaderLoc, "shaders/default_vertex_shader.vert");
-	LOG(DEBUG, "Building fragment shader");
-	buildShader(fragmentShaderLoc, "shaders/fragment_shader.frag");
-
-	// create the programs
-	blockProgLoc = glCreateProgram();
-	defaultProgLoc = glCreateProgram();
-
-	GLuint blockProgramShaderLocs[2] = {blockVertexShaderLoc, fragmentShaderLoc};
-	GLuint defaultProgramShaderLocs[2] = {defaultVertexShaderLoc, fragmentShaderLoc};
-
-	LOG(DEBUG, "Building block program");
-	buildProgram(blockProgLoc, blockProgramShaderLocs, 2);
-	LOG(DEBUG, "Building default program");
-	buildProgram(defaultProgLoc, defaultProgramShaderLocs, 2);
-
-	// delete the shaders
-	glDeleteShader(blockVertexShaderLoc);
-	glDeleteShader(defaultVertexShaderLoc);
-	glDeleteShader(fragmentShaderLoc);
-	logOpenGLError();
-}
-
-void GL3Renderer::buildShader(GLuint shaderLoc, const char* fileName) {
-	// Read the Vertex Shader code from the file
-	std::string shaderCode;
-	std::ifstream shaderStream(fileName, std::ios::in);
-	if(shaderStream.is_open())
-	{
-		std::string Line = "";
-		while(getline(shaderStream, Line))
-			shaderCode += "\n" + Line;
-		shaderStream.close();
-	}
-
-	// Compile Shader
-	char const * sourcePointer = shaderCode.c_str();
-	glShaderSource(shaderLoc, 1, &sourcePointer , NULL);
-	glCompileShader(shaderLoc);
-
-	// Check Vertex Shader
-	GLint Result = GL_FALSE;
-	int InfoLogLength;
-	glGetShaderiv(shaderLoc, GL_COMPILE_STATUS, &Result);
-	glGetShaderiv(shaderLoc, GL_INFO_LOG_LENGTH, &InfoLogLength);
-	std::vector<char> shaderErrorMessage(InfoLogLength);
-	glGetShaderInfoLog(shaderLoc, InfoLogLength, NULL, &shaderErrorMessage[0]);
-	// TODO use logging
-	fprintf(stdout, "%s\n", &shaderErrorMessage[0]);
-}
-
-void GL3Renderer::buildProgram(GLuint programLoc, GLuint *shaders, int numShaders) {
-	// Link the program
-	for (int i = 0; i < numShaders; i++) {
-		glAttachShader(programLoc, shaders[i]);
-	}
-	glLinkProgram(programLoc);
-
-	// Check the program
-	GLint Result = GL_FALSE;
-	int InfoLogLength;
-	glGetProgramiv(programLoc, GL_LINK_STATUS, &Result);
-	glGetProgramiv(programLoc, GL_INFO_LOG_LENGTH, &InfoLogLength);
-	std::vector<char> programErrorMessage(std::max(InfoLogLength, int(1)));
-	glGetProgramInfoLog(programLoc, InfoLogLength, NULL, &programErrorMessage[0]);
-	// TODO use logging
-	fprintf(stdout, "%s\n", &programErrorMessage[0]);
 }
 
 void GL3Renderer::resize(int width, int height) {
@@ -169,26 +82,6 @@ void GL3Renderer::makeOrthogonalMatrix() {
 		orthogonalMatrix = glm::ortho(-DEFAULT_WINDOWED_RES[1] * currentRatio / 2.0f, DEFAULT_WINDOWED_RES[1]
 				* currentRatio / 2.0f, -DEFAULT_WINDOWED_RES[1] / 2.0f,
 				DEFAULT_WINDOWED_RES[1] / 2.0f, 1.0f, -1.0f);
-}
-
-void GL3Renderer::setPerspectiveMatrix() {
-	glUseProgram(blockProgLoc);
-	glUniformMatrix4fv(projMatLoc, 1, GL_FALSE, glm::value_ptr(perspectiveMatrix));
-}
-
-void GL3Renderer::setOrthogonalMatrix() {
-	glUseProgram(blockProgLoc);
-	glUniformMatrix4fv(projMatLoc, 1, GL_FALSE, glm::value_ptr(orthogonalMatrix));
-}
-
-void GL3Renderer::setViewMatrix() {
-	glUseProgram(blockProgLoc);
-	glUniformMatrix4fv(viewMatLoc, 1, GL_FALSE, glm::value_ptr(viewMatrix));
-}
-
-void GL3Renderer::setModelMatrix() {
-	glUseProgram(blockProgLoc);
-	glUniformMatrix4fv(modelMatLoc, 1, GL_FALSE, glm::value_ptr(modelMatrix));
 }
 
 void GL3Renderer::makeMaxFOV() {
@@ -276,13 +169,7 @@ void GL3Renderer::destroyRenderDistanceDependent() {
 void GL3Renderer::tick() {
 	render();
 
-	stopwatch->start(CLOCK_FSH);
-	//glFinish();
-	stopwatch->stop(CLOCK_FSH);
-
-	stopwatch->start(CLOCK_FLP);
 	SDL_GL_SwapWindow(window);
-	stopwatch->stop(CLOCK_FLP);
 
 	if (getCurrentTime() - lastStopWatchSave > millis(200)) {
 		lastStopWatchSave = getCurrentTime();
@@ -307,20 +194,19 @@ void GL3Renderer::render() {
 	glEnable(GL_DEPTH_TEST);
 	logOpenGLError();
 
-	setPerspectiveMatrix();
-
 	Player &player = world->getPlayer(localClientID);
 	if (player.isValid()) {
+		shaders.setProjectionMatrix(perspectiveMatrix);
 
-		modelMatrix = glm::mat4(1.0f);
-		setModelMatrix();
+		// view matrix for sky
+		glm::mat4 viewMatrix = glm::rotate(glm::mat4(1.0f), (float) (-player.getPitch() / 360.0 * TAU), glm::vec3(1.0f, 0.0f, 0.0f));
+		shaders.setModelMatrix(glm::mat4(1.0f));
+		shaders.setViewMatrix(viewMatrix);
 
-		// Render sky
-		viewMatrix = glm::rotate(glm::mat4(1.0f), (float) (-player.getPitch() / 360.0 * TAU), glm::vec3(1.0f, 0.0f, 0.0f));
-		setViewMatrix();
+		// render sky
 		//renderSky();
 
-		// Render Scene
+		// view matrix for scene
 		viewMatrix = glm::rotate(viewMatrix, (float) (-player.getYaw() / 360.0 * TAU), glm::vec3(0.0f, 1.0f, 0.0f));
 		viewMatrix = glm::rotate(viewMatrix, (float) (-TAU / 4.0), glm::vec3(1.0f, 0.0f, 0.0f));
 		viewMatrix = glm::rotate(viewMatrix, (float) (TAU / 4.0), glm::vec3(0.0f, 0.0f, 1.0f));
@@ -331,49 +217,29 @@ void GL3Renderer::render() {
 			(float) -((playerPos[1] % m + m) % m) / RESOLUTION,
 			(float) -((playerPos[2] % m + m) % m) / RESOLUTION)
 		);
-		setViewMatrix();
-		renderScene();
+		shaders.setViewMatrix(viewMatrix);
+
+		// render scene
+		renderChunks();
+		renderTarget();
+		renderPlayers();
 	}
 
 	// render overlay
-	setOrthogonalMatrix();
-	modelMatrix = glm::mat4(1.0);
+	shaders.setModelMatrix(glm::mat4(1.0f));
+	shaders.setViewMatrix(glm::mat4(1.0f));
+	shaders.setProjectionMatrix(orthogonalMatrix);
 
 	if (state == PLAYING && player.isValid()) {
-		stopwatch->start(CLOCK_HUD);
 		//renderHud(player);
 		//if (debugActive)
 		//	renderDebugInfo(player);
-		stopwatch->stop(CLOCK_HUD);
 	} else if (state == IN_MENU){
 		renderMenu();
 	}
 }
 
-void GL3Renderer::renderScene() {
-	/*glEnable(GL_DEPTH_TEST);
-	glEnable(GL_TEXTURE_2D);
-	glEnable(GL_LIGHTING);
-	if (conf.fog != Fog::NONE) glEnable(GL_FOG);
-
-	glLightfv(GL_LIGHT0, GL_POSITION, sunLightPosition.ptr());*/
-
-	// render chunks
-	stopwatch->start(CLOCK_CHR);
-	renderChunks();
-	renderTarget();
-	stopwatch->stop(CLOCK_CHR);
-
-	// render players
-	stopwatch->start(CLOCK_PLA);
-	renderPlayers();
-	stopwatch->stop(CLOCK_PLA);
-}
-
 void GL3Renderer::renderChunks() {
-	glUseProgram(blockProgLoc);
-	logOpenGLError();
-
 	int length = conf.render_distance * 2 + 1;
 
 	vec3i64 ccc;
@@ -422,15 +288,12 @@ void GL3Renderer::renderChunks() {
 		if (vaoStatus[index] != NO_CHUNK && vaoChunks[index] == cc) {
 			if (chunkFaces[index] > 0) {
 				visibleFaces += chunkFaces[index];
-				stopwatch->start(CLOCK_DLC);
-				glm::mat4 oldModelMatrix = modelMatrix;
-				modelMatrix = glm::translate(modelMatrix, glm::vec3((float) (cd[0] * (int) Chunk::WIDTH), (float) (cd[1] * (int) Chunk::WIDTH), (float) (cd[2] * (int) Chunk::WIDTH)));
-				setModelMatrix();
 				glBindVertexArray(vaos[index]);
+				glm::mat4 modelMatrix = glm::translate(glm::mat4(1.0f), glm::vec3((float) (cd[0] * (int) Chunk::WIDTH), (float) (cd[1] * (int) Chunk::WIDTH), (float) (cd[2] * (int) Chunk::WIDTH)));
+				shaders.setModelMatrix(modelMatrix);
+				shaders.prepareProgram(BLOCK_PROGRAM);
 				glDrawArrays(GL_TRIANGLES, 0, chunkFaces[index] * 3);
 				logOpenGLError();
-				modelMatrix = oldModelMatrix;
-				stopwatch->stop(CLOCK_DLC);
 			}
 
 			for (int d = 0; d < 6; d++) {
@@ -491,7 +354,6 @@ bool GL3Renderer::inFrustum(vec3i64 cc, vec3i64 pos, vec3d lookDir) {
 }
 
 void GL3Renderer::renderChunk(Chunk &c) {
-	stopwatch->start(CLOCK_NDL);
 	vec3i64 cc = c.getCC();
 
 	int length = conf.render_distance * 2 + 1;
@@ -513,7 +375,6 @@ void GL3Renderer::renderChunk(Chunk &c) {
 	if (c.getAirBlocks() == Chunk::WIDTH * Chunk::WIDTH * Chunk::WIDTH) {
 		glBufferData(GL_ARRAY_BUFFER, 0, 0, GL_STATIC_DRAW);
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
-		stopwatch->stop(CLOCK_NDL);
 		return;
 	}
 
@@ -633,25 +494,18 @@ void GL3Renderer::renderChunk(Chunk &c) {
 	chunkFaces[index] = bufferSize / 3;
 	newFaces += chunkFaces[index];
 	faces += chunkFaces[index];
-	stopwatch->stop(CLOCK_NDL);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	logOpenGLError();
 }
 
 void GL3Renderer::renderMenu() {
-	glUseProgram(defaultProgLoc);
-	logOpenGLError();
 
 }
 
 void GL3Renderer::renderTarget() {
-	glUseProgram(defaultProgLoc);
-	logOpenGLError();
 
 }
 
 void GL3Renderer::renderPlayers() {
-	glUseProgram(defaultProgLoc);
-	logOpenGLError();
 
 }
