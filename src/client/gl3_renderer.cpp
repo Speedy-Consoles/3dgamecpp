@@ -33,6 +33,9 @@ GL3Renderer::GL3Renderer(
 		stopwatch(stopwatch) {
 	initRenderDistanceDependent();
 	makeMaxFOV();
+	glViewport(0, 0, graphics->getWidth(), graphics->getHeight());
+	makePerspectiveMatrix();
+	makeOrthogonalMatrix();
 
 	// light
 	glm::vec3 ambientColor = glm::vec3(0.3f, 0.3f, 0.27f);

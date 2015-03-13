@@ -202,12 +202,4 @@ void Shaders::prepareProgram(ShaderProgram program) {
 		}
 		break;
 	}
-
-	/*glUniform3fv(blockAmbientColorLoc, 1, glm::value_ptr(glm::vec3(1.0f)));
-	glUniform3fv(blockDiffColorLoc, 1, glm::value_ptr(glm::vec3(1.0f)));
-	glUniform3fv(blockDiffDirLoc, 1, glm::value_ptr(glm::vec3(1.0f)));
-	glUniformMatrix4fv(blockModelMatLoc, 1, GL_FALSE, glm::value_ptr(glm::mat4(1.0f)));
-	glUniformMatrix4fv(blockViewMatLoc, 1, GL_FALSE, glm::value_ptr(glm::mat4(1.0f)));
-	glUniformMatrix4fv(blockProjMatLoc, 1, GL_FALSE, glm::value_ptr(glm::mat4(1.0f)));
-	glUseProgram(programLocations[BLOCK_PROGRAM]);*/
 }
