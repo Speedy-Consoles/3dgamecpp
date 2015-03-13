@@ -41,15 +41,15 @@ Shaders::Shaders() {
 	blockDiffColorLoc = glGetUniformLocation(programLocations[BLOCK_PROGRAM], "diffuseLightColor");
 	blockDiffDirLoc = glGetUniformLocation(programLocations[BLOCK_PROGRAM], "diffuseLightDirection");
 	blockModelMatLoc = glGetUniformLocation(programLocations[BLOCK_PROGRAM], "modelMatrix");
-	blockViewMatLoc = glGetUniformLocation(programLocations[BLOCK_PROGRAM], "modelMatrix");
-	blockProjMatLoc = glGetUniformLocation(programLocations[BLOCK_PROGRAM], "modelMatrix");
+	blockViewMatLoc = glGetUniformLocation(programLocations[BLOCK_PROGRAM], "viewMatrix");
+	blockProjMatLoc = glGetUniformLocation(programLocations[BLOCK_PROGRAM], "projectionMatrix");
 
 	defaultAmbientColorLoc = glGetUniformLocation(programLocations[DEFAULT_PROGRAM], "ambientLightColor");
 	defaultDiffColorLoc = glGetUniformLocation(programLocations[DEFAULT_PROGRAM], "diffuseLightColor");
 	defaultDiffDirLoc = glGetUniformLocation(programLocations[DEFAULT_PROGRAM], "diffuseLightDirection");
 	defaultModelMatLoc = glGetUniformLocation(programLocations[DEFAULT_PROGRAM], "modelMatrix");
-	defaultViewMatLoc = glGetUniformLocation(programLocations[DEFAULT_PROGRAM], "modelMatrix");
-	defaultProjMatLoc = glGetUniformLocation(programLocations[DEFAULT_PROGRAM], "modelMatrix");
+	defaultViewMatLoc = glGetUniformLocation(programLocations[DEFAULT_PROGRAM], "viewMatrix");
+	defaultProjMatLoc = glGetUniformLocation(programLocations[DEFAULT_PROGRAM], "projectionMatrix");
 
 	activeProgram = DEFAULT_PROGRAM;
 	glUseProgram(programLocations[DEFAULT_PROGRAM]);
