@@ -18,28 +18,35 @@ const vec3 NORMALS[6] = vec3[6](
 	vec3( 0.0,  0.0, -1.0)
 );
 
-uniform vec3 ambientLightColor;
-uniform vec3 diffuseLightDirection;
-uniform vec3 diffuseLightColor;
+const vec2 CORNER_POSITIONS[4] = vec2[4](
+	vec2(0.0, 0.0),
+	vec2(1.0, 0.0),
+	vec2(1.0, 1.0),
+	vec2(0.0, 1.0)
+);
 
 uniform mat4 projectionMatrix;
 uniform mat4 viewMatrix;
 uniform mat4 modelMatrix;
 
 layout(location = 0) in uint posIndex;
-layout(location = 1) in uint dirIndexShadowLevel;
+layout(location = 1) in uint dirIndexCornerIndex;
+layout(location = 2) in uint shadowLevels;
 
-out vec3 vfColor;
+out vec3 vfNormal;
+out vec2 vfCornerPosition;
+out float[4] vfShadowLevels;
 
 void main() {
-	gl_Position.x = mod(posIndex, 33u);
-	gl_Position.y = mod(posIndex / 33u, 33u);
-	gl_Position.z = posIndex / (33u * 33u);
-    gl_Position.w = 1.0;
-    gl_Position = projectionMatrix * viewMatrix * modelMatrix * gl_Position;
-    uint dirIndex = dirIndexShadowLevel & 7u;
-    uint shadowLevel = dirIndexShadowLevel >> 3u;
-    float shadowBrightness = 1.0 - float(shadowLevel) / 3.0 * 0.2;
-    vec3 diffuseLight = max(0, dot(NORMALS[dirIndex], normalize(diffuseLightDirection))) * diffuseLightColor;
-    vfColor = (ambientLightColor + diffuseLight) * shadowBrightness;
+	vec4 position = vec4(mod(posIndex, 33u), mod(posIndex / 33u, 33u), posIndex / (33u * 33u), 1.0);
+	gl_Position = projectionMatrix * viewMatrix * modelMatrix * position;
+
+	int dirIndex = int(dirIndexCornerIndex & 7u);
+	vfNormal = NORMALS[dirIndex];
+
+	for (int i = 0; i < 4; i++) {
+		vfShadowLevels[i] = float((shadowLevels >> 2 * i) & 3u) / 3.0;
+	}
+
+	vfCornerPosition = CORNER_POSITIONS[dirIndexCornerIndex >> 3u];
 }

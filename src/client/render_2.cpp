@@ -410,7 +410,7 @@ void GL2Renderer::renderChunk(Chunk &c) {
 								light -= 0.2;
 							if (s2)
 								light -= 0.2;
-							if (m && !(s1 && s2))
+							if (m || (s1 && s2))
 								light -= 0.2;
 							faceBuffer[fbi++] = light;
 							faceBuffer[fbi++] = light;

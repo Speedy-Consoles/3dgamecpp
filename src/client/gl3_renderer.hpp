@@ -96,7 +96,8 @@ private:
 	// buffer for block vertices
 	struct BlockVertexData {
 		GLushort positionIndex;
-		GLubyte dirIndexShadowLevel;
+		GLubyte dirIndexCornerIndex;
+		GLubyte shadowLevels;
 	};
 
 	struct HudVertexData {
