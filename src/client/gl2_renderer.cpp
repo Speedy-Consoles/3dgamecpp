@@ -35,8 +35,13 @@ GL2Renderer::GL2Renderer(
 		localClientID(*localClientID),
 		texManager(conf),
 		stopwatch(stopwatch) {
-
 	makeMaxFOV();
+	makePerspective();
+	makeOrthogonal();
+
+	// update framebuffer object
+	if (conf.aa != AntiAliasing::NONE)
+		createFBO();
 
 	initGL();
 	for (int i = 0; i < 20; i++) {
@@ -205,8 +210,7 @@ void GL2Renderer::initRenderDistanceDependent() {
 	faces = 0;
 }
 
-void GL2Renderer::resize(int width, int height) {
-	glViewport(0, 0, width, height);
+void GL2Renderer::resize() {
 	makePerspective();
 	makeOrthogonal();
 

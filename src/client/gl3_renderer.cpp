@@ -1,8 +1,6 @@
 #include "gl3_renderer.hpp"
 
-#include <fstream>
 #include <SDL2/SDL.h>
-#include <glm/gtc/type_ptr.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
 #include "engine/logging.hpp"
@@ -33,111 +31,64 @@ GL3Renderer::GL3Renderer(
 		state(*state),
 		localClientID(*localClientID),
 		stopwatch(stopwatch) {
-	loadShaders();
 	initRenderDistanceDependent();
 	makeMaxFOV();
+	makePerspectiveMatrix();
+	makeOrthogonalMatrix();
 
-	// save uniform locations
-	ambientColorLoc = glGetUniformLocation(progLoc, "ambientLightColor");
-	diffDirLoc = glGetUniformLocation(progLoc, "diffuseLightDirection");
-	diffColorLoc = glGetUniformLocation(progLoc, "diffuseLightColor");
+	// light
+	glm::vec3 ambientColor = glm::vec3(0.3f, 0.3f, 0.27f);
+	glm::vec3 diffuseDirection = glm::vec3(1.0f, 0.5f, 3.0f);
+	glm::vec3 diffuseColor = glm::vec3(0.2f, 0.2f, 0.17f);
 
-	projMatLoc = glGetUniformLocation(progLoc, "projectionMatrix");
-	viewMatLoc = glGetUniformLocation(progLoc, "viewMatrix");
-	modelMatLoc = glGetUniformLocation(progLoc, "modelMatrix");
+	shaders.setAmbientLightColor(ambientColor);
+	shaders.setDiffuseLightDirection(diffuseDirection);
+	shaders.setDiffuseLightColor(diffuseColor);
 
-	// make light
-	glUniform3fv(ambientColorLoc, 1, glm::value_ptr(glm::vec3(0.3f, 0.3f, 0.27f)));
-	glUniform3fv(diffDirLoc, 1, glm::value_ptr(glm::vec3(1.0f, 0.5f, 3.0f)));
-	glUniform3fv(diffColorLoc, 1, glm::value_ptr(glm::vec3(0.2f, 0.2f, 0.17f)));
+	buildCrossHair();
+
+	// gl stuff
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glEnable(GL_CULL_FACE);
+}
+
+void GL3Renderer::buildCrossHair() {
+	glGenVertexArrays(1, &crossHairVAO);
+	glGenBuffers(1, &crossHairVBO);
+	glBindVertexArray(crossHairVAO);
+	glBindBuffer(GL_ARRAY_BUFFER, crossHairVBO);
+
+	HudVertexData vertexData[12] = {
+			// x       y     r     g     b     a
+			{-20.0f,  -2.0f, 0.0f, 0.0f, 0.0f, 0.5f},
+			{ 20.0f,  -2.0f, 0.0f, 0.0f, 0.0f, 0.5f},
+			{ 20.0f,   2.0f, 0.0f, 0.0f, 0.0f, 0.5f},
+			{ 20.0f,   2.0f, 0.0f, 0.0f, 0.0f, 0.5f},
+			{-20.0f,   2.0f, 0.0f, 0.0f, 0.0f, 0.5f},
+			{-20.0f,  -2.0f, 0.0f, 0.0f, 0.0f, 0.5f},
+			{ -2.0f, -20.0f, 0.0f, 0.0f, 0.0f, 0.5f},
+			{  2.0f, -20.0f, 0.0f, 0.0f, 0.0f, 0.5f},
+			{  2.0f,  20.0f, 0.0f, 0.0f, 0.0f, 0.5f},
+			{  2.0f,  20.0f, 0.0f, 0.0f, 0.0f, 0.5f},
+			{ -2.0f,  20.0f, 0.0f, 0.0f, 0.0f, 0.5f},
+			{ -2.0f, -20.0f, 0.0f, 0.0f, 0.0f, 0.5f},
+	};
+
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertexData), vertexData, GL_STATIC_DRAW);
+	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 24, 0);
+	glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 24, (void *) 8);
+	glEnableVertexAttribArray(0);
+	glEnableVertexAttribArray(1);
+	glBindVertexArray(0);
 }
 
 GL3Renderer::~GL3Renderer() {
-	LOG(DEBUG, "Destroying Graphics");
+	LOG(DEBUG, "Destroying GL3 renderer");
 	destroyRenderDistanceDependent();
 }
 
-void GL3Renderer::loadShaders() {
-	// Create the shaders
-	GLuint vertexShaderID = glCreateShader(GL_VERTEX_SHADER);
-	GLuint fragmentShaderID = glCreateShader(GL_FRAGMENT_SHADER);
-
-	// Read the Vertex Shader code from the file
-	std::string vertexShaderCode;
-	std::ifstream vertexShaderStream("shaders/vertex_shader.vert", std::ios::in);
-	if(vertexShaderStream.is_open())
-	{
-		std::string Line = "";
-		while(getline(vertexShaderStream, Line))
-			vertexShaderCode += "\n" + Line;
-		vertexShaderStream.close();
-	}
-
-	// Read the Fragment Shader code from the file
-	std::string fragmentShaderCode;
-	std::ifstream fragmentShaderStream("shaders/fragment_shader.frag", std::ios::in);
-	if(fragmentShaderStream.is_open()){
-		std::string Line = "";
-		while(getline(fragmentShaderStream, Line))
-			fragmentShaderCode += "\n" + Line;
-		fragmentShaderStream.close();
-	}
-
-	GLint Result = GL_FALSE;
-	int InfoLogLength;
-
-	// Compile Vertex Shader
-	LOG(DEBUG, "Compiling vertex shader");
-	char const * VertexSourcePointer = vertexShaderCode.c_str();
-	glShaderSource(vertexShaderID, 1, &VertexSourcePointer , NULL);
-	glCompileShader(vertexShaderID);
-
-	// Check Vertex Shader
-	glGetShaderiv(vertexShaderID, GL_COMPILE_STATUS, &Result);
-	glGetShaderiv(vertexShaderID, GL_INFO_LOG_LENGTH, &InfoLogLength);
-	std::vector<char> VertexShaderErrorMessage(InfoLogLength);
-	glGetShaderInfoLog(vertexShaderID, InfoLogLength, NULL, &VertexShaderErrorMessage[0]);
-	// TODO use logging
-	fprintf(stdout, "%s\n", &VertexShaderErrorMessage[0]);
-
-	// Compile Fragment Shader
-	LOG(DEBUG, "Compiling fragment shader");
-	char const * FragmentSourcePointer = fragmentShaderCode.c_str();
-	glShaderSource(fragmentShaderID, 1, &FragmentSourcePointer , NULL);
-	glCompileShader(fragmentShaderID);
-
-	// Check Fragment Shader
-	glGetShaderiv(fragmentShaderID, GL_COMPILE_STATUS, &Result);
-	glGetShaderiv(fragmentShaderID, GL_INFO_LOG_LENGTH, &InfoLogLength);
-	std::vector<char> FragmentShaderErrorMessage(InfoLogLength);
-	glGetShaderInfoLog(fragmentShaderID, InfoLogLength, NULL, &FragmentShaderErrorMessage[0]);
-	// TODO use logging
-	fprintf(stdout, "%s\n", &FragmentShaderErrorMessage[0]);
-
-	// Link the program
-	LOG(DEBUG, "Linking program");
-	progLoc = glCreateProgram();
-	glAttachShader(progLoc, vertexShaderID);
-	glAttachShader(progLoc, fragmentShaderID);
-	glLinkProgram(progLoc);
-
-	// Check the program
-	glGetProgramiv(progLoc, GL_LINK_STATUS, &Result);
-	glGetProgramiv(progLoc, GL_INFO_LOG_LENGTH, &InfoLogLength);
-	std::vector<char> programErrorMessage(std::max(InfoLogLength, int(1)));
-	glGetProgramInfoLog(progLoc, InfoLogLength, NULL, &programErrorMessage[0]);
-	// TODO use logging
-	fprintf(stdout, "%s\n", &programErrorMessage[0]);
-
-	glDeleteShader(vertexShaderID);
-	glDeleteShader(fragmentShaderID);
-
-	glUseProgram(progLoc);
-}
-
-void GL3Renderer::resize(int width, int height) {
-	LOG(INFO, "Resize to " << width << "x" << height);
-	glViewport(0, 0, width, height);
+void GL3Renderer::resize() {
 	makePerspectiveMatrix();
 	makeOrthogonalMatrix();
 }
@@ -154,36 +105,23 @@ void GL3Renderer::makePerspectiveMatrix() {
 		angle = yfov;
 
 	float zFar = Chunk::WIDTH * sqrt(3 * (conf.render_distance + 1) * (conf.render_distance + 1));
-	perspectiveMatrix = glm::perspective((float) angle,
+	glm::mat4 perspectiveMatrix = glm::perspective((float) angle,
 			(float) currentRatio, ZNEAR, zFar);
+	shaders.setProjectionMatrix(perspectiveMatrix);
 }
 
 void GL3Renderer::makeOrthogonalMatrix() {
 	float normalRatio = DEFAULT_WINDOWED_RES[0] / (double) DEFAULT_WINDOWED_RES[1];
 	float currentRatio = graphics->getWidth() / (double) graphics->getHeight();
+	glm::mat4 hudMatrix;
 	if (currentRatio > normalRatio)
-		orthogonalMatrix = glm::ortho(-DEFAULT_WINDOWED_RES[0] / 2.0f, DEFAULT_WINDOWED_RES[0] / 2.0f, -DEFAULT_WINDOWED_RES[0]
+		hudMatrix = glm::ortho(-DEFAULT_WINDOWED_RES[0] / 2.0f, DEFAULT_WINDOWED_RES[0] / 2.0f, -DEFAULT_WINDOWED_RES[0]
 				/ currentRatio / 2.0f, DEFAULT_WINDOWED_RES[0] / currentRatio / 2.0f, 1.0f, -1.0f);
 	else
-		orthogonalMatrix = glm::ortho(-DEFAULT_WINDOWED_RES[1] * currentRatio / 2.0f, DEFAULT_WINDOWED_RES[1]
+		hudMatrix = glm::ortho(-DEFAULT_WINDOWED_RES[1] * currentRatio / 2.0f, DEFAULT_WINDOWED_RES[1]
 				* currentRatio / 2.0f, -DEFAULT_WINDOWED_RES[1] / 2.0f,
 				DEFAULT_WINDOWED_RES[1] / 2.0f, 1.0f, -1.0f);
-}
-
-void GL3Renderer::setPerspectiveMatrix() {
-	glUniformMatrix4fv(projMatLoc, 1, GL_FALSE, glm::value_ptr(perspectiveMatrix));
-}
-
-void GL3Renderer::setOrthogonalMatrix() {
-	glUniformMatrix4fv(projMatLoc, 1, GL_FALSE, glm::value_ptr(orthogonalMatrix));
-}
-
-void GL3Renderer::setViewMatrix() {
-	glUniformMatrix4fv(viewMatLoc, 1, GL_FALSE, glm::value_ptr(viewMatrix));
-}
-
-void GL3Renderer::setModelMatrix() {
-	glUniformMatrix4fv(modelMatLoc, 1, GL_FALSE, glm::value_ptr(modelMatrix));
+	shaders.setHudProjectionMatrix(hudMatrix);
 }
 
 void GL3Renderer::makeMaxFOV() {
@@ -239,10 +177,12 @@ void GL3Renderer::initRenderDistanceDependent() {
 		glBindVertexArray(vaos[i]);
 		glBindBuffer(GL_ARRAY_BUFFER, vbos[i]);
 		glBufferData(GL_ARRAY_BUFFER, 0, 0, GL_STATIC_DRAW);
-		glVertexAttribIPointer(0, 1, GL_UNSIGNED_SHORT, 3, 0);
-		glVertexAttribIPointer(1, 1, GL_UNSIGNED_BYTE, 3, (void *) 2);
+		glVertexAttribIPointer(0, 1, GL_UNSIGNED_SHORT, 4, 0);
+		glVertexAttribIPointer(1, 1, GL_UNSIGNED_BYTE, 4, (void *) 2);
+		glVertexAttribIPointer(2, 1, GL_UNSIGNED_BYTE, 4, (void *) 3);
 		glEnableVertexAttribArray(0);
 		glEnableVertexAttribArray(1);
+		glEnableVertexAttribArray(2);
 		vaoStatus[i] = NO_CHUNK;
 		chunkFaces[i] = 0;
 		chunkPassThroughs[i] = 0;
@@ -267,16 +207,11 @@ void GL3Renderer::destroyRenderDistanceDependent() {
 	delete vsFringe;
 	delete vsIndices;
 }
+
 void GL3Renderer::tick() {
 	render();
 
-	stopwatch->start(CLOCK_FSH);
-	//glFinish();
-	stopwatch->stop(CLOCK_FSH);
-
-	stopwatch->start(CLOCK_FLP);
 	SDL_GL_SwapWindow(window);
-	stopwatch->stop(CLOCK_FLP);
 
 	if (getCurrentTime() - lastStopWatchSave > millis(200)) {
 		lastStopWatchSave = getCurrentTime();
@@ -299,21 +234,19 @@ void GL3Renderer::tick() {
 void GL3Renderer::render() {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glEnable(GL_DEPTH_TEST);
-
-	setPerspectiveMatrix();
+	logOpenGLError();
 
 	Player &player = world->getPlayer(localClientID);
 	if (player.isValid()) {
+		// view matrix for sky
+		glm::mat4 viewMatrix = glm::rotate(glm::mat4(1.0f), (float) (-player.getPitch() / 360.0 * TAU), glm::vec3(1.0f, 0.0f, 0.0f));
+		shaders.setModelMatrix(glm::mat4(1.0f));
+		shaders.setViewMatrix(viewMatrix);
 
-		modelMatrix = glm::mat4(1.0f);
-		setModelMatrix();
-
-		// Render sky
-		viewMatrix = glm::rotate(glm::mat4(1.0f), (float) (-player.getPitch() / 360.0 * TAU), glm::vec3(1.0f, 0.0f, 0.0f));
-		setViewMatrix();
+		// render sky
 		//renderSky();
 
-		// Render Scene
+		// view matrix for scene
 		viewMatrix = glm::rotate(viewMatrix, (float) (-player.getYaw() / 360.0 * TAU), glm::vec3(0.0f, 1.0f, 0.0f));
 		viewMatrix = glm::rotate(viewMatrix, (float) (-TAU / 4.0), glm::vec3(1.0f, 0.0f, 0.0f));
 		viewMatrix = glm::rotate(viewMatrix, (float) (TAU / 4.0), glm::vec3(0.0f, 0.0f, 1.0f));
@@ -324,43 +257,22 @@ void GL3Renderer::render() {
 			(float) -((playerPos[1] % m + m) % m) / RESOLUTION,
 			(float) -((playerPos[2] % m + m) % m) / RESOLUTION)
 		);
-		setViewMatrix();
-		renderScene();
+		shaders.setViewMatrix(viewMatrix);
+
+		// render scene
+		renderChunks();
+		renderTarget();
+		renderPlayers();
 	}
 
 	// render overlay
-	setOrthogonalMatrix();
-	modelMatrix = glm::mat4(1.0);
-
 	if (state == PLAYING && player.isValid()) {
-		stopwatch->start(CLOCK_HUD);
-		//renderHud(player);
+		renderHud(player);
 		//if (debugActive)
 		//	renderDebugInfo(player);
-		stopwatch->stop(CLOCK_HUD);
 	} else if (state == IN_MENU){
 		renderMenu();
 	}
-}
-
-void GL3Renderer::renderScene() {
-	/*glEnable(GL_DEPTH_TEST);
-	glEnable(GL_TEXTURE_2D);
-	glEnable(GL_LIGHTING);
-	if (conf.fog != Fog::NONE) glEnable(GL_FOG);
-
-	glLightfv(GL_LIGHT0, GL_POSITION, sunLightPosition.ptr());*/
-
-	// render chunks
-	stopwatch->start(CLOCK_CHR);
-	renderChunks();
-	renderTarget();
-	stopwatch->stop(CLOCK_CHR);
-
-	// render players
-	stopwatch->start(CLOCK_PLA);
-	renderPlayers();
-	stopwatch->stop(CLOCK_PLA);
 }
 
 void GL3Renderer::renderChunks() {
@@ -406,21 +318,18 @@ void GL3Renderer::renderChunks() {
 		if ((vaoStatus[index] != OK || vaoChunks[index] != cc) && (newChunks < MAX_NEW_CHUNKS && newFaces < MAX_NEW_QUADS)) {
 			Chunk *c = world->getChunk(cc);
 			if (c)
-				renderChunk(*c);
+				buildChunk(*c);
 		}
 
 		if (vaoStatus[index] != NO_CHUNK && vaoChunks[index] == cc) {
 			if (chunkFaces[index] > 0) {
 				visibleFaces += chunkFaces[index];
-				stopwatch->start(CLOCK_DLC);
-				glm::mat4 oldModelMatrix = modelMatrix;
-				modelMatrix = glm::translate(modelMatrix, glm::vec3((float) (cd[0] * (int) Chunk::WIDTH), (float) (cd[1] * (int) Chunk::WIDTH), (float) (cd[2] * (int) Chunk::WIDTH)));
-				setModelMatrix();
 				glBindVertexArray(vaos[index]);
+				glm::mat4 modelMatrix = glm::translate(glm::mat4(1.0f), glm::vec3((float) (cd[0] * (int) Chunk::WIDTH), (float) (cd[1] * (int) Chunk::WIDTH), (float) (cd[2] * (int) Chunk::WIDTH)));
+				shaders.setModelMatrix(modelMatrix);
+				shaders.prepareProgram(BLOCK_PROGRAM);
 				glDrawArrays(GL_TRIANGLES, 0, chunkFaces[index] * 3);
 				logOpenGLError();
-				modelMatrix = oldModelMatrix;
-				stopwatch->stop(CLOCK_DLC);
 			}
 
 			for (int d = 0; d < 6; d++) {
@@ -466,6 +375,7 @@ void GL3Renderer::renderChunks() {
 		}
 	}
 	glBindVertexArray(0);
+	logOpenGLError();
 }
 
 bool GL3Renderer::inFrustum(vec3i64 cc, vec3i64 pos, vec3d lookDir) {
@@ -479,8 +389,7 @@ bool GL3Renderer::inFrustum(vec3i64 cc, vec3i64 pos, vec3d lookDir) {
 	return atan(orthoChunkDist / chunkLookDist) <= maxFOV / 2;
 }
 
-void GL3Renderer::renderChunk(Chunk &c) {
-	stopwatch->start(CLOCK_NDL);
+void GL3Renderer::buildChunk(Chunk &c) {
 	vec3i64 cc = c.getCC();
 
 	int length = conf.render_distance * 2 + 1;
@@ -497,11 +406,11 @@ void GL3Renderer::renderChunk(Chunk &c) {
 	chunkPassThroughs[index] = c.getPassThroughs();
 
 	glBindBuffer(GL_ARRAY_BUFFER, vbos[index]);
+	logOpenGLError();
 
 	if (c.getAirBlocks() == Chunk::WIDTH * Chunk::WIDTH * Chunk::WIDTH) {
 		glBufferData(GL_ARRAY_BUFFER, 0, 0, GL_STATIC_DRAW);
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
-		stopwatch->stop(CLOCK_NDL);
 		return;
 	}
 
@@ -515,7 +424,6 @@ void GL3Renderer::renderChunk(Chunk &c) {
 	size_t bufferSize = 0;
 
 	const uint8 *blocks = c.getBlocks();
-	int fbi = 0;
 	for (uint8 d = 0; d < 3; d++) {
 		vec3i64 dir = uDirs[d].cast<int64>();
 		uint i = 0;
@@ -574,64 +482,71 @@ void GL3Renderer::renderChunk(Chunk &c) {
 								corners |= 1 << j;
 							}
 						}
-
-						vec2f texs[4];
 						vec3i64 bc = c.getCC() * c.WIDTH + faceBlock.cast<int64>();
 
 						ushort posIndices[4];
-						int shadowLevel[4];
+						uchar shadowCombination = 0;
 						for (int j = 0; j < 4; j++) {
-							shadowLevel[j] = 0;
+							int shadowLevel = 0;
 							bool s1 = (corners & FACE_CORNER_MASK[j][0]) > 0;
 							bool s2 = (corners & FACE_CORNER_MASK[j][2]) > 0;
 							bool m = (corners & FACE_CORNER_MASK[j][1]) > 0;
 							if (s1)
-								shadowLevel[j]++;
+								shadowLevel++;
 							if (s2)
-								shadowLevel[j]++;
-							if (m && !(s1 && s2))
-								shadowLevel[j]++;
+								shadowLevel++;
+							if (m || (s1 && s2))
+								shadowLevel++;
+							shadowCombination |= shadowLevel << 2 * j;
 							vec3ui8 vertex = faceBlock.cast<uint8>() + QUAD_CYCLES_3D[faceDir][j].cast<uint8>();
 							posIndices[j] = (vertex[2] * (Chunk::WIDTH + 1) + vertex[1]) * (Chunk::WIDTH + 1) + vertex[0];
-							vec3i asdf = faceBlock.cast<int>() + QUAD_CYCLES_3D[faceDir][j];
-							if (asdf[0] < 0 || asdf[0] > 32)
-								printf("bla\n");
-							if (asdf[1] < 0 ||asdf[1] > 32)
-								printf("bla\n");
-							if (asdf[2] < 0 ||asdf[2] > 32)
-								printf("bla\n");
 						}
-						vertexBufferData[bufferSize].positionIndex = posIndices[0];
-						vertexBufferData[bufferSize].dirIndexShadowLevel = faceDir | (shadowLevel[0] << 3);
-						bufferSize++;
-						vertexBufferData[bufferSize].positionIndex = posIndices[1];
-						vertexBufferData[bufferSize].dirIndexShadowLevel = faceDir | (shadowLevel[1] << 3);
-						bufferSize++;
-						vertexBufferData[bufferSize].positionIndex = posIndices[2];
-						vertexBufferData[bufferSize].dirIndexShadowLevel = faceDir | (shadowLevel[2] << 3);
-						bufferSize++;
-						vertexBufferData[bufferSize].positionIndex = posIndices[2];
-						vertexBufferData[bufferSize].dirIndexShadowLevel = faceDir | (shadowLevel[2] << 3);
-						bufferSize++;
-						vertexBufferData[bufferSize].positionIndex = posIndices[3];
-						vertexBufferData[bufferSize].dirIndexShadowLevel = faceDir | (shadowLevel[3] << 3);
-						bufferSize++;
-						vertexBufferData[bufferSize].positionIndex = posIndices[0];
-						vertexBufferData[bufferSize].dirIndexShadowLevel = faceDir | (shadowLevel[0] << 3);
-						bufferSize++;
+						int indices[6] = {0, 1, 2, 2, 3, 0};
+						for (int j = 0; j < 6; j++) {
+							blockVertexBuffer[bufferSize].positionIndex = posIndices[indices[j]];
+							blockVertexBuffer[bufferSize].dirIndexCornerIndex = faceDir | (indices[j] << 3);
+							blockVertexBuffer[bufferSize].shadowLevels = shadowCombination;
+							bufferSize++;
+						}
 					}
 				}
 			}
 		}
 	}
 
-	glBufferData(GL_ARRAY_BUFFER, sizeof(ChunkVertexData) * bufferSize, vertexBufferData, GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(BlockVertexData) * bufferSize, blockVertexBuffer, GL_STATIC_DRAW);
+	logOpenGLError();
 
 	chunkFaces[index] = bufferSize / 3;
 	newFaces += chunkFaces[index];
 	faces += chunkFaces[index];
-	stopwatch->stop(CLOCK_NDL);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	logOpenGLError();
+}
+
+void GL3Renderer::renderHud(const Player &player) {
+
+	glBindVertexArray(crossHairVAO);
+	shaders.prepareProgram(HUD_PROGRAM);
+	glDrawArrays(GL_TRIANGLES, 0, 12);
+
+	/*vec2f texs[4];
+	texManager.bind(player.getBlock());
+	glBindTexture(GL_TEXTURE_2D, texManager.getTexture());
+	texManager.getTextureVertices(texs);
+
+	glColor4f(1, 1, 1, 1);
+
+	float d = (graphics->getWidth() < graphics->getHeight() ? graphics->getWidth() : graphics->getHeight()) * 0.05;
+	glPushMatrix();
+	glTranslatef(-graphics->getDrawWidth() * 0.48, -graphics->getDrawHeight() * 0.48, 0);
+	glBegin(GL_QUADS);
+		glTexCoord2f(texs[0][0], texs[0][1]); glVertex2f(0, 0);
+		glTexCoord2f(texs[1][0], texs[1][1]); glVertex2f(d, 0);
+		glTexCoord2f(texs[2][0], texs[2][1]); glVertex2f(d, d);
+		glTexCoord2f(texs[3][0], texs[3][1]); glVertex2f(0, d);
+	glEnd();
+	glPopMatrix();*/
 }
 
 void GL3Renderer::renderMenu() {

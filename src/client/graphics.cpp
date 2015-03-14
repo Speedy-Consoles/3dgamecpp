@@ -47,6 +47,11 @@ Graphics::Graphics(
 	);
 	if (!window) LOG(FATAL, SDL_GetError());
 
+	width = conf.windowed_res[0];
+	height = conf.windowed_res[1];
+	calcDrawArea();
+	glViewport(0, 0, width, height);
+
 	LOG(DEBUG, "Creating Open GL Context");
 	glContext = SDL_GL_CreateContext(window);
 	if (!glContext) LOG(FATAL, SDL_GetError());
@@ -65,8 +70,6 @@ Graphics::Graphics(
 	} else {
 		renderer = new GL2Renderer(this, window, world, menu, state, localClientID, conf, stopwatch);
 	}
-
-	resize(conf.windowed_res[0], conf.windowed_res[1]);
 }
 
 Graphics::~Graphics() {
@@ -81,7 +84,8 @@ void Graphics::resize(int width, int height) {
 	this->width = width;
 	this->height = height;
 	calcDrawArea();
-	renderer->resize(width, height);
+	glViewport(0, 0, width, height);
+	renderer->resize();
 }
 
 void Graphics::calcDrawArea() {

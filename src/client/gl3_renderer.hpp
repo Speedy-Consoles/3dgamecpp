@@ -6,6 +6,7 @@
 #include <glm/vec3.hpp>
 
 #include "renderer.hpp"
+#include "shaders.hpp"
 
 #include "game/chunk.hpp"
 #include "util.hpp"
@@ -52,29 +53,16 @@ private:
 	static const int MAX_NEW_QUADS = 6000;
 	static const int MAX_NEW_CHUNKS = 500;
 
-	// transformation matrices
-	glm::mat4 perspectiveMatrix;
-	glm::mat4 orthogonalMatrix;
-	glm::mat4 viewMatrix;
-	glm::mat4 modelMatrix;
-
-	// program Location
-	GLuint progLoc;
-
-	// uniform locations
-	GLuint ambientColorLoc;
-	GLuint diffDirLoc;
-	GLuint diffColorLoc;
-
-	GLuint projMatLoc;
-	GLuint viewMatLoc;
-	GLuint modelMatLoc;
+	// shaders
+	Shaders shaders;
 
 	// vao, vbo locations
 	GLuint *vaos;
 	GLuint *vbos;
+	GLuint crossHairVAO;
+	GLuint crossHairVBO;
 
-	// vao data
+	// vao meta data
 	vec3i64 *vaoChunks;
 	uint8 *vaoStatus;
 
@@ -105,14 +93,24 @@ private:
 
 #pragma pack(push)
 #pragma pack(1)
-	// buffer for chunk vertices
-	struct ChunkVertexData {
+	// buffer for block vertices
+	struct BlockVertexData {
 		GLushort positionIndex;
-		GLubyte dirIndexShadowLevel;
+		GLubyte dirIndexCornerIndex;
+		GLubyte shadowLevels;
+	};
+
+	struct HudVertexData {
+		GLfloat x;
+		GLfloat y;
+		GLfloat r;
+		GLfloat g;
+		GLfloat b;
+		GLfloat a;
 	};
 #pragma pack(pop)
 
-	ChunkVertexData vertexBufferData[Chunk::WIDTH * Chunk::WIDTH * (Chunk::WIDTH + 1) * 3 * 2 * 3];
+	BlockVertexData blockVertexBuffer[Chunk::WIDTH * Chunk::WIDTH * (Chunk::WIDTH + 1) * 3 * 2 * 3];
 
 public:
 	GL3Renderer(Graphics *graphics, SDL_Window *window, World *world, const Menu *menu,
@@ -122,15 +120,10 @@ public:
 
 	void tick();
 
-	void resize(int width, int height);
+	void resize();
 	void makePerspectiveMatrix();
 	void makeOrthogonalMatrix();
 	void makeMaxFOV();
-
-	void setViewMatrix();
-	void setModelMatrix();
-	void setPerspectiveMatrix();
-	void setOrthogonalMatrix();
 
 	void setDebug(bool debugActive);
 	bool isDebug();
@@ -141,15 +134,19 @@ public:
 	void setConf(const GraphicsConf &);
 
 private:
-	void loadShaders();
+	void loadShaderPrograms();
+	void buildShader(GLuint shaderLoc, const char* fileName);
+	void buildProgram(GLuint programLoc, GLuint *shaders, int numShaders);
+
+	void buildChunk(Chunk &c);
+	void buildCrossHair();
 
 	void render();
-	void renderScene();
 	void renderChunks();
-	void renderChunk(Chunk &c);
 	void renderMenu();
 	void renderTarget();
 	void renderPlayers();
+	void renderHud(const Player &player);
 
 	bool inFrustum(vec3i64 cc, vec3i64 pos, vec3d lookDir);
 

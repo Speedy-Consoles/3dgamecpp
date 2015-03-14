@@ -3,6 +3,7 @@
 
 #include <cmath>
 #include <type_traits>
+#include <algorithm>
 
 static const double TAU = atan(1) * 8;
 
@@ -28,5 +29,8 @@ typename std::enable_if<std::is_floating_point<T>::value, T>::type
 cycle(T d, T range) {
     return d - std::floor(d / range) * range;
 }
+
+using std::min;
+using std::max;
 
 #endif // MATH_HPP_
