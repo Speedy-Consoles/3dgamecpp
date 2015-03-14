@@ -1,12 +1,21 @@
 #version 330 core
 
+//in int gl_VertexID;
+//in int gl_InstanceID;
+
+//out gl_PerVertex {
+//	vec4 gl_Position;
+//	float gl_PointSize;
+//	float gl_ClipDistance[];
+//};
+
 const vec3 NORMALS[6] = vec3[6](
-		vec3( 1.0,  0.0,  0.0),
-		vec3( 0.0,  1.0,  0.0),
-		vec3( 1.0,  0.0,  1.0),
-		vec3(-1.0,  0.0,  0.0),
-		vec3( 0.0, -1.0,  0.0),
-		vec3( 0.0,  0.0, -1.0)
+	vec3( 1.0,  0.0,  0.0),
+	vec3( 0.0,  1.0,  0.0),
+	vec3( 1.0,  0.0,  1.0),
+	vec3(-1.0,  0.0,  0.0),
+	vec3( 0.0, -1.0,  0.0),
+	vec3( 0.0,  0.0, -1.0)
 );
 
 uniform vec3 ambientLightColor;
@@ -20,7 +29,7 @@ uniform mat4 modelMatrix;
 layout(location = 0) in uint posIndex;
 layout(location = 1) in uint dirIndexShadowLevel;
 
-out vec3 gl_Color;
+out vec3 vfColor;
 
 void main() {
 	gl_Position.x = mod(posIndex, 33u);
@@ -32,5 +41,5 @@ void main() {
     uint shadowLevel = dirIndexShadowLevel >> 3u;
     float shadowBrightness = 1.0 - float(shadowLevel) / 3.0 * 0.2;
     vec3 diffuseLight = max(0, dot(NORMALS[dirIndex], normalize(diffuseLightDirection))) * diffuseLightColor;
-    gl_Color = (ambientLightColor + diffuseLight) * shadowBrightness;
+    vfColor = (ambientLightColor + diffuseLight) * shadowBrightness;
 }

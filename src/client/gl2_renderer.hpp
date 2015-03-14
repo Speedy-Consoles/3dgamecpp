@@ -122,7 +122,7 @@ public:
 
 	void tick();
 
-	void resize(int width, int height);
+	void resize();
 
 	void setDebug(bool debugActive);
 	bool isDebug();

@@ -33,7 +33,6 @@ GL3Renderer::GL3Renderer(
 		stopwatch(stopwatch) {
 	initRenderDistanceDependent();
 	makeMaxFOV();
-	glViewport(0, 0, graphics->getWidth(), graphics->getHeight());
 	makePerspectiveMatrix();
 	makeOrthogonalMatrix();
 
@@ -45,6 +44,43 @@ GL3Renderer::GL3Renderer(
 	shaders.setAmbientLightColor(ambientColor);
 	shaders.setDiffuseLightDirection(diffuseDirection);
 	shaders.setDiffuseLightColor(diffuseColor);
+
+	buildCrossHair();
+
+	// gl stuff
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glEnable(GL_CULL_FACE);
+}
+
+void GL3Renderer::buildCrossHair() {
+	glGenVertexArrays(1, &crossHairVAO);
+	glGenBuffers(1, &crossHairVBO);
+	glBindVertexArray(crossHairVAO);
+	glBindBuffer(GL_ARRAY_BUFFER, crossHairVBO);
+
+	HudVertexData vertexData[12] = {
+			// x       y     r     g     b     a
+			{-20.0f,  -2.0f, 0.0f, 0.0f, 0.0f, 0.5f},
+			{ 20.0f,  -2.0f, 0.0f, 0.0f, 0.0f, 0.5f},
+			{ 20.0f,   2.0f, 0.0f, 0.0f, 0.0f, 0.5f},
+			{ 20.0f,   2.0f, 0.0f, 0.0f, 0.0f, 0.5f},
+			{-20.0f,   2.0f, 0.0f, 0.0f, 0.0f, 0.5f},
+			{-20.0f,  -2.0f, 0.0f, 0.0f, 0.0f, 0.5f},
+			{ -2.0f, -20.0f, 0.0f, 0.0f, 0.0f, 0.5f},
+			{  2.0f, -20.0f, 0.0f, 0.0f, 0.0f, 0.5f},
+			{  2.0f,  20.0f, 0.0f, 0.0f, 0.0f, 0.5f},
+			{  2.0f,  20.0f, 0.0f, 0.0f, 0.0f, 0.5f},
+			{ -2.0f,  20.0f, 0.0f, 0.0f, 0.0f, 0.5f},
+			{ -2.0f, -20.0f, 0.0f, 0.0f, 0.0f, 0.5f},
+	};
+
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertexData), vertexData, GL_STATIC_DRAW);
+	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 24, 0);
+	glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 24, (void *) 8);
+	glEnableVertexAttribArray(0);
+	glEnableVertexAttribArray(1);
+	glBindVertexArray(0);
 }
 
 GL3Renderer::~GL3Renderer() {
@@ -52,9 +88,7 @@ GL3Renderer::~GL3Renderer() {
 	destroyRenderDistanceDependent();
 }
 
-void GL3Renderer::resize(int width, int height) {
-	LOG(INFO, "Resize to " << width << "x" << height);
-	glViewport(0, 0, width, height);
+void GL3Renderer::resize() {
 	makePerspectiveMatrix();
 	makeOrthogonalMatrix();
 }
@@ -71,20 +105,23 @@ void GL3Renderer::makePerspectiveMatrix() {
 		angle = yfov;
 
 	float zFar = Chunk::WIDTH * sqrt(3 * (conf.render_distance + 1) * (conf.render_distance + 1));
-	perspectiveMatrix = glm::perspective((float) angle,
+	glm::mat4 perspectiveMatrix = glm::perspective((float) angle,
 			(float) currentRatio, ZNEAR, zFar);
+	shaders.setProjectionMatrix(perspectiveMatrix);
 }
 
 void GL3Renderer::makeOrthogonalMatrix() {
 	float normalRatio = DEFAULT_WINDOWED_RES[0] / (double) DEFAULT_WINDOWED_RES[1];
 	float currentRatio = graphics->getWidth() / (double) graphics->getHeight();
+	glm::mat4 hudMatrix;
 	if (currentRatio > normalRatio)
-		orthogonalMatrix = glm::ortho(-DEFAULT_WINDOWED_RES[0] / 2.0f, DEFAULT_WINDOWED_RES[0] / 2.0f, -DEFAULT_WINDOWED_RES[0]
+		hudMatrix = glm::ortho(-DEFAULT_WINDOWED_RES[0] / 2.0f, DEFAULT_WINDOWED_RES[0] / 2.0f, -DEFAULT_WINDOWED_RES[0]
 				/ currentRatio / 2.0f, DEFAULT_WINDOWED_RES[0] / currentRatio / 2.0f, 1.0f, -1.0f);
 	else
-		orthogonalMatrix = glm::ortho(-DEFAULT_WINDOWED_RES[1] * currentRatio / 2.0f, DEFAULT_WINDOWED_RES[1]
+		hudMatrix = glm::ortho(-DEFAULT_WINDOWED_RES[1] * currentRatio / 2.0f, DEFAULT_WINDOWED_RES[1]
 				* currentRatio / 2.0f, -DEFAULT_WINDOWED_RES[1] / 2.0f,
 				DEFAULT_WINDOWED_RES[1] / 2.0f, 1.0f, -1.0f);
+	shaders.setHudProjectionMatrix(hudMatrix);
 }
 
 void GL3Renderer::makeMaxFOV() {
@@ -199,8 +236,6 @@ void GL3Renderer::render() {
 
 	Player &player = world->getPlayer(localClientID);
 	if (player.isValid()) {
-		shaders.setProjectionMatrix(perspectiveMatrix);
-
 		// view matrix for sky
 		glm::mat4 viewMatrix = glm::rotate(glm::mat4(1.0f), (float) (-player.getPitch() / 360.0 * TAU), glm::vec3(1.0f, 0.0f, 0.0f));
 		shaders.setModelMatrix(glm::mat4(1.0f));
@@ -229,12 +264,8 @@ void GL3Renderer::render() {
 	}
 
 	// render overlay
-	shaders.setModelMatrix(glm::mat4(1.0f));
-	shaders.setViewMatrix(glm::mat4(1.0f));
-	shaders.setProjectionMatrix(orthogonalMatrix);
-
 	if (state == PLAYING && player.isValid()) {
-		//renderHud(player);
+		renderHud(player);
 		//if (debugActive)
 		//	renderDebugInfo(player);
 	} else if (state == IN_MENU){
@@ -285,7 +316,7 @@ void GL3Renderer::renderChunks() {
 		if ((vaoStatus[index] != OK || vaoChunks[index] != cc) && (newChunks < MAX_NEW_CHUNKS && newFaces < MAX_NEW_QUADS)) {
 			Chunk *c = world->getChunk(cc);
 			if (c)
-				renderChunk(*c);
+				buildChunk(*c);
 		}
 
 		if (vaoStatus[index] != NO_CHUNK && vaoChunks[index] == cc) {
@@ -356,7 +387,7 @@ bool GL3Renderer::inFrustum(vec3i64 cc, vec3i64 pos, vec3d lookDir) {
 	return atan(orthoChunkDist / chunkLookDist) <= maxFOV / 2;
 }
 
-void GL3Renderer::renderChunk(Chunk &c) {
+void GL3Renderer::buildChunk(Chunk &c) {
 	vec3i64 cc = c.getCC();
 
 	int length = conf.render_distance * 2 + 1;
@@ -499,6 +530,31 @@ void GL3Renderer::renderChunk(Chunk &c) {
 	faces += chunkFaces[index];
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	logOpenGLError();
+}
+
+void GL3Renderer::renderHud(const Player &player) {
+
+	glBindVertexArray(crossHairVAO);
+	shaders.prepareProgram(HUD_PROGRAM);
+	glDrawArrays(GL_TRIANGLES, 0, 12);
+
+	/*vec2f texs[4];
+	texManager.bind(player.getBlock());
+	glBindTexture(GL_TEXTURE_2D, texManager.getTexture());
+	texManager.getTextureVertices(texs);
+
+	glColor4f(1, 1, 1, 1);
+
+	float d = (graphics->getWidth() < graphics->getHeight() ? graphics->getWidth() : graphics->getHeight()) * 0.05;
+	glPushMatrix();
+	glTranslatef(-graphics->getDrawWidth() * 0.48, -graphics->getDrawHeight() * 0.48, 0);
+	glBegin(GL_QUADS);
+		glTexCoord2f(texs[0][0], texs[0][1]); glVertex2f(0, 0);
+		glTexCoord2f(texs[1][0], texs[1][1]); glVertex2f(d, 0);
+		glTexCoord2f(texs[2][0], texs[2][1]); glVertex2f(d, d);
+		glTexCoord2f(texs[3][0], texs[3][1]); glVertex2f(0, d);
+	glEnd();
+	glPopMatrix();*/
 }
 
 void GL3Renderer::renderMenu() {

@@ -50,6 +50,7 @@ Graphics::Graphics(
 	width = conf.windowed_res[0];
 	height = conf.windowed_res[1];
 	calcDrawArea();
+	glViewport(0, 0, width, height);
 
 	LOG(DEBUG, "Creating Open GL Context");
 	glContext = SDL_GL_CreateContext(window);
@@ -83,7 +84,8 @@ void Graphics::resize(int width, int height) {
 	this->width = width;
 	this->height = height;
 	calcDrawArea();
-	renderer->resize(width, height);
+	glViewport(0, 0, width, height);
+	renderer->resize();
 }
 
 void Graphics::calcDrawArea() {

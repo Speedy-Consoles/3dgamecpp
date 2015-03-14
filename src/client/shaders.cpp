@@ -7,32 +7,40 @@
 
 Shaders::Shaders() {
 	// Create the shaders
-	GLuint blockVertexShaderLoc = glCreateShader(GL_VERTEX_SHADER);
 	GLuint defaultVertexShaderLoc = glCreateShader(GL_VERTEX_SHADER);
+	GLuint blockVertexShaderLoc = glCreateShader(GL_VERTEX_SHADER);
+	GLuint hudVertexShaderLoc = glCreateShader(GL_VERTEX_SHADER);
 	GLuint fragmentShaderLoc = glCreateShader(GL_FRAGMENT_SHADER);
 
-	LOG(DEBUG, "Building block vertex shader");
-	buildShader(blockVertexShaderLoc, "shaders/block_vertex_shader.vert");
 	LOG(DEBUG, "Building default vertex shader");
 	buildShader(defaultVertexShaderLoc, "shaders/default_vertex_shader.vert");
+	LOG(DEBUG, "Building block vertex shader");
+	buildShader(blockVertexShaderLoc, "shaders/block_vertex_shader.vert");
+	LOG(DEBUG, "Building block vertex shader");
+	buildShader(hudVertexShaderLoc, "shaders/hud_vertex_shader.vert");
 	LOG(DEBUG, "Building fragment shader");
 	buildShader(fragmentShaderLoc, "shaders/fragment_shader.frag");
 
 	// create the programs
-	programLocations[BLOCK_PROGRAM] = glCreateProgram();
 	programLocations[DEFAULT_PROGRAM] = glCreateProgram();
+	programLocations[BLOCK_PROGRAM] = glCreateProgram();
+	programLocations[HUD_PROGRAM] = glCreateProgram();
 
-	GLuint blockProgramShaderLocs[2] = {blockVertexShaderLoc, fragmentShaderLoc};
 	GLuint defaultProgramShaderLocs[2] = {defaultVertexShaderLoc, fragmentShaderLoc};
+	GLuint blockProgramShaderLocs[2] = {blockVertexShaderLoc, fragmentShaderLoc};
+	GLuint hudProgramShaderLocs[2] = {hudVertexShaderLoc, fragmentShaderLoc};
 
-	LOG(DEBUG, "Building block program");
-	buildProgram(programLocations[BLOCK_PROGRAM], blockProgramShaderLocs, 2);
 	LOG(DEBUG, "Building default program");
 	buildProgram(programLocations[DEFAULT_PROGRAM], defaultProgramShaderLocs, 2);
+	LOG(DEBUG, "Building block program");
+	buildProgram(programLocations[BLOCK_PROGRAM], blockProgramShaderLocs, 2);
+	LOG(DEBUG, "Building hud program");
+	buildProgram(programLocations[HUD_PROGRAM], hudProgramShaderLocs, 2);
 
 	// delete the shaders
-	glDeleteShader(blockVertexShaderLoc);
 	glDeleteShader(defaultVertexShaderLoc);
+	glDeleteShader(blockVertexShaderLoc);
+	glDeleteShader(hudVertexShaderLoc);
 	glDeleteShader(fragmentShaderLoc);
 	logOpenGLError();
 
@@ -50,6 +58,8 @@ Shaders::Shaders() {
 	defaultModelMatLoc = glGetUniformLocation(programLocations[DEFAULT_PROGRAM], "modelMatrix");
 	defaultViewMatLoc = glGetUniformLocation(programLocations[DEFAULT_PROGRAM], "viewMatrix");
 	defaultProjMatLoc = glGetUniformLocation(programLocations[DEFAULT_PROGRAM], "projectionMatrix");
+
+	hudProjMatLoc = glGetUniformLocation(programLocations[HUD_PROGRAM], "projectionMatrix");
 
 	activeProgram = DEFAULT_PROGRAM;
 	glUseProgram(programLocations[DEFAULT_PROGRAM]);
@@ -143,6 +153,11 @@ void Shaders::setProjectionMatrix(const glm::mat4 &matrix) {
 	defaultProjMatUp = false;
 }
 
+void Shaders::setHudProjectionMatrix(const glm::mat4 &matrix) {
+	hudProjectionMatrix = matrix;
+	hudProjMatUp = false;
+}
+
 void Shaders::prepareProgram(ShaderProgram program) {
 	if (activeProgram != program) {
 		glUseProgram(programLocations[program]);
@@ -199,6 +214,12 @@ void Shaders::prepareProgram(ShaderProgram program) {
 		if (!blockProjMatUp) {
 			glUniformMatrix4fv(blockProjMatLoc, 1, GL_FALSE, glm::value_ptr(projectionMatrix));
 			blockProjMatUp = true;
+		}
+		break;
+	case HUD_PROGRAM:
+		if (!hudProjMatUp) {
+			glUniformMatrix4fv(hudProjMatLoc, 1, GL_FALSE, glm::value_ptr(hudProjectionMatrix));
+			hudProjMatUp = true;
 		}
 		break;
 	}

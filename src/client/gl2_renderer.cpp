@@ -36,7 +36,6 @@ GL2Renderer::GL2Renderer(
 		texManager(conf),
 		stopwatch(stopwatch) {
 	makeMaxFOV();
-	glViewport(0, 0, graphics->getWidth(), graphics->getHeight());
 	makePerspective();
 	makeOrthogonal();
 
@@ -211,8 +210,7 @@ void GL2Renderer::initRenderDistanceDependent() {
 	faces = 0;
 }
 
-void GL2Renderer::resize(int width, int height) {
-	glViewport(0, 0, width, height);
+void GL2Renderer::resize() {
 	makePerspective();
 	makeOrthogonal();
 

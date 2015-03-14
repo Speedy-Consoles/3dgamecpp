@@ -1,13 +1,18 @@
 #version 330 core
 
-uniform vec3 ambientLightColor;
-uniform vec3 diffuseLightDirection;
-uniform vec3 diffuseLightColor;
+//in int gl_VertexID;
+//in int gl_InstanceID;
 
-uniform mat4 projectionMatrix;
-uniform mat4 viewMatrix;
-uniform mat4 modelMatrix;
+//out gl_PerVertex {
+//  vec4 gl_Position;
+//  float gl_PointSize;
+//  float gl_ClipDistance[];
+//};
+
+layout(location = 0) in vec2 position;
+
+out vec4 vfColor;
 
 void main() {
-
+	
 }

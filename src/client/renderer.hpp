@@ -9,7 +9,7 @@ public:
 
 	virtual void tick() = 0;
 
-	virtual void resize(int width, int height) = 0;
+	virtual void resize() = 0;
 
 	virtual void setDebug(bool debugActive) = 0;
 	virtual bool isDebug() = 0;

@@ -53,18 +53,16 @@ private:
 	static const int MAX_NEW_QUADS = 6000;
 	static const int MAX_NEW_CHUNKS = 500;
 
-	// projection matrices
-	glm::mat4 perspectiveMatrix;
-	glm::mat4 orthogonalMatrix;
-
 	// shaders
 	Shaders shaders;
 
 	// vao, vbo locations
 	GLuint *vaos;
 	GLuint *vbos;
+	GLuint crossHairVAO;
+	GLuint crossHairVBO;
 
-	// vao data
+	// vao meta data
 	vec3i64 *vaoChunks;
 	uint8 *vaoStatus;
 
@@ -100,6 +98,15 @@ private:
 		GLushort positionIndex;
 		GLubyte dirIndexShadowLevel;
 	};
+
+	struct HudVertexData {
+		GLfloat x;
+		GLfloat y;
+		GLfloat r;
+		GLfloat g;
+		GLfloat b;
+		GLfloat a;
+	};
 #pragma pack(pop)
 
 	BlockVertexData blockVertexBuffer[Chunk::WIDTH * Chunk::WIDTH * (Chunk::WIDTH + 1) * 3 * 2 * 3];
@@ -112,7 +119,7 @@ public:
 
 	void tick();
 
-	void resize(int width, int height);
+	void resize();
 	void makePerspectiveMatrix();
 	void makeOrthogonalMatrix();
 	void makeMaxFOV();
@@ -130,12 +137,15 @@ private:
 	void buildShader(GLuint shaderLoc, const char* fileName);
 	void buildProgram(GLuint programLoc, GLuint *shaders, int numShaders);
 
+	void buildChunk(Chunk &c);
+	void buildCrossHair();
+
 	void render();
 	void renderChunks();
-	void renderChunk(Chunk &c);
 	void renderMenu();
 	void renderTarget();
 	void renderPlayers();
+	void renderHud(const Player &player);
 
 	bool inFrustum(vec3i64 cc, vec3i64 pos, vec3d lookDir);
 

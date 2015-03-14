@@ -8,8 +8,9 @@
 enum ShaderProgram {
 	DEFAULT_PROGRAM,
 	BLOCK_PROGRAM,
+	HUD_PROGRAM,
 };
-static const int NUM_PROGRAMS = 2;
+static const int NUM_PROGRAMS = 3;
 
 class Shaders {
 
@@ -31,6 +32,8 @@ class Shaders {
 	GLint defaultViewMatLoc;
 	GLint defaultProjMatLoc;
 
+	GLint hudProjMatLoc;
+
 	// uniforms
 	glm::vec3 ambientColor;
 	glm::vec3 diffuseColor;
@@ -39,6 +42,8 @@ class Shaders {
 	glm::mat4 modelMatrix;
 	glm::mat4 viewMatrix;
 	glm::mat4 projectionMatrix;
+
+	glm::mat4 hudProjectionMatrix;
 
 	// uniform up-to-dateness
 	bool blockAmbientColorUp = false;
@@ -55,6 +60,8 @@ class Shaders {
 	bool defaultViewMatUp = false;
 	bool defaultProjMatUp = false;
 
+	bool hudProjMatUp = false;
+
 	// active program
 	ShaderProgram activeProgram;
 
@@ -69,6 +76,8 @@ public:
 	void setModelMatrix(const glm::mat4 &matrix);
 	void setViewMatrix(const glm::mat4 &matrix);
 	void setProjectionMatrix(const glm::mat4 &matrix);
+
+	void setHudProjectionMatrix(const glm::mat4 &matrix);
 
 	void prepareProgram(ShaderProgram program);
 private:
