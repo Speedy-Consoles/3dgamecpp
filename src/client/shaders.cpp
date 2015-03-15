@@ -86,12 +86,13 @@ void Shaders::buildShader(GLuint shaderLoc, const char* fileName) {
 	// Read the Vertex Shader code from the file
 	std::string shaderCode;
 	std::ifstream shaderStream(fileName, std::ios::in);
-	if(shaderStream.is_open())
-	{
+	if(shaderStream.is_open()) {
 		std::string Line = "";
 		while(getline(shaderStream, Line))
 			shaderCode += "\n" + Line;
 		shaderStream.close();
+	} else {
+		LOG(FATAL, "Could not open file!");
 	}
 
 	// Compile Shader

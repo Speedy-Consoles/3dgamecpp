@@ -34,8 +34,8 @@ Graphics::Graphics(
 
 	LOG(DEBUG, "Creating window");
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
-	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
-	SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_COMPATIBILITY);
 	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
 	//SDL_GL_SetSwapInterval(0);
 	SDL_SetHint("SDL_VIDEO_MINIMIZE_ON_FOCUS_LOSS", "0");
@@ -63,9 +63,9 @@ Graphics::Graphics(
 	GLenum glew_error = glewInit();
 	if (glew_error != GLEW_OK)
 		LOG(FATAL, glewGetErrorString(glew_error));
-	if (!GLEW_VERSION_2_0)
-		LOG(FATAL, "OpenGL version 2.0 not available");
-	if (GLEW_VERSION_3_0 && conf.render_backend == RenderBackend::OGL_3) {
+	if (!GLEW_VERSION_2_1)
+		LOG(FATAL, "OpenGL version 2.1 not available");
+	if (GLEW_VERSION_3_3 && conf.render_backend == RenderBackend::OGL_3) {
 		renderer = new GL3Renderer(this, window, world, menu, state, localClientID, conf, stopwatch);
 	} else {
 		renderer = new GL2Renderer(this, window, world, menu, state, localClientID, conf, stopwatch);
