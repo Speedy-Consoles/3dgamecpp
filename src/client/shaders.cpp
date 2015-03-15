@@ -72,9 +72,10 @@ Shaders::Shaders() {
 	logOpenGLError();
 }
 
-Shaders::~Shaders()
-{
-
+Shaders::~Shaders() {
+	glDeleteProgram(programLocations[DEFAULT_PROGRAM]);
+	glDeleteProgram(programLocations[BLOCK_PROGRAM]);
+	glDeleteProgram(programLocations[HUD_PROGRAM]);
 }
 
 void Shaders::buildShader(GLuint shaderLoc, const char* fileName) {
