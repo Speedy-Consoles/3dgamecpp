@@ -14,6 +14,7 @@ Shaders::Shaders() {
 	GLuint hudVertexShaderLoc = glCreateShader(GL_VERTEX_SHADER);
 	GLuint defaultFragmentShaderLoc = glCreateShader(GL_FRAGMENT_SHADER);
 	GLuint blockFragmentShaderLoc = glCreateShader(GL_FRAGMENT_SHADER);
+	GLuint hudFragmentShaderLoc = glCreateShader(GL_FRAGMENT_SHADER);
 
 	LOG(DEBUG, "Building default vertex shader");
 	buildShader(defaultVertexShaderLoc, "shaders/default_vertex_shader.vert");
@@ -25,6 +26,8 @@ Shaders::Shaders() {
 	buildShader(defaultFragmentShaderLoc, "shaders/default_fragment_shader.frag");
 	LOG(DEBUG, "Building block fragment shader");
 	buildShader(blockFragmentShaderLoc, "shaders/block_fragment_shader.frag");
+	LOG(DEBUG, "Building hud fragment shader");
+	buildShader(hudFragmentShaderLoc, "shaders/hud_fragment_shader.frag");
 
 	// create the programs
 	programLocations[DEFAULT_PROGRAM] = glCreateProgram();
@@ -33,7 +36,7 @@ Shaders::Shaders() {
 
 	GLuint defaultProgramShaderLocs[2] = {defaultVertexShaderLoc, defaultFragmentShaderLoc};
 	GLuint blockProgramShaderLocs[2] = {blockVertexShaderLoc, blockFragmentShaderLoc};
-	GLuint hudProgramShaderLocs[2] = {hudVertexShaderLoc, defaultFragmentShaderLoc};
+	GLuint hudProgramShaderLocs[2] = {hudVertexShaderLoc, hudFragmentShaderLoc};
 
 	LOG(DEBUG, "Building default program");
 	buildProgram(programLocations[DEFAULT_PROGRAM], defaultProgramShaderLocs, 2);
@@ -48,6 +51,7 @@ Shaders::Shaders() {
 	glDeleteShader(hudVertexShaderLoc);
 	glDeleteShader(defaultFragmentShaderLoc);
 	glDeleteShader(blockFragmentShaderLoc);
+	glDeleteShader(hudFragmentShaderLoc);
 	logOpenGLError();
 
 	// get uniform locations
