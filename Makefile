@@ -9,6 +9,7 @@ CLIENT_OBJECT_FILES = \
 	client/render_menu_2.cpp.o\
 	client/gl3_renderer.cpp.o\
 	client/shaders.cpp.o\
+	client/chunk_renderer.cpp.o\
 	client/local_server_interface.cpp.o\
 	client/remote_server_interface.cpp.o\
 	client/menu.cpp.o\
