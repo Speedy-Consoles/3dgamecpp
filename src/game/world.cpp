@@ -157,7 +157,7 @@ bool World::setBlock(vec3i64 bc, uint8 type, bool visual) {
 			vec3i64 diff = NINE_CUBE_CYCLE[i].cast<int64>();
 			bool leave = false;
 			for (int dim = 0; dim < 3; dim++) {
-				if (diff[dim] != 0 && (diff[dim] + 1) / 2 * Chunk::WIDTH != icc[dim]) {
+				if (diff[dim] != 0 && (diff[dim] + 1) / 2 * (Chunk::WIDTH - 1) != icc[dim]) {
 					leave = true;
 					break;
 				}
