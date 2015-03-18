@@ -55,6 +55,7 @@ Shaders::Shaders() {
 	logOpenGLError();
 
 	// get uniform locations
+	blockLightEnabledLoc = glGetUniformLocation(programLocations[BLOCK_PROGRAM], "lightEnabled");
 	blockAmbientColorLoc = glGetUniformLocation(programLocations[BLOCK_PROGRAM], "ambientLightColor");
 	blockDiffColorLoc = glGetUniformLocation(programLocations[BLOCK_PROGRAM], "diffuseLightColor");
 	blockDiffDirLoc = glGetUniformLocation(programLocations[BLOCK_PROGRAM], "diffuseLightDirection");
@@ -62,6 +63,7 @@ Shaders::Shaders() {
 	blockViewMatLoc = glGetUniformLocation(programLocations[BLOCK_PROGRAM], "viewMatrix");
 	blockProjMatLoc = glGetUniformLocation(programLocations[BLOCK_PROGRAM], "projectionMatrix");
 
+	defaultLightEnabledLoc = glGetUniformLocation(programLocations[DEFAULT_PROGRAM], "lightEnabled");
 	defaultAmbientColorLoc = glGetUniformLocation(programLocations[DEFAULT_PROGRAM], "ambientLightColor");
 	defaultDiffColorLoc = glGetUniformLocation(programLocations[DEFAULT_PROGRAM], "diffuseLightColor");
 	defaultDiffDirLoc = glGetUniformLocation(programLocations[DEFAULT_PROGRAM], "diffuseLightDirection");
@@ -129,6 +131,12 @@ void Shaders::buildProgram(GLuint programLoc, GLuint *shaders, int numShaders) {
 	fprintf(stdout, "%s\n", &programErrorMessage[0]);
 }
 
+void Shaders::setLightEnabled(bool enabled) {
+	lightEnabled = enabled;
+	blockLightEnabledUp = false;
+	defaultLightEnabledUp = false;
+}
+
 void Shaders::setDiffuseLightColor(const glm::vec3 &color) {
 	diffuseColor = color;
 	blockDiffColorUp = false;
@@ -177,6 +185,10 @@ void Shaders::prepareProgram(ShaderProgram program) {
 	}
 	switch (program) {
 	case DEFAULT_PROGRAM:
+		if (!defaultLightEnabledUp) {
+			glUniform1i(defaultLightEnabledLoc, lightEnabled);
+			defaultLightEnabledUp = true;
+		}
 		if (!defaultAmbientColorUp) {
 			glUniform3fv(defaultAmbientColorLoc, 1, glm::value_ptr(ambientColor));
 			defaultAmbientColorUp = true;
@@ -203,6 +215,10 @@ void Shaders::prepareProgram(ShaderProgram program) {
 		}
 		break;
 	case BLOCK_PROGRAM:
+		if (!blockLightEnabledUp) {
+			glUniform1i(blockLightEnabledLoc, lightEnabled);
+			blockLightEnabledUp = true;
+		}
 		if (!blockAmbientColorUp) {
 			glUniform3fv(blockAmbientColorLoc, 1, glm::value_ptr(ambientColor));
 			blockAmbientColorUp = true;

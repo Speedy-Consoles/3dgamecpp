@@ -38,18 +38,16 @@ GL3Renderer::GL3Renderer(
 	makeOrthogonalMatrix();
 
 	// light
-	glm::vec3 ambientColor = glm::vec3(0.3f, 0.3f, 0.27f);
-	glm::vec3 diffuseDirection = glm::vec3(1.0f, 0.5f, 3.0f);
-	glm::vec3 diffuseColor = glm::vec3(0.2f, 0.2f, 0.17f);
-
 	shaders.setAmbientLightColor(ambientColor);
 	shaders.setDiffuseLightDirection(diffuseDirection);
 	shaders.setDiffuseLightColor(diffuseColor);
 
 	buildCrossHair();
+	buildSky();
 
 	// gl stuff
 	glEnable(GL_BLEND);
+	glEnable(GL_DEPTH_TEST);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glEnable(GL_CULL_FACE);
 }
@@ -61,19 +59,19 @@ void GL3Renderer::buildCrossHair() {
 	glBindBuffer(GL_ARRAY_BUFFER, crossHairVBO);
 
 	HudVertexData vertexData[12] = {
-			// x       y     r     g     b     a
-			{-20.0f,  -2.0f, 0.0f, 0.0f, 0.0f, 0.5f},
-			{ 20.0f,  -2.0f, 0.0f, 0.0f, 0.0f, 0.5f},
-			{ 20.0f,   2.0f, 0.0f, 0.0f, 0.0f, 0.5f},
-			{ 20.0f,   2.0f, 0.0f, 0.0f, 0.0f, 0.5f},
-			{-20.0f,   2.0f, 0.0f, 0.0f, 0.0f, 0.5f},
-			{-20.0f,  -2.0f, 0.0f, 0.0f, 0.0f, 0.5f},
-			{ -2.0f, -20.0f, 0.0f, 0.0f, 0.0f, 0.5f},
-			{  2.0f, -20.0f, 0.0f, 0.0f, 0.0f, 0.5f},
-			{  2.0f,  20.0f, 0.0f, 0.0f, 0.0f, 0.5f},
-			{  2.0f,  20.0f, 0.0f, 0.0f, 0.0f, 0.5f},
-			{ -2.0f,  20.0f, 0.0f, 0.0f, 0.0f, 0.5f},
-			{ -2.0f, -20.0f, 0.0f, 0.0f, 0.0f, 0.5f},
+			// x        y       r     g     b     a
+			{{-20.0f,  -2.0f}, {0.0f, 0.0f, 0.0f, 0.5f}},
+			{{ 20.0f,  -2.0f}, {0.0f, 0.0f, 0.0f, 0.5f}},
+			{{ 20.0f,   2.0f}, {0.0f, 0.0f, 0.0f, 0.5f}},
+			{{ 20.0f,   2.0f}, {0.0f, 0.0f, 0.0f, 0.5f}},
+			{{-20.0f,   2.0f}, {0.0f, 0.0f, 0.0f, 0.5f}},
+			{{-20.0f,  -2.0f}, {0.0f, 0.0f, 0.0f, 0.5f}},
+			{{ -2.0f, -20.0f}, {0.0f, 0.0f, 0.0f, 0.5f}},
+			{{  2.0f, -20.0f}, {0.0f, 0.0f, 0.0f, 0.5f}},
+			{{  2.0f,  20.0f}, {0.0f, 0.0f, 0.0f, 0.5f}},
+			{{  2.0f,  20.0f}, {0.0f, 0.0f, 0.0f, 0.5f}},
+			{{ -2.0f,  20.0f}, {0.0f, 0.0f, 0.0f, 0.5f}},
+			{{ -2.0f, -20.0f}, {0.0f, 0.0f, 0.0f, 0.5f}},
 	};
 
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertexData), vertexData, GL_STATIC_DRAW);
@@ -81,6 +79,39 @@ void GL3Renderer::buildCrossHair() {
 	glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 24, (void *) 8);
 	glEnableVertexAttribArray(0);
 	glEnableVertexAttribArray(1);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindVertexArray(0);
+}
+
+void GL3Renderer::buildSky() {
+	glGenVertexArrays(1, &skyVAO);
+	glGenBuffers(1, &skyVBO);
+	glBindVertexArray(skyVAO);
+	glBindBuffer(GL_ARRAY_BUFFER, skyVBO);
+
+	VertexData vertexData[12] = {
+			// x      y      z       r            g            b            a
+			{{-2.0f, -2.0f,  2.0f}, {fogColor[0], fogColor[1], fogColor[2], 1.0f}},
+			{{ 2.0f, -2.0f,  2.0f}, {fogColor[0], fogColor[1], fogColor[2], 1.0f}},
+			{{ 2.0f,  0.3f, -1.0f}, {fogColor[0], fogColor[1], fogColor[2], 1.0f}},
+			{{ 2.0f,  0.3f, -1.0f}, {fogColor[0], fogColor[1], fogColor[2], 1.0f}},
+			{{-2.0f,  0.3f, -1.0f}, {fogColor[0], fogColor[1], fogColor[2], 1.0f}},
+			{{-2.0f, -2.0f,  2.0f}, {fogColor[0], fogColor[1], fogColor[2], 1.0f}},
+
+			{{-2.0f,  0.3f, -1.0f}, {fogColor[0], fogColor[1], fogColor[2], 1.0f}},
+			{{ 2.0f,  0.3f, -1.0f}, {fogColor[0], fogColor[1], fogColor[2], 1.0f}},
+			{{ 2.0f,  2.0f,  2.0f}, {skyColor[0], skyColor[1], skyColor[2], 1.0f}},
+			{{ 2.0f,  2.0f,  2.0f}, {skyColor[0], skyColor[1], skyColor[2], 1.0f}},
+			{{-2.0f,  2.0f,  2.0f}, {skyColor[0], skyColor[1], skyColor[2], 1.0f}},
+			{{-2.0f,  0.3f, -1.0f}, {fogColor[0], fogColor[1], fogColor[2], 1.0f}},
+	};
+
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertexData), vertexData, GL_STATIC_DRAW);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 28, 0);
+	glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 28, (void *) 12);
+	glEnableVertexAttribArray(0);
+	glEnableVertexAttribArray(1);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindVertexArray(0);
 }
 
@@ -180,10 +211,11 @@ void GL3Renderer::tick() {
 
 void GL3Renderer::render() {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	glEnable(GL_DEPTH_TEST);
 	logOpenGLError();
 
+	shaders.setLightEnabled(false);
 	renderSky();
+	shaders.setLightEnabled(true);
 	chunkRenderer.render();
 	renderTarget();
 	renderPlayers();
@@ -231,7 +263,13 @@ void GL3Renderer::renderSky() {
 		shaders.setModelMatrix(glm::mat4(1.0f));
 		shaders.setViewMatrix(viewMatrix);
 		shaders.prepareProgram(DEFAULT_PROGRAM);
-		// TODO
+
+		glDisable(GL_DEPTH_TEST);
+		glDepthMask(false);
+		glBindVertexArray(skyVAO);
+		glDrawArrays(GL_TRIANGLES, 0, 12);
+		glDepthMask(true);
+		glEnable(GL_DEPTH_TEST);
 	}
 }
 

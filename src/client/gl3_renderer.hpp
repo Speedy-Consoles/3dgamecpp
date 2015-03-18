@@ -53,6 +53,8 @@ private:
 	// vao, vbo locations
 	GLuint crossHairVAO;
 	GLuint crossHairVBO;
+	GLuint skyVAO;
+	GLuint skyVBO;
 
 	// performance info
 	bool debugActive = false;
@@ -63,15 +65,25 @@ private:
 	time_t lastFPSUpdate = 0;
 	time_t lastStopWatchSave = 0;
 
+	// light
+	glm::vec3 ambientColor = glm::vec3(0.4f, 0.4f, 0.35f);
+	glm::vec3 diffuseDirection = glm::vec3(1.0f, 0.5f, 3.0f);
+	glm::vec3 diffuseColor = glm::vec3(0.2f, 0.2f, 0.17f);
+
+	// colors
+	vec3f fogColor{ 0.6f, 0.6f, 0.8f };
+	vec3f skyColor{ 0.15f, 0.15f, 0.9f };;
+
 #pragma pack(push)
 #pragma pack(1)
+	struct VertexData {
+		GLfloat xyz[3];
+		GLfloat rgba[4];
+	};
+
 	struct HudVertexData {
-		GLfloat x;
-		GLfloat y;
-		GLfloat r;
-		GLfloat g;
-		GLfloat b;
-		GLfloat a;
+		GLfloat xy[2];
+		GLfloat rgba[4];
 	};
 #pragma pack(pop)
 
@@ -104,6 +116,7 @@ private:
 	void buildProgram(GLuint programLoc, GLuint *shaders, int numShaders);
 
 	void buildCrossHair();
+	void buildSky();
 
 	void render();
 	void renderSky();

@@ -18,6 +18,7 @@ class Shaders {
 	GLuint programLocations[NUM_PROGRAMS];
 
 	// uniform locations
+	GLint blockLightEnabledLoc;
 	GLint blockAmbientColorLoc;
 	GLint blockDiffColorLoc;
 	GLint blockDiffDirLoc;
@@ -25,6 +26,7 @@ class Shaders {
 	GLint blockViewMatLoc;
 	GLint blockProjMatLoc;
 
+	GLint defaultLightEnabledLoc;
 	GLint defaultAmbientColorLoc;
 	GLint defaultDiffColorLoc;
 	GLint defaultDiffDirLoc;
@@ -35,6 +37,7 @@ class Shaders {
 	GLint hudProjMatLoc;
 
 	// uniforms
+	GLboolean lightEnabled;
 	glm::vec3 ambientColor;
 	glm::vec3 diffuseColor;
 	glm::vec3 diffuseDirection;
@@ -46,6 +49,7 @@ class Shaders {
 	glm::mat4 hudProjectionMatrix;
 
 	// uniform up-to-dateness
+	bool blockLightEnabledUp = false;
 	bool blockAmbientColorUp = false;
 	bool blockDiffColorUp = false;
 	bool blockDiffDirUp = false;
@@ -53,6 +57,7 @@ class Shaders {
 	bool blockViewMatUp = false;
 	bool blockProjMatUp = false;
 
+	bool defaultLightEnabledUp = false;
 	bool defaultAmbientColorUp = false;
 	bool defaultDiffColorUp = false;
 	bool defaultDiffDirUp = false;
@@ -68,6 +73,8 @@ class Shaders {
 public:
 	Shaders();
 	~Shaders();
+
+	void setLightEnabled(bool enabled);
 
 	void setDiffuseLightColor(const glm::vec3 &color);
 	void setDiffuseLightDirection(const glm::vec3 &direction);

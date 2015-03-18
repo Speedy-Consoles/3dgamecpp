@@ -9,10 +9,16 @@
 //  float gl_ClipDistance[];
 //};
 
-layout(location = 0) in vec2 position;
+uniform mat4 projectionMatrix;
+uniform mat4 viewMatrix;
+uniform mat4 modelMatrix;
+
+layout(location = 0) in vec3 position;
+layout(location = 1) in vec4 color;
 
 out vec4 vfColor;
 
 void main() {
-	
+	vfColor = color;
+	gl_Position = projectionMatrix * viewMatrix * modelMatrix * vec4(position, 1.0f);
 }

@@ -13,6 +13,7 @@
 
 // out float gl_FragDepth;
 
+uniform bool lightEnabled;
 uniform vec3 ambientLightColor;
 uniform vec3 diffuseLightDirection;
 uniform vec3 diffuseLightColor;
@@ -23,6 +24,10 @@ in vec4 vfColor;
 out vec4 fColor;
  
 void main() {
-    vec3 diffuseLight = max(0, dot(vfNormal, normalize(diffuseLightDirection))) * diffuseLightColor;
-    fColor = vec4(ambientLightColor + diffuseLight, 1.0) * vfColor;
+	if (lightEnabled) {
+		vec3 diffuseLight = max(0, dot(vfNormal, normalize(diffuseLightDirection))) * diffuseLightColor;
+		fColor = vec4(ambientLightColor + diffuseLight, 1.0) * vfColor;
+	} else {
+		fColor = vfColor;
+	}
 }
