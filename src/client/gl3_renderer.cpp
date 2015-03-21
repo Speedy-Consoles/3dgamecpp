@@ -233,6 +233,7 @@ void GL3Renderer::render() {
 
 void GL3Renderer::renderHud(const Player &player) {
 
+	glDepthMask(false);
 	glBindVertexArray(crossHairVAO);
 	shaders.prepareProgram(HUD_PROGRAM);
 	glDrawArrays(GL_TRIANGLES, 0, 12);
@@ -254,6 +255,7 @@ void GL3Renderer::renderHud(const Player &player) {
 		glTexCoord2f(texs[3][0], texs[3][1]); glVertex2f(0, d);
 	glEnd();
 	glPopMatrix();*/
+	glDepthMask(true);
 }
 
 void GL3Renderer::renderSky() {
