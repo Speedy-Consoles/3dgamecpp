@@ -38,6 +38,9 @@ private:
 	vec3i64 *vaoChunks;
 	uint8 *vaoStatus;
 
+	// texture location
+	GLuint blockTextures;
+
 	// chunk data
 	int *chunkFaces;
 	uint16 *chunkPassThroughs;
@@ -61,6 +64,7 @@ private:
 	// buffer for block vertices
 	struct BlockVertexData {
 		GLushort positionIndex;
+		GLubyte textureIndex;
 		GLubyte dirIndexCornerIndex;
 		GLubyte shadowLevels;
 	};
@@ -76,6 +80,7 @@ public:
 	void render();
 
 private:
+	void loadTextures();
 	void buildChunk(Chunk &c);
 
 	void renderChunks();

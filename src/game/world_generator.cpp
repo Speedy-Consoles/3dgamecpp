@@ -29,8 +29,8 @@ void WorldGenerator::generateChunk(Chunk &chunk) {
 	auto cc = chunk.getCC();
 	for (uint ix = 0; ix < Chunk::WIDTH; ix++) {
 		for (uint iy = 0; iy < Chunk::WIDTH; iy++) {
-			long x = round((cc[0] * Chunk::WIDTH + ix) / overAllScale);
-			long y = round((cc[1] * Chunk::WIDTH + iy) / overAllScale);
+			int64 x = round((cc[0] * Chunk::WIDTH + ix) / overAllScale);
+			int64 y = round((cc[1] * Chunk::WIDTH + iy) / overAllScale);
 			double ax = x / areaXYScale;
 			double ay = y / areaXYScale;
 			double ap = perlin.perlin(ax, ay, 0);
@@ -55,7 +55,7 @@ void WorldGenerator::generateChunk(Chunk &chunk) {
 			int realDepth = 0;
 			for (int iz = Chunk::WIDTH + 4; iz >= 0; iz--) {
 				int index = Chunk::getBlockIndex(vec3ui8(ix, iy, iz));
-				long z = iz + cc[2] * Chunk::WIDTH;
+				int64 z = iz + cc[2] * Chunk::WIDTH;
 				double depth = h - z;
 				/*if (perlin.octavePerlin((double)x/400, (double)y/400, (double)z/400, 4, 0.5) > 0.5)
 					solid = true;
@@ -85,11 +85,11 @@ void WorldGenerator::generateChunk(Chunk &chunk) {
 
 				if (iz < (int) Chunk::WIDTH) {
 					if (realDepth == 1)
-						chunk.initBlock(index, 2);
+						chunk.initBlock(index, 1 + cycle(x + 2 * y - x * y + x * x, (int64) 32));
 					else if(realDepth >= 5)
-						chunk.initBlock(index, 36);
+						chunk.initBlock(index, 1 + cycle(x + 2 * y - x * y + x * x, (int64) 32));
 					else if(solid)
-						chunk.initBlock(index, 1);
+						chunk.initBlock(index, 1 + cycle(x + 2 * y - x * y + x * x, (int64) 32));
 					else
 						chunk.initBlock(index, 0);
 				}

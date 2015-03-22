@@ -3,6 +3,7 @@
 #include <glm/mat4x4.hpp>
 #include <glm/vec3.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include <SDL2/SDL_image.h>
 
 #include "gl3_renderer.hpp"
 #include "engine/logging.hpp"
@@ -13,11 +14,82 @@
 ChunkRenderer::ChunkRenderer(World *world, Shaders *shaders, GL3Renderer *renderer, const uint8 *localClientID, const GraphicsConf &conf)
 		: conf(conf), world(world), shaders(shaders), renderer(renderer), localClientID(*localClientID) {
 	initRenderDistanceDependent();
+
+	loadTextures();
 }
 
 ChunkRenderer::~ChunkRenderer() {
 	LOG(DEBUG, "Destroying chunk renderer");
 	destroyRenderDistanceDependent();
+	glDeleteTextures(1, &blockTextures);
+}
+
+void ChunkRenderer::loadTextures() {
+
+	int xTiles = 16;
+	int yTiles = 16;
+	GLsizei layerCount = 256;
+	GLsizei mipLevelCount = 1;
+
+	SDL_Surface *img = IMG_Load("img/textures_1.png");
+	if (!img) {
+		LOG(ERROR, "Textures could not be loaded");
+		return;
+	}
+	int tileW = img->w / xTiles;
+	int tileH = img->h / yTiles;
+	SDL_Surface *tmp = SDL_CreateRGBSurface(
+			0, tileW, tileH, 32,
+			0x000000FF, 0x0000FF00, 0x00FF0000, 0xFF000000);
+	if (!tmp) {
+		LOG(ERROR, "Temporary SDL_Surface could not be created");
+		return;
+	}
+
+	glGenTextures(1, &blockTextures);
+	glBindTexture(GL_TEXTURE_2D_ARRAY, blockTextures);
+	glTexStorage3D(GL_TEXTURE_2D_ARRAY, mipLevelCount, GL_RGBA8, tileW, tileH, layerCount);
+
+	uint blocks[] = {
+		 1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15, 16,
+		17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32,
+		33,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+		 0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+		 0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+		 0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+		 0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+		 0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+		 0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+		 0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+		 0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+		 0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+		 0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+		 0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+		 0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+		 0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+	};
+
+	size_t loaded = 0;
+	auto blocks_ptr = blocks;
+	for (int j = 0; j < yTiles; ++j) {
+		for (int i = 0; i < xTiles; ++i) {
+			uint block = *blocks_ptr++;
+			if (block == 0)
+				continue;
+			SDL_Rect rect{i * tileW, j * tileH, tileW, tileH};
+			int ret_code = SDL_BlitSurface(img, &rect, tmp, nullptr);
+			if (ret_code)
+				LOG(ERROR, "Blit unsuccessful: " << SDL_GetError());
+			glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, block, tileW, tileH, 1, GL_RGBA, GL_UNSIGNED_BYTE, tmp->pixels);
+			++loaded;
+		}
+	}
+
+	//Always set reasonable texture parameters
+	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 }
 
 void ChunkRenderer::setConf(const GraphicsConf &conf) {
@@ -50,12 +122,14 @@ void ChunkRenderer::initRenderDistanceDependent() {
 		glBindVertexArray(vaos[i]);
 		glBindBuffer(GL_ARRAY_BUFFER, vbos[i]);
 		glBufferData(GL_ARRAY_BUFFER, 0, 0, GL_STATIC_DRAW);
-		glVertexAttribIPointer(0, 1, GL_UNSIGNED_SHORT, 4, 0);
-		glVertexAttribIPointer(1, 1, GL_UNSIGNED_BYTE, 4, (void *) 2);
-		glVertexAttribIPointer(2, 1, GL_UNSIGNED_BYTE, 4, (void *) 3);
+		glVertexAttribIPointer(0, 1, GL_UNSIGNED_SHORT, 5, (void *) 0);
+		glVertexAttribIPointer(1, 1, GL_UNSIGNED_BYTE, 5, (void *) 2);
+		glVertexAttribIPointer(2, 1, GL_UNSIGNED_BYTE, 5, (void *) 3);
+		glVertexAttribIPointer(3, 1, GL_UNSIGNED_BYTE, 5, (void *) 4);
 		glEnableVertexAttribArray(0);
 		glEnableVertexAttribArray(1);
 		glEnableVertexAttribArray(2);
+		glEnableVertexAttribArray(3);
 		vaoStatus[i] = NO_CHUNK;
 		chunkFaces[i] = 0;
 		chunkPassThroughs[i] = 0;
@@ -319,6 +393,7 @@ void ChunkRenderer::buildChunk(Chunk &c) {
 						int indices[6] = {0, 1, 2, 2, 3, 0};
 						for (int j = 0; j < 6; j++) {
 							blockVertexBuffer[bufferSize].positionIndex = posIndices[indices[j]];
+							blockVertexBuffer[bufferSize].textureIndex = faceType;
 							blockVertexBuffer[bufferSize].dirIndexCornerIndex = faceDir | (indices[j] << 3);
 							blockVertexBuffer[bufferSize].shadowLevels = shadowCombination;
 							bufferSize++;

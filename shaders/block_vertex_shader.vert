@@ -30,17 +30,21 @@ uniform mat4 viewMatrix;
 uniform mat4 modelMatrix;
 
 layout(location = 0) in uint posIndex;
-layout(location = 1) in uint dirIndexCornerIndex;
-layout(location = 2) in uint shadowLevels;
+layout(location = 1) in uint textureIndex;
+layout(location = 2) in uint dirIndexCornerIndex;
+layout(location = 3) in uint shadowLevels;
 
 out vec3 vfNormal;
+flat out uint vfTextureIndex;
 out vec2 vfCornerPosition;
 out float[4] vfShadowLevels;
 
 void main() {
 	vec4 position = vec4(mod(posIndex, 33u), mod(posIndex / 33u, 33u), posIndex / (33u * 33u), 1.0);
 	gl_Position = projectionMatrix * viewMatrix * modelMatrix * position;
-
+	
+	vfTextureIndex = textureIndex;
+	
 	int dirIndex = int(dirIndexCornerIndex & 7u);
 	vfNormal = NORMALS[dirIndex];
 
