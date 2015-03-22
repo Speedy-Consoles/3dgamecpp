@@ -85,11 +85,11 @@ void WorldGenerator::generateChunk(Chunk &chunk) {
 
 				if (iz < (int) Chunk::WIDTH) {
 					if (realDepth == 1)
-						chunk.initBlock(index, 1 + cycle(x + 2 * y - x * y + x * x, (int64) 32));
+						chunk.initBlock(index, 2);
 					else if(realDepth >= 5)
-						chunk.initBlock(index, 1 + cycle(x + 2 * y - x * y + x * x, (int64) 32));
+						chunk.initBlock(index, 3);
 					else if(solid)
-						chunk.initBlock(index, 1 + cycle(x + 2 * y - x * y + x * x, (int64) 32));
+						chunk.initBlock(index, 1);
 					else
 						chunk.initBlock(index, 0);
 				}
