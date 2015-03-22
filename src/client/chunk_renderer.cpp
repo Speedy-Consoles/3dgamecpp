@@ -14,7 +14,6 @@
 ChunkRenderer::ChunkRenderer(World *world, Shaders *shaders, GL3Renderer *renderer, const uint8 *localClientID, const GraphicsConf &conf)
 		: conf(conf), world(world), shaders(shaders), renderer(renderer), localClientID(*localClientID) {
 	initRenderDistanceDependent();
-
 	loadTextures();
 }
 
@@ -25,7 +24,6 @@ ChunkRenderer::~ChunkRenderer() {
 }
 
 void ChunkRenderer::loadTextures() {
-
 	int xTiles = 16;
 	int yTiles = 16;
 	GLsizei layerCount = 256;
@@ -83,7 +81,6 @@ void ChunkRenderer::loadTextures() {
 		}
 	}
 
-	//Always set reasonable texture parameters
 	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_BASE_LEVEL, 0);
 	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAX_LEVEL, mipLevelCount - 1);
 	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_GENERATE_MIPMAP, GL_TRUE);

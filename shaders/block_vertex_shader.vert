@@ -25,6 +25,13 @@ const vec2 CORNER_POSITIONS[4] = vec2[4](
 	vec2(0.0, 1.0)
 );
 
+const vec2 TEXTURE_POSITIONS[4] = vec2[4](
+	vec2(0.0, 1.0),
+	vec2(1.0, 1.0),
+	vec2(1.0, 0.0),
+	vec2(0.0, 0.0)
+);
+
 uniform mat4 projectionMatrix;
 uniform mat4 viewMatrix;
 uniform mat4 modelMatrix;
@@ -36,6 +43,7 @@ layout(location = 3) in uint shadowLevels;
 
 out vec3 vfNormal;
 flat out uint vfTextureIndex;
+out vec2 vfTexturePosition;
 out vec2 vfCornerPosition;
 out float[4] vfShadowLevels;
 
@@ -52,5 +60,7 @@ void main() {
 		vfShadowLevels[i] = float((shadowLevels >> 2 * i) & 3u) / 3.0;
 	}
 
-	vfCornerPosition = CORNER_POSITIONS[dirIndexCornerIndex >> 3u];
+	uint cornerIndex = dirIndexCornerIndex >> 3u;
+	vfCornerPosition = CORNER_POSITIONS[cornerIndex];
+	vfTexturePosition = TEXTURE_POSITIONS[cornerIndex];
 }
