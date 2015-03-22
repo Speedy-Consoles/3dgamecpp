@@ -29,7 +29,7 @@ void ChunkRenderer::loadTextures() {
 	int xTiles = 16;
 	int yTiles = 16;
 	GLsizei layerCount = 256;
-	GLsizei mipLevelCount = 1;
+	GLsizei mipLevelCount = 7;
 
 	SDL_Surface *img = IMG_Load("img/textures_1.png");
 	if (!img) {
@@ -69,7 +69,6 @@ void ChunkRenderer::loadTextures() {
 		 0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
 	};
 
-	size_t loaded = 0;
 	auto blocks_ptr = blocks;
 	for (int j = 0; j < yTiles; ++j) {
 		for (int i = 0; i < xTiles; ++i) {
@@ -81,15 +80,19 @@ void ChunkRenderer::loadTextures() {
 			if (ret_code)
 				LOG(ERROR, "Blit unsuccessful: " << SDL_GetError());
 			glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, block, tileW, tileH, 1, GL_RGBA, GL_UNSIGNED_BYTE, tmp->pixels);
-			++loaded;
 		}
 	}
 
 	//Always set reasonable texture parameters
-	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_BASE_LEVEL, 0);
+	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAX_LEVEL, mipLevelCount - 1);
+	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_GENERATE_MIPMAP, GL_TRUE);
+
+	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glGenerateMipmap(GL_TEXTURE_2D_ARRAY);
 }
 
 void ChunkRenderer::setConf(const GraphicsConf &conf) {
