@@ -13,6 +13,28 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Shader Files">
+      <UniqueIdentifier>{8076c443-1ae5-453f-9f2d-3261649eebbb}</UniqueIdentifier>
+      <Extensions>frag;vert</Extensions>
+    </Filter>
+    <Filter Include="Header Files\gui">
+      <UniqueIdentifier>{bf948d9e-72a6-4319-8081-ab663a76b400}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\net">
+      <UniqueIdentifier>{b9087c7c-1fb0-44f2-bc23-5902be3e65fd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\gfx">
+      <UniqueIdentifier>{92410e59-71bc-44ac-971d-e938316c87f5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\gfx">
+      <UniqueIdentifier>{49cc6417-2719-4a7c-9ca2-ce19dcddcefa}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\net">
+      <UniqueIdentifier>{533e4945-e09c-4df0-837c-219bd1573eae}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\gui">
+      <UniqueIdentifier>{1d9fec60-f49d-40f2-a894-4927ce1f2052}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\client\client.cpp">
@@ -21,50 +43,50 @@
     <ClCompile Include="..\..\src\client\config.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\client\graphics.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\client\local_server_interface.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\client\menu.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\client\remote_server_interface.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\client\texture_manager.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\client\gui\button.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\client\gui\frame.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\gui</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\client\gui\label.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\gui</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\client\gui\widget.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\gui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\client\gui\frame.cpp">
+      <Filter>Source Files\gui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\client\local_server_interface.cpp">
+      <Filter>Source Files\net</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\client\remote_server_interface.cpp">
+      <Filter>Source Files\net</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\client\gl2_renderer.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\client\gl3_renderer.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\gfx</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\client\render_2.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\gfx</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\client\render_menu_2.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\gfx</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\client\shaders.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="..\..\src\client\texture_manager.cpp">
+      <Filter>Source Files\gfx</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\client\chunk_renderer.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\gfx</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\client\gl3_renderer.cpp">
+      <Filter>Source Files\gfx</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\client\shaders.cpp">
+      <Filter>Source Files\gfx</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\client\graphics.cpp">
+      <Filter>Source Files\gfx</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -74,53 +96,73 @@
     <ClInclude Include="..\..\src\client\config.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\client\graphics.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\client\local_server_interface.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\client\menu.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\client\remote_server_interface.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\client\server_interface.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\client\texture_manager.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\client\gui\button.hpp">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\gui</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\client\gui\cycle_button.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\client\gui\frame.hpp">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\gui</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\client\gui\label.hpp">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\gui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\client\gui\frame.hpp">
+      <Filter>Header Files\gui</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\client\gui\widget.hpp">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\gui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\client\server_interface.hpp">
+      <Filter>Header Files\net</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\client\remote_server_interface.hpp">
+      <Filter>Header Files\net</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\client\local_server_interface.hpp">
+      <Filter>Header Files\net</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\client\gl2_renderer.hpp">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\gfx</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\client\texture_manager.hpp">
+      <Filter>Header Files\gfx</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\client\gl3_renderer.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\client\renderer.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\client\shaders.hpp">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\gfx</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\client\chunk_renderer.hpp">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\gfx</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\client\shaders.hpp">
+      <Filter>Header Files\gfx</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\client\renderer.hpp">
+      <Filter>Header Files\gfx</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\client\graphics.hpp">
+      <Filter>Header Files\gfx</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\shaders\block_fragment_shader.frag">
+      <Filter>Shader Files</Filter>
+    </None>
+    <None Include="..\..\shaders\block_vertex_shader.vert">
+      <Filter>Shader Files</Filter>
+    </None>
+    <None Include="..\..\shaders\default_fragment_shader.frag">
+      <Filter>Shader Files</Filter>
+    </None>
+    <None Include="..\..\shaders\default_vertex_shader.vert">
+      <Filter>Shader Files</Filter>
+    </None>
+    <None Include="..\..\shaders\hud_fragment_shader.frag">
+      <Filter>Shader Files</Filter>
+    </None>
+    <None Include="..\..\shaders\hud_vertex_shader.vert">
+      <Filter>Shader Files</Filter>
+    </None>
   </ItemGroup>
 </Project>
