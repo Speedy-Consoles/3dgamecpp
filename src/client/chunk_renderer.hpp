@@ -83,8 +83,6 @@ private:
 	void loadTextures();
 	void buildChunk(Chunk &c);
 
-	void renderChunks();
-
 	bool inFrustum(vec3i64 cc, vec3i64 pos, vec3d lookDir);
 
 	void destroyRenderDistanceDependent();

@@ -13,6 +13,7 @@ Shaders::Shaders() {
 	GLuint blockVertexShaderLoc = glCreateShader(GL_VERTEX_SHADER);
 	GLuint hudVertexShaderLoc = glCreateShader(GL_VERTEX_SHADER);
 	GLuint defaultFragmentShaderLoc = glCreateShader(GL_FRAGMENT_SHADER);
+	GLuint skyFragmentShaderLoc = glCreateShader(GL_FRAGMENT_SHADER);
 	GLuint blockFragmentShaderLoc = glCreateShader(GL_FRAGMENT_SHADER);
 	GLuint hudFragmentShaderLoc = glCreateShader(GL_FRAGMENT_SHADER);
 
@@ -24,6 +25,8 @@ Shaders::Shaders() {
 	buildShader(hudVertexShaderLoc, "shaders/hud_vertex_shader.vert");
 	LOG(DEBUG, "Building default fragment shader");
 	buildShader(defaultFragmentShaderLoc, "shaders/default_fragment_shader.frag");
+	LOG(DEBUG, "Building sky fragment shader");
+	buildShader(skyFragmentShaderLoc, "shaders/sky_fragment_shader.frag");
 	LOG(DEBUG, "Building block fragment shader");
 	buildShader(blockFragmentShaderLoc, "shaders/block_fragment_shader.frag");
 	LOG(DEBUG, "Building hud fragment shader");
@@ -31,15 +34,19 @@ Shaders::Shaders() {
 
 	// create the programs
 	programLocations[DEFAULT_PROGRAM] = glCreateProgram();
+	programLocations[SKY_PROGRAM] = glCreateProgram();
 	programLocations[BLOCK_PROGRAM] = glCreateProgram();
 	programLocations[HUD_PROGRAM] = glCreateProgram();
 
 	GLuint defaultProgramShaderLocs[2] = {defaultVertexShaderLoc, defaultFragmentShaderLoc};
+	GLuint skyProgramShaderLocs[2] = {defaultVertexShaderLoc, skyFragmentShaderLoc};
 	GLuint blockProgramShaderLocs[2] = {blockVertexShaderLoc, blockFragmentShaderLoc};
 	GLuint hudProgramShaderLocs[2] = {hudVertexShaderLoc, hudFragmentShaderLoc};
 
 	LOG(DEBUG, "Building default program");
 	buildProgram(programLocations[DEFAULT_PROGRAM], defaultProgramShaderLocs, 2);
+	LOG(DEBUG, "Building sky program");
+	buildProgram(programLocations[SKY_PROGRAM], skyProgramShaderLocs, 2);
 	LOG(DEBUG, "Building block program");
 	buildProgram(programLocations[BLOCK_PROGRAM], blockProgramShaderLocs, 2);
 	LOG(DEBUG, "Building hud program");
@@ -50,19 +57,12 @@ Shaders::Shaders() {
 	glDeleteShader(blockVertexShaderLoc);
 	glDeleteShader(hudVertexShaderLoc);
 	glDeleteShader(defaultFragmentShaderLoc);
+	glDeleteShader(skyFragmentShaderLoc);
 	glDeleteShader(blockFragmentShaderLoc);
 	glDeleteShader(hudFragmentShaderLoc);
 	logOpenGLError();
 
 	// get uniform locations
-	blockLightEnabledLoc = glGetUniformLocation(programLocations[BLOCK_PROGRAM], "lightEnabled");
-	blockAmbientColorLoc = glGetUniformLocation(programLocations[BLOCK_PROGRAM], "ambientLightColor");
-	blockDiffColorLoc = glGetUniformLocation(programLocations[BLOCK_PROGRAM], "diffuseLightColor");
-	blockDiffDirLoc = glGetUniformLocation(programLocations[BLOCK_PROGRAM], "diffuseLightDirection");
-	blockModelMatLoc = glGetUniformLocation(programLocations[BLOCK_PROGRAM], "modelMatrix");
-	blockViewMatLoc = glGetUniformLocation(programLocations[BLOCK_PROGRAM], "viewMatrix");
-	blockProjMatLoc = glGetUniformLocation(programLocations[BLOCK_PROGRAM], "projectionMatrix");
-
 	defaultLightEnabledLoc = glGetUniformLocation(programLocations[DEFAULT_PROGRAM], "lightEnabled");
 	defaultAmbientColorLoc = glGetUniformLocation(programLocations[DEFAULT_PROGRAM], "ambientLightColor");
 	defaultDiffColorLoc = glGetUniformLocation(programLocations[DEFAULT_PROGRAM], "diffuseLightColor");
@@ -70,8 +70,44 @@ Shaders::Shaders() {
 	defaultModelMatLoc = glGetUniformLocation(programLocations[DEFAULT_PROGRAM], "modelMatrix");
 	defaultViewMatLoc = glGetUniformLocation(programLocations[DEFAULT_PROGRAM], "viewMatrix");
 	defaultProjMatLoc = glGetUniformLocation(programLocations[DEFAULT_PROGRAM], "projectionMatrix");
+	defaultFogDistanceLoc = glGetUniformLocation(programLocations[DEFAULT_PROGRAM], "fogDistance");
+
+	skyModelMatLoc = glGetUniformLocation(programLocations[SKY_PROGRAM], "modelMatrix");
+	skyViewMatLoc = glGetUniformLocation(programLocations[SKY_PROGRAM], "viewMatrix");
+	skyProjMatLoc = glGetUniformLocation(programLocations[SKY_PROGRAM], "projectionMatrix");
+
+	blockLightEnabledLoc = glGetUniformLocation(programLocations[BLOCK_PROGRAM], "lightEnabled");
+	blockAmbientColorLoc = glGetUniformLocation(programLocations[BLOCK_PROGRAM], "ambientLightColor");
+	blockDiffColorLoc = glGetUniformLocation(programLocations[BLOCK_PROGRAM], "diffuseLightColor");
+	blockDiffDirLoc = glGetUniformLocation(programLocations[BLOCK_PROGRAM], "diffuseLightDirection");
+	blockModelMatLoc = glGetUniformLocation(programLocations[BLOCK_PROGRAM], "modelMatrix");
+	blockViewMatLoc = glGetUniformLocation(programLocations[BLOCK_PROGRAM], "viewMatrix");
+	blockProjMatLoc = glGetUniformLocation(programLocations[BLOCK_PROGRAM], "projectionMatrix");
+	blockFogDistanceLoc = glGetUniformLocation(programLocations[BLOCK_PROGRAM], "fogDistance");
 
 	hudProjMatLoc = glGetUniformLocation(programLocations[HUD_PROGRAM], "projectionMatrix");
+
+
+//	GLint tmp = glGetUniformLocation(programLocations[DEFAULT_PROGRAM], "sampler");
+//	glUseProgram(programLocations[DEFAULT_PROGRAM]);
+//	glUniform1i(tmp, 0);
+
+	glUseProgram(programLocations[SKY_PROGRAM]);
+	GLint tmp = glGetUniformLocation(programLocations[SKY_PROGRAM], "sceneColorSampler");
+	glUniform1i(tmp, 0);
+	tmp = glGetUniformLocation(programLocations[SKY_PROGRAM], "sceneDistanceSampler");
+	glUniform1i(tmp, 1);
+	tmp = glGetUniformLocation(programLocations[SKY_PROGRAM], "sceneDepthSampler");
+	glUniform1i(tmp, 2);
+
+	glUseProgram(programLocations[BLOCK_PROGRAM]);
+	tmp = glGetUniformLocation(programLocations[BLOCK_PROGRAM], "sampler");
+	glUniform1i(tmp, 0);
+
+//	glUseProgram(programLocations[HUD_PROGRAM]);
+//	tmp = glGetUniformLocation(programLocations[HUD_PROGRAM], "sampler");
+//	glUniform1i(tmp, 0);
+
 
 	activeProgram = DEFAULT_PROGRAM;
 	glUseProgram(programLocations[DEFAULT_PROGRAM]);
@@ -133,49 +169,58 @@ void Shaders::buildProgram(GLuint programLoc, GLuint *shaders, int numShaders) {
 
 void Shaders::setLightEnabled(bool enabled) {
 	lightEnabled = enabled;
-	blockLightEnabledUp = false;
 	defaultLightEnabledUp = false;
+	blockLightEnabledUp = false;
 }
 
 void Shaders::setDiffuseLightColor(const glm::vec3 &color) {
 	diffuseColor = color;
-	blockDiffColorUp = false;
 	defaultDiffColorUp = false;
+	blockDiffColorUp = false;
 }
 
 void Shaders::setDiffuseLightDirection(const glm::vec3 &direction) {
 	diffuseDirection = direction;
-	blockDiffDirUp = false;
 	defaultDiffDirUp = false;
+	blockDiffDirUp = false;
 }
 
 void Shaders::setAmbientLightColor(const glm::vec3 &color) {
 	ambientColor = color;
-	blockAmbientColorUp = false;
 	defaultAmbientColorUp = false;
+	blockAmbientColorUp = false;
 }
 
 void Shaders::setModelMatrix(const glm::mat4 &matrix) {
 	modelMatrix = matrix;
-	blockModelMatUp = false;
 	defaultModelMatUp = false;
+	skyModelMatUp = false;
+	blockModelMatUp = false;
 }
 
 void Shaders::setViewMatrix(const glm::mat4 &matrix) {
 	viewMatrix = matrix;
-	blockViewMatUp = false;
 	defaultViewMatUp = false;
+	skyViewMatUp = false;
+	blockViewMatUp = false;
 }
 
 void Shaders::setProjectionMatrix(const glm::mat4 &matrix) {
 	projectionMatrix = matrix;
-	blockProjMatUp = false;
 	defaultProjMatUp = false;
+	skyProjMatUp = false;
+	blockProjMatUp = false;
 }
 
 void Shaders::setHudProjectionMatrix(const glm::mat4 &matrix) {
 	hudProjectionMatrix = matrix;
 	hudProjMatUp = false;
+}
+
+void Shaders::setFogDistance(float distance) {
+	fogDistance = distance;
+	defaultFogDistanceUp = false;
+	blockFogDistanceUp = false;
 }
 
 void Shaders::prepareProgram(ShaderProgram program) {
@@ -213,6 +258,24 @@ void Shaders::prepareProgram(ShaderProgram program) {
 			glUniformMatrix4fv(defaultProjMatLoc, 1, GL_FALSE, glm::value_ptr(projectionMatrix));
 			defaultProjMatUp = true;
 		}
+		if (!defaultFogDistanceUp) {
+			glUniform1f(defaultFogDistanceLoc, fogDistance);
+			defaultFogDistanceUp = true;
+		}
+		break;
+	case SKY_PROGRAM:
+		if (!skyModelMatUp) {
+			glUniformMatrix4fv(skyModelMatLoc, 1, GL_FALSE, glm::value_ptr(modelMatrix));
+			skyModelMatUp = true;
+		}
+		if (!skyViewMatUp) {
+			glUniformMatrix4fv(skyViewMatLoc, 1, GL_FALSE, glm::value_ptr(viewMatrix));
+			skyViewMatUp = true;
+		}
+		if (!skyProjMatUp) {
+			glUniformMatrix4fv(skyProjMatLoc, 1, GL_FALSE, glm::value_ptr(projectionMatrix));
+			skyProjMatUp = true;
+		}
 		break;
 	case BLOCK_PROGRAM:
 		if (!blockLightEnabledUp) {
@@ -242,6 +305,10 @@ void Shaders::prepareProgram(ShaderProgram program) {
 		if (!blockProjMatUp) {
 			glUniformMatrix4fv(blockProjMatLoc, 1, GL_FALSE, glm::value_ptr(projectionMatrix));
 			blockProjMatUp = true;
+		}
+		if (!blockFogDistanceUp) {
+			glUniform1f(blockFogDistanceLoc, fogDistance);
+			blockFogDistanceUp = true;
 		}
 		break;
 	case HUD_PROGRAM:

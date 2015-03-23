@@ -7,10 +7,11 @@
 
 enum ShaderProgram {
 	DEFAULT_PROGRAM,
+	SKY_PROGRAM,
 	BLOCK_PROGRAM,
 	HUD_PROGRAM,
 };
-static const int NUM_PROGRAMS = 3;
+static const int NUM_PROGRAMS = 4;
 
 class Shaders {
 
@@ -18,14 +19,6 @@ class Shaders {
 	GLuint programLocations[NUM_PROGRAMS];
 
 	// uniform locations
-	GLint blockLightEnabledLoc;
-	GLint blockAmbientColorLoc;
-	GLint blockDiffColorLoc;
-	GLint blockDiffDirLoc;
-	GLint blockModelMatLoc;
-	GLint blockViewMatLoc;
-	GLint blockProjMatLoc;
-
 	GLint defaultLightEnabledLoc;
 	GLint defaultAmbientColorLoc;
 	GLint defaultDiffColorLoc;
@@ -33,6 +26,20 @@ class Shaders {
 	GLint defaultModelMatLoc;
 	GLint defaultViewMatLoc;
 	GLint defaultProjMatLoc;
+	GLint defaultFogDistanceLoc;
+
+	GLint skyModelMatLoc;
+	GLint skyViewMatLoc;
+	GLint skyProjMatLoc;
+
+	GLint blockLightEnabledLoc;
+	GLint blockAmbientColorLoc;
+	GLint blockDiffColorLoc;
+	GLint blockDiffDirLoc;
+	GLint blockModelMatLoc;
+	GLint blockViewMatLoc;
+	GLint blockProjMatLoc;
+	GLint blockFogDistanceLoc;
 
 	GLint hudProjMatLoc;
 
@@ -48,15 +55,9 @@ class Shaders {
 
 	glm::mat4 hudProjectionMatrix;
 
-	// uniform up-to-dateness
-	bool blockLightEnabledUp = false;
-	bool blockAmbientColorUp = false;
-	bool blockDiffColorUp = false;
-	bool blockDiffDirUp = false;
-	bool blockModelMatUp = false;
-	bool blockViewMatUp = false;
-	bool blockProjMatUp = false;
+	GLfloat fogDistance;
 
+	// uniform up-to-dateness
 	bool defaultLightEnabledUp = false;
 	bool defaultAmbientColorUp = false;
 	bool defaultDiffColorUp = false;
@@ -64,6 +65,20 @@ class Shaders {
 	bool defaultModelMatUp = false;
 	bool defaultViewMatUp = false;
 	bool defaultProjMatUp = false;
+	bool defaultFogDistanceUp = false;
+
+	bool blockLightEnabledUp = false;
+	bool blockAmbientColorUp = false;
+	bool blockDiffColorUp = false;
+	bool blockDiffDirUp = false;
+	bool blockModelMatUp = false;
+	bool blockViewMatUp = false;
+	bool blockProjMatUp = false;
+	bool blockFogDistanceUp = false;
+
+	bool skyModelMatUp = false;
+	bool skyViewMatUp = false;
+	bool skyProjMatUp = false;
 
 	bool hudProjMatUp = false;
 
@@ -85,6 +100,8 @@ public:
 	void setProjectionMatrix(const glm::mat4 &matrix);
 
 	void setHudProjectionMatrix(const glm::mat4 &matrix);
+
+	void setFogDistance(float distance);
 
 	void prepareProgram(ShaderProgram program);
 private:

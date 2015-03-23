@@ -18,10 +18,14 @@ uniform vec3 ambientLightColor;
 uniform vec3 diffuseLightDirection;
 uniform vec3 diffuseLightColor;
 
+uniform float fogDistance;
+
 in vec3 vfNormal;
 in vec4 vfColor;
+in vec3 vfRealPosition;
 
-out vec4 fColor;
+layout(location = 0) out vec4 fColor;
+layout(location = 1) out vec4 fDistance;
  
 void main() {
 	if (lightEnabled) {
@@ -30,4 +34,7 @@ void main() {
 	} else {
 		fColor = vfColor;
 	}
+
+	// TODO why this?
+	fDistance = vec4(length(vfRealPosition) / fogDistance, 0.0, 0.0, 1.0);
 }

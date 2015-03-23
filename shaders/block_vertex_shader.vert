@@ -45,11 +45,14 @@ out vec3 vfNormal;
 flat out uint vfTextureIndex;
 out vec2 vfTexturePosition;
 out vec2 vfCornerPosition;
+out vec3 vfRealPosition;
 out float[4] vfShadowLevels;
 
 void main() {
 	vec4 position = vec4(mod(posIndex, 33u), mod(posIndex / 33u, 33u), posIndex / (33u * 33u), 1.0);
-	gl_Position = projectionMatrix * viewMatrix * modelMatrix * position;
+	vec4 realPosition = viewMatrix * modelMatrix * position;
+	vfRealPosition = realPosition.xyz;
+	gl_Position = projectionMatrix * realPosition;
 	
 	vfTextureIndex = textureIndex;
 	

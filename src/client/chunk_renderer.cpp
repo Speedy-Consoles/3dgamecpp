@@ -166,25 +166,26 @@ void ChunkRenderer::destroyRenderDistanceDependent() {
 
 void ChunkRenderer::render() {
 	Player &player = world->getPlayer(localClientID);
-	if (player.isValid()) {
-		glm::mat4 viewMatrix = glm::rotate(glm::mat4(1.0f), (float) (-player.getPitch() / 360.0 * TAU), glm::vec3(1.0f, 0.0f, 0.0f));
-		viewMatrix = glm::rotate(viewMatrix, (float) (-player.getYaw() / 360.0 * TAU), glm::vec3(0.0f, 1.0f, 0.0f));
-		viewMatrix = glm::rotate(viewMatrix, (float) (-TAU / 4.0), glm::vec3(1.0f, 0.0f, 0.0f));
-		viewMatrix = glm::rotate(viewMatrix, (float) (TAU / 4.0), glm::vec3(0.0f, 0.0f, 1.0f));
-		vec3i64 playerPos = player.getPos();
-		int64 m = RESOLUTION * Chunk::WIDTH;
-		viewMatrix = glm::translate(viewMatrix, glm::vec3(
-			(float) -((playerPos[0] % m + m) % m) / RESOLUTION,
-			(float) -((playerPos[1] % m + m) % m) / RESOLUTION,
-			(float) -((playerPos[2] % m + m) % m) / RESOLUTION)
-		);
-		shaders->setViewMatrix(viewMatrix);
+	if (!player.isValid())
+		return;
 
-		renderChunks();
-	}
-}
+	glm::mat4 viewMatrix = glm::rotate(glm::mat4(1.0f), (float) (-player.getPitch() / 360.0 * TAU), glm::vec3(1.0f, 0.0f, 0.0f));
+	viewMatrix = glm::rotate(viewMatrix, (float) (-player.getYaw() / 360.0 * TAU), glm::vec3(0.0f, 1.0f, 0.0f));
+	viewMatrix = glm::rotate(viewMatrix, (float) (-TAU / 4.0), glm::vec3(1.0f, 0.0f, 0.0f));
+	viewMatrix = glm::rotate(viewMatrix, (float) (TAU / 4.0), glm::vec3(0.0f, 0.0f, 1.0f));
+	vec3i64 playerPos = player.getPos();
+	int64 m = RESOLUTION * Chunk::WIDTH;
+	viewMatrix = glm::translate(viewMatrix, glm::vec3(
+		(float) -((playerPos[0] % m + m) % m) / RESOLUTION,
+		(float) -((playerPos[1] % m + m) % m) / RESOLUTION,
+		(float) -((playerPos[2] % m + m) % m) / RESOLUTION)
+	);
+	shaders->setViewMatrix(viewMatrix);
 
-void ChunkRenderer::renderChunks() {
+	shaders->setLightEnabled(true);
+
+	glBindTexture(GL_TEXTURE_2D_ARRAY, blockTextures);
+
 	int length = conf.render_distance * 2 + 1;
 
 	vec3i64 ccc;
