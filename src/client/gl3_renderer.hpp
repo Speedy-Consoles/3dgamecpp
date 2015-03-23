@@ -57,10 +57,8 @@ private:
 	GLuint skyVBO;
 
 	// scene fbo
-	GLuint sceneFBO;
-	GLuint sceneColorTexture;
-	GLuint sceneDistanceTexture;
-	GLuint sceneDepthTexture;
+	GLuint skyFBO;
+	GLuint skyTexture;
 
 	// performance info
 	bool debugActive = false;

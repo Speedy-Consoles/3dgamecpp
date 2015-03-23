@@ -56,45 +56,25 @@ GL3Renderer::GL3Renderer(
 	logOpenGLError();
 
 	// TODO make variable sized
-	// sky fbo and textures
-	glGenTextures(1, &sceneColorTexture);
-	glBindTexture(GL_TEXTURE_2D, sceneColorTexture);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 1920, 1080, 0, GL_RGBA, GL_FLOAT, 0);
+	// fog fbo and texture
+	glGenTextures(1, &skyTexture);
+	glBindTexture(GL_TEXTURE_2D, skyTexture);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, 1920, 1080, 0, GL_RGBA, GL_FLOAT, 0);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	logOpenGLError();
 
-	glGenTextures(1, &sceneDistanceTexture);
-	glBindTexture(GL_TEXTURE_2D, sceneDistanceTexture);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, 1920, 1080, 0,  GL_RED, GL_FLOAT, 0);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	logOpenGLError();
-
-	glGenTextures(1, &sceneDepthTexture);
-	glBindTexture(GL_TEXTURE_2D, sceneDepthTexture);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, 1920, 1080, 0,  GL_DEPTH_COMPONENT, GL_FLOAT, 0);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	logOpenGLError();
-
-	glGenFramebuffers(1, &sceneFBO);
-	glBindFramebuffer(GL_FRAMEBUFFER, sceneFBO);
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, sceneColorTexture, 0);
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, sceneDistanceTexture, 0);
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, sceneDepthTexture, 0);
-	GLenum buffers[2] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1};
-	glDrawBuffers(2, buffers);
+	glGenFramebuffers(1, &skyFBO);
+	glBindFramebuffer(GL_FRAMEBUFFER, skyFBO);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, skyTexture, 0);
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	logOpenGLError();
 }
 
 GL3Renderer::~GL3Renderer() {
 	LOG(DEBUG, "Destroying GL3 renderer");
-	glDeleteFramebuffers(1, &sceneFBO);
-	glDeleteTextures(1, &sceneColorTexture);
-	glDeleteTextures(1, &sceneDistanceTexture);
-	glDeleteTextures(1, &sceneDepthTexture);
+	glDeleteFramebuffers(1, &skyFBO);
+	glDeleteTextures(1, &skyTexture);
 }
 
 void GL3Renderer::buildCrossHair() {
@@ -252,23 +232,24 @@ void GL3Renderer::tick() {
 }
 
 void GL3Renderer::render() {
-	glBindFramebuffer(GL_FRAMEBUFFER, sceneFBO);
+	shaders.setLightEnabled(false);
+	renderSky();
+
+	glBindFramebuffer(GL_FRAMEBUFFER, skyFBO);
 	logOpenGLError();
-	GLfloat black[4] = {0.0};
-	GLfloat one = 1.0;
-	glClearBufferfv(GL_COLOR, 0, black);
-	glClearBufferfv(GL_DEPTH, 0, &one);
+	renderSky();
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	logOpenGLError();
+	shaders.setLightEnabled(true);
+
+	glClear(GL_DEPTH_BUFFER_BIT);
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D, skyTexture);
+	glActiveTexture(GL_TEXTURE0);
 	logOpenGLError();
 	chunkRenderer.render();
 	renderTarget();
 	renderPlayers();
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	logOpenGLError();
-	glDisable(GL_DEPTH_TEST);
-	renderSky();
-	glEnable(GL_DEPTH_TEST);
 
 	Player &player = world->getPlayer(localClientID);
 	// render overlay
@@ -282,7 +263,7 @@ void GL3Renderer::render() {
 }
 
 void GL3Renderer::renderHud(const Player &player) {
-
+	glDisable(GL_DEPTH_TEST);
 	glDepthMask(false);
 	glBindVertexArray(crossHairVAO);
 	shaders.prepareProgram(HUD_PROGRAM);
@@ -306,9 +287,12 @@ void GL3Renderer::renderHud(const Player &player) {
 	glEnd();
 	glPopMatrix();*/
 	glDepthMask(true);
+	glEnable(GL_DEPTH_TEST);
 }
 
 void GL3Renderer::renderSky() {
+	glDisable(GL_DEPTH_TEST);
+	glDepthMask(false);
 	Player &player = world->getPlayer(localClientID);
 	if (!player.isValid())
 		return;
@@ -316,17 +300,14 @@ void GL3Renderer::renderSky() {
 	glm::mat4 viewMatrix = glm::rotate(glm::mat4(1.0f), (float) (-player.getPitch() / 360.0 * TAU), glm::vec3(1.0f, 0.0f, 0.0f));
 	shaders.setModelMatrix(glm::mat4(1.0f));
 	shaders.setViewMatrix(viewMatrix);
-	shaders.prepareProgram(SKY_PROGRAM);
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, sceneColorTexture);
-	glActiveTexture(GL_TEXTURE1);
-	glBindTexture(GL_TEXTURE_2D, sceneDistanceTexture);
-	glActiveTexture(GL_TEXTURE2);
-	glBindTexture(GL_TEXTURE_2D, sceneDepthTexture);
-	glActiveTexture(GL_TEXTURE0);
+	shaders.setFogEnabled(false);
+	shaders.prepareProgram(DEFAULT_PROGRAM);
 
 	glBindVertexArray(skyVAO);
 	glDrawArrays(GL_TRIANGLES, 0, 12);
+	shaders.setFogEnabled(true);
+	glDepthMask(true);
+	glEnable(GL_DEPTH_TEST);
 }
 
 void GL3Renderer::renderMenu() {
@@ -335,23 +316,23 @@ void GL3Renderer::renderMenu() {
 
 void GL3Renderer::renderTarget() {
 	Player &player = world->getPlayer(localClientID);
-	if (player.isValid()) {
-		// view matrix for scene
-		glm::mat4 viewMatrix = glm::rotate(glm::mat4(1.0f), (float) (-player.getPitch() / 360.0 * TAU), glm::vec3(1.0f, 0.0f, 0.0f));
-		viewMatrix = glm::rotate(viewMatrix, (float) (-player.getYaw() / 360.0 * TAU), glm::vec3(0.0f, 1.0f, 0.0f));
-		viewMatrix = glm::rotate(viewMatrix, (float) (-TAU / 4.0), glm::vec3(1.0f, 0.0f, 0.0f));
-		viewMatrix = glm::rotate(viewMatrix, (float) (TAU / 4.0), glm::vec3(0.0f, 0.0f, 1.0f));
-		vec3i64 playerPos = player.getPos();
-		int64 m = RESOLUTION * Chunk::WIDTH;
-		viewMatrix = glm::translate(viewMatrix, glm::vec3(
-			(float) -((playerPos[0] % m + m) % m) / RESOLUTION,
-			(float) -((playerPos[1] % m + m) % m) / RESOLUTION,
-			(float) -((playerPos[2] % m + m) % m) / RESOLUTION)
-		);
-		shaders.setViewMatrix(viewMatrix);
-		shaders.prepareProgram(DEFAULT_PROGRAM);
-		// TODO
-	}
+	if (!player.isValid())
+		return;
+	// view matrix for scene
+	glm::mat4 viewMatrix = glm::rotate(glm::mat4(1.0f), (float) (-player.getPitch() / 360.0 * TAU), glm::vec3(1.0f, 0.0f, 0.0f));
+	viewMatrix = glm::rotate(viewMatrix, (float) (-player.getYaw() / 360.0 * TAU), glm::vec3(0.0f, 1.0f, 0.0f));
+	viewMatrix = glm::rotate(viewMatrix, (float) (-TAU / 4.0), glm::vec3(1.0f, 0.0f, 0.0f));
+	viewMatrix = glm::rotate(viewMatrix, (float) (TAU / 4.0), glm::vec3(0.0f, 0.0f, 1.0f));
+	vec3i64 playerPos = player.getPos();
+	int64 m = RESOLUTION * Chunk::WIDTH;
+	viewMatrix = glm::translate(viewMatrix, glm::vec3(
+		(float) -((playerPos[0] % m + m) % m) / RESOLUTION,
+		(float) -((playerPos[1] % m + m) % m) / RESOLUTION,
+		(float) -((playerPos[2] % m + m) % m) / RESOLUTION)
+	);
+	shaders.setViewMatrix(viewMatrix);
+	shaders.prepareProgram(DEFAULT_PROGRAM);
+	// TODO
 }
 
 void GL3Renderer::renderPlayers() {

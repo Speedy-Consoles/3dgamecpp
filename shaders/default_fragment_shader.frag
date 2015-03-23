@@ -18,23 +18,31 @@ uniform vec3 ambientLightColor;
 uniform vec3 diffuseLightDirection;
 uniform vec3 diffuseLightColor;
 
+uniform bool fogEnabled;
 uniform float fogDistance;
+
+uniform sampler2D textureSampler;
+uniform sampler2D fogSampler;
 
 in vec3 vfNormal;
 in vec4 vfColor;
 in vec3 vfRealPosition;
+in vec2 vfTexturePosition;
 
-layout(location = 0) out vec4 fColor;
-layout(location = 1) out vec4 fDistance;
+out vec4 fColor;
  
 void main() {
+	vec4 sceneColor = vfColor * vec4(1.0);//texture(textureSampler, vfTexturePosition);
 	if (lightEnabled) {
 		vec3 diffuseLight = max(0, dot(vfNormal, normalize(diffuseLightDirection))) * diffuseLightColor;
-		fColor = vec4(ambientLightColor + diffuseLight, 1.0) * vfColor;
-	} else {
-		fColor = vfColor;
+		sceneColor.xyz = sceneColor.xyz * (ambientLightColor + diffuseLight);
 	}
-
-	// TODO why this?
-	fDistance = vec4(length(vfRealPosition) / fogDistance, 0.0, 0.0, 1.0);
+	if (fogEnabled) {
+		float fogAlpha = clamp(length(vfRealPosition) / fogDistance, 0.0, 1.0);
+		vec3 fogPart = fogAlpha * texelFetch(fogSampler, ivec2(gl_FragCoord.xy), 0).xyz;
+		vec3 scenePart = sceneColor.xyz * (1.0 - fogAlpha);
+		fColor = vec4(scenePart + fogPart, sceneColor.a);
+	} else {
+		fColor = sceneColor;
+	}
 }

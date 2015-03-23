@@ -18,10 +18,12 @@ layout(location = 1) in vec4 color;
 
 out vec4 vfColor;
 out vec3 vfRealPosition;
+out vec2 vfTexturePosition;
 
 void main() {
 	vfColor = color;
 	vec4 realPosition = viewMatrix * modelMatrix * vec4(position, 1.0);
 	vfRealPosition = realPosition.xyz;
 	gl_Position = projectionMatrix * realPosition;
+	vfTexturePosition = vec2(0.0);
 }

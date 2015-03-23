@@ -7,11 +7,10 @@
 
 enum ShaderProgram {
 	DEFAULT_PROGRAM,
-	SKY_PROGRAM,
 	BLOCK_PROGRAM,
 	HUD_PROGRAM,
 };
-static const int NUM_PROGRAMS = 4;
+static const int NUM_PROGRAMS = 3;
 
 class Shaders {
 
@@ -26,11 +25,8 @@ class Shaders {
 	GLint defaultModelMatLoc;
 	GLint defaultViewMatLoc;
 	GLint defaultProjMatLoc;
+	GLint defaultFogEnabledLoc;
 	GLint defaultFogDistanceLoc;
-
-	GLint skyModelMatLoc;
-	GLint skyViewMatLoc;
-	GLint skyProjMatLoc;
 
 	GLint blockLightEnabledLoc;
 	GLint blockAmbientColorLoc;
@@ -39,6 +35,7 @@ class Shaders {
 	GLint blockModelMatLoc;
 	GLint blockViewMatLoc;
 	GLint blockProjMatLoc;
+	GLint blockFogEnabledLoc;
 	GLint blockFogDistanceLoc;
 
 	GLint hudProjMatLoc;
@@ -55,6 +52,7 @@ class Shaders {
 
 	glm::mat4 hudProjectionMatrix;
 
+	GLboolean fogEnabled;
 	GLfloat fogDistance;
 
 	// uniform up-to-dateness
@@ -65,6 +63,7 @@ class Shaders {
 	bool defaultModelMatUp = false;
 	bool defaultViewMatUp = false;
 	bool defaultProjMatUp = false;
+	bool defaultFogEnabledUp = false;
 	bool defaultFogDistanceUp = false;
 
 	bool blockLightEnabledUp = false;
@@ -74,11 +73,8 @@ class Shaders {
 	bool blockModelMatUp = false;
 	bool blockViewMatUp = false;
 	bool blockProjMatUp = false;
+	bool blockFogEnabledUp = false;
 	bool blockFogDistanceUp = false;
-
-	bool skyModelMatUp = false;
-	bool skyViewMatUp = false;
-	bool skyProjMatUp = false;
 
 	bool hudProjMatUp = false;
 
@@ -90,7 +86,6 @@ public:
 	~Shaders();
 
 	void setLightEnabled(bool enabled);
-
 	void setDiffuseLightColor(const glm::vec3 &color);
 	void setDiffuseLightDirection(const glm::vec3 &direction);
 	void setAmbientLightColor(const glm::vec3 &color);
@@ -101,6 +96,7 @@ public:
 
 	void setHudProjectionMatrix(const glm::mat4 &matrix);
 
+	void setFogEnabled(bool enabled);
 	void setFogDistance(float distance);
 
 	void prepareProgram(ShaderProgram program);

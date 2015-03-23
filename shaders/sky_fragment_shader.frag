@@ -25,7 +25,6 @@ void main() {
 	float sceneDepth = texelFetch(sceneDepthSampler, ivec2(gl_FragCoord.xy), 0);
 	if (sceneDepth == 1.0) {
 		fColor = vfColor;
-		gl_FragDepth = 1.0;
 	} else {
 		vec4 sceneColor = texelFetch(sceneColorSampler, ivec2(gl_FragCoord.xy), 0);
 		float sceneDistance = texelFetch(sceneDistanceSampler, ivec2(gl_FragCoord.xy), 0);
