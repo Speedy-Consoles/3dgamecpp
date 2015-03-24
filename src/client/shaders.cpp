@@ -63,7 +63,8 @@ Shaders::Shaders() {
 	defaultViewMatLoc = glGetUniformLocation(programLocations[DEFAULT_PROGRAM], "viewMatrix");
 	defaultProjMatLoc = glGetUniformLocation(programLocations[DEFAULT_PROGRAM], "projectionMatrix");
 	defaultFogEnabledLoc = glGetUniformLocation(programLocations[DEFAULT_PROGRAM], "fogEnabled");
-	defaultFogDistanceLoc = glGetUniformLocation(programLocations[DEFAULT_PROGRAM], "fogDistance");
+	defaultFogStartDistanceLoc = glGetUniformLocation(programLocations[DEFAULT_PROGRAM], "fogStartDistance");
+	defaultFogEndDistanceLoc = glGetUniformLocation(programLocations[DEFAULT_PROGRAM], "fogEndDistance");
 
 	blockLightEnabledLoc = glGetUniformLocation(programLocations[BLOCK_PROGRAM], "lightEnabled");
 	blockAmbientColorLoc = glGetUniformLocation(programLocations[BLOCK_PROGRAM], "ambientLightColor");
@@ -73,7 +74,8 @@ Shaders::Shaders() {
 	blockViewMatLoc = glGetUniformLocation(programLocations[BLOCK_PROGRAM], "viewMatrix");
 	blockProjMatLoc = glGetUniformLocation(programLocations[BLOCK_PROGRAM], "projectionMatrix");
 	blockFogEnabledLoc = glGetUniformLocation(programLocations[BLOCK_PROGRAM], "fogEnabled");
-	blockFogDistanceLoc = glGetUniformLocation(programLocations[BLOCK_PROGRAM], "fogDistance");
+	blockFogStartDistanceLoc = glGetUniformLocation(programLocations[BLOCK_PROGRAM], "fogStartDistance");
+	blockFogEndDistanceLoc = glGetUniformLocation(programLocations[BLOCK_PROGRAM], "fogEndDistance");
 
 	hudProjMatLoc = glGetUniformLocation(programLocations[HUD_PROGRAM], "projectionMatrix");
 
@@ -206,10 +208,16 @@ void Shaders::setFogEnabled(bool enabled) {
 	blockFogEnabledUp = false;
 }
 
-void Shaders::setFogDistance(float distance) {
-	fogDistance = distance;
-	defaultFogDistanceUp = false;
-	blockFogDistanceUp = false;
+void Shaders::setStartFogDistance(float distance) {
+	fogStartDistance = distance;
+	defaultFogStartDistanceUp = false;
+	blockFogStartDistanceUp = false;
+}
+
+void Shaders::setEndFogDistance(float distance) {
+	fogEndDistance = distance;
+	defaultFogEndDistanceUp = false;
+	blockFogEndDistanceUp = false;
 }
 
 void Shaders::prepareProgram(ShaderProgram program) {
@@ -251,9 +259,13 @@ void Shaders::prepareProgram(ShaderProgram program) {
 			glUniform1i(defaultFogEnabledLoc, fogEnabled);
 			defaultFogEnabledUp = true;
 		}
-		if (!defaultFogDistanceUp) {
-			glUniform1f(defaultFogDistanceLoc, fogDistance);
-			defaultFogDistanceUp = true;
+		if (!defaultFogStartDistanceUp) {
+			glUniform1f(defaultFogStartDistanceLoc, fogStartDistance);
+			defaultFogStartDistanceUp = true;
+		}
+		if (!defaultFogEndDistanceUp) {
+			glUniform1f(defaultFogEndDistanceLoc, fogEndDistance);
+			defaultFogEndDistanceUp = true;
 		}
 		break;
 	case BLOCK_PROGRAM:
@@ -289,9 +301,13 @@ void Shaders::prepareProgram(ShaderProgram program) {
 			glUniform1i(blockFogEnabledLoc, fogEnabled);
 			blockFogEnabledUp = true;
 		}
-		if (!blockFogDistanceUp) {
-			glUniform1f(blockFogDistanceLoc, fogDistance);
-			blockFogDistanceUp = true;
+		if (!blockFogStartDistanceUp) {
+			glUniform1f(blockFogStartDistanceLoc, fogStartDistance);
+			blockFogStartDistanceUp = true;
+		}
+		if (!blockFogEndDistanceUp) {
+			glUniform1f(blockFogEndDistanceLoc, fogEndDistance);
+			blockFogEndDistanceUp = true;
 		}
 		break;
 	case HUD_PROGRAM:

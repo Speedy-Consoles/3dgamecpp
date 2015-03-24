@@ -43,7 +43,8 @@ GL3Renderer::GL3Renderer(
 	shaders.setDiffuseLightColor(diffuseColor);
 
 	// fog
-	shaders.setFogDistance((conf.render_distance - 1) * Chunk::WIDTH);
+	shaders.setEndFogDistance((conf.render_distance - 1) * Chunk::WIDTH);
+	shaders.setStartFogDistance((conf.render_distance - 1) * Chunk::WIDTH * 1 / 2.0);
 
 	buildCrossHair();
 	buildSky();
@@ -199,7 +200,8 @@ void GL3Renderer::setConf(const GraphicsConf &conf) {
 
 	if (conf.render_distance != old_conf.render_distance) {
 		makePerspectiveMatrix();
-		shaders.setFogDistance((conf.render_distance - 1) * Chunk::WIDTH);
+		shaders.setEndFogDistance((conf.render_distance - 1) * Chunk::WIDTH);
+		shaders.setStartFogDistance((conf.render_distance - 1) * Chunk::WIDTH * 1 / 2.0);
 	}
 
 	if (conf.fov != old_conf.fov) {

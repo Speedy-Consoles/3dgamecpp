@@ -26,7 +26,8 @@ class Shaders {
 	GLint defaultViewMatLoc;
 	GLint defaultProjMatLoc;
 	GLint defaultFogEnabledLoc;
-	GLint defaultFogDistanceLoc;
+	GLint defaultFogStartDistanceLoc;
+	GLint defaultFogEndDistanceLoc;
 
 	GLint blockLightEnabledLoc;
 	GLint blockAmbientColorLoc;
@@ -36,7 +37,8 @@ class Shaders {
 	GLint blockViewMatLoc;
 	GLint blockProjMatLoc;
 	GLint blockFogEnabledLoc;
-	GLint blockFogDistanceLoc;
+	GLint blockFogStartDistanceLoc;
+	GLint blockFogEndDistanceLoc;
 
 	GLint hudProjMatLoc;
 
@@ -53,7 +55,8 @@ class Shaders {
 	glm::mat4 hudProjectionMatrix;
 
 	GLboolean fogEnabled;
-	GLfloat fogDistance;
+	GLfloat fogStartDistance;
+	GLfloat fogEndDistance;
 
 	// uniform up-to-dateness
 	bool defaultLightEnabledUp = false;
@@ -64,7 +67,8 @@ class Shaders {
 	bool defaultViewMatUp = false;
 	bool defaultProjMatUp = false;
 	bool defaultFogEnabledUp = false;
-	bool defaultFogDistanceUp = false;
+	bool defaultFogStartDistanceUp = false;
+	bool defaultFogEndDistanceUp = false;
 
 	bool blockLightEnabledUp = false;
 	bool blockAmbientColorUp = false;
@@ -74,7 +78,8 @@ class Shaders {
 	bool blockViewMatUp = false;
 	bool blockProjMatUp = false;
 	bool blockFogEnabledUp = false;
-	bool blockFogDistanceUp = false;
+	bool blockFogStartDistanceUp = false;
+	bool blockFogEndDistanceUp = false;
 
 	bool hudProjMatUp = false;
 
@@ -97,7 +102,8 @@ public:
 	void setHudProjectionMatrix(const glm::mat4 &matrix);
 
 	void setFogEnabled(bool enabled);
-	void setFogDistance(float distance);
+	void setStartFogDistance(float distance);
+	void setEndFogDistance(float distance);
 
 	void prepareProgram(ShaderProgram program);
 private:
