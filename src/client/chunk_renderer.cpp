@@ -99,6 +99,9 @@ void ChunkRenderer::loadTextures() {
 	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, GL_REPEAT);
 	glGenerateMipmap(GL_TEXTURE_2D_ARRAY);
 	logOpenGLError();
+
+	SDL_FreeSurface(tmp);
+	SDL_FreeSurface(img);
 }
 
 void ChunkRenderer::setConf(const GraphicsConf &conf) {
