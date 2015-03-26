@@ -80,8 +80,8 @@ Shaders::Shaders() {
 	hudProjMatLoc = glGetUniformLocation(programLocations[HUD_PROGRAM], "projectionMatrix");
 
 
-	GLint tmp = glGetUniformLocation(programLocations[DEFAULT_PROGRAM], "sampler");
-	tmp = glGetUniformLocation(programLocations[DEFAULT_PROGRAM], "textureSampler");
+	glUseProgram(programLocations[DEFAULT_PROGRAM]);
+	GLint tmp = glGetUniformLocation(programLocations[DEFAULT_PROGRAM], "textureSampler");
 	glUniform1i(tmp, 0);
 	tmp = glGetUniformLocation(programLocations[DEFAULT_PROGRAM], "fogSampler");
 	glUniform1i(tmp, 1);
