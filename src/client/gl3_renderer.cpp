@@ -56,11 +56,10 @@ GL3Renderer::GL3Renderer(
 	glEnable(GL_CULL_FACE);
 	logOpenGLError();
 
-	// TODO make variable sized
 	// fog fbo and texture
 	glGenTextures(1, &skyTexture);
 	glBindTexture(GL_TEXTURE_2D, skyTexture);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, 1920, 1080, 0, GL_RGBA, GL_FLOAT, 0);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, graphics->getWidth(), graphics->getHeight(), 0, GL_RGBA, GL_FLOAT, 0);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	logOpenGLError();
@@ -144,6 +143,8 @@ void GL3Renderer::buildSky() {
 void GL3Renderer::resize() {
 	makePerspectiveMatrix();
 	makeOrthogonalMatrix();
+	glBindTexture(GL_TEXTURE_2D, skyTexture);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, graphics->getWidth(), graphics->getHeight(), 0, GL_RGBA, GL_FLOAT, 0);
 }
 
 void GL3Renderer::makePerspectiveMatrix() {
