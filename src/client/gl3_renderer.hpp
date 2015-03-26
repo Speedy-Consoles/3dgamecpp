@@ -2,6 +2,7 @@
 #define GL3_RENDERER_HPP
 
 #include <GL/glew.h>
+#include <FTGL/ftgl.h>
 #include <glm/mat4x4.hpp>
 #include <glm/vec3.hpp>
 
@@ -76,7 +77,9 @@ private:
 
 	// colors
 	vec3f fogColor{ 0.6f, 0.6f, 0.8f };
-	vec3f skyColor{ 0.15f, 0.15f, 0.9f };;
+	vec3f skyColor{ 0.15f, 0.15f, 0.9f };
+
+    FTFont *font;
 
 #pragma pack(push)
 #pragma pack(1)

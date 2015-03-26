@@ -54,6 +54,8 @@
     <None Include="..\..\shaders\block_vertex_shader.vert" />
     <None Include="..\..\shaders\default_fragment_shader.frag" />
     <None Include="..\..\shaders\default_vertex_shader.vert" />
+    <None Include="..\..\shaders\font.frag" />
+    <None Include="..\..\shaders\font.vert" />
     <None Include="..\..\shaders\hud_fragment_shader.frag" />
     <None Include="..\..\shaders\hud_vertex_shader.vert" />
   </ItemGroup>

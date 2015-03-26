@@ -93,6 +93,12 @@
     <ClInclude Include="..\..\src\game\world_generator.hpp">
       <Filter>Header Files\game</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\engine\unicode_int.hpp">
+      <Filter>Header Files\engine</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\engine\bmfont.hpp">
+      <Filter>Header Files\engine</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\stopwatch.cpp">
@@ -139,6 +145,12 @@
     </ClCompile>
     <ClCompile Include="..\..\src\game\world_generator.cpp">
       <Filter>Source Files\game</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\engine\unicode_int.cpp">
+      <Filter>Source Files\engine</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\engine\bmfont.cpp">
+      <Filter>Source Files\engine</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

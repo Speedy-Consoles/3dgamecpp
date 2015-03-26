@@ -164,5 +164,11 @@
     <None Include="..\..\shaders\hud_vertex_shader.vert">
       <Filter>Shader Files</Filter>
     </None>
+    <None Include="..\..\shaders\font.frag">
+      <Filter>Shader Files</Filter>
+    </None>
+    <None Include="..\..\shaders\font.vert">
+      <Filter>Shader Files</Filter>
+    </None>
   </ItemGroup>
 </Project>

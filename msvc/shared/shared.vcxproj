@@ -12,6 +12,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\constants.hpp" />
+    <ClInclude Include="..\..\src\engine\bmfont.hpp" />
     <ClInclude Include="..\..\src\engine\buffer.hpp" />
     <ClInclude Include="..\..\src\engine\logging.hpp" />
     <ClInclude Include="..\..\src\engine\macros.hpp" />
@@ -23,6 +24,7 @@
     <ClInclude Include="..\..\src\engine\stack.hpp" />
     <ClInclude Include="..\..\src\engine\std_types.hpp" />
     <ClInclude Include="..\..\src\engine\time.hpp" />
+    <ClInclude Include="..\..\src\engine\unicode_int.hpp" />
     <ClInclude Include="..\..\src\engine\vmath.hpp" />
     <ClInclude Include="..\..\src\game\chunk.hpp" />
     <ClInclude Include="..\..\src\game\perlin.hpp" />
@@ -35,11 +37,13 @@
     <ClInclude Include="..\..\src\util.hpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\src\engine\bmfont.cpp" />
     <ClCompile Include="..\..\src\engine\buffer.cpp" />
     <ClCompile Include="..\..\src\engine\logging.cpp" />
     <ClCompile Include="..\..\src\engine\net.cpp" />
     <ClCompile Include="..\..\src\engine\socket.cpp" />
     <ClCompile Include="..\..\src\engine\time.cpp" />
+    <ClCompile Include="..\..\src\engine\unicode_int.cpp" />
     <ClCompile Include="..\..\src\game\chunk.cpp" />
     <ClCompile Include="..\..\src\game\perlin.cpp" />
     <ClCompile Include="..\..\src\game\player.cpp" />

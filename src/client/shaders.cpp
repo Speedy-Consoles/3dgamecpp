@@ -79,6 +79,7 @@ Shaders::Shaders() {
 
 	hudProjMatLoc = glGetUniformLocation(programLocations[HUD_PROGRAM], "projectionMatrix");
 
+    logOpenGLError();
 
 	glUseProgram(programLocations[DEFAULT_PROGRAM]);
 	GLint tmp = glGetUniformLocation(programLocations[DEFAULT_PROGRAM], "textureSampler");
@@ -86,11 +87,15 @@ Shaders::Shaders() {
 	tmp = glGetUniformLocation(programLocations[DEFAULT_PROGRAM], "fogSampler");
 	glUniform1i(tmp, 1);
 
+    logOpenGLError();
+
 	glUseProgram(programLocations[BLOCK_PROGRAM]);
 	tmp = glGetUniformLocation(programLocations[BLOCK_PROGRAM], "textureSampler");
 	glUniform1i(tmp, 0);
 	tmp = glGetUniformLocation(programLocations[BLOCK_PROGRAM], "fogSampler");
 	glUniform1i(tmp, 1);
+
+    logOpenGLError();
 
 //	glUseProgram(programLocations[HUD_PROGRAM]);
 //	tmp = glGetUniformLocation(programLocations[HUD_PROGRAM], "sampler");
@@ -112,9 +117,9 @@ void Shaders::buildShader(GLuint shaderLoc, const char* fileName) {
 	// Read the Vertex Shader code from the file
 	std::string shaderCode;
 	std::ifstream shaderStream(fileName, std::ios::in);
-	if(shaderStream.is_open()) {
+	if (shaderStream.is_open()) {
 		std::string Line = "";
-		while(getline(shaderStream, Line))
+		while (getline(shaderStream, Line))
 			shaderCode += "\n" + Line;
 		shaderStream.close();
 	} else {
@@ -221,10 +226,10 @@ void Shaders::setEndFogDistance(float distance) {
 }
 
 void Shaders::prepareProgram(ShaderProgram program) {
-	if (activeProgram != program) {
+	//if (activeProgram != program) {
 		glUseProgram(programLocations[program]);
 		activeProgram = program;
-	}
+	//}
 	switch (program) {
 	case DEFAULT_PROGRAM:
 		if (!defaultLightEnabledUp) {

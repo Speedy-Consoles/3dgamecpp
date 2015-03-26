@@ -49,6 +49,16 @@ GL3Renderer::GL3Renderer(
 	buildCrossHair();
 	buildSky();
 
+    // font
+    LOG(DEBUG, "Loading font");
+    font = new FTGLTextureFont("res/DejaVuSansMono.ttf");
+    if (font) {
+        font->FaceSize(16);
+        font->CharMap(ft_encoding_unicode);
+    } else {
+        LOG(ERROR, "Could not open 'res/DejaVuSansMono.ttf'");
+    }
+
 	// gl stuff
 	glEnable(GL_BLEND);
 	glEnable(GL_DEPTH_TEST);
@@ -73,6 +83,9 @@ GL3Renderer::GL3Renderer(
 
 GL3Renderer::~GL3Renderer() {
 	LOG(DEBUG, "Destroying GL3 renderer");
+
+    delete font;
+
 	glDeleteFramebuffers(1, &skyFBO);
 	glDeleteTextures(1, &skyTexture);
 }
@@ -235,9 +248,11 @@ void GL3Renderer::tick() {
 }
 
 void GL3Renderer::render() {
-	shaders.setLightEnabled(false);
+    shaders.setLightEnabled(false);
+    logOpenGLError();
 	renderSky();
 
+    logOpenGLError();
 	glBindFramebuffer(GL_FRAMEBUFFER, skyFBO);
 	logOpenGLError();
 	renderSky();
