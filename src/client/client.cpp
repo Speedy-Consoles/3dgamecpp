@@ -43,7 +43,6 @@ private:
 
 	bool closeRequested = false;
 
-    BMFont font;
 
 public:
 	Client(const Client &) = delete;
@@ -103,8 +102,6 @@ Client::Client(const char *worldId, const char *serverAdress) {
 	frame = menu->getFrame();
 	graphics = new Graphics(world, menu, &state, &localClientId, *conf, stopwatch);
 
-    font.load("test.fnt");
-
 	if (serverAdress) {
 		LOG(INFO, "Connecting to remote server '" << serverAdress << "'");
 		serverInterface = new RemoteServerInterface(world, serverAdress, *conf);
@@ -156,7 +153,6 @@ void Client::run() {
 #ifndef NO_GRAPHICS
         if (getCurrentTime() < time + timeShift + seconds(1) / TICK_SPEED) {
             graphics->tick();
-            font.Write(5, 5, 0, "Hello, world!", 0, 0);
         }
 
 #endif

@@ -1,6 +1,7 @@
 #version 330 core
 
 uniform mat4 projectionMatrix;
+uniform mat4 modelMatrix;
 
 layout(location = 0) in vec2 coord;
 layout(location = 1) in vec2 texCoord;

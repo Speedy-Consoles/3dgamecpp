@@ -2,13 +2,13 @@
 #define GL3_RENDERER_HPP
 
 #include <GL/glew.h>
-#include <FTGL/ftgl.h>
 #include <glm/mat4x4.hpp>
 #include <glm/vec3.hpp>
 
 #include "renderer.hpp"
 #include "shaders.hpp"
 #include "chunk_renderer.hpp"
+#include "engine/bmfont.hpp"
 
 #include "game/chunk.hpp"
 #include "util.hpp"
@@ -48,6 +48,9 @@ private:
 	// shaders
 	Shaders shaders;
 
+    // font
+    BMFont font;
+
 	// chunk renderer
 	ChunkRenderer chunkRenderer;
 
@@ -78,8 +81,6 @@ private:
 	// colors
 	vec3f fogColor{ 0.6f, 0.6f, 0.8f };
 	vec3f skyColor{ 0.15f, 0.15f, 0.9f };
-
-    FTFont *font;
 
 #pragma pack(push)
 #pragma pack(1)

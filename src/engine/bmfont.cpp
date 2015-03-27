@@ -109,7 +109,7 @@ public:
 // This is the BMFont class that is used to write text with bitmap fonts.
 //=============================================================================
 
-BMFont::BMFont()
+BMFont::BMFont(Shaders *shaders)
 {
     fontHeight = 0;
     base = 0;
@@ -118,6 +118,7 @@ BMFont::BMFont()
     scale = 1.0f;
     hasOutline = false;
     encoding = NONE;
+    this->shaders = shaders;
 }
 
 BMFont::~BMFont()
@@ -340,7 +341,7 @@ void BMFont::InternalWrite(float x, float y, float z, const char *text, int coun
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
     glEnableVertexAttribArray(0); // coord
     glEnableVertexAttribArray(1); // texCoord
-    glUseProgram(program);
+    // TODO glBindTexture
     logOpenGLError();
 
     glDisable(GL_DEPTH_TEST);
@@ -368,33 +369,24 @@ void BMFont::InternalWrite(float x, float y, float z, const char *text, int coun
         logOpenGLError();
 
         void *coordOffset = (void *)ch->vboOffset;
-        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), coordOffset);
+        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void *)0);
 
         void *texCoordOffset = (void *)(ch->vboOffset + 2 * sizeof(float));
-        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), texCoordOffset);
+        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void *)2);
         logOpenGLError();
 
-        GLuint uniform;
-        uniform = glGetUniformLocation(program, "isPacked");
-        glUniform1i(uniform, isPacked);
-        uniform = glGetUniformLocation(program, "page");
-        glUniform1i(uniform, ch->page);
-        uniform = glGetUniformLocation(program, "chnl");
-        glUniform1i(uniform, ch->chnl);
-
-        glm::mat4 projectionMatrix = glm::mat4(1.0f);
-        //glm::translate(projectionMatrix, glm::vec3(x + ox, y + oy, 0.0f));
-        uniform = glGetUniformLocation(program, "projectionMatrix");
-        glUniformMatrix4fv(uniform, 1, GL_FALSE, glm::value_ptr(projectionMatrix));
+        shaders->setFontModelMatrix(glm::translate(glm::mat4(1.0f), glm::vec3(x + ox, y + oy, 0.0f)));
+        shaders->setFontIsPacked(isPacked);
+        shaders->setFontPage(ch->page);
+        shaders->setFontChannel(ch->chnl);
         logOpenGLError();
 
-        float buffer[] = {0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1, 1, 1, 1, 0, 0};
-        glBufferData(GL_ARRAY_BUFFER, 18 * sizeof(float), buffer, GL_STATIC_DRAW);
+        float buffer[] = {0, 0, 0, 0, 10, 0, 10, 0, 10, 10, 10, 10};
+        glBufferData(GL_ARRAY_BUFFER, 12 * sizeof(float), buffer, GL_STATIC_DRAW);
         
-        glUseProgram(9);
-        glDrawArrays(GL_TRIANGLES, 0, 3);
+        shaders->prepareProgram(FONT_PROGRAM);
+        glDrawArrays(GL_TRIANGLES, 0, 6);
         logOpenGLError();
-        glUseProgram(program);
 
         x += a;
         if (charId == ' ')

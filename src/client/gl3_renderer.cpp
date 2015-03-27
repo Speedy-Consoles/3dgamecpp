@@ -32,6 +32,8 @@ GL3Renderer::GL3Renderer(
 		state(*state),
 		localClientID(*localClientID),
 		stopwatch(stopwatch),
+        shaders(),
+        font(&shaders),
 		chunkRenderer(world, &shaders, this, localClientID, conf) {
 	makeMaxFOV();
 	makePerspectiveMatrix();
@@ -50,14 +52,7 @@ GL3Renderer::GL3Renderer(
 	buildSky();
 
     // font
-    LOG(DEBUG, "Loading font");
-    font = new FTGLTextureFont("res/DejaVuSansMono.ttf");
-    if (font) {
-        font->FaceSize(16);
-        font->CharMap(ft_encoding_unicode);
-    } else {
-        LOG(ERROR, "Could not open 'res/DejaVuSansMono.ttf'");
-    }
+    font.load("test.fnt");
 
 	// gl stuff
 	glEnable(GL_BLEND);
@@ -83,8 +78,6 @@ GL3Renderer::GL3Renderer(
 
 GL3Renderer::~GL3Renderer() {
 	LOG(DEBUG, "Destroying GL3 renderer");
-
-    delete font;
 
 	glDeleteFramebuffers(1, &skyFBO);
 	glDeleteTextures(1, &skyTexture);
@@ -188,7 +181,8 @@ void GL3Renderer::makeOrthogonalMatrix() {
 		hudMatrix = glm::ortho(-DEFAULT_WINDOWED_RES[1] * currentRatio / 2.0f, DEFAULT_WINDOWED_RES[1]
 				* currentRatio / 2.0f, -DEFAULT_WINDOWED_RES[1] / 2.0f,
 				DEFAULT_WINDOWED_RES[1] / 2.0f, 1.0f, -1.0f);
-	shaders.setHudProjectionMatrix(hudMatrix);
+    shaders.setHudProjectionMatrix(hudMatrix);
+    shaders.setFontProjectionMatrix(hudMatrix);
 }
 
 void GL3Renderer::makeMaxFOV() {
@@ -275,6 +269,7 @@ void GL3Renderer::render() {
 		renderHud(player);
 		//if (debugActive)
 		//	renderDebugInfo(player);
+        font.Write(5, 5, 0, "Hello, world!", 0, 0);
 	} else if (state == IN_MENU){
 		renderMenu();
 	}

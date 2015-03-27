@@ -9,8 +9,10 @@ enum ShaderProgram {
 	DEFAULT_PROGRAM,
 	BLOCK_PROGRAM,
 	HUD_PROGRAM,
+    FONT_PROGRAM,
 };
-static const int NUM_PROGRAMS = 3;
+
+static const int NUM_PROGRAMS = 4;
 
 class Shaders {
 
@@ -40,7 +42,14 @@ class Shaders {
 	GLint blockFogStartDistanceLoc;
 	GLint blockFogEndDistanceLoc;
 
-	GLint hudProjMatLoc;
+    GLint hudProjMatLoc;
+
+    GLint fontProjMatLoc;
+    GLint fontModelMatLoc;
+    GLint fontTexLoc;
+    GLint fontIsPackedLoc;
+    GLint fontPageLoc;
+    GLint fontChannelLoc;
 
 	// uniforms
 	GLboolean lightEnabled;
@@ -53,6 +62,12 @@ class Shaders {
 	glm::mat4 projectionMatrix;
 
 	glm::mat4 hudProjectionMatrix;
+
+    glm::mat4 fontProjectionMatrix;
+    glm::mat4 fontModelMatrix;
+    GLboolean fontIsPacked;
+    GLshort fontPage;
+    GLshort fontChannel;
 
 	GLboolean fogEnabled;
 	GLfloat fogStartDistance;
@@ -83,6 +98,12 @@ class Shaders {
 
 	bool hudProjMatUp = false;
 
+    bool fontProjMatUp = false;
+    bool fontModelMatUp = false;
+    bool fontIsPackedUp = false;
+    bool fontChannelUp = false;
+    bool fontPageUp = false;
+
 	// active program
 	ShaderProgram activeProgram;
 
@@ -99,7 +120,13 @@ public:
 	void setViewMatrix(const glm::mat4 &matrix);
 	void setProjectionMatrix(const glm::mat4 &matrix);
 
-	void setHudProjectionMatrix(const glm::mat4 &matrix);
+    void setHudProjectionMatrix(const glm::mat4 &matrix);
+
+    void setFontProjectionMatrix(const glm::mat4 &matrix);
+    void setFontModelMatrix(const glm::mat4 &matrix);
+    void setFontIsPacked(bool isPacked);
+    void setFontPage(short page);
+    void setFontChannel(short channel);
 
 	void setFogEnabled(bool enabled);
 	void setStartFogDistance(float distance);

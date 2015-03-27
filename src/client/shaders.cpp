@@ -10,48 +10,61 @@
 Shaders::Shaders() {
 	// Create the shaders
 	GLuint defaultVertexShaderLoc = glCreateShader(GL_VERTEX_SHADER);
-	GLuint blockVertexShaderLoc = glCreateShader(GL_VERTEX_SHADER);
-	GLuint hudVertexShaderLoc = glCreateShader(GL_VERTEX_SHADER);
+    GLuint blockVertexShaderLoc = glCreateShader(GL_VERTEX_SHADER);
+    GLuint hudVertexShaderLoc = glCreateShader(GL_VERTEX_SHADER);
+    GLuint fontVertexShaderLoc = glCreateShader(GL_VERTEX_SHADER);
 	GLuint defaultFragmentShaderLoc = glCreateShader(GL_FRAGMENT_SHADER);
-	GLuint blockFragmentShaderLoc = glCreateShader(GL_FRAGMENT_SHADER);
-	GLuint hudFragmentShaderLoc = glCreateShader(GL_FRAGMENT_SHADER);
+    GLuint blockFragmentShaderLoc = glCreateShader(GL_FRAGMENT_SHADER);
+    GLuint hudFragmentShaderLoc = glCreateShader(GL_FRAGMENT_SHADER);
+    GLuint fontFragmentShaderLoc = glCreateShader(GL_FRAGMENT_SHADER);
 
 	LOG(DEBUG, "Building default vertex shader");
 	buildShader(defaultVertexShaderLoc, "shaders/default_vertex_shader.vert");
 	LOG(DEBUG, "Building block vertex shader");
-	buildShader(blockVertexShaderLoc, "shaders/block_vertex_shader.vert");
-	LOG(DEBUG, "Building block vertex shader");
-	buildShader(hudVertexShaderLoc, "shaders/hud_vertex_shader.vert");
+    buildShader(blockVertexShaderLoc, "shaders/block_vertex_shader.vert");
+    LOG(DEBUG, "Building hud vertex shader");
+    buildShader(hudVertexShaderLoc, "shaders/hud_vertex_shader.vert");
+    LOG(DEBUG, "Building font vertex shader");
+    buildShader(fontVertexShaderLoc, "shaders/font.vert");
+
 	LOG(DEBUG, "Building default fragment shader");
 	buildShader(defaultFragmentShaderLoc, "shaders/default_fragment_shader.frag");
 	LOG(DEBUG, "Building block fragment shader");
-	buildShader(blockFragmentShaderLoc, "shaders/block_fragment_shader.frag");
-	LOG(DEBUG, "Building hud fragment shader");
-	buildShader(hudFragmentShaderLoc, "shaders/hud_fragment_shader.frag");
+    buildShader(blockFragmentShaderLoc, "shaders/block_fragment_shader.frag");
+    LOG(DEBUG, "Building hud fragment shader");
+    buildShader(hudFragmentShaderLoc, "shaders/hud_fragment_shader.frag");
+    LOG(DEBUG, "Building font fragment shader");
+    buildShader(fontFragmentShaderLoc, "shaders/font.frag");
 
 	// create the programs
 	programLocations[DEFAULT_PROGRAM] = glCreateProgram();
-	programLocations[BLOCK_PROGRAM] = glCreateProgram();
-	programLocations[HUD_PROGRAM] = glCreateProgram();
+    programLocations[BLOCK_PROGRAM] = glCreateProgram();
+    programLocations[HUD_PROGRAM] = glCreateProgram();
+    programLocations[FONT_PROGRAM] = glCreateProgram();
 
 	GLuint defaultProgramShaderLocs[2] = {defaultVertexShaderLoc, defaultFragmentShaderLoc};
-	GLuint blockProgramShaderLocs[2] = {blockVertexShaderLoc, blockFragmentShaderLoc};
-	GLuint hudProgramShaderLocs[2] = {hudVertexShaderLoc, hudFragmentShaderLoc};
+    GLuint blockProgramShaderLocs[2] = { blockVertexShaderLoc, blockFragmentShaderLoc };
+    GLuint hudProgramShaderLocs[2] = { hudVertexShaderLoc, hudFragmentShaderLoc };
+    GLuint fontProgramShaderLocs[2] = { fontVertexShaderLoc, fontFragmentShaderLoc };
 
 	LOG(DEBUG, "Building default program");
 	buildProgram(programLocations[DEFAULT_PROGRAM], defaultProgramShaderLocs, 2);
 	LOG(DEBUG, "Building block program");
-	buildProgram(programLocations[BLOCK_PROGRAM], blockProgramShaderLocs, 2);
-	LOG(DEBUG, "Building hud program");
-	buildProgram(programLocations[HUD_PROGRAM], hudProgramShaderLocs, 2);
+    buildProgram(programLocations[BLOCK_PROGRAM], blockProgramShaderLocs, 2);
+    LOG(DEBUG, "Building hud program");
+    buildProgram(programLocations[HUD_PROGRAM], hudProgramShaderLocs, 2);
+    LOG(DEBUG, "Building font program");
+    buildProgram(programLocations[FONT_PROGRAM], fontProgramShaderLocs, 2);
 
 	// delete the shaders
 	glDeleteShader(defaultVertexShaderLoc);
-	glDeleteShader(blockVertexShaderLoc);
-	glDeleteShader(hudVertexShaderLoc);
+    glDeleteShader(blockVertexShaderLoc);
+    glDeleteShader(hudVertexShaderLoc);
+    glDeleteShader(fontVertexShaderLoc);
 	glDeleteShader(defaultFragmentShaderLoc);
-	glDeleteShader(blockFragmentShaderLoc);
-	glDeleteShader(hudFragmentShaderLoc);
+    glDeleteShader(blockFragmentShaderLoc);
+    glDeleteShader(hudFragmentShaderLoc);
+    glDeleteShader(fontFragmentShaderLoc);
 	logOpenGLError();
 
 	// get uniform locations
@@ -77,7 +90,13 @@ Shaders::Shaders() {
 	blockFogStartDistanceLoc = glGetUniformLocation(programLocations[BLOCK_PROGRAM], "fogStartDistance");
 	blockFogEndDistanceLoc = glGetUniformLocation(programLocations[BLOCK_PROGRAM], "fogEndDistance");
 
-	hudProjMatLoc = glGetUniformLocation(programLocations[HUD_PROGRAM], "projectionMatrix");
+    hudProjMatLoc = glGetUniformLocation(programLocations[HUD_PROGRAM], "projectionMatrix");
+
+    fontProjMatLoc = glGetUniformLocation(programLocations[FONT_PROGRAM], "projectionMatrix");
+    fontModelMatLoc = glGetUniformLocation(programLocations[FONT_PROGRAM], "modelMatrix");
+    fontIsPackedLoc = glGetUniformLocation(programLocations[FONT_PROGRAM], "isPacked");
+    fontPageLoc = glGetUniformLocation(programLocations[FONT_PROGRAM], "page");
+    fontChannelLoc = glGetUniformLocation(programLocations[FONT_PROGRAM], "chnl");
 
     logOpenGLError();
 
@@ -109,8 +128,9 @@ Shaders::Shaders() {
 
 Shaders::~Shaders() {
 	glDeleteProgram(programLocations[DEFAULT_PROGRAM]);
-	glDeleteProgram(programLocations[BLOCK_PROGRAM]);
-	glDeleteProgram(programLocations[HUD_PROGRAM]);
+    glDeleteProgram(programLocations[BLOCK_PROGRAM]);
+    glDeleteProgram(programLocations[HUD_PROGRAM]);
+    glDeleteProgram(programLocations[FONT_PROGRAM]);
 }
 
 void Shaders::buildShader(GLuint shaderLoc, const char* fileName) {
@@ -205,6 +225,31 @@ void Shaders::setProjectionMatrix(const glm::mat4 &matrix) {
 void Shaders::setHudProjectionMatrix(const glm::mat4 &matrix) {
 	hudProjectionMatrix = matrix;
 	hudProjMatUp = false;
+}
+
+void Shaders::setFontProjectionMatrix(const glm::mat4 &matrix) {
+    fontProjectionMatrix = matrix;
+    fontProjMatUp = false;
+}
+
+void Shaders::setFontModelMatrix(const glm::mat4 &matrix) {
+    fontModelMatrix = matrix;
+    fontModelMatUp = false;
+}
+
+void Shaders::setFontIsPacked(bool isPacked) {
+    fontIsPacked = isPacked;
+    fontIsPackedUp = false;
+}
+
+void Shaders::setFontPage(short page) {
+    fontPage = page;
+    fontPageUp = false;
+}
+
+void Shaders::setFontChannel(short channel) {
+    fontChannel = channel;
+    fontChannelUp = false;
 }
 
 void Shaders::setFogEnabled(bool enabled) {
@@ -315,6 +360,28 @@ void Shaders::prepareProgram(ShaderProgram program) {
 			blockFogEndDistanceUp = true;
 		}
 		break;
+    case FONT_PROGRAM:
+        if (!fontProjMatUp) {
+            glUniformMatrix4fv(fontProjMatLoc, 1, GL_FALSE, glm::value_ptr(hudProjectionMatrix));
+            hudProjMatUp = true;
+        }
+        if (!fontModelMatUp) {
+            glUniformMatrix4fv(fontModelMatLoc, 1, GL_FALSE, glm::value_ptr(hudProjectionMatrix));
+            hudProjMatUp = true;
+        }
+        if (!fontIsPackedUp) {
+            glUniform1i(fontIsPackedLoc, fontIsPacked);
+            hudProjMatUp = true;
+        }
+        if (!fontPageUp) {
+            glUniform1i(fontPageLoc, fontPage);
+            hudProjMatUp = true;
+        }
+        if (!fontChannelUp) {
+            glUniform1i(fontChannelLoc, fontChannel);
+            hudProjMatUp = true;
+        }
+        break;
 	case HUD_PROGRAM:
 		if (!hudProjMatUp) {
 			glUniformMatrix4fv(hudProjMatLoc, 1, GL_FALSE, glm::value_ptr(hudProjectionMatrix));

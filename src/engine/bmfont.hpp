@@ -46,6 +46,7 @@
 #include <GL/glew.h>
 
 #include "std_types.hpp"
+#include "client/shaders.hpp"
 
 struct CharDesc {
     short srcX;
@@ -75,7 +76,7 @@ class BMFontLoader;
 class BMFont
 {
 public:
-    BMFont();
+    BMFont(Shaders *shaders);
     ~BMFont();
 
 	int load(const char *fontFile);
@@ -96,8 +97,10 @@ public:
 	void PrepareEffect();
 	void PreparePixelPerfectOutput();
 
-protected:
+private:
     friend class BMFontLoader;
+
+    Shaders *shaders;
 
 	void InternalWrite(float x, float y, float z, const char *text, int count, float spacing = 0);
 
