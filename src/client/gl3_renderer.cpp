@@ -1,4 +1,4 @@
-#include "gl3_renderer.hpp"
+﻿#include "gl3_renderer.hpp"
 
 #include <SDL2/SDL.h>
 #include <glm/gtc/matrix_transform.hpp>
@@ -52,7 +52,8 @@ GL3Renderer::GL3Renderer(
 	buildSky();
 
     // font
-    font.load("opensans.fnt");
+    font.load("dejavusans32.fnt");
+    font.SetTextEncoding(UTF8);
 
 	// gl stuff
 	glEnable(GL_BLEND);
@@ -276,8 +277,21 @@ void GL3Renderer::render() {
             "M     M\n"
             "ABCDEFGHIJKLMNOPQRSTUVWXYZ\n"
             "abcdefghijklmnopqrstuvwxyz\n"
-            "0123456789"
+            "0123456789\n"
+            "äöüßÄÜÖ"
             , 0, 0);
+
+        unsigned char rawData[35] = {
+            0xE2, 0x82, 0xB2, 0xE2, 0x81, 0x89, 0xE2, 0x82, 0xAC, 0xE2, 0x82, 0xA5,
+            0xE2, 0x85, 0xA6, 0xE2, 0x99, 0x94, 0xE2, 0x99, 0x96, 0xE2, 0x99, 0x97,
+            0xE2, 0xA1, 0xA1, 0xE2, 0xA2, 0x97, 0xE2, 0xA1, 0xAD, 0x20, 0x00
+        };
+
+        font.WriteML(-500, 0, 0,
+            (const char *)rawData
+            , 0, 0);
+
+
 	} else if (state == IN_MENU){
 		renderMenu();
 	}
