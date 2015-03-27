@@ -160,44 +160,51 @@ int BMFont::load(const char *fontFile)
     logOpenGLError();
 
     // build huge fucking array here
-    size_t bufferSize = chars.size() * 6 * 4;
+    size_t bufferSize = (chars.size() + 1) * 6 * 4;
     float *vboBuffer = new float[bufferSize];
     float *head = vboBuffer;
+
+    auto buildCharVBOLambda = [&] (CharDesc *desc) {
+        desc->vboOffset = (head - vboBuffer) * sizeof(float);
+
+        *head++ = 0.0f;
+        *head++ = 0.0f;
+        *head++ = (float)desc->srcX / (float)scaleW;
+        *head++ = (float)(desc->srcY + desc->srcH) / (float)scaleH;
+
+        *head++ = (float)desc->srcW;
+        *head++ = 0.0f;
+        *head++ = (float)(desc->srcX + desc->srcW) / (float)scaleW;
+        *head++ = (float)(desc->srcY + desc->srcH) / (float)scaleH;
+
+        *head++ = (float)desc->srcW;
+        *head++ = (float)desc->srcH;
+        *head++ = (float)(desc->srcX + desc->srcW) / (float)scaleW;
+        *head++ = (float)desc->srcY / (float)scaleH;
+
+        *head++ = (float)desc->srcW;
+        *head++ = (float)desc->srcH;
+        *head++ = (float)(desc->srcX + desc->srcW) / (float)scaleW;
+        *head++ = (float)desc->srcY / (float)scaleH;
+
+        *head++ = 0.0f;
+        *head++ = (float)desc->srcH;
+        *head++ = (float)desc->srcX / (float)scaleW;
+        *head++ = (float)desc->srcY / (float)scaleH;
+
+        *head++ = 0.0f;
+        *head++ = 0.0f;
+        *head++ = (float)desc->srcX / (float)scaleW;
+        *head++ = (float)(desc->srcY + desc->srcH) / (float)scaleH;
+    };
+
+    buildCharVBOLambda(&defChar);
+
     for (auto &descPair : chars) {
         auto desc = descPair.second;
-        desc->vboOffset = (head - vboBuffer) * sizeof (float);
-
-        *head++ = 0.0f;
-        *head++ = 0.0f;
-        *head++ = (float)desc->srcX / (float)scaleW;
-        *head++ = (float)(desc->srcY + desc->srcH) / (float)scaleH;
-
-        *head++ = (float)desc->srcW;
-        *head++ = 0.0f;
-        *head++ = (float)(desc->srcX + desc->srcW) / (float)scaleW;
-        *head++ = (float)(desc->srcY + desc->srcH) / (float)scaleH;
-
-        *head++ = (float)desc->srcW;
-        *head++ = (float)desc->srcH;
-        *head++ = (float)(desc->srcX + desc->srcW) / (float)scaleW;
-        *head++ = (float)desc->srcY / (float)scaleH;
-
-        *head++ = (float)desc->srcW;
-        *head++ = (float)desc->srcH;
-        *head++ = (float)(desc->srcX + desc->srcW) / (float)scaleW;
-        *head++ = (float)desc->srcY / (float)scaleH;
-
-        *head++ = 0.0f;
-        *head++ = (float)desc->srcH;
-        *head++ = (float)desc->srcX / (float)scaleW;
-        *head++ = (float)desc->srcY / (float)scaleH;
-
-        *head++ = 0.0f;
-        *head++ = 0.0f;
-        *head++ = (float)desc->srcX / (float)scaleW;
-        *head++ = (float)(desc->srcY + desc->srcH) / (float)scaleH;
-
+        buildCharVBOLambda(desc);
     }
+
     glBufferData(GL_ARRAY_BUFFER, bufferSize * sizeof(float), vboBuffer, GL_STATIC_DRAW);
     logOpenGLError();
 
