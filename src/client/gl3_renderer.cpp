@@ -52,7 +52,7 @@ GL3Renderer::GL3Renderer(
 	buildSky();
 
     // font
-    font.load("test.fnt");
+    font.load("opensans.fnt");
 
 	// gl stuff
 	glEnable(GL_BLEND);
@@ -269,7 +269,15 @@ void GL3Renderer::render() {
 		renderHud(player);
 		//if (debugActive)
 		//	renderDebugInfo(player);
-        font.Write(5, 5, 0, "Hello, world!", 0, 0);
+        //font.Write(5, 5, 0, "Hello, World!\ntest", 0, 0);
+        font.WriteML(0, 0, 0,
+            "Hello, world!\n"
+            "Hello again!\n"
+            "M     M\n"
+            "ABCDEFGHIJKLMNOPQRSTUVWXYZ\n"
+            "abcdefghijklmnopqrstuvwxyz\n"
+            "0123456789"
+            , 0, 0);
 	} else if (state == IN_MENU){
 		renderMenu();
 	}

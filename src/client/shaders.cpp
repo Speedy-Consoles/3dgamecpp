@@ -271,10 +271,10 @@ void Shaders::setEndFogDistance(float distance) {
 }
 
 void Shaders::prepareProgram(ShaderProgram program) {
-	//if (activeProgram != program) {
+	if (activeProgram != program) {
 		glUseProgram(programLocations[program]);
 		activeProgram = program;
-	//}
+	}
 	switch (program) {
 	case DEFAULT_PROGRAM:
 		if (!defaultLightEnabledUp) {
@@ -362,24 +362,24 @@ void Shaders::prepareProgram(ShaderProgram program) {
 		break;
     case FONT_PROGRAM:
         if (!fontProjMatUp) {
-            glUniformMatrix4fv(fontProjMatLoc, 1, GL_FALSE, glm::value_ptr(hudProjectionMatrix));
-            hudProjMatUp = true;
+            glUniformMatrix4fv(fontProjMatLoc, 1, GL_FALSE, glm::value_ptr(fontProjectionMatrix));
+            fontProjMatUp = true;
         }
         if (!fontModelMatUp) {
-            glUniformMatrix4fv(fontModelMatLoc, 1, GL_FALSE, glm::value_ptr(hudProjectionMatrix));
-            hudProjMatUp = true;
+            glUniformMatrix4fv(fontModelMatLoc, 1, GL_FALSE, glm::value_ptr(fontModelMatrix));
+            fontModelMatUp = true;
         }
         if (!fontIsPackedUp) {
             glUniform1i(fontIsPackedLoc, fontIsPacked);
-            hudProjMatUp = true;
+            fontIsPackedUp = true;
         }
         if (!fontPageUp) {
             glUniform1i(fontPageLoc, fontPage);
-            hudProjMatUp = true;
+            fontPageUp = true;
         }
         if (!fontChannelUp) {
             glUniform1i(fontChannelLoc, fontChannel);
-            hudProjMatUp = true;
+            fontChannelUp = true;
         }
         break;
 	case HUD_PROGRAM:
