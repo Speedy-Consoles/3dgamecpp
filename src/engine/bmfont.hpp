@@ -44,16 +44,14 @@
 
 #include "font.hpp"
 
+#include <GL/glew.h>
 #include <vector>
-#include <string>
 #include <map>
 
-#include <GL/glew.h>
-
 #include "std_types.hpp"
-#include "client/shaders.hpp"
 
 class BMFontLoader;
+class Shaders;
 
 class BMFont : public Font {
 public:
@@ -76,18 +74,21 @@ public:
 	float getBottomOffset();
 	float getTopOffset();
 
+protected:
+    CharDesc *getChar(int id);
+
     float getLineHeight() override { return scale * (float)lineHeight; }
-    float getKerning(int first, int second) override;
-
-    float getTextWidth(const char *text, int count) override;
-
     void beginRender() override;
+    float renderGlyph(float x, float y, float z, int glyph) override;
+    float getTextWidth(const char *text, int count) override;
+    float getKerning(int first, int second) override;
 
 private:
     friend class BMFontLoader;
 
-    float renderGlyph(float x, float y, float z, int glyph) override;
-    CharDesc *getChar(int id);
+    void buildVBO();
+    void createTexture();
+    void loadPage(int id, const char *filename);
 
 	short lineHeight = 0; // total height of the font
 	short base = 0; // y of base line

@@ -42,15 +42,18 @@
 #include "bmfont.hpp"
 #include "unicode_int.hpp"
 
+#include "client/shaders.hpp"
+
 #include "logging.hpp"
 #include "macros.hpp"
 
 #include <SDL2/SDL_image.h>
 #include <GL/glew.h>
-#include <fstream>
 #include <glm/mat4x4.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include <fstream>
+#include <string>
 
 class BMFontLoader {
 public:
@@ -118,6 +121,7 @@ BMFont::~BMFont()
 
     glDeleteTextures(1, &tex);
     glDeleteProgram(program);
+    glDeleteBuffers(1, &vbo);
 }
 
 int BMFont::load(const char *fontFile) {
@@ -138,6 +142,109 @@ int BMFont::load(const char *fontFile) {
     auto r = loader->Load();
     delete loader;
 
+    buildVBO();
+
+    return r;
+}
+
+void BMFont::setHeight(float h)
+{
+    scale = h / float(lineHeight);
+}
+
+float BMFont::getBottomOffset()
+{
+    return scale * (base - lineHeight);
+}
+
+float BMFont::getTopOffset()
+{
+    return scale * (base - 0);
+}
+
+BMFont::CharDesc *BMFont::getChar(int id)
+{
+    std::map<int, CharDesc*>::iterator it = chars.find(id);
+    if (it == chars.end())
+        return nullptr;
+    return it->second;
+}
+
+void BMFont::beginRender() {
+    glBindVertexArray(0);
+    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+    glEnableVertexAttribArray(0); // coord
+    glEnableVertexAttribArray(1); // texCoord
+    glBindTexture(GL_TEXTURE_2D_ARRAY, tex);
+    glDisable(GL_DEPTH_TEST);
+    logOpenGLError();
+}
+
+float BMFont::renderGlyph(float x, float y, float z, int glyph) {
+    y += scale * float(base);
+
+    CharDesc *ch = getChar(glyph);
+    if (ch == 0) ch = &defChar;
+
+    float a = scale * float(ch->xAdv);
+    float w = scale * float(ch->srcW);
+    float h = scale * float(ch->srcH);
+    float ox = scale * float(ch->xOff);
+    float oy = scale * float(ch->yOff);
+
+    void *coordOffset = (void *)ch->vboOffset;
+    void *texCoordOffset = (void *)(ch->vboOffset + 2 * sizeof(float));
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), coordOffset);
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), texCoordOffset);
+
+    glm::mat4 ident(1.0f);
+    auto transl = glm::vec3(x + ox, y - (h + oy), 0.0f);
+    auto modelMat = glm::translate(ident, transl);
+    shaders->setFontModelMatrix(modelMat);
+    shaders->setFontIsPacked(isPacked);
+    shaders->setFontPage(ch->page);
+    shaders->setFontChannel(ch->chnl);
+
+    shaders->prepareProgram(FONT_PROGRAM);
+    glDrawArrays(GL_TRIANGLES, 0, 6);
+
+    return a;
+}
+
+float BMFont::getTextWidth(const char *text, int count) {
+    if (count <= 0)
+        count = getTextLength(text);
+
+    float x = 0;
+
+    for (int n = 0; n < count;) {
+        int charId = getTextChar(text, n, &n);
+
+        CharDesc *ch = getChar(charId);
+        if (ch == 0) ch = &defChar;
+
+        x += scale * (ch->xAdv);
+
+        if (n < count)
+            x += getKerning(charId, getTextChar(text, n));
+    }
+
+    return x;
+}
+
+float BMFont::getKerning(int first, int second)
+{
+    CharDesc *ch = getChar(first);
+    if (ch == 0) return 0;
+    for (uint n = 0; n < ch->kerningPairs.size(); n += 2) {
+        if (ch->kerningPairs[n] == second)
+            return ch->kerningPairs[n + 1] * scale;
+    }
+
+    return 0;
+}
+
+void BMFont::buildVBO() {
     // build vbo for all glyphs
     glBindVertexArray(0);
     glGenBuffers(1, &vbo);
@@ -150,7 +257,7 @@ int BMFont::load(const char *fontFile) {
     float *vboBuffer = new float[bufferSize];
     float *head = vboBuffer;
 
-    auto buildCharVBOLambda = [&] (CharDesc *desc) {
+    auto buildCharVBOLambda = [&](CharDesc *desc) {
         desc->vboOffset = (head - vboBuffer) * sizeof(float);
 
         *head++ = 0.0f;
@@ -193,105 +300,61 @@ int BMFont::load(const char *fontFile) {
 
     glBufferData(GL_ARRAY_BUFFER, bufferSize * sizeof(float), vboBuffer, GL_STATIC_DRAW);
     logOpenGLError();
-
-    return r;
+    delete[] vboBuffer;
 }
 
-BMFont::CharDesc *BMFont::getChar(int id)
-{
-    std::map<int, CharDesc*>::iterator it = chars.find(id);
-    if (it == chars.end())
-        return nullptr;
-    return it->second;
-}
-
-float BMFont::getKerning(int first, int second)
-{
-    CharDesc *ch = getChar(first);
-    if (ch == 0) return 0;
-    for (uint n = 0; n < ch->kerningPairs.size(); n += 2) {
-        if (ch->kerningPairs[n] == second)
-            return ch->kerningPairs[n + 1] * scale;
-    }
-
-    return 0;
-}
-
-float BMFont::getTextWidth(const char *text, int count) {
-    if (count <= 0)
-        count = getTextLength(text);
-
-    float x = 0;
-
-    for (int n = 0; n < count;) {
-        int charId = getTextChar(text, n, &n);
-
-        CharDesc *ch = getChar(charId);
-        if (ch == 0) ch = &defChar;
-
-        x += scale * (ch->xAdv);
-
-        if (n < count)
-            x += getKerning(charId, getTextChar(text, n));
-    }
-
-    return x;
-}
-
-void BMFont::setHeight(float h)
-{
-    scale = h / float(lineHeight);
-}
-
-float BMFont::getBottomOffset()
-{
-    return scale * (base - lineHeight);
-}
-
-float BMFont::getTopOffset()
-{
-    return scale * (base - 0);
-}
-
-float BMFont::renderGlyph(float x, float y, float z, int glyph) {
-    y += scale * float(base);
-
-    CharDesc *ch = getChar(glyph);
-    if (ch == 0) ch = &defChar;
-
-    float a = scale * float(ch->xAdv);
-    float w = scale * float(ch->srcW);
-    float h = scale * float(ch->srcH);
-    float ox = scale * float(ch->xOff);
-    float oy = scale * float(ch->yOff);
-
-    void *coordOffset = (void *)ch->vboOffset;
-    void *texCoordOffset = (void *)(ch->vboOffset + 2 * sizeof(float));
-    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), coordOffset);
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), texCoordOffset);
-
-    glm::mat4 ident(1.0f);
-    auto transl = glm::vec3(x + ox, y - (h + oy), 0.0f);
-    auto modelMat = glm::translate(ident, transl);
-    shaders->setFontModelMatrix(modelMat);
-    shaders->setFontIsPacked(isPacked);
-    shaders->setFontPage(ch->page);
-    shaders->setFontChannel(ch->chnl);
-
-    shaders->prepareProgram(FONT_PROGRAM);
-    glDrawArrays(GL_TRIANGLES, 0, 6);
-
-    return a;
-}
-
-void BMFont::beginRender() {
-    glBindVertexArray(0);
-    glBindBuffer(GL_ARRAY_BUFFER, vbo);
-    glEnableVertexAttribArray(0); // coord
-    glEnableVertexAttribArray(1); // texCoord
-    glBindTexture(GL_TEXTURE_2D_ARRAY, tex);
-    glDisable(GL_DEPTH_TEST);
+void BMFont::createTexture() {
+    glGenTextures(1, &tex);
     logOpenGLError();
+    glBindTexture(GL_TEXTURE_2D_ARRAY, tex);
+    logOpenGLError();
+    glTexStorage3D(GL_TEXTURE_2D_ARRAY, 1, GL_RGBA8, scaleW, scaleH, pages);
+    logOpenGLError();
+
+    glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    logOpenGLError();
+}
+
+void BMFont::loadPage(int id, const char *filename) {
+    SDL_Surface *img = nullptr, *tmp = nullptr;
+
+    // Load the font textures
+    img = IMG_Load(filename);
+    if (!img) {
+        LOG(ERROR, "Textures could not be loaded");
+        goto FAILURE;
+    }
+
+    SDL_PixelFormat pixelFormat;
+    pixelFormat.format = SDL_PIXELFORMAT_RGBA8888;
+    pixelFormat.palette = nullptr;
+    pixelFormat.BitsPerPixel = 32;
+    pixelFormat.BytesPerPixel = 4;
+    pixelFormat.Rmask = 0x000000FF;
+    pixelFormat.Gmask = 0x0000FF00;
+    pixelFormat.Bmask = 0x00FF0000;
+    pixelFormat.Amask = 0xFF000000;
+    tmp = SDL_ConvertSurface(img, &pixelFormat, 0);
+    if (!tmp) {
+        LOG(ERROR, "Temporary SDL_Surface could not be created");
+        goto FAILURE;
+    }
+
+    glBindTexture(GL_TEXTURE_2D_ARRAY, tex);
+    glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, id, scaleW, scaleH, 1, GL_RGBA, GL_UNSIGNED_BYTE, tmp->pixels);
+    logOpenGLError();
+    SDL_FreeSurface(img);
+    SDL_FreeSurface(tmp);
+    return;
+
+FAILURE:
+    {
+        LOG(ERROR, "Failed to load font page '" << filename << "'");
+        if (img) SDL_FreeSurface(img);
+        if (tmp) SDL_FreeSurface(tmp);
+        return;
+    }
 }
 
 //=============================================================================
@@ -315,7 +378,6 @@ BMFontLoader::BMFontLoader(FILE *f, BMFont *font, const char *fontFile)
 void BMFontLoader::LoadPage(int id, const char *pageFile, const char *fontFile)
 {
     string str;
-    SDL_Surface *img = nullptr, *tmp = nullptr;
 
     // Load the texture from the same directory as the font descriptor file
     str = fontFile;
@@ -327,48 +389,7 @@ void BMFontLoader::LoadPage(int id, const char *pageFile, const char *fontFile)
         str = "";
     str += pageFile;
 
-    // Load the font textures
-    img = IMG_Load(str.c_str());
-    if (!img) {
-        LOG(ERROR, "Textures could not be loaded");
-        goto FAILURE;
-    }
-    {
-        SDL_PixelFormat pixelFormat;
-        pixelFormat.format = SDL_PIXELFORMAT_RGBA8888;
-        pixelFormat.palette = nullptr;
-        pixelFormat.BitsPerPixel = 32;
-        pixelFormat.BytesPerPixel = 4;
-        pixelFormat.Rmask = 0x000000FF;
-        pixelFormat.Gmask = 0x0000FF00;
-        pixelFormat.Bmask = 0x00FF0000;
-        pixelFormat.Amask = 0xFF000000;
-        tmp = SDL_ConvertSurface(img, &pixelFormat, 0);
-    }
-    if (!tmp) {
-        LOG(ERROR, "Temporary SDL_Surface could not be created");
-        goto FAILURE;
-    }
-    {
-        SDL_Rect rect{ 0, 0, font->scaleW, font->scaleH };
-        int ret_code = SDL_BlitSurface(img, &rect, tmp, nullptr);
-        if (ret_code) {
-            LOG(ERROR, "Blit unsuccessful: " << SDL_GetError());
-            goto FAILURE;
-        }
-    }
-    glBindTexture(GL_TEXTURE_2D_ARRAY, font->tex);
-    glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, id, font->scaleW, font->scaleH, 1, GL_RGBA, GL_UNSIGNED_BYTE, tmp->pixels);
-    logOpenGLError();
-    SDL_FreeSurface(img);
-    SDL_FreeSurface(tmp);
-    return;
-
-FAILURE:
-    LOG(ERROR, "Failed to load font page '" << str.c_str() << "'");
-    if (img) SDL_FreeSurface(img);
-    if (tmp) SDL_FreeSurface(tmp);
-    return;
+    font->loadPage(id, str.c_str());
 }
 
 void BMFontLoader::SetFontInfo(int outlineThickness)
@@ -387,19 +408,7 @@ void BMFontLoader::SetCommonInfo(int lineHeight, int base, int scaleW, int scale
     if (isPacked && outlineThickness)
         font->hasOutline = true;
 
-    logOpenGLError();
-
-    glGenTextures(1, &font->tex);
-    logOpenGLError();
-    glBindTexture(GL_TEXTURE_2D_ARRAY, font->tex);
-    logOpenGLError();
-    glTexStorage3D(GL_TEXTURE_2D_ARRAY, 1, GL_RGBA8, scaleW, scaleH, pages);
-    logOpenGLError();
-
-    glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-
-    logOpenGLError();
+    font->createTexture();
 }
 
 void BMFontLoader::AddChar(int id, int x, int y, int w, int h, int xoffset, int yoffset, int xadvance, int page, int chnl)
