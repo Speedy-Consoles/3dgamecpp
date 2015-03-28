@@ -53,7 +53,7 @@ GL3Renderer::GL3Renderer(
 
     // font
     font.load("dejavusans32.fnt");
-    font.SetTextEncoding(UTF8);
+    font.setEncoding(Font::Encoding::UTF8);
 
 	// gl stuff
 	glEnable(GL_BLEND);
@@ -271,14 +271,14 @@ void GL3Renderer::render() {
 		//if (debugActive)
 		//	renderDebugInfo(player);
         //font.Write(5, 5, 0, "Hello, World!\ntest", 0, 0);
-        font.WriteML(0, 0, 0,
+        font.write(0, 0, 0,
             "Hello, world!\n"
             "Hello again!\n"
             "M     M\n"
             "ABCDEFGHIJKLMNOPQRSTUVWXYZ\n"
             "abcdefghijklmnopqrstuvwxyz\n"
             "0123456789\n"
-            , 0, 0);
+            , 0);
 
         unsigned char rawData[] = {
             0xE2, 0x82, 0xB2, 0xE2, 0x81, 0x89, 0xE2, 0x82, 0xAC, 0xE2, 0x82, 0xA5,
@@ -287,9 +287,9 @@ void GL3Renderer::render() {
             0xB6, 0x00
         };
 
-        font.WriteML(-500, 0, 0,
+        font.write(-500, 0, 0,
             (const char *)rawData
-            , 0, 0);
+            , 0);
 
 
 	} else if (state == IN_MENU){

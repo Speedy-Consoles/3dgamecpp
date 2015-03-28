@@ -39,76 +39,39 @@
         Seperated file format logic from rendering logic by subclassing
 */
 
-#ifndef BMFONT_HPP
-#define BMFONT_HPP
+#ifndef FONT_HPP_
+#define FONT_HPP_
 
-#include "font.hpp"
-
-#include <vector>
-#include <string>
-#include <map>
-
-#include <GL/glew.h>
-
-#include "std_types.hpp"
-#include "client/shaders.hpp"
-
-class BMFontLoader;
-
-class BMFont : public Font {
+// Base class for all fonts
+// Deals with encoding, kerning and alignment
+class Font {
 public:
 
-    struct CharDesc {
-        short srcX, srcY, srcW, srcH, xOff, yOff, xAdv;
-        short page;
-        unsigned int chnl;
-        unsigned int vboOffset;
-        std::vector<int> kerningPairs;
-    };
+    enum class Encoding { NONE, UTF8, UTF16 };
+    enum class Alignment { LEFT, CENTER, RIGHT, JUSTIFY };
 
-    BMFont(Shaders *shaders);
-    ~BMFont();
+    void setEncoding(Encoding encoding) { this->encoding = encoding; }
 
-	int load(const char *fontFile);
+    void writeLine(float x, float y, float z, const char *text, int count, Alignment alignment = Alignment::LEFT);
+    void write(float x, float y, float z, const char *text, int count, Alignment alignment = Alignment::LEFT);
+    void writeBox(float x, float y, float z, float width, const char *text, int count, Alignment alignment = Alignment::LEFT);
 
-	void setHeight(float h);
+    virtual float getLineHeight() = 0;
+    virtual void beginRender() {}
+    virtual void endRender() {}
+    virtual float renderGlyph(float x, float y, float z, int glyph) = 0;
+    virtual float getTextWidth(const char *text, int count) = 0;
+    virtual float getKerning(int first, int second) { return 0.0f; }
 
-	float getBottomOffset();
-	float getTopOffset();
+protected:
+    Encoding encoding = Encoding::NONE;
 
-    float getLineHeight() override { return scale * (float)lineHeight; }
-    float getKerning(int first, int second) override;
-
-    float getTextWidth(const char *text, int count) override;
-
-    void beginRender() override;
+    int getTextLength(const char *text);
+    int getTextChar(const char *text, int pos, int *nextPos = nullptr);
+    int findTextChar(const char *text, int start, int length, int ch);
 
 private:
-    friend class BMFontLoader;
-
-    float renderGlyph(float x, float y, float z, int glyph) override;
-    CharDesc *getChar(int id);
-
-	short lineHeight = 0; // total height of the font
-	short base = 0; // y of base line
-	short scaleW = 0;
-	short scaleH = 0;
-	float scale = 1.0f;
-    bool isPacked = false;
-    bool hasOutline = false;
-    short pages = 0;
-
-    Shaders *shaders = nullptr;
-
-    GLuint tex = 0;
-    GLuint program = 0;
-    GLuint vbo = 0;
-
-    CharDesc defChar;
-    std::map<int, CharDesc*> chars;
+    void writeInternal(float x, float y, float z, const char *text, int count, float spacing = 0.0f);
 };
 
-// 2008-05-11 Storing the characters in a map instead of an array
-// 2008-05-17 Added support for writing text with UTF8 and UTF16 encoding
-
-#endif // BMFONT_HPP
+#endif // FONT_HPP_

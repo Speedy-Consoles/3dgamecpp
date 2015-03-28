@@ -99,6 +99,9 @@
     <ClInclude Include="..\..\src\engine\bmfont.hpp">
       <Filter>Header Files\engine</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\engine\font.hpp">
+      <Filter>Header Files\engine</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\stopwatch.cpp">
@@ -150,6 +153,9 @@
       <Filter>Source Files\engine</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\engine\bmfont.cpp">
+      <Filter>Source Files\engine</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\engine\font.cpp">
       <Filter>Source Files\engine</Filter>
     </ClCompile>
   </ItemGroup>

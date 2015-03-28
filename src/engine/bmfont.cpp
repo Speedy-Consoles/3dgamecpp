@@ -30,10 +30,13 @@
     The original version could be obtained from
         http://www.angelcode.com/dev/bmfonts/
     as of 2015-03-22
+    The original filename was acgfx_font.cpp
 
     2015-03-22 - Lars Thorben Drögemüller
         Removed enclosing namespace and enforced coding conventions
         All the DirectX specific code was thrown out
+        Rewrote rendering code in OpenGL 3.3
+        Seperated file format logic from rendering logic by subclassing
 */
 
 #include "bmfont.hpp"
@@ -48,10 +51,6 @@
 #include <glm/mat4x4.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
-
-using namespace std;
-
-// Implement private helper classes for loading the bitmap font files
 
 class BMFontLoader {
 public:
@@ -103,22 +102,10 @@ public:
     void ReadKerningPairsBlock(int size);
 };
 
-//=============================================================================
-// BMFont
-//
-// This is the BMFont class that is used to write text with bitmap fonts.
-//=============================================================================
-
-BMFont::BMFont(Shaders *shaders)
+BMFont::BMFont(Shaders *shaders) :
+    shaders(shaders)
 {
-    fontHeight = 0;
-    base = 0;
-    scaleW = 0;
-    scaleH = 0;
-    scale = 1.0f;
-    hasOutline = false;
-    encoding = NONE;
-    this->shaders = shaders;
+    // nothing
 }
 
 BMFont::~BMFont()
@@ -133,8 +120,7 @@ BMFont::~BMFont()
     glDeleteProgram(program);
 }
 
-int BMFont::load(const char *fontFile)
-{
+int BMFont::load(const char *fontFile) {
     // Load the font
     FILE *f = fopen(fontFile, "rb");
 
@@ -208,29 +194,20 @@ int BMFont::load(const char *fontFile)
     glBufferData(GL_ARRAY_BUFFER, bufferSize * sizeof(float), vboBuffer, GL_STATIC_DRAW);
     logOpenGLError();
 
-    PrepareEffect();
-
     return r;
 }
 
-void BMFont::SetTextEncoding(FontTextEncoding encoding)
-{
-    this->encoding = encoding;
-}
-
-// Internal
-CharDesc *BMFont::GetChar(int id)
+BMFont::CharDesc *BMFont::getChar(int id)
 {
     std::map<int, CharDesc*>::iterator it = chars.find(id);
     if (it == chars.end())
-        return 0;
+        return nullptr;
     return it->second;
 }
 
-// Internal
-float BMFont::AdjustForKerningPairs(int first, int second)
+float BMFont::getKerning(int first, int second)
 {
-    CharDesc *ch = GetChar(first);
+    CharDesc *ch = getChar(first);
     if (ch == 0) return 0;
     for (uint n = 0; n < ch->kerningPairs.size(); n += 2) {
         if (ch->kerningPairs[n] == second)
@@ -240,409 +217,81 @@ float BMFont::AdjustForKerningPairs(int first, int second)
     return 0;
 }
 
-float BMFont::GetTextWidth(const char *text, int count)
-{
+float BMFont::getTextWidth(const char *text, int count) {
     if (count <= 0)
-        count = GetTextLength(text);
+        count = getTextLength(text);
 
     float x = 0;
 
     for (int n = 0; n < count;) {
-        int charId = GetTextChar(text, n, &n);
+        int charId = getTextChar(text, n, &n);
 
-        CharDesc *ch = GetChar(charId);
+        CharDesc *ch = getChar(charId);
         if (ch == 0) ch = &defChar;
 
         x += scale * (ch->xAdv);
 
         if (n < count)
-            x += AdjustForKerningPairs(charId, GetTextChar(text, n));
+            x += getKerning(charId, getTextChar(text, n));
     }
 
     return x;
 }
 
-void BMFont::SetHeight(float h)
+void BMFont::setHeight(float h)
 {
-    scale = h / float(fontHeight);
+    scale = h / float(lineHeight);
 }
 
-float BMFont::GetHeight()
+float BMFont::getBottomOffset()
 {
-    return scale * float(fontHeight);
+    return scale * (base - lineHeight);
 }
 
-float BMFont::GetBottomOffset()
-{
-    return scale * (base - fontHeight);
-}
-
-float BMFont::GetTopOffset()
+float BMFont::getTopOffset()
 {
     return scale * (base - 0);
 }
 
-// Internal
-// Returns the number of bytes in the string until the null char
-int BMFont::GetTextLength(const char *text)
-{
-    if (encoding == UTF16) {
-        int textLen = 0;
-        for (;;) {
-            unsigned int len;
-            int r = decodeUTF16(&text[textLen], &len);
-            if (r > 0)
-                textLen += len;
-            else if (r < 0)
-                textLen++;
-            else
-                return textLen;
-        }
-    }
+float BMFont::renderGlyph(float x, float y, float z, int glyph) {
+    y += scale * float(base);
 
-    // Both UTF8 and standard ASCII strings can use strlen
-    return (int)strlen(text);
+    CharDesc *ch = getChar(glyph);
+    if (ch == 0) ch = &defChar;
+
+    float a = scale * float(ch->xAdv);
+    float w = scale * float(ch->srcW);
+    float h = scale * float(ch->srcH);
+    float ox = scale * float(ch->xOff);
+    float oy = scale * float(ch->yOff);
+
+    void *coordOffset = (void *)ch->vboOffset;
+    void *texCoordOffset = (void *)(ch->vboOffset + 2 * sizeof(float));
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), coordOffset);
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), texCoordOffset);
+
+    glm::mat4 ident(1.0f);
+    auto transl = glm::vec3(x + ox, y - (h + oy), 0.0f);
+    auto modelMat = glm::translate(ident, transl);
+    shaders->setFontModelMatrix(modelMat);
+    shaders->setFontIsPacked(isPacked);
+    shaders->setFontPage(ch->page);
+    shaders->setFontChannel(ch->chnl);
+
+    shaders->prepareProgram(FONT_PROGRAM);
+    glDrawArrays(GL_TRIANGLES, 0, 6);
+
+    return a;
 }
 
-// Internal
-int BMFont::GetTextChar(const char *text, int pos, int *nextPos)
-{
-    int ch;
-    unsigned int len;
-    if (encoding == UTF8) {
-        ch = decodeUTF8(&text[pos], &len);
-        if (ch == -1) len = 1;
-    } else if (encoding == UTF16) {
-        ch = decodeUTF16(&text[pos], &len);
-        if (ch == -1) len = 2;
-    } else {
-        len = 1;
-        ch = (unsigned char)text[pos];
-    }
-
-    if (nextPos) *nextPos = pos + len;
-    return ch;
-}
-
-// Internal
-int BMFont::FindTextChar(const char *text, int start, int length, int ch)
-{
-    int pos = start;
-    int nextPos;
-    int currChar = -1;
-    while (pos < length) {
-        currChar = GetTextChar(text, pos, &nextPos);
-        if (currChar == ch)
-            return pos;
-        pos = nextPos;
-    }
-
-    return -1;
-}
-
-void BMFont::InternalWrite(float x, float y, float z, const char *text, int count, float spacing)
-{
-    int page = -1;
-
+void BMFont::beginRender() {
     glBindVertexArray(0);
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
     glEnableVertexAttribArray(0); // coord
     glEnableVertexAttribArray(1); // texCoord
     glBindTexture(GL_TEXTURE_2D_ARRAY, tex);
-    logOpenGLError();
-
     glDisable(GL_DEPTH_TEST);
-
-    y += scale * float(base);
-
-    for (int n = 0; n < count;) {
-        int charId = GetTextChar(text, n, &n);
-        CharDesc *ch = GetChar(charId);
-        if (ch == 0) ch = &defChar;
-
-        // Map the center of the texel to the corners
-        // in order to get pixel perfect mapping
-        float u = (float(ch->srcX) + 0.5f) / scaleW;
-        float v = (float(ch->srcY) + 0.5f) / scaleH;
-        float u2 = u + float(ch->srcW) / scaleW;
-        float v2 = v + float(ch->srcH) / scaleH;
-
-        float a = scale * float(ch->xAdv);
-        float w = scale * float(ch->srcW);
-        float h = scale * float(ch->srcH);
-        float ox = scale * float(ch->xOff);
-        float oy = scale * float(ch->yOff);
-
-        logOpenGLError();
-
-        void *coordOffset = (void *)ch->vboOffset;
-        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), coordOffset);
-
-        void *texCoordOffset = (void *)(ch->vboOffset + 2 * sizeof(float));
-        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), texCoordOffset);
-        logOpenGLError();
-
-        glm::mat4 modelMat(1.0f);
-        modelMat = glm::translate(modelMat, glm::vec3(x + ox, y - (h + oy), 0.0f));
-        shaders->setFontModelMatrix(modelMat);
-        shaders->setFontIsPacked(isPacked);
-        shaders->setFontPage(ch->page);
-        shaders->setFontChannel(ch->chnl);
-        logOpenGLError();
-
-        //float buffer[] = {0, 0, 0, 0, 10, 0, 10, 0, 10, 10, 10, 10};
-        //glBufferData(GL_ARRAY_BUFFER, 12 * sizeof(float), buffer, GL_STATIC_DRAW);
-        
-        shaders->prepareProgram(FONT_PROGRAM);
-        glDrawArrays(GL_TRIANGLES, 0, 6);
-        logOpenGLError();
-
-        x += a;
-        if (charId == ' ')
-            x += spacing;
-
-        if (n < count)
-            x += AdjustForKerningPairs(charId, GetTextChar(text, n));
-    }
-}
-
-void BMFont::Write(float x, float y, float z, const char *text, int count, unsigned int mode)
-{
-    if (count <= 0)
-        count = GetTextLength(text);
-
-    if (mode == FONT_ALIGN_CENTER) {
-        float w = GetTextWidth(text, count);
-        x -= w / 2;
-    } else if (mode == FONT_ALIGN_RIGHT) {
-        float w = GetTextWidth(text, count);
-        x -= w;
-    }
-
-    InternalWrite(x, y, z, text, count);
-}
-
-void BMFont::WriteML(float x, float y, float z, const char *text, int count, unsigned int mode)
-{
-    if (count <= 0)
-        count = GetTextLength(text);
-
-    // Get first line
-    int pos = 0;
-    int len = FindTextChar(text, pos, count, '\n');
-    if (len == -1) len = count;
-    while (pos < count) {
-        float cx = x;
-        if (mode == FONT_ALIGN_CENTER) {
-            float w = GetTextWidth(&text[pos], len);
-            cx -= w / 2;
-        } else if (mode == FONT_ALIGN_RIGHT) {
-            float w = GetTextWidth(&text[pos], len);
-            cx -= w;
-        }
-
-        InternalWrite(cx, y, z, &text[pos], len);
-
-        y -= scale * float(fontHeight);
-
-        // Get next line
-        pos += len;
-        int ch = GetTextChar(text, pos, &pos);
-        if (ch == '\n') {
-            len = FindTextChar(text, pos, count, '\n');
-            if (len == -1)
-                len = count - pos;
-            else
-                len = len - pos;
-        }
-    }
-}
-
-void BMFont::WriteBox(float x, float y, float z, float width, const char *text, int count, unsigned int mode)
-{
-    if (count <= 0)
-        count = GetTextLength(text);
-
-    float currWidth = 0, wordWidth;
-    int lineS = 0, lineE = 0, wordS = 0, wordE = 0;
-    int wordCount = 0;
-
-    const char *s = " ";
-    float spaceWidth = GetTextWidth(s, 1);
-    bool softBreak = false;
-
-    for (; lineS < count;) {
-        // Determine the extent of the line
-        for (;;) {
-            // Determine the number of characters in the word
-            while (wordE < count &&
-                GetTextChar(text, wordE) != ' ' &&
-                GetTextChar(text, wordE) != '\n')
-                // Advance the cursor to the next character
-                GetTextChar(text, wordE, &wordE);
-
-            // Determine the width of the word
-            if (wordE > wordS) {
-                wordCount++;
-                wordWidth = GetTextWidth(&text[wordS], wordE - wordS);
-            } else
-                wordWidth = 0;
-
-            // Does the word fit on the line? The first word is always accepted.
-            if (wordCount == 1 || currWidth + (wordCount > 1 ? spaceWidth : 0) + wordWidth <= width) {
-                // Increase the line extent to the end of the word
-                lineE = wordE;
-                currWidth += (wordCount > 1 ? spaceWidth : 0) + wordWidth;
-
-                // Did we reach the end of the line?
-                if (wordE == count || GetTextChar(text, wordE) == '\n') {
-                    softBreak = false;
-
-                    // Skip the newline character
-                    if (wordE < count)
-                        // Advance the cursor to the next character
-                        GetTextChar(text, wordE, &wordE);
-
-                    break;
-                }
-
-                // Skip the trailing space
-                if (wordE < count && GetTextChar(text, wordE) == ' ')
-                    // Advance the cursor to the next character
-                    GetTextChar(text, wordE, &wordE);
-
-                // Move to next word
-                wordS = wordE;
-            } else {
-                softBreak = true;
-
-                // Skip the trailing space
-                if (wordE < count && GetTextChar(text, wordE) == ' ')
-                    // Advance the cursor to the next character
-                    GetTextChar(text, wordE, &wordE);
-
-                break;
-            }
-        }
-
-        // Write the line
-        if (mode == FONT_ALIGN_JUSTIFY) {
-            float spacing = 0;
-            if (softBreak) {
-                if (wordCount > 2)
-                    spacing = (width - currWidth) / (wordCount - 2);
-                else
-                    spacing = (width - currWidth);
-            }
-
-            InternalWrite(x, y, z, &text[lineS], lineE - lineS, spacing);
-        } else {
-            float cx = x;
-            if (mode == FONT_ALIGN_RIGHT)
-                cx = x + width - currWidth;
-            else if (mode == FONT_ALIGN_CENTER)
-                cx = x + 0.5f*(width - currWidth);
-
-            InternalWrite(cx, y, z, &text[lineS], lineE - lineS);
-        }
-
-        if (softBreak) {
-            // Skip the trailing space
-            if (lineE < count && GetTextChar(text, lineE) == ' ')
-                // Advance the cursor to the next character
-                GetTextChar(text, lineE, &lineE);
-
-            // We've already counted the first word on the next line
-            currWidth = wordWidth;
-            wordCount = 1;
-        } else {
-            // Skip the line break
-            if (lineE < count && GetTextChar(text, lineE) == '\n')
-                // Advance the cursor to the next character
-                GetTextChar(text, lineE, &lineE);
-
-            currWidth = 0;
-            wordCount = 0;
-        }
-
-        // Move to next line
-        lineS = lineE;
-        wordS = wordE;
-        y -= scale * float(fontHeight);
-    }
-}
-
-void BMFont::PrepareEffect()
-{
-    auto compileShaderLambda = [&] (GLuint shader, const char *path) {
-        using namespace std;
-
-        ifstream ifs(path, ios::in);
-        if (!ifs.is_open()) {
-            LOG(ERROR, "Could not open '" << path << "'!");
-            return false;
-        }
-        stringstream ss;
-        ss << ifs.rdbuf();
-        ifs.close();
-
-        string sourceStr = ss.str();
-        char const *source = sourceStr.c_str();
-        glShaderSource(shader, 1, &source, NULL);
-        glCompileShader(shader);
-        GLint shaderStatus = GL_FALSE;
-        int infoLogLength;
-        glGetShaderiv(shader, GL_COMPILE_STATUS, &shaderStatus);
-        glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &infoLogLength);
-
-        if (shaderStatus) {
-            LOG(INFO, "Shader '" << path << "' compiled successfully!");
-        } else {
-            char *infoLog = new char[infoLogLength];
-            glGetShaderInfoLog(shader, infoLogLength, NULL, infoLog);
-            LOG(ERROR, "Shader '" << path << "' did not compile!");
-            LOG(DEBUG, infoLog);
-            delete[] infoLog;
-        }
-
-        return !shaderStatus;
-    };
-
-    GLuint vert = glCreateShader(GL_VERTEX_SHADER);
-    compileShaderLambda(vert, "shaders/font.vert");
-
-    GLuint frag = glCreateShader(GL_FRAGMENT_SHADER);
-    compileShaderLambda(frag, "shaders/font.frag");
-
-    program = glCreateProgram();
-    glAttachShader(program, vert);
-    glAttachShader(program, frag);
-    glLinkProgram(program);
-
-    GLint programStatus = GL_FALSE;
-    int infoLogLength;
-    glGetProgramiv(program, GL_LINK_STATUS, &programStatus);
-    glGetProgramiv(program, GL_INFO_LOG_LENGTH, &infoLogLength);
-
-    if (programStatus) {
-        LOG(INFO, "Shader program linked successfully!");
-    } else {
-        char *infoLog = new char[infoLogLength];
-        glGetProgramInfoLog(program, infoLogLength, NULL, infoLog);
-        LOG(ERROR, "Shader program did not link!");
-        LOG(DEBUG, infoLog);
-        delete[] infoLog;
-    }
-
-    glDeleteShader(vert);
-    glDeleteShader(frag);
-
     logOpenGLError();
-}
-
-void BMFont::PreparePixelPerfectOutput()
-{
-    // nothing
 }
 
 //=============================================================================
@@ -651,6 +300,8 @@ void BMFont::PreparePixelPerfectOutput()
 // This is the base class for all loader classes. This is the only class
 // that has access to and knows how to set the BMFont members.
 //=============================================================================
+
+using namespace std;
 
 BMFontLoader::BMFontLoader(FILE *f, BMFont *font, const char *fontFile)
 {
@@ -725,9 +376,9 @@ void BMFontLoader::SetFontInfo(int outlineThickness)
     this->outlineThickness = outlineThickness;
 }
 
-void BMFontLoader::SetCommonInfo(int fontHeight, int base, int scaleW, int scaleH, int pages, bool isPacked)
+void BMFontLoader::SetCommonInfo(int lineHeight, int base, int scaleW, int scaleH, int pages, bool isPacked)
 {
-    font->fontHeight = fontHeight;
+    font->lineHeight = lineHeight;
     font->base = base;
     font->scaleW = scaleW;
     font->scaleH = scaleH;
@@ -762,14 +413,14 @@ void BMFontLoader::AddChar(int id, int x, int y, int w, int h, int xoffset, int 
     else chnl = -1;
 
     if (id >= 0) {
-        CharDesc *ch = new CharDesc{
+        BMFont::CharDesc *ch = new BMFont::CharDesc{
             x, y, w, h, xoffset, yoffset, xadvance, page, chnl
         };
-        font->chars.insert(std::map<int, CharDesc*>::value_type(id, ch));
+        font->chars.insert(std::map<int, BMFont::CharDesc*>::value_type(id, ch));
     }
 
     if (id == -1) {
-        font->defChar = CharDesc{
+        font->defChar = BMFont::CharDesc{
             x, y, w, h, xoffset, yoffset, xadvance, page, chnl
         };
     }

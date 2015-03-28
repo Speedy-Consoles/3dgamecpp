@@ -30,6 +30,7 @@
     The original version could be obtained from
         http://www.angelcode.com/dev/bmfonts/
     as of 2015-03-22
+    The original filename was acutil_unicode.h
 
     2015-03-22 - Lars Thorben Drögemüller
         Removed enclosing namespace and enforced coding conventions
