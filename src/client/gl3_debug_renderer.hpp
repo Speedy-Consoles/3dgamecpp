@@ -9,7 +9,7 @@ class GL3Renderer;
 
 class GL3DebugRenderer {
 public:
-	GL3DebugRenderer(Graphics *graphics, GL3Renderer *renderer, Shaders *shaders, const World *world, int playerId);
+	GL3DebugRenderer(Graphics *graphics, GL3Renderer *renderer, Shaders *shaders, const World *world, const uint8 *playerId);
 
 	void render();
 
@@ -17,7 +17,7 @@ private:
 	Graphics *graphics = nullptr;
 	GL3Renderer *renderer = nullptr;
 	const World *world = nullptr;
-	int playerId = 0;
+	const uint8 &playerId;
 
 	BMFont font;
 };

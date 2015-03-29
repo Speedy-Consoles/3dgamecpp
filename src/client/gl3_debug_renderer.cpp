@@ -1,10 +1,10 @@
 #include "gl3_debug_renderer.hpp"
 
-GL3DebugRenderer::GL3DebugRenderer(Graphics *graphics, GL3Renderer *renderer, Shaders *shaders, const World *world, int playerId) :
+GL3DebugRenderer::GL3DebugRenderer(Graphics *graphics, GL3Renderer *renderer, Shaders *shaders, const World *world, const uint8 *playerId) :
 	graphics(graphics),
 	renderer(renderer),
 	world(world),
-	playerId(playerId),
+	playerId(*playerId),
 	font(shaders)
 {
 	font.load("fonts/dejavusansmono24.fnt");
