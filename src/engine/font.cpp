@@ -44,58 +44,6 @@
 #include "unicode_int.hpp"
 #include <cstring>
 
-// Returns the number of bytes in the string until the null char
-int Font::getTextLength(const char *text) {
-	if (encoding == Encoding::UTF16) {
-		int textLen = 0;
-		for (;;) {
-			unsigned int len;
-			int r = decodeUTF16(&text[textLen], &len);
-			if (r > 0)
-				textLen += len;
-			else if (r < 0)
-				textLen++;
-			else
-				return textLen;
-		}
-	}
-
-	// Both UTF8 and standard ASCII strings can use strlen
-	return (int)strlen(text);
-}
-
-int Font::getTextChar(const char *text, int pos, int *nextPos) {
-	int ch;
-	unsigned int len;
-	if (encoding == Encoding::UTF8) {
-		ch = decodeUTF8(&text[pos], &len);
-		if (ch == -1) len = 1;
-	} else if (encoding == Encoding::UTF16) {
-		ch = decodeUTF16(&text[pos], &len);
-		if (ch == -1) len = 2;
-	} else {
-		len = 1;
-		ch = (unsigned char)text[pos];
-	}
-
-	if (nextPos) *nextPos = pos + len;
-	return ch;
-}
-
-int Font::findTextChar(const char *text, int start, int length, int ch) {
-	int pos = start;
-	int nextPos;
-	int currChar = -1;
-	while (pos < length) {
-		currChar = getTextChar(text, pos, &nextPos);
-		if (currChar == ch)
-			return pos;
-		pos = nextPos;
-	}
-
-	return -1;
-}
-
 void Font::writeLine(float x, float y, float z, const char *text, int count, Alignment alignment) {
 	if (count <= 0)
 		count = getTextLength(text);
@@ -263,6 +211,58 @@ void Font::writeBox(float x, float y, float z, float width, const char *text, in
 		y -= getLineHeight();
 	}
 	endRender();
+}
+
+// Returns the number of bytes in the string until the null char
+int Font::getTextLength(const char *text) {
+    if (encoding == Encoding::UTF16) {
+        int textLen = 0;
+        for (;;) {
+            unsigned int len;
+            int r = decodeUTF16(&text[textLen], &len);
+            if (r > 0)
+                textLen += len;
+            else if (r < 0)
+                textLen++;
+            else
+                return textLen;
+        }
+    }
+
+    // Both UTF8 and standard ASCII strings can use strlen
+    return (int)strlen(text);
+}
+
+int Font::getTextChar(const char *text, int pos, int *nextPos) {
+    int ch;
+    unsigned int len;
+    if (encoding == Encoding::UTF8) {
+        ch = decodeUTF8(&text[pos], &len);
+        if (ch == -1) len = 1;
+    } else if (encoding == Encoding::UTF16) {
+        ch = decodeUTF16(&text[pos], &len);
+        if (ch == -1) len = 2;
+    } else {
+        len = 1;
+        ch = (unsigned char)text[pos];
+    }
+
+    if (nextPos) *nextPos = pos + len;
+    return ch;
+}
+
+int Font::findTextChar(const char *text, int start, int length, int ch) {
+    int pos = start;
+    int nextPos;
+    int currChar = -1;
+    while (pos < length) {
+        currChar = getTextChar(text, pos, &nextPos);
+        if (currChar == ch)
+            return pos;
+        pos = nextPos;
+    }
+
+    return -1;
 }
 
 void Font::writeInternal(float x, float y, float z, const char *text, int count, float spacing) {

@@ -56,15 +56,15 @@ public:
 	void write(float x, float y, float z, const char *text, int count, Alignment alignment = Alignment::LEFT);
 	void writeBox(float x, float y, float z, float width, const char *text, int count, Alignment alignment = Alignment::LEFT);
 
+protected:
+	Encoding encoding = Encoding::NONE;
+
 	virtual float getLineHeight() = 0;
 	virtual void beginRender() {}
 	virtual void endRender() {}
 	virtual float renderGlyph(float x, float y, float z, int glyph) = 0;
 	virtual float getTextWidth(const char *text, int count) = 0;
 	virtual float getKerning(int first, int second) { return 0.0f; }
-
-protected:
-	Encoding encoding = Encoding::NONE;
 
 	int getTextLength(const char *text);
 	int getTextChar(const char *text, int pos, int *nextPos = nullptr);

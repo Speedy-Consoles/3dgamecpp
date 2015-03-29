@@ -1,6 +1,6 @@
 /*
 	AngelCode Tool Box Library
-	Copyright (c) 2007-2008 Andreas Jonsson
+	Copyright (c) 2007-2008 Andreas Jönsson
   
 	This software is provided 'as-is', without any express or implied
 	warranty. In no event will the authors be held liable for any
@@ -21,7 +21,7 @@
 	3. This notice may not be removed or altered from any source
 	   distribution.
   
-	Andreas Jonsson
+	Andreas Jönsson
 	andreas@angelcode.com
 */
 
