@@ -44,10 +44,10 @@ class Shaders {
 
     GLint hudProjMatLoc;
 
-    GLint fontProjMatLoc;
-    GLint fontModelMatLoc;
-    GLint fontTexLoc;
-    GLint fontIsPackedLoc;
+    GLint fontTransMatLoc;
+	GLint fontTexLoc;
+	GLint fontIsPackedLoc;
+	GLint fontHasOutlineLoc;
     GLint fontPageLoc;
     GLint fontChannelLoc;
 
@@ -64,8 +64,9 @@ class Shaders {
 	glm::mat4 hudProjectionMatrix;
 
     glm::mat4 fontProjectionMatrix;
-    glm::mat4 fontModelMatrix;
-    GLboolean fontIsPacked;
+	glm::mat4 fontModelMatrix;
+	GLboolean fontIsPacked;
+	GLboolean fontHasOutline;
     GLshort fontPage;
     GLshort fontChannel;
 
@@ -99,8 +100,9 @@ class Shaders {
 	bool hudProjMatUp = false;
 
     bool fontProjMatUp = false;
-    bool fontModelMatUp = false;
-    bool fontIsPackedUp = false;
+	bool fontModelMatUp = false;
+	bool fontIsPackedUp = false;
+	bool fontHasOutlineUp = false;
     bool fontChannelUp = false;
     bool fontPageUp = false;
 
@@ -123,8 +125,9 @@ public:
     void setHudProjectionMatrix(const glm::mat4 &matrix);
 
     void setFontProjectionMatrix(const glm::mat4 &matrix);
-    void setFontModelMatrix(const glm::mat4 &matrix);
-    void setFontIsPacked(bool isPacked);
+	void setFontModelMatrix(const glm::mat4 &matrix);
+	void setFontIsPacked(bool isPacked);
+	void setFontHasOutline(bool hasOutline);
     void setFontPage(short page);
     void setFontChannel(short channel);
 

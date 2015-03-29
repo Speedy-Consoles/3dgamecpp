@@ -92,9 +92,9 @@ Shaders::Shaders() {
 
     hudProjMatLoc = glGetUniformLocation(programLocations[HUD_PROGRAM], "projectionMatrix");
 
-    fontProjMatLoc = glGetUniformLocation(programLocations[FONT_PROGRAM], "projectionMatrix");
-    fontModelMatLoc = glGetUniformLocation(programLocations[FONT_PROGRAM], "modelMatrix");
-    fontIsPackedLoc = glGetUniformLocation(programLocations[FONT_PROGRAM], "isPacked");
+    fontTransMatLoc = glGetUniformLocation(programLocations[FONT_PROGRAM], "transformMatrix");
+	fontIsPackedLoc = glGetUniformLocation(programLocations[FONT_PROGRAM], "isPacked");
+	fontHasOutlineLoc = glGetUniformLocation(programLocations[FONT_PROGRAM], "hasOutline");
     fontPageLoc = glGetUniformLocation(programLocations[FONT_PROGRAM], "page");
     fontChannelLoc = glGetUniformLocation(programLocations[FONT_PROGRAM], "chnl");
 
@@ -119,7 +119,6 @@ Shaders::Shaders() {
 //	glUseProgram(programLocations[HUD_PROGRAM]);
 //	tmp = glGetUniformLocation(programLocations[HUD_PROGRAM], "sampler");
 //	glUniform1i(tmp, 0);
-
 
 	activeProgram = DEFAULT_PROGRAM;
 	glUseProgram(programLocations[DEFAULT_PROGRAM]);
@@ -242,6 +241,11 @@ void Shaders::setFontIsPacked(bool isPacked) {
     fontIsPackedUp = false;
 }
 
+void Shaders::setFontHasOutline(bool hasOutline) {
+	fontHasOutline = hasOutline;
+	fontHasOutlineUp = false;
+}
+
 void Shaders::setFontPage(short page) {
     fontPage = page;
     fontPageUp = false;
@@ -361,18 +365,20 @@ void Shaders::prepareProgram(ShaderProgram program) {
 		}
 		break;
     case FONT_PROGRAM:
-        if (!fontProjMatUp) {
-            glUniformMatrix4fv(fontProjMatLoc, 1, GL_FALSE, glm::value_ptr(fontProjectionMatrix));
+		if (!fontProjMatUp || !fontModelMatUp) {
+			auto transformMat = fontProjectionMatrix * fontModelMatrix;
+			glUniformMatrix4fv(fontTransMatLoc, 1, GL_FALSE, glm::value_ptr(transformMat));
             fontProjMatUp = true;
+			fontModelMatUp = true;
         }
-        if (!fontModelMatUp) {
-            glUniformMatrix4fv(fontModelMatLoc, 1, GL_FALSE, glm::value_ptr(fontModelMatrix));
-            fontModelMatUp = true;
-        }
-        if (!fontIsPackedUp) {
-            glUniform1i(fontIsPackedLoc, fontIsPacked);
-            fontIsPackedUp = true;
-        }
+		if (!fontIsPackedUp) {
+			glUniform1i(fontIsPackedLoc, fontIsPacked);
+			fontIsPackedUp = true;
+		}
+		if (!fontHasOutlineUp) {
+			glUniform1i(fontHasOutlineLoc, fontHasOutline);
+			fontHasOutlineUp = true;
+		}
         if (!fontPageUp) {
             glUniform1i(fontPageLoc, fontPage);
             fontPageUp = true;
