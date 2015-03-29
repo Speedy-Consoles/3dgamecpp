@@ -49,7 +49,8 @@ private:
 	Shaders shaders;
 
     // font
-    BMFont font;
+	BMFont fontTimes;
+	BMFont fontDejavu;
 
 	// chunk renderer
 	ChunkRenderer chunkRenderer;

@@ -158,8 +158,8 @@ void Shaders::buildShader(GLuint shaderLoc, const char* fileName) {
 	glGetShaderiv(shaderLoc, GL_INFO_LOG_LENGTH, &InfoLogLength);
 	std::vector<char> shaderErrorMessage(InfoLogLength);
 	glGetShaderInfoLog(shaderLoc, InfoLogLength, NULL, &shaderErrorMessage[0]);
-	// TODO use logging
-	fprintf(stdout, "%s\n", &shaderErrorMessage[0]);
+	if (!Result)
+		LOG(ERROR, &shaderErrorMessage[0]);
 }
 
 void Shaders::buildProgram(GLuint programLoc, GLuint *shaders, int numShaders) {
@@ -176,8 +176,8 @@ void Shaders::buildProgram(GLuint programLoc, GLuint *shaders, int numShaders) {
 	glGetProgramiv(programLoc, GL_INFO_LOG_LENGTH, &InfoLogLength);
 	std::vector<char> programErrorMessage(std::max(InfoLogLength, int(1)));
 	glGetProgramInfoLog(programLoc, InfoLogLength, NULL, &programErrorMessage[0]);
-	// TODO use logging
-	fprintf(stdout, "%s\n", &programErrorMessage[0]);
+	if (!Result)
+		LOG(ERROR, &programErrorMessage[0]);
 }
 
 void Shaders::setLightEnabled(bool enabled) {

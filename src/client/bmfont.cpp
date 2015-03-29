@@ -274,7 +274,6 @@ float BMFont::renderGlyph(float x, float y, float z, int glyph) {
 	auto transl = glm::vec3(x + ox, y - (h + oy), 0.0f);
 	auto modelMat = glm::translate(ident, transl);
 	shaders->setFontModelMatrix(modelMat);
-	shaders->setFontIsPacked(isPacked);
 	shaders->setFontPage(ch->page);
 	shaders->setFontChannel(ch->chnl);
 
@@ -291,6 +290,8 @@ void BMFont::beginRender() {
 	glEnableVertexAttribArray(1); // texCoord
 	glBindTexture(GL_TEXTURE_2D_ARRAY, tex);
 	glDisable(GL_DEPTH_TEST);
+	shaders->setFontIsPacked(isPacked);
+	shaders->setFontHasOutline(hasOutline);
 	logOpenGLError();
 }
 

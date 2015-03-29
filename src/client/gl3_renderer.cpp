@@ -32,8 +32,9 @@ GL3Renderer::GL3Renderer(
 		state(*state),
 		localClientID(*localClientID),
 		stopwatch(stopwatch),
-        shaders(),
-        font(&shaders),
+		shaders(),
+		fontTimes(&shaders),
+		fontDejavu(&shaders),
 		chunkRenderer(world, &shaders, this, localClientID, conf) {
 	makeMaxFOV();
 	makePerspectiveMatrix();
@@ -52,8 +53,10 @@ GL3Renderer::GL3Renderer(
 	buildSky();
 
     // font
-    font.load("dejavusans32.fnt");
-    font.setEncoding(Font::Encoding::UTF8);
+	fontTimes.load("times32.fnt");
+	fontTimes.setEncoding(Font::Encoding::UTF8);
+	fontDejavu.load("dejavusans32.fnt");
+	fontDejavu.setEncoding(Font::Encoding::UTF8);
 
 	// gl stuff
 	glEnable(GL_BLEND);
@@ -273,7 +276,7 @@ void GL3Renderer::render() {
         //font.Write(5, 5, 0, "Hello, World!\ntest", 0, 0);
 
 		shaders.setFontTextColor(glm::vec4(1.0f, 0.0f, 1.0f, 1.0f));
-        font.write(0, 0, 0,
+        fontTimes.write(0, 0, 0,
             "Hello, world!\n"
             "Hello again!\n"
             "M     M\n"
@@ -290,7 +293,7 @@ void GL3Renderer::render() {
         };
 
 		shaders.setFontTextColor(glm::vec4(0.0f, 1.0f, 1.0f, 1.0f));
-        font.write(-500, 0, 0,
+        fontDejavu.write(-500, 0, 0,
             (const char *)rawData
             , 0);
 
