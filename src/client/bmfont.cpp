@@ -251,7 +251,6 @@ void BMFont::beginRender() {
 	glEnableVertexAttribArray(0); // coord
 	glEnableVertexAttribArray(1); // texCoord
 	glBindTexture(GL_TEXTURE_2D_ARRAY, tex);
-	glDisable(GL_DEPTH_TEST);
 	shaders->setFontIsPacked(isPacked);
 	shaders->setFontHasOutline(hasOutline);
 	shaders->setFontTextColor(textColor);

@@ -7,6 +7,7 @@
 #include "engine/math.hpp"
 
 #include "chunk_renderer.hpp"
+#include "gl3_debug_renderer.hpp"
 #include "graphics.hpp"
 #include "menu.hpp"
 #include "stopwatch.hpp"
@@ -23,7 +24,8 @@ GL3Renderer::GL3Renderer(
 		const ClientState *state,
 		const uint8 *localClientID,
 		const GraphicsConf &conf,
-		Stopwatch *stopwatch) :
+		Stopwatch *stopwatch)
+		:
 		graphics(graphics),
 		conf(conf),
 		window(window),
@@ -35,7 +37,9 @@ GL3Renderer::GL3Renderer(
 		shaders(),
 		fontTimes(&shaders),
 		fontDejavu(&shaders),
-		chunkRenderer(world, &shaders, this, localClientID, conf) {
+		chunkRenderer(world, &shaders, this, localClientID, conf),
+		debugRenderer(graphics, this, &shaders, world, *localClientID)
+{
 	makeMaxFOV();
 	makePerspectiveMatrix();
 	makeOrthogonalMatrix();
@@ -53,9 +57,9 @@ GL3Renderer::GL3Renderer(
 	buildSky();
 
     // font
-	fontTimes.load("times32.fnt");
+	fontTimes.load("fonts/times32.fnt");
 	fontTimes.setEncoding(Font::Encoding::UTF8);
-	fontDejavu.load("dejavusans32.fnt");
+	fontDejavu.load("fonts/dejavusans32.fnt");
 	fontDejavu.setEncoding(Font::Encoding::UTF8);
 
 	// gl stuff
@@ -269,48 +273,20 @@ void GL3Renderer::render() {
 
 	Player &player = world->getPlayer(localClientID);
 	// render overlay
+	glDepthMask(false);
+	glDisable(GL_DEPTH_TEST);
 	if (state == PLAYING) {
 		renderHud(player);
-		//if (debugActive)
-		//	renderDebugInfo(player);
-        //font.Write(5, 5, 0, "Hello, World!\ntest", 0, 0);
-
-		fontTimes.setColor(glm::vec4(0.0f, 0.0f, 0.0f, 1.0f));
-		fontTimes.setOutlineColor(glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
-		fontTimes.setOutline(true);
-		fontTimes.write(0, 0, 0, "Colored Outlines!  With proper layering: wwvw", 0);
-
-		fontTimes.setOutline(false);
-		fontTimes.write(0, 0, 0, "\nSame font without Outline!", 0);
-
-		fontTimes.setOutline(true);
-		fontTimes.setColor(glm::vec4(0.0f, 0.0f, 1.0f, 1.0f));
-		fontTimes.setOutlineColor(glm::vec4(1.0f, 1.0f, 1.0f, 0.3f));
-		fontTimes.write(0, 0, 0, "\n\nTransparent Outlines!", 0);
-
-		fontTimes.setOutline(false);
-		fontTimes.setColor(glm::vec4(1.0f, 0.0f, 1.0f, 0.3f));
-		fontTimes.write(0, 0, 0, "\n\n\nTransparent Text!", 0);
-
-        unsigned char rawData[] = {
-            0xE2, 0x82, 0xB2, 0xE2, 0x81, 0x89, 0xE2, 0x82, 0xAC, 0xE2, 0x82, 0xA5,
-            0xE2, 0x85, 0xA6, 0xE2, 0x99, 0x94, 0xE2, 0x99, 0x96, 0xE2, 0x99, 0x97,
-            0xE2, 0xA1, 0xA1, 0xE2, 0xA2, 0x97, 0xE2, 0xA1, 0xAD, 0x30, 0xEF, 0xBA,
-            0xB6, 0x00
-        };
-
-		fontDejavu.setColor(glm::vec4(0.0f, 1.0f, 1.0f, 1.0f));
-        fontDejavu.write(-500, 0, 0, (char *)rawData, 0);
-
-
+		if (debugActive)
+			debugRenderer.render();
 	} else if (state == IN_MENU){
 		renderMenu();
 	}
+	glDepthMask(true);
+	glEnable(GL_DEPTH_TEST);
 }
 
 void GL3Renderer::renderHud(const Player &player) {
-	glDisable(GL_DEPTH_TEST);
-	glDepthMask(false);
 	glBindVertexArray(crossHairVAO);
 	shaders.prepareProgram(HUD_PROGRAM);
 	glDrawArrays(GL_TRIANGLES, 0, 12);
@@ -332,8 +308,6 @@ void GL3Renderer::renderHud(const Player &player) {
 		glTexCoord2f(texs[3][0], texs[3][1]); glVertex2f(0, d);
 	glEnd();
 	glPopMatrix();*/
-	glDepthMask(true);
-	glEnable(GL_DEPTH_TEST);
 }
 
 void GL3Renderer::renderSky() {

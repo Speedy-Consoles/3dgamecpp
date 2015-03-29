@@ -233,6 +233,10 @@ Player &World::getPlayer(int playerID) {
 	return players[playerID];
 }
 
+const Player &World::getPlayer(int playerID) const {
+	return players[playerID];
+}
+
 void World::addPlayer(int playerID) {
 	players[playerID].create(this);
 }

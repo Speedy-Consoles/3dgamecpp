@@ -77,6 +77,7 @@ public:
 	void deletePlayer(int playerID);
 
 	Player &getPlayer(int playerID);
+	const Player &getPlayer(int playerID) const;
 
 	Chunk *getChunk(vec3i64 cc);
 	void insertChunk(Chunk *chunk);

@@ -1,0 +1,59 @@
+# AngelCode Bitmap Font Generator configuration file
+fileVersion=1
+
+# font settings
+fontName=DejaVu Sans Mono
+fontFile=
+charSet=0
+fontSize=24
+aa=1
+scaleH=100
+useSmoothing=1
+isBold=0
+isItalic=0
+useUnicode=1
+disableBoxChars=1
+outputInvalidCharGlyph=0
+dontIncludeKerningPairs=0
+useHinting=1
+renderFromOutline=0
+useClearType=1
+
+# character alignment
+paddingDown=0
+paddingUp=0
+paddingRight=0
+paddingLeft=0
+spacingHoriz=1
+spacingVert=1
+useFixedHeight=0
+forceZero=0
+
+# output file
+outWidth=256
+outHeight=256
+outBitDepth=32
+fontDescFormat=0
+fourChnlPacked=1
+textureFormat=png
+textureCompression=0
+alphaChnl=2
+redChnl=0
+greenChnl=0
+blueChnl=0
+invA=0
+invR=0
+invG=0
+invB=0
+
+# outline
+outlineThickness=2
+
+# selected chars
+chars=32-126,160-451,461-483,486-496,500-502,504-505,508-545,548-577,579-581,588-589,688-697,699-705,710
+chars=711-713,716-723,726-734,736-745,750,755,768-831,835,856,865,884-885,890,894,900-906,908,910-929
+chars=931-974,976-993,1008-1023,8192-8202,8208-8227,8230,8239-8247,8249-8250,8252-8254,8261-8265,8267
+chars=8287,8304,8308-8318,8320-8334,8356,8364,8450,8453,8461,8469-8471,8473-8474,8477,8482,8484,8486,8531
+chars=8532-8542,11800,11822,65533
+
+# imported icon images

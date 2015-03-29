@@ -8,6 +8,7 @@
 #include "renderer.hpp"
 #include "shaders.hpp"
 #include "chunk_renderer.hpp"
+#include "gl3_debug_renderer.hpp"
 #include "bmfont.hpp"
 
 #include "game/chunk.hpp"
@@ -54,6 +55,7 @@ private:
 
 	// chunk renderer
 	ChunkRenderer chunkRenderer;
+	GL3DebugRenderer debugRenderer;
 
 	// vao, vbo locations
 	GLuint crossHairVAO;
