@@ -8,7 +8,7 @@
 #include "renderer.hpp"
 #include "shaders.hpp"
 #include "chunk_renderer.hpp"
-#include "engine/bmfont.hpp"
+#include "bmfont.hpp"
 
 #include "game/chunk.hpp"
 #include "util.hpp"

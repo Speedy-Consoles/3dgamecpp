@@ -19,7 +19,6 @@
 #include "gui/frame.hpp"
 #include "engine/logging.hpp"
 #include "engine/socket.hpp"
-#include "engine/bmfont.hpp"
 
 #undef DEFAULT_LOGGER
 #define DEFAULT_LOGGER NAMED_LOGGER("client")

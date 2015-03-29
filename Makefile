@@ -10,6 +10,7 @@ CLIENT_OBJECT_FILES = \
 	client/gl3_renderer.cpp.o\
 	client/shaders.cpp.o\
 	client/chunk_renderer.cpp.o\
+	client/bmfont.cpp.o\
 	client/local_server_interface.cpp.o\
 	client/remote_server_interface.cpp.o\
 	client/menu.cpp.o\
@@ -37,6 +38,8 @@ SHARED_OBJECT_FILES = \
 	engine/net.cpp.o\
 	engine/socket.cpp.o\
 	engine/time.cpp.o\
+	engine/font.cpp.o\
+	engine/unicode_int.cpp.o\
 	io/archive.cpp.o\
 	io/chunk_loader.cpp.o\
 	io/chunk_loader_internals.cpp.o\
