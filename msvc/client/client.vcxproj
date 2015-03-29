@@ -11,6 +11,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\src\client\bmfont.cpp" />
     <ClCompile Include="..\..\src\client\chunk_renderer.cpp" />
     <ClCompile Include="..\..\src\client\client.cpp" />
     <ClCompile Include="..\..\src\client\config.cpp" />
@@ -30,6 +31,7 @@
     <ClCompile Include="..\..\src\client\texture_manager.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\src\client\bmfont.hpp" />
     <ClInclude Include="..\..\src\client\chunk_renderer.hpp" />
     <ClInclude Include="..\..\src\client\client.hpp" />
     <ClInclude Include="..\..\src\client\config.hpp" />

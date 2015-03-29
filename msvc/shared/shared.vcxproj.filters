@@ -96,9 +96,6 @@
     <ClInclude Include="..\..\src\engine\unicode_int.hpp">
       <Filter>Header Files\engine</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\engine\bmfont.hpp">
-      <Filter>Header Files\engine</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\engine\font.hpp">
       <Filter>Header Files\engine</Filter>
     </ClInclude>
@@ -150,9 +147,6 @@
       <Filter>Source Files\game</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\engine\unicode_int.cpp">
-      <Filter>Source Files\engine</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\engine\bmfont.cpp">
       <Filter>Source Files\engine</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\engine\font.cpp">

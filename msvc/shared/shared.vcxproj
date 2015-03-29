@@ -12,7 +12,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\constants.hpp" />
-    <ClInclude Include="..\..\src\engine\bmfont.hpp" />
     <ClInclude Include="..\..\src\engine\buffer.hpp" />
     <ClInclude Include="..\..\src\engine\font.hpp" />
     <ClInclude Include="..\..\src\engine\logging.hpp" />
@@ -38,7 +37,6 @@
     <ClInclude Include="..\..\src\util.hpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\src\engine\bmfont.cpp" />
     <ClCompile Include="..\..\src\engine\buffer.cpp" />
     <ClCompile Include="..\..\src\engine\font.cpp" />
     <ClCompile Include="..\..\src\engine\logging.cpp" />
