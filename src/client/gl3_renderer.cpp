@@ -301,9 +301,7 @@ void GL3Renderer::render() {
         };
 
 		shaders.setFontTextColor(glm::vec4(0.0f, 1.0f, 1.0f, 1.0f));
-        fontDejavu.write(-500, 0, 0,
-            (const char *)rawData
-            , 0);
+        fontDejavu.write(-500, 0, 0, (char *)rawData, 0);
 
 
 	} else if (state == IN_MENU){

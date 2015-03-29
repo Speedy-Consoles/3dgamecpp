@@ -39,7 +39,7 @@ vec4 computePacked(vec4 texColor) {
 	if (hasOutline) {
 		return computeWithOutline(val);
 	} else {
-		return vec4(vec3(1.0), val);
+		return vec4(textColor.rgb, textColor.a * val);
 	}
 }
 
