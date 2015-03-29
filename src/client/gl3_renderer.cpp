@@ -271,6 +271,8 @@ void GL3Renderer::render() {
 		//if (debugActive)
 		//	renderDebugInfo(player);
         //font.Write(5, 5, 0, "Hello, World!\ntest", 0, 0);
+
+		shaders.setFontTextColor(glm::vec4(1.0f, 0.0f, 1.0f, 1.0f));
         font.write(0, 0, 0,
             "Hello, world!\n"
             "Hello again!\n"
@@ -287,6 +289,7 @@ void GL3Renderer::render() {
             0xB6, 0x00
         };
 
+		shaders.setFontTextColor(glm::vec4(0.0f, 1.0f, 1.0f, 1.0f));
         font.write(-500, 0, 0,
             (const char *)rawData
             , 0);

@@ -2,8 +2,11 @@
 
 uniform sampler2DArray tex;
 uniform bool isPacked;
+uniform bool hasOutline;
 uniform int page;
 uniform int chnl;
+
+uniform vec4 textColor;
 
 in vec2 vfTexCoord;
 
@@ -18,5 +21,5 @@ void main() {
 	} else {
 		glyphColor = texColor;
 	}
-    fColor = glyphColor;
+    fColor = glyphColor * textColor;
 }

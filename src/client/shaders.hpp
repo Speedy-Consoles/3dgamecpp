@@ -50,6 +50,7 @@ class Shaders {
 	GLint fontHasOutlineLoc;
     GLint fontPageLoc;
     GLint fontChannelLoc;
+	GLint fontTextColorLoc;
 
 	// uniforms
 	GLboolean lightEnabled;
@@ -69,6 +70,7 @@ class Shaders {
 	GLboolean fontHasOutline;
     GLshort fontPage;
     GLshort fontChannel;
+	glm::vec4 fontTextColor;
 
 	GLboolean fogEnabled;
 	GLfloat fogStartDistance;
@@ -105,6 +107,7 @@ class Shaders {
 	bool fontHasOutlineUp = false;
     bool fontChannelUp = false;
     bool fontPageUp = false;
+	bool fontTextColorUp = false;
 
 	// active program
 	ShaderProgram activeProgram;
@@ -130,6 +133,7 @@ public:
 	void setFontHasOutline(bool hasOutline);
     void setFontPage(short page);
     void setFontChannel(short channel);
+	void setFontTextColor(const glm::vec4 &color);
 
 	void setFogEnabled(bool enabled);
 	void setStartFogDistance(float distance);
