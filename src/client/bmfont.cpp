@@ -345,30 +345,22 @@ void BMFontLoader::LoadPage(int id, const char *pageFile, const char *fontFile)
 		LOG(ERROR, "Textures could not be loaded");
 		goto FAILURE;
 	}
-	{
-		SDL_PixelFormat pixelFormat;
-		pixelFormat.format = SDL_PIXELFORMAT_RGBA8888;
-		pixelFormat.palette = nullptr;
-		pixelFormat.BitsPerPixel = 32;
-		pixelFormat.BytesPerPixel = 4;
-		pixelFormat.Rmask = 0x000000FF;
-		pixelFormat.Gmask = 0x0000FF00;
-		pixelFormat.Bmask = 0x00FF0000;
-		pixelFormat.Amask = 0xFF000000;
-		tmp = SDL_ConvertSurface(img, &pixelFormat, 0);
-	}
+
+	SDL_PixelFormat pixelFormat;
+	pixelFormat.format = SDL_PIXELFORMAT_RGBA8888;
+	pixelFormat.palette = nullptr;
+	pixelFormat.BitsPerPixel = 32;
+	pixelFormat.BytesPerPixel = 4;
+	pixelFormat.Rmask = 0x000000FF;
+	pixelFormat.Gmask = 0x0000FF00;
+	pixelFormat.Bmask = 0x00FF0000;
+	pixelFormat.Amask = 0xFF000000;
+	tmp = SDL_ConvertSurface(img, &pixelFormat, 0);
 	if (!tmp) {
 		LOG(ERROR, "Temporary SDL_Surface could not be created");
 		goto FAILURE;
 	}
-	{
-		SDL_Rect rect{ 0, 0, font->scaleW, font->scaleH };
-		int ret_code = SDL_BlitSurface(img, &rect, tmp, nullptr);
-		if (ret_code) {
-			LOG(ERROR, "Blit unsuccessful: " << SDL_GetError());
-			goto FAILURE;
-		}
-	}
+
 	glBindTexture(GL_TEXTURE_2D_ARRAY, font->tex);
 	glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, id, font->scaleW, font->scaleH, 1, GL_RGBA, GL_UNSIGNED_BYTE, tmp->pixels);
 	logOpenGLError();
@@ -377,10 +369,12 @@ void BMFontLoader::LoadPage(int id, const char *pageFile, const char *fontFile)
 	return;
 
 FAILURE:
-	LOG(ERROR, "Failed to load font page '" << str.c_str() << "'");
-	if (img) SDL_FreeSurface(img);
-	if (tmp) SDL_FreeSurface(tmp);
-	return;
+	{
+		LOG(ERROR, "Failed to load font page '" << str.c_str() << "'");
+		if (img) SDL_FreeSurface(img);
+		if (tmp) SDL_FreeSurface(tmp);
+		return;
+	}
 }
 
 void BMFontLoader::SetFontInfo(int outlineThickness)
