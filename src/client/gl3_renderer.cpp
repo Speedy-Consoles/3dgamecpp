@@ -275,15 +275,23 @@ void GL3Renderer::render() {
 		//	renderDebugInfo(player);
         //font.Write(5, 5, 0, "Hello, World!\ntest", 0, 0);
 
-		shaders.setFontTextColor(glm::vec4(1.0f, 0.0f, 1.0f, 1.0f));
-        fontTimes.write(0, 0, 0,
-            "Hello, world!\n"
-            "Hello again!\n"
-            "M     M\n"
-            "ABCDEFGHIJKLMNOPQRSTUVWXYZ\n"
-            "abcdefghijklmnopqrstuvwxyz\n"
-            "0123456789\n"
-            , 0);
+		shaders.setFontTextColor(glm::vec4(0.0f, 0.0f, 0.0f, 1.0f));
+		shaders.setFontOutlineColor(glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
+		shaders.setFontMode(Shaders::FontRenderMode::DEFAULT);
+		fontTimes.write(0, 0, 0, "Colored Outlines!", 0);
+		shaders.setFontMode(Shaders::FontRenderMode::OUTLINE);
+		fontTimes.write(0, 0, 0, "\nFirst pass!", 0);
+		shaders.setFontMode(Shaders::FontRenderMode::TEXT);
+		fontTimes.write(0, 0, 0, "\n\nSecond pass!", 0);
+
+		shaders.setFontMode(Shaders::FontRenderMode::DEFAULT);
+		shaders.setFontTextColor(glm::vec4(0.0f, 0.0f, 1.0f, 1.0f));
+		shaders.setFontOutlineColor(glm::vec4(1.0f, 1.0f, 1.0f, 0.3f));
+		fontTimes.write(0, 0, 0, "\n\n\nTransparent Outlines!", 0);
+
+		shaders.setFontMode(Shaders::FontRenderMode::TEXT);
+		shaders.setFontTextColor(glm::vec4(1.0f, 0.0f, 1.0f, 0.5f));
+		fontTimes.write(0, 0, 0, "\n\n\n\nTransparent Text!", 0);
 
         unsigned char rawData[] = {
             0xE2, 0x82, 0xB2, 0xE2, 0x81, 0x89, 0xE2, 0x82, 0xAC, 0xE2, 0x82, 0xA5,

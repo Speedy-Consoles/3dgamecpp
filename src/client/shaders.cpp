@@ -98,6 +98,8 @@ Shaders::Shaders() {
 	fontPageLoc = glGetUniformLocation(programLocations[FONT_PROGRAM], "page");
 	fontChannelLoc = glGetUniformLocation(programLocations[FONT_PROGRAM], "chnl");
 	fontTextColorLoc = glGetUniformLocation(programLocations[FONT_PROGRAM], "textColor");
+	fontOutlineColorLoc = glGetUniformLocation(programLocations[FONT_PROGRAM], "outlineColor");
+	fontModeLoc = glGetUniformLocation(programLocations[FONT_PROGRAM], "mode");
 
     logOpenGLError();
 
@@ -262,6 +264,16 @@ void Shaders::setFontTextColor(const glm::vec4 &color) {
 	fontTextColorUp = false;
 }
 
+void Shaders::setFontOutlineColor(const glm::vec4 &color) {
+	fontOutlineColor = color;
+	fontOutlineColorUp = false;
+}
+
+void Shaders::setFontMode(FontRenderMode mode) {
+	fontMode = static_cast<int>(mode);
+	fontModeUp = false;
+}
+
 void Shaders::setFogEnabled(bool enabled) {
 	fogEnabled = enabled;
 	defaultFogEnabledUp = false;
@@ -395,7 +407,15 @@ void Shaders::prepareProgram(ShaderProgram program) {
 		}
 		if (!fontTextColorUp) {
 			glUniform4fv(fontTextColorLoc, 1, glm::value_ptr(fontTextColor));
-			fontChannelUp = true;
+			fontTextColorUp = true;
+		}
+		if (!fontOutlineColorUp) {
+			glUniform4fv(fontOutlineColorLoc, 1, glm::value_ptr(fontOutlineColor));
+			fontOutlineColorUp = true;
+		}
+		if (!fontModeUp) {
+			glUniform1i(fontModeLoc, fontMode);
+			fontModeUp = true;
 		}
         break;
 	case HUD_PROGRAM:

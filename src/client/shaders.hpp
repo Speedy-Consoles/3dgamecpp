@@ -49,8 +49,10 @@ class Shaders {
 	GLint fontIsPackedLoc;
 	GLint fontHasOutlineLoc;
     GLint fontPageLoc;
-    GLint fontChannelLoc;
+	GLint fontChannelLoc;
 	GLint fontTextColorLoc;
+	GLint fontOutlineColorLoc;
+	GLint fontModeLoc;
 
 	// uniforms
 	GLboolean lightEnabled;
@@ -69,8 +71,10 @@ class Shaders {
 	GLboolean fontIsPacked;
 	GLboolean fontHasOutline;
     GLshort fontPage;
-    GLshort fontChannel;
-	glm::vec4 fontTextColor;
+	GLshort fontChannel;
+	glm::vec4 fontTextColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);;
+	glm::vec4 fontOutlineColor = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+	GLshort fontMode = 0;
 
 	GLboolean fogEnabled;
 	GLfloat fogStartDistance;
@@ -106,8 +110,10 @@ class Shaders {
 	bool fontIsPackedUp = false;
 	bool fontHasOutlineUp = false;
     bool fontChannelUp = false;
-    bool fontPageUp = false;
+	bool fontPageUp = false;
 	bool fontTextColorUp = false;
+	bool fontOutlineColorUp = false;
+	bool fontModeUp = false;
 
 	// active program
 	ShaderProgram activeProgram;
@@ -132,8 +138,11 @@ public:
 	void setFontIsPacked(bool isPacked);
 	void setFontHasOutline(bool hasOutline);
     void setFontPage(short page);
-    void setFontChannel(short channel);
+	void setFontChannel(short channel);
 	void setFontTextColor(const glm::vec4 &color);
+	void setFontOutlineColor(const glm::vec4 &color);
+	enum class FontRenderMode { DEFAULT, OUTLINE, TEXT };
+	void setFontMode(FontRenderMode mode);
 
 	void setFogEnabled(bool enabled);
 	void setStartFogDistance(float distance);
