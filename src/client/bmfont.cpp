@@ -330,8 +330,8 @@ void BMFontLoader::LoadPage(int id, const char *pageFile, const char *fontFile)
 
 	// Load the texture from the same directory as the font descriptor file
 	str = fontFile;
-	for (size_t n = 0; (n = str.find('/', n)) != string::npos;) str.replace(n, 1, "\\");
-	size_t i = str.rfind('\\');
+	for (size_t n = 0; (n = str.find('\\', n)) != string::npos;) str.replace(n, 1, "/");
+	size_t i = str.rfind('/');
 	if (i != string::npos)
 		str = str.substr(0, i + 1);
 	else
