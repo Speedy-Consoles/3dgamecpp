@@ -70,8 +70,7 @@ protected:
 	int getTextChar(const char *text, int pos, int *nextPos = nullptr);
 	int findTextChar(const char *text, int start, int length, int ch);
 
-private:
-	void writeInternal(float x, float y, float z, const char *text, int count, float spacing = 0.0f);
+	virtual void writeInternal(float x, float y, float z, const char *text, int count, float spacing = 0.0f);
 };
 
 #endif // FONT_HPP_

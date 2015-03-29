@@ -197,14 +197,6 @@ int BMFont::load(const char *fontFile) {
 	return r;
 }
 
-BMFont::CharDesc *BMFont::getChar(int id)
-{
-	std::map<int, CharDesc*>::iterator it = chars.find(id);
-	if (it == chars.end())
-		return nullptr;
-	return it->second;
-}
-
 float BMFont::getKerning(int first, int second)
 {
 	CharDesc *ch = getChar(first);
@@ -253,6 +245,20 @@ float BMFont::getTopOffset()
 	return scale * (base - 0);
 }
 
+void BMFont::beginRender() {
+	glBindVertexArray(0);
+	glBindBuffer(GL_ARRAY_BUFFER, vbo);
+	glEnableVertexAttribArray(0); // coord
+	glEnableVertexAttribArray(1); // texCoord
+	glBindTexture(GL_TEXTURE_2D_ARRAY, tex);
+	glDisable(GL_DEPTH_TEST);
+	shaders->setFontIsPacked(isPacked);
+	shaders->setFontHasOutline(hasOutline);
+	shaders->setFontTextColor(textColor);
+	shaders->setFontOutlineColor(outlineColor);
+	logOpenGLError();
+}
+
 float BMFont::renderGlyph(float x, float y, float z, int glyph) {
 	y += scale * float(base);
 
@@ -283,16 +289,21 @@ float BMFont::renderGlyph(float x, float y, float z, int glyph) {
 	return a;
 }
 
-void BMFont::beginRender() {
-	glBindVertexArray(0);
-	glBindBuffer(GL_ARRAY_BUFFER, vbo);
-	glEnableVertexAttribArray(0); // coord
-	glEnableVertexAttribArray(1); // texCoord
-	glBindTexture(GL_TEXTURE_2D_ARRAY, tex);
-	glDisable(GL_DEPTH_TEST);
-	shaders->setFontIsPacked(isPacked);
-	shaders->setFontHasOutline(hasOutline);
-	logOpenGLError();
+BMFont::CharDesc *BMFont::getChar(int id)
+{
+	std::map<int, CharDesc*>::iterator it = chars.find(id);
+	if (it == chars.end())
+		return nullptr;
+	return it->second;
+}
+
+void BMFont::writeInternal(float x, float y, float z, const char *text, int count, float spacing) {
+	if (hasOutline && outline) {
+		shaders->setFontMode(Shaders::FontRenderMode::OUTLINE);
+		Font::writeInternal(x, y, z, text, count, spacing);
+	}
+	shaders->setFontMode(Shaders::FontRenderMode::TEXT);
+	Font::writeInternal(x, y, z, text, count, spacing);
 }
 
 //=============================================================================
@@ -385,8 +396,10 @@ void BMFontLoader::SetCommonInfo(int lineHeight, int base, int scaleW, int scale
 	font->scaleH = scaleH;
 	font->pages = pages;
 	font->isPacked = isPacked;
-	if (isPacked && outlineThickness)
+	if (isPacked && outlineThickness) {
 		font->hasOutline = true;
+		font->outline = true;
+	}
 
 	logOpenGLError();
 

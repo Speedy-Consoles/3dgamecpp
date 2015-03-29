@@ -275,23 +275,22 @@ void GL3Renderer::render() {
 		//	renderDebugInfo(player);
         //font.Write(5, 5, 0, "Hello, World!\ntest", 0, 0);
 
-		shaders.setFontTextColor(glm::vec4(0.0f, 0.0f, 0.0f, 1.0f));
-		shaders.setFontOutlineColor(glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
-		shaders.setFontMode(Shaders::FontRenderMode::DEFAULT);
-		fontTimes.write(0, 0, 0, "Colored Outlines!", 0);
-		shaders.setFontMode(Shaders::FontRenderMode::OUTLINE);
-		fontTimes.write(0, 0, 0, "\nFirst pass!", 0);
-		shaders.setFontMode(Shaders::FontRenderMode::TEXT);
-		fontTimes.write(0, 0, 0, "\n\nSecond pass!", 0);
+		fontTimes.setColor(glm::vec4(0.0f, 0.0f, 0.0f, 1.0f));
+		fontTimes.setOutlineColor(glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
+		fontTimes.setOutline(true);
+		fontTimes.write(0, 0, 0, "Colored Outlines!  With proper layering: wwvw", 0);
 
-		shaders.setFontMode(Shaders::FontRenderMode::DEFAULT);
-		shaders.setFontTextColor(glm::vec4(0.0f, 0.0f, 1.0f, 1.0f));
-		shaders.setFontOutlineColor(glm::vec4(1.0f, 1.0f, 1.0f, 0.3f));
-		fontTimes.write(0, 0, 0, "\n\n\nTransparent Outlines!", 0);
+		fontTimes.setOutline(false);
+		fontTimes.write(0, 0, 0, "\nSame font without Outline!", 0);
 
-		shaders.setFontMode(Shaders::FontRenderMode::TEXT);
-		shaders.setFontTextColor(glm::vec4(1.0f, 0.0f, 1.0f, 0.5f));
-		fontTimes.write(0, 0, 0, "\n\n\n\nTransparent Text!", 0);
+		fontTimes.setOutline(true);
+		fontTimes.setColor(glm::vec4(0.0f, 0.0f, 1.0f, 1.0f));
+		fontTimes.setOutlineColor(glm::vec4(1.0f, 1.0f, 1.0f, 0.3f));
+		fontTimes.write(0, 0, 0, "\n\nTransparent Outlines!", 0);
+
+		fontTimes.setOutline(false);
+		fontTimes.setColor(glm::vec4(1.0f, 0.0f, 1.0f, 0.3f));
+		fontTimes.write(0, 0, 0, "\n\n\nTransparent Text!", 0);
 
         unsigned char rawData[] = {
             0xE2, 0x82, 0xB2, 0xE2, 0x81, 0x89, 0xE2, 0x82, 0xAC, 0xE2, 0x82, 0xA5,
@@ -300,7 +299,7 @@ void GL3Renderer::render() {
             0xB6, 0x00
         };
 
-		shaders.setFontTextColor(glm::vec4(0.0f, 1.0f, 1.0f, 1.0f));
+		fontDejavu.setColor(glm::vec4(0.0f, 1.0f, 1.0f, 1.0f));
         fontDejavu.write(-500, 0, 0, (char *)rawData, 0);
 
 

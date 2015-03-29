@@ -81,13 +81,19 @@ public:
 
 	float getTextWidth(const char *text, int count) override;
 
-	void beginRender() override;
+	void setColor(const glm::vec4 &color) { textColor = color; }
+	void setOutlineColor(const glm::vec4 &color) { outlineColor = color; }
+	void setOutline(bool val = true) { outline = val; }
+
 
 private:
 	friend class BMFontLoader;
 
+	void beginRender() override;
 	float renderGlyph(float x, float y, float z, int glyph) override;
 	CharDesc *getChar(int id);
+
+	void writeInternal(float x, float y, float z, const char *text, int count, float spacing = 0.0f) override;
 
 	short lineHeight = 0; // total height of the font
 	short base = 0; // y of base line
@@ -99,6 +105,10 @@ private:
 	short pages = 0;
 
 	Shaders *shaders = nullptr;
+
+	glm::vec4 textColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
+	glm::vec4 outlineColor = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+	bool outline;
 
 	GLuint tex = 0;
 	GLuint program = 0;
