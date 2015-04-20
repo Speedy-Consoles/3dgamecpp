@@ -38,7 +38,7 @@ private:
 	SDL_Window *window;
 	World *world;
 	const Menu *menu;
-	const ClientState &state;
+	const Client::State &state;
 	const uint8 &localClientID;
 	Stopwatch *stopwatch;
 
@@ -100,7 +100,7 @@ private:
 
 public:
 	GL3Renderer(Graphics *graphics, SDL_Window *window, World *world, const Menu *menu,
-				const ClientState *state, const uint8 *localClientId,
+				const Client::State *state, const uint8 *localClientId,
 				const GraphicsConf &conf, Stopwatch *stopwatch = nullptr);
 	~GL3Renderer();
 

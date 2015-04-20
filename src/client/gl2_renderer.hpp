@@ -51,7 +51,7 @@ private:
 	SDL_Window *window;
 	World *world;
 	const Menu *menu;
-	const ClientState &state;
+	const Client::State &state;
 
 	const uint8 &localClientID;
 
@@ -116,7 +116,7 @@ private:
 
 public:
 	GL2Renderer(Graphics *graphics, SDL_Window *window, World *world, const Menu *menu,
-				const ClientState *state, const uint8 *localClientId,
+				const Client::State *state, const uint8 *localClientId,
 				const GraphicsConf &conf, Stopwatch *stopwatch = nullptr);
 	~GL2Renderer();
 

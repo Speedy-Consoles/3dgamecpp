@@ -11,7 +11,7 @@ using namespace gui;
 Graphics::Graphics(
 		World *world,
 		const Menu *menu,
-		const ClientState *state,
+		const Client::State *state,
 		const uint8 *localClientID,
 		const GraphicsConf &conf,
 		Stopwatch *stopwatch) : state(*state) {
@@ -155,9 +155,9 @@ void Graphics::setConf(const GraphicsConf &conf) {
 
 void Graphics::tick() {
 	if (oldState != state) {
-		if (state == IN_MENU)
+		if (state == Client::State::IN_MENU)
 			setMenu(true);
-		else if (oldState == IN_MENU)
+		else if (oldState == Client::State::IN_MENU)
 			setMenu(false);
 		oldState = state;
 	}

@@ -22,7 +22,7 @@ GL2Renderer::GL2Renderer(
 		SDL_Window *window,
 		World *world,
 		const Menu *menu,
-		const ClientState *state,
+		const Client::State *state,
 		const uint8 *localClientID,
 		const GraphicsConf &conf,
 		Stopwatch *stopwatch) :

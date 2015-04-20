@@ -21,7 +21,7 @@ GL3Renderer::GL3Renderer(
 		SDL_Window *window,
 		World *world,
 		const Menu *menu,
-		const ClientState *state,
+		const Client::State *state,
 		const uint8 *localClientID,
 		const GraphicsConf &conf,
 		Stopwatch *stopwatch)
@@ -275,11 +275,11 @@ void GL3Renderer::render() {
 	// render overlay
 	glDepthMask(false);
 	glDisable(GL_DEPTH_TEST);
-	if (state == PLAYING) {
+	if (state == Client::State::PLAYING) {
 		renderHud(player);
 		if (debugActive)
 			debugRenderer.render();
-	} else if (state == IN_MENU){
+	} else if (state == Client::State::IN_MENU){
 		renderMenu();
 	}
 	glDepthMask(true);

@@ -81,13 +81,13 @@ void GL2Renderer::render() {
 	glLoadIdentity();
 	texManager.bind(0);
 
-	if (state == PLAYING && player.isValid()) {
+	if (state == Client::State::PLAYING && player.isValid()) {
 		stopwatch->start(CLOCK_HUD);
 		renderHud(player);
 		if (debugActive)
 			renderDebugInfo(player);
 		stopwatch->stop(CLOCK_HUD);
-	} else if (state == IN_MENU){
+	} else if (state == Client::State::IN_MENU){
 		renderMenu();
 	}
 }

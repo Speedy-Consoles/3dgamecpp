@@ -11,13 +11,19 @@ class Graphics;
 struct GraphicsConf;
 class Stopwatch;
 
-enum ClientState {
-	CONNECTING,
-	PLAYING,
-	IN_MENU,
-};
-
 class Client {
+public:
+	enum class State {
+		CONNECTING,
+		PLAYING,
+		IN_MENU,
+	};
+
+	Client(const char *worldId, const char *serverAdress);
+	~Client();
+
+	void run();
+
 private:
 	ServerInterface *serverInterface = nullptr;
 	World *world = nullptr;
@@ -28,7 +34,7 @@ private:
 
 	uint8 localClientId;
 
-	ClientState state = CONNECTING;
+	State state = State::CONNECTING;
 
 	Time time = 0;
     Time timeShift = 0;
@@ -37,11 +43,7 @@ private:
 
 
 public:
-	Client(const Client &) = delete;
-	Client(const char *worldId, const char *serverAdress);
-	~Client();
 
-	void run();
 
 private:
 	void sync(int perSecond);

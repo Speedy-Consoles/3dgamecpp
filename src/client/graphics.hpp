@@ -25,8 +25,8 @@ private:
 	Renderer *renderer;
 	GraphicsConf conf;
 
-	const ClientState &state;
-	ClientState oldState;
+	const Client::State &state;
+	Client::State oldState;
 
 	int width;
 	int height;
@@ -39,7 +39,7 @@ private:
 	double oldRelMouseY = 0.5;
 
 public:
-	Graphics(World *world, const Menu *menu, const ClientState *state,
+	Graphics(World *world, const Menu *menu, const Client::State *state,
 				const uint8 *localClientId, const GraphicsConf &conf, Stopwatch *stopwatch = nullptr);
 	~Graphics();
 
