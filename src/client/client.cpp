@@ -112,9 +112,11 @@ void Client::run() {
 			stopwatch->stop(CLOCK_NET);
 
 			stopwatch->start(CLOCK_TIC);
-			world->tick(tick, localClientId);
+			if (!_isPaused)
+				world->tick(tick, localClientId);
 			stopwatch->stop(CLOCK_TIC);
 		}
+
 #ifndef NO_GRAPHICS
         if (getCurrentTime() < time + timeShift + seconds(1) / TICK_SPEED) {
             graphics->tick();
@@ -188,10 +190,10 @@ void Client::handleInput() {
 				case SDL_SCANCODE_ESCAPE:
 					menu->update();
 					state = State::IN_MENU;
-					world->setPause(true);
+					_isPaused = true;
 					break;
 				case SDL_SCANCODE_F:
-					if (!world->isPaused()) {
+					if (!_isPaused) {
 						serverInterface->toggleFly();
 					}
 					break;
@@ -221,7 +223,7 @@ void Client::handleInput() {
 					graphics->setConf(*conf);
 					break;
 				case SDL_SCANCODE_F3:
-					graphics->setDebug(!graphics->isDebug());
+					_isDebugOn = !_isDebugOn;
 					break;
 				default:
 					break;
@@ -255,7 +257,7 @@ void Client::handleInput() {
 				case SDL_SCANCODE_ESCAPE:
 					menu->apply();
 					state = State::PLAYING;
-					world->setPause(false);
+					_isPaused = false;
 					/*for (int z = -5; z < 37; z++) {
 						for (int y = -5; y < 37; y++) {
 							for (int x = -5; x < 37; x++) {
@@ -277,7 +279,7 @@ void Client::handleInput() {
 			}
 			break;
 		case SDL_MOUSEMOTION:
-			if (state == State::PLAYING && !world->isPaused()) {
+			if (state == State::PLAYING && !_isPaused) {
 				double yaw = player.getYaw();
 				double pitch = player.getPitch();
 				yaw -= event.motion.xrel / 10.0;
@@ -294,7 +296,7 @@ void Client::handleInput() {
 			}
 			break;
 		case SDL_MOUSEBUTTONDOWN:
-			if (state == State::PLAYING && !world->isPaused()) {
+			if (state == State::PLAYING && !_isPaused) {
 				vec3i64 bc;
 				int d;
 				bool target = player.getTargetedFace(&bc, &d);
@@ -326,7 +328,7 @@ void Client::handleInput() {
 	const uint8 *keyboard = SDL_GetKeyboardState(nullptr);
 
 	int moveInput = 0;
-	if (state == State::PLAYING && !world->isPaused()) {
+	if (state == State::PLAYING && !_isPaused) {
 		if (keyboard[SDL_SCANCODE_D])
 			moveInput |= Player::MOVE_INPUT_FLAG_STRAFE_RIGHT;
 		if (keyboard[SDL_SCANCODE_A])

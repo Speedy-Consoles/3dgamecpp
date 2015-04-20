@@ -193,14 +193,6 @@ void GL3Renderer::makeMaxFOV() {
 		maxFOV = atan(ratio * tan(yfov / 2)) * 2;
 }
 
-void GL3Renderer::setDebug(bool debugActive) {
-	this->debugActive = debugActive;
-}
-
-bool GL3Renderer::isDebug() {
-	return debugActive;
-}
-
 void GL3Renderer::setConf(const GraphicsConf &conf) {
 	GraphicsConf old_conf = this->conf;
 	this->conf = conf;
@@ -268,7 +260,7 @@ void GL3Renderer::render() {
 	glDisable(GL_DEPTH_TEST);
 	if (client->getState() == Client::State::PLAYING) {
 		renderHud(player);
-		if (debugActive)
+		if (client->isDebugOn())
 			debugRenderer.render();
 	} else if (client->getState() == Client::State::IN_MENU){
 		renderMenu();

@@ -84,7 +84,7 @@ void GL2Renderer::render() {
 	if (client->getState() == Client::State::PLAYING && player.isValid()) {
 		client->getStopwatch()->start(CLOCK_HUD);
 		renderHud(player);
-		if (debugActive)
+		if (client->isDebugOn())
 			renderDebugInfo(player);
 		client->getStopwatch()->stop(CLOCK_HUD);
 	} else if (client->getState() == Client::State::IN_MENU){

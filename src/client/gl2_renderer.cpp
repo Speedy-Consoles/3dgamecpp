@@ -266,14 +266,6 @@ void GL2Renderer::makeMaxFOV() {
 		maxFOV = atan(ratio * tan(yfov / 2)) * 2;
 }
 
-void GL2Renderer::setDebug(bool debugActive) {
-	this->debugActive = debugActive;
-}
-
-bool GL2Renderer::isDebug() {
-	return debugActive;
-}
-
 static uint getMSLevelFromAA(AntiAliasing aa) {
 	switch (aa) {
 		case AntiAliasing::NONE:    return 0;

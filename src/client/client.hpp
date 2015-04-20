@@ -25,6 +25,8 @@ public:
 	~Client();
 
 	State getState() const { return state; }
+	bool isPaused() const { return _isPaused; }
+	bool isDebugOn() const { return _isDebugOn; }
 	uint8 getLocalClientId() const;
 	
 	GraphicsConf *getConf() { return conf.get(); }
@@ -47,6 +49,9 @@ private:
 	uint8 localClientId;
 
 	State state = State::CONNECTING;
+
+	bool _isPaused = false;
+	bool _isDebugOn = false;
 
 	Time time = 0;
     Time timeShift = 0;

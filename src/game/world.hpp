@@ -50,19 +50,13 @@ private:
 
 	Player players[MAX_CLIENTS];
 
-	bool pause = false;
-
 public:
-
 	World(std::string id);
 	~World();
 
 	std::string getId() const { return id; }
 
 	void tick(int tick, uint localPlayerID);
-
-	void setPause(bool pause);
-	bool isPaused();
 
 	int shootRay(vec3i64 start, vec3d ray, double maxDist,
 			vec3i boxCorner, vec3d *outHit, vec3i64 outHitBlock[3],

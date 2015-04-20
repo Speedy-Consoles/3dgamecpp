@@ -49,11 +49,6 @@ public:
 
 	void resize(int width, int height);
 
-	void setDebug(bool debugActive);
-	bool isDebug();
-
-	bool getCloseRequested();
-
 	const GraphicsConf &getConf() const { return conf; }
 	void setConf(const GraphicsConf &);
 

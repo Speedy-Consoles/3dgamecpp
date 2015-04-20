@@ -63,7 +63,6 @@ private:
 	GLuint skyTexture;
 
 	// performance info
-	bool debugActive = false;
 	int prevFPS[20];
 	int fpsCounter = 0;
 	int fpsSum = 0;
@@ -105,11 +104,6 @@ public:
 	void makeMaxFOV();
 
 	float getMaxFOV() { return maxFOV; }
-
-	void setDebug(bool debugActive);
-	bool isDebug();
-
-	bool getCloseRequested();
 
 	const GraphicsConf &getConf() const { return conf; }
 	void setConf(const GraphicsConf &);

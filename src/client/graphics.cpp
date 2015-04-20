@@ -139,14 +139,6 @@ float Graphics::getScalingFactor() const {
 	return (float) drawWidth / width;
 }
 
-void Graphics::setDebug(bool debugActive) {
-	renderer->setDebug(debugActive);
-}
-
-bool Graphics::isDebug() {
-	return renderer->isDebug();
-}
-
 void Graphics::setConf(const GraphicsConf &conf) {
 	GraphicsConf old_conf = this->conf;
 	this->conf = conf;

@@ -11,9 +11,6 @@ public:
 
 	virtual void resize() = 0;
 
-	virtual void setDebug(bool debugActive) = 0;
-	virtual bool isDebug() = 0;
-
 	virtual const GraphicsConf &getConf() const = 0;
 	virtual void setConf(const GraphicsConf &) = 0;
 };
