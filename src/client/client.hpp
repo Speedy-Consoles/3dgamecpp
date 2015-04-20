@@ -24,6 +24,15 @@ public:
 	Client(const char *worldId, const char *serverAdress);
 	~Client();
 
+	uint8 getLocalClientId() const;
+	
+	GraphicsConf *getConf() { return conf.get(); }
+	World *getWorld() { return world.get(); }
+	Menu *getMenu() { return menu.get(); }
+	Graphics *getGraphics() { return graphics.get(); }
+	ServerInterface *getServerInterface() { return serverInterface.get(); }
+	Stopwatch *getStopwatch() { return stopwatch.get(); }
+
 	void run();
 
 private:

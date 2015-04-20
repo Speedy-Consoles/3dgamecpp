@@ -85,6 +85,10 @@ Client::~Client() {
 	store("graphics-default.profile", *conf);
 }
 
+uint8 Client::getLocalClientId() const {
+	 return serverInterface->getLocalClientId();
+}
+
 void Client::run() {
 	LOG(INFO, "Running client");
 	time = getCurrentTime();
