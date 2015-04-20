@@ -11,8 +11,8 @@
 #include "game/player.hpp"
 #include "util.hpp"
 
-ChunkRenderer::ChunkRenderer(Client *client, World *world, Shaders *shaders, GL3Renderer *renderer, const uint8 *localClientID, const GraphicsConf &conf)
-		: client(client), conf(conf), world(world), shaders(shaders), renderer(renderer), localClientID(*localClientID) {
+ChunkRenderer::ChunkRenderer(Client *client, GL3Renderer *renderer, Shaders *shaders)
+		: client(client), renderer(renderer), shaders(shaders), conf(*client->getConf()) {
 	initRenderDistanceDependent();
 	loadTextures();
 }
@@ -168,7 +168,7 @@ void ChunkRenderer::destroyRenderDistanceDependent() {
 }
 
 void ChunkRenderer::render() {
-	Player &player = world->getPlayer(localClientID);
+	Player &player = client->getWorld()->getPlayer(client->getLocalClientId());
 	if (!player.isValid())
 		return;
 
@@ -192,7 +192,7 @@ void ChunkRenderer::render() {
 	int length = conf.render_distance * 2 + 1;
 
 	vec3i64 ccc;
-	while (world->popChangedChunk(&ccc)) {
+	while (client->getWorld()->popChangedChunk(&ccc)) {
 		int index = ((((ccc[2] % length) + length) % length) * length
 				+ (((ccc[1] % length) + length) % length)) * length
 				+ (((ccc[0] % length) + length) % length);
@@ -200,9 +200,8 @@ void ChunkRenderer::render() {
 			vaoStatus[index] = OUTDATED;
 	}
 
-	Player &localPlayer = world->getPlayer(localClientID);
-	vec3i64 pc = localPlayer.getChunkPos();
-	vec3d lookDir = getVectorFromAngles(localPlayer.getYaw(), localPlayer.getPitch());
+	vec3i64 pc = player.getChunkPos();
+	vec3d lookDir = getVectorFromAngles(player.getYaw(), player.getPitch());
 
 	newFaces = 0;
 	newChunks = 0;
@@ -229,7 +228,7 @@ void ChunkRenderer::render() {
 		fringeSize--;
 
 		if ((vaoStatus[index] != OK || vaoChunks[index] != cc) && (newChunks < MAX_NEW_CHUNKS && newFaces < MAX_NEW_QUADS)) {
-			Chunk *c = world->getChunk(cc);
+			Chunk *c = client->getWorld()->getChunk(cc);
 			if (c)
 				buildChunk(*c);
 		}
@@ -255,7 +254,7 @@ void ChunkRenderer::render() {
 				if ((uint) abs(ncd[0]) > conf.render_distance
 						|| (uint) abs(ncd[1]) > conf.render_distance
 						|| (uint) abs(ncd[2]) > conf.render_distance
-						|| !inFrustum(ncc, localPlayer.getPos(), lookDir))
+						|| !inFrustum(ncc, player.getPos(), lookDir))
 					continue;
 
 				int nIndex = ((((ncc[2] % length) + length) % length) * length
@@ -338,7 +337,7 @@ void ChunkRenderer::buildChunk(Chunk &c) {
 					if ((x == Chunk::WIDTH - 1 && d==0)
 							|| (y == Chunk::WIDTH - 1 && d==1)
 							|| (z == Chunk::WIDTH - 1 && d==2)) {
-						thatType = world->getBlock(cc * Chunk::WIDTH + vec3i64(x, y, z) + dir);
+						thatType = client->getWorld()->getBlock(cc * Chunk::WIDTH + vec3i64(x, y, z) + dir);
 						if (thatType != 0) {
 							if (x != -1 && y != -1 && z != -1)
 								i++;
@@ -348,7 +347,7 @@ void ChunkRenderer::buildChunk(Chunk &c) {
 						thatType = blocks[ni++];
 
 					if (x == -1 || y == -1 || z == -1) {
-						thisType = world->getBlock(cc * Chunk::WIDTH + vec3i64(x, y, z));
+						thisType = client->getWorld()->getBlock(cc * Chunk::WIDTH + vec3i64(x, y, z));
 						if (thisType != 0)
 							continue;
 					} else {
@@ -377,7 +376,7 @@ void ChunkRenderer::buildChunk(Chunk &c) {
 							if (		dIcc[0] < 0 || dIcc[0] >= (int) Chunk::WIDTH
 									||	dIcc[1] < 0 || dIcc[1] >= (int) Chunk::WIDTH
 									||	dIcc[2] < 0 || dIcc[2] >= (int) Chunk::WIDTH)
-								cornerBlock = world->getBlock(cc * Chunk::WIDTH + dIcc);
+								cornerBlock = client->getWorld()->getBlock(cc * Chunk::WIDTH + dIcc);
 							else
 								cornerBlock = c.getBlock(dIcc.cast<uint8>());
 							if (cornerBlock) {

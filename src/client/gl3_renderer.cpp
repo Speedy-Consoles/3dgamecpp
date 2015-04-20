@@ -19,28 +19,17 @@ using namespace gui;
 GL3Renderer::GL3Renderer(
 	Client *client,
 	Graphics *graphics,
-	SDL_Window *window,
-	World *world,
-	const Menu *menu,
-	const Client::State *state,
-	const uint8 *localClientID,
-	const GraphicsConf &conf,
-	Stopwatch *stopwatch)
+	SDL_Window *window)
 	:
 	client(client),
 	graphics(graphics),
-	conf(conf),
+	conf(*client->getConf()),
 	window(window),
-	world(world),
-	menu(menu),
-	state(*state),
-	localClientID(*localClientID),
-	stopwatch(stopwatch),
 	shaders(),
 	fontTimes(&shaders),
 	fontDejavu(&shaders),
-	chunkRenderer(client, world, &shaders, this, localClientID, conf),
-	debugRenderer(client, graphics, this, &shaders, world, localClientID)
+	chunkRenderer(client, this, &shaders),
+	debugRenderer(client, this, &shaders, graphics)
 {
 	makeMaxFOV();
 	makePerspectiveMatrix();
@@ -235,9 +224,9 @@ void GL3Renderer::tick() {
 
 	if (getCurrentTime() - lastStopWatchSave > millis(200)) {
 		lastStopWatchSave = getCurrentTime();
-		stopwatch->stop(CLOCK_ALL);
-		stopwatch->save();
-		stopwatch->start(CLOCK_ALL);
+		client->getStopwatch()->stop(CLOCK_ALL);
+		client->getStopwatch()->save();
+		client->getStopwatch()->start(CLOCK_ALL);
 	}
 
 	while (getCurrentTime() - lastFPSUpdate > millis(50)) {
@@ -273,15 +262,15 @@ void GL3Renderer::render() {
 	renderTarget();
 	renderPlayers();
 
-	Player &player = world->getPlayer(localClientID);
+	Player &player = client->getWorld()->getPlayer(client->getLocalClientId());
 	// render overlay
 	glDepthMask(false);
 	glDisable(GL_DEPTH_TEST);
-	if (state == Client::State::PLAYING) {
+	if (client->getState() == Client::State::PLAYING) {
 		renderHud(player);
 		if (debugActive)
 			debugRenderer.render();
-	} else if (state == Client::State::IN_MENU){
+	} else if (client->getState() == Client::State::IN_MENU){
 		renderMenu();
 	}
 	glDepthMask(true);
@@ -315,7 +304,7 @@ void GL3Renderer::renderHud(const Player &player) {
 void GL3Renderer::renderSky() {
 	glDisable(GL_DEPTH_TEST);
 	glDepthMask(false);
-	Player &player = world->getPlayer(localClientID);
+	Player &player = client->getWorld()->getPlayer(client->getLocalClientId());
 	if (!player.isValid())
 		return;
 
@@ -337,7 +326,7 @@ void GL3Renderer::renderMenu() {
 }
 
 void GL3Renderer::renderTarget() {
-	Player &player = world->getPlayer(localClientID);
+	Player &player = client->getWorld()->getPlayer(client->getLocalClientId());
 	if (!player.isValid())
 		return;
 	// view matrix for scene

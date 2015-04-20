@@ -71,7 +71,7 @@ Graphics::Graphics(
 	if (!GLEW_VERSION_2_1)
 		LOG(FATAL, "OpenGL version 2.1 not available");
 	if (GLEW_VERSION_3_3 && conf.render_backend == RenderBackend::OGL_3) {
-		renderer = new GL3Renderer(client, this, window, world, menu, state, localClientID, conf, stopwatch);
+		renderer = new GL3Renderer(client, this, window);
 	} else {
 		renderer = new GL2Renderer(client, this, window, world, menu, state, localClientID, conf, stopwatch);
 	}

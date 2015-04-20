@@ -32,17 +32,10 @@ namespace gui {
 
 class GL3Renderer : public Renderer {
 private:
-	Client *client;
-
-	Graphics *graphics;
+	Client *client = nullptr;
+	Graphics *graphics = nullptr;
+	SDL_Window *window = nullptr;
 	GraphicsConf conf;
-
-	SDL_Window *window;
-	World *world;
-	const Menu *menu;
-	const Client::State &state;
-	const uint8 &localClientID;
-	Stopwatch *stopwatch;
 
 	// 3D values
 	float ZNEAR = 0.1f;
@@ -101,9 +94,7 @@ private:
 #pragma pack(pop)
 
 public:
-	GL3Renderer(Client *client, Graphics *graphics, SDL_Window *window, World *world, const Menu *menu,
-				const Client::State *state, const uint8 *localClientId,
-				const GraphicsConf &conf, Stopwatch *stopwatch = nullptr);
+	GL3Renderer(Client *client, Graphics *graphics, SDL_Window *window);
 	~GL3Renderer();
 
 	void tick();

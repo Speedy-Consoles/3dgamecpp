@@ -1,11 +1,9 @@
 #include "gl3_debug_renderer.hpp"
 
-GL3DebugRenderer::GL3DebugRenderer(Client *client, Graphics *graphics, GL3Renderer *renderer, Shaders *shaders, const World *world, const uint8 *playerId) :
+GL3DebugRenderer::GL3DebugRenderer(Client *client, GL3Renderer *renderer, Shaders *shaders, Graphics *graphics) :
 	client(client),
-	graphics(graphics),
 	renderer(renderer),
-	world(world),
-	playerId(*playerId),
+	graphics(graphics),
 	font(shaders)
 {
 	font.load("fonts/dejavusansmono24.fnt");
@@ -13,7 +11,7 @@ GL3DebugRenderer::GL3DebugRenderer(Client *client, Graphics *graphics, GL3Render
 }
 
 void GL3DebugRenderer::render() {
-	const Player &player = world->getPlayer(playerId);
+	const Player &player = client->getWorld()->getPlayer(client->getLocalClientId());
 
 	float x = -graphics->getDrawWidth() / 2 + 5;
 	float y = graphics->getDrawHeight() / 2 - font.getTopOffset() - 5;

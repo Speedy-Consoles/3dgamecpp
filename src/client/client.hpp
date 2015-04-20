@@ -24,6 +24,7 @@ public:
 	Client(const char *worldId, const char *serverAdress);
 	~Client();
 
+	State getState() const { return state; }
 	uint8 getLocalClientId() const;
 	
 	GraphicsConf *getConf() { return conf.get(); }

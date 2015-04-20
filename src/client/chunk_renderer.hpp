@@ -21,13 +21,9 @@ private:
 	};
 
 	Client *client;
-
-	GraphicsConf conf;
-
-	World *world;
-	Shaders *shaders;
 	GL3Renderer *renderer;
-	const uint8 &localClientID;
+	Shaders *shaders;
+	GraphicsConf conf;
 
 	// performance limits
 	static const int MAX_NEW_QUADS = 6000;
@@ -76,7 +72,7 @@ private:
 	BlockVertexData blockVertexBuffer[Chunk::WIDTH * Chunk::WIDTH * (Chunk::WIDTH + 1) * 3 * 2 * 3];
 
 public:
-	ChunkRenderer(Client *client, World *world, Shaders *shaders, GL3Renderer *renderer, const uint8 *localClientID, const GraphicsConf &conf);
+	ChunkRenderer(Client *client, GL3Renderer *renderer, Shaders *shaders);
 	~ChunkRenderer();
 
 	void setConf(const GraphicsConf &);
