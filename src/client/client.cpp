@@ -28,7 +28,6 @@ private:
 	ServerInterface *serverInterface = nullptr;
 	World *world = nullptr;
 	Menu *menu = nullptr;
-	gui::Frame *frame = nullptr;
 	Graphics *graphics = nullptr;
 	GraphicsConf *conf = nullptr;
 	Stopwatch *stopwatch = nullptr;
@@ -98,7 +97,6 @@ Client::Client(const char *worldId, const char *serverAdress) {
 	world = new World(worldId);
 
 	menu = new Menu(conf);
-	frame = menu->getFrame();
 	graphics = new Graphics(world, menu, &state, &localClientId, *conf, stopwatch);
 
 	if (serverAdress) {
@@ -324,7 +322,7 @@ void Client::handleInput() {
 				int x = event.motion.x;
 				int y = graphics->getHeight() - event.motion.y;
 				float factor = graphics->getScalingFactor();
-				frame->updateMousePosition(x * factor, y * factor);
+				menu->getFrame()->updateMousePosition(x * factor, y * factor);
 			}
 			break;
 		case SDL_MOUSEBUTTONDOWN:
@@ -345,7 +343,7 @@ void Client::handleInput() {
 					int x = event.button.x;
 					int y = graphics->getHeight() - event.button.y;
 					float factor = graphics->getScalingFactor();
-					frame->handleMouseClick(x * factor, y * factor);
+					menu->getFrame()->handleMouseClick(x * factor, y * factor);
 				}
 			}
 			break;
