@@ -11,8 +11,8 @@
 #include "game/player.hpp"
 #include "util.hpp"
 
-ChunkRenderer::ChunkRenderer(World *world, Shaders *shaders, GL3Renderer *renderer, const uint8 *localClientID, const GraphicsConf &conf)
-		: conf(conf), world(world), shaders(shaders), renderer(renderer), localClientID(*localClientID) {
+ChunkRenderer::ChunkRenderer(Client *client, World *world, Shaders *shaders, GL3Renderer *renderer, const uint8 *localClientID, const GraphicsConf &conf)
+		: client(client), conf(conf), world(world), shaders(shaders), renderer(renderer), localClientID(*localClientID) {
 	initRenderDistanceDependent();
 	loadTextures();
 }

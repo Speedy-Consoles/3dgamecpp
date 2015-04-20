@@ -39,8 +39,8 @@ GL3Renderer::GL3Renderer(
 	shaders(),
 	fontTimes(&shaders),
 	fontDejavu(&shaders),
-	chunkRenderer(world, &shaders, this, localClientID, conf),
-	debugRenderer(graphics, this, &shaders, world, localClientID)
+	chunkRenderer(client, world, &shaders, this, localClientID, conf),
+	debugRenderer(client, graphics, this, &shaders, world, localClientID)
 {
 	makeMaxFOV();
 	makePerspectiveMatrix();

@@ -9,11 +9,12 @@ class GL3Renderer;
 
 class GL3DebugRenderer {
 public:
-	GL3DebugRenderer(Graphics *graphics, GL3Renderer *renderer, Shaders *shaders, const World *world, const uint8 *playerId);
+	GL3DebugRenderer(Client *client, Graphics *graphics, GL3Renderer *renderer, Shaders *shaders, const World *world, const uint8 *playerId);
 
 	void render();
 
 private:
+	Client *client = nullptr;
 	Graphics *graphics = nullptr;
 	GL3Renderer *renderer = nullptr;
 	const World *world = nullptr;

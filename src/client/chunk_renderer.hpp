@@ -3,6 +3,7 @@
 
 #include <GL/glew.h>
 
+#include "client/client.hpp"
 #include "shaders.hpp"
 #include "config.hpp"
 #include "engine/math.hpp"
@@ -18,6 +19,8 @@ private:
 		OUTDATED,
 		OK,
 	};
+
+	Client *client;
 
 	GraphicsConf conf;
 
@@ -73,7 +76,7 @@ private:
 	BlockVertexData blockVertexBuffer[Chunk::WIDTH * Chunk::WIDTH * (Chunk::WIDTH + 1) * 3 * 2 * 3];
 
 public:
-	ChunkRenderer(World *world, Shaders *shaders, GL3Renderer *renderer, const uint8 *localClientID, const GraphicsConf &conf);
+	ChunkRenderer(Client *client, World *world, Shaders *shaders, GL3Renderer *renderer, const uint8 *localClientID, const GraphicsConf &conf);
 	~ChunkRenderer();
 
 	void setConf(const GraphicsConf &);
