@@ -20,6 +20,8 @@ namespace gui {
 
 class Graphics {
 private:
+	Client *client = nullptr;
+
 	SDL_GLContext glContext;
 	SDL_Window *window;
 	Renderer *renderer;
@@ -39,7 +41,7 @@ private:
 	double oldRelMouseY = 0.5;
 
 public:
-	Graphics(World *world, const Menu *menu, const Client::State *state,
+	Graphics(Client *client, World *world, const Menu *menu, const Client::State *state,
 				const uint8 *localClientId, const GraphicsConf &conf, Stopwatch *stopwatch = nullptr);
 	~Graphics();
 

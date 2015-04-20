@@ -9,12 +9,17 @@
 using namespace gui;
 
 Graphics::Graphics(
+		Client *client,
 		World *world,
 		const Menu *menu,
 		const Client::State *state,
 		const uint8 *localClientID,
 		const GraphicsConf &conf,
-		Stopwatch *stopwatch) : state(*state) {
+		Stopwatch *stopwatch)
+		:
+		client(client),
+		state(*state)
+{
 	LOG(DEBUG, "Constructing Graphics");
 
 	LOG(DEBUG, "Initializing SDL");
@@ -66,9 +71,9 @@ Graphics::Graphics(
 	if (!GLEW_VERSION_2_1)
 		LOG(FATAL, "OpenGL version 2.1 not available");
 	if (GLEW_VERSION_3_3 && conf.render_backend == RenderBackend::OGL_3) {
-		renderer = new GL3Renderer(this, window, world, menu, state, localClientID, conf, stopwatch);
+		renderer = new GL3Renderer(client, this, window, world, menu, state, localClientID, conf, stopwatch);
 	} else {
-		renderer = new GL2Renderer(this, window, world, menu, state, localClientID, conf, stopwatch);
+		renderer = new GL2Renderer(client, this, window, world, menu, state, localClientID, conf, stopwatch);
 	}
 }
 

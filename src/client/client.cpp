@@ -63,7 +63,7 @@ Client::Client(const char *worldId, const char *serverAdress) {
 
 	world = std::unique_ptr<World>(new World(worldId));
 	menu = std::unique_ptr<Menu>(new Menu(conf.get()));
-	graphics = std::unique_ptr<Graphics>(new Graphics(world.get(), menu.get(), &state, &localClientId, *conf, stopwatch.get()));
+	graphics = std::unique_ptr<Graphics>(new Graphics(this, world.get(), menu.get(), &state, &localClientId, *conf, stopwatch.get()));
 
 	if (serverAdress) {
 		LOG(INFO, "Connecting to remote server '" << serverAdress << "'");

@@ -17,28 +17,30 @@
 using namespace gui;
 
 GL3Renderer::GL3Renderer(
-		Graphics *graphics,
-		SDL_Window *window,
-		World *world,
-		const Menu *menu,
-		const Client::State *state,
-		const uint8 *localClientID,
-		const GraphicsConf &conf,
-		Stopwatch *stopwatch)
-		:
-		graphics(graphics),
-		conf(conf),
-		window(window),
-		world(world),
-		menu(menu),
-		state(*state),
-		localClientID(*localClientID),
-		stopwatch(stopwatch),
-		shaders(),
-		fontTimes(&shaders),
-		fontDejavu(&shaders),
-		chunkRenderer(world, &shaders, this, localClientID, conf),
-		debugRenderer(graphics, this, &shaders, world, localClientID)
+	Client *client,
+	Graphics *graphics,
+	SDL_Window *window,
+	World *world,
+	const Menu *menu,
+	const Client::State *state,
+	const uint8 *localClientID,
+	const GraphicsConf &conf,
+	Stopwatch *stopwatch)
+	:
+	client(client),
+	graphics(graphics),
+	conf(conf),
+	window(window),
+	world(world),
+	menu(menu),
+	state(*state),
+	localClientID(*localClientID),
+	stopwatch(stopwatch),
+	shaders(),
+	fontTimes(&shaders),
+	fontDejavu(&shaders),
+	chunkRenderer(world, &shaders, this, localClientID, conf),
+	debugRenderer(graphics, this, &shaders, world, localClientID)
 {
 	makeMaxFOV();
 	makePerspectiveMatrix();

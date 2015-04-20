@@ -32,6 +32,8 @@ namespace gui {
 
 class GL3Renderer : public Renderer {
 private:
+	Client *client;
+
 	Graphics *graphics;
 	GraphicsConf conf;
 
@@ -99,7 +101,7 @@ private:
 #pragma pack(pop)
 
 public:
-	GL3Renderer(Graphics *graphics, SDL_Window *window, World *world, const Menu *menu,
+	GL3Renderer(Client *client, Graphics *graphics, SDL_Window *window, World *world, const Menu *menu,
 				const Client::State *state, const uint8 *localClientId,
 				const GraphicsConf &conf, Stopwatch *stopwatch = nullptr);
 	~GL3Renderer();

@@ -18,23 +18,27 @@
 using namespace gui;
 
 GL2Renderer::GL2Renderer(
-		Graphics *graphics,
-		SDL_Window *window,
-		World *world,
-		const Menu *menu,
-		const Client::State *state,
-		const uint8 *localClientID,
-		const GraphicsConf &conf,
-		Stopwatch *stopwatch) :
-		graphics(graphics),
-		conf(conf),
-		window(window),
-		world(world),
-		menu(menu),
-		state(*state),
-		localClientID(*localClientID),
-		texManager(conf),
-		stopwatch(stopwatch) {
+	Client *client,
+	Graphics *graphics,
+	SDL_Window *window,
+	World *world,
+	const Menu *menu,
+	const Client::State *state,
+	const uint8 *localClientID,
+	const GraphicsConf &conf,
+	Stopwatch *stopwatch)
+	:
+	client(client),
+	graphics(graphics),
+	conf(conf),
+	window(window),
+	world(world),
+	menu(menu),
+	state(*state),
+	localClientID(*localClientID),
+	texManager(conf),
+	stopwatch(stopwatch)
+{
 	makeMaxFOV();
 	makePerspective();
 	makeOrthogonal();

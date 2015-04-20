@@ -44,6 +44,7 @@ private:
 
 	double maxFOV;
 
+	Client *client;
 	Graphics *graphics;
 
 	GraphicsConf conf;
@@ -115,7 +116,7 @@ private:
 //	bool fxaa = false;
 
 public:
-	GL2Renderer(Graphics *graphics, SDL_Window *window, World *world, const Menu *menu,
+	GL2Renderer(Client *client, Graphics *graphics, SDL_Window *window, World *world, const Menu *menu,
 				const Client::State *state, const uint8 *localClientId,
 				const GraphicsConf &conf, Stopwatch *stopwatch = nullptr);
 	~GL2Renderer();
