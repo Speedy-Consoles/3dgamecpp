@@ -13,9 +13,11 @@
 const double World::GRAVITY = -9.81 * RESOLUTION / 60.0 / 60.0 * 4;
 
 World::World(std::string id) : id(id), chunks(0, vec3i64HashFunc) {
+	LOG(INFO, "Opening world '" << id << "'");
 }
 
 World::~World() {
+	LOG(DEBUG, "Deleting world '" << id << "'");
 	for (auto iter : chunks) {
 		iter.second->free();
 	}

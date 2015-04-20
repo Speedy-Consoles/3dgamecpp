@@ -55,38 +55,34 @@ int main(int argc, char *argv[]) {
 }
 
 Client::Client(const char *worldId, const char *serverAdress) {
-	stopwatch = new Stopwatch(CLOCK_ID_NUM);
+	stopwatch = std::unique_ptr<Stopwatch>(new Stopwatch(CLOCK_ID_NUM));
 	stopwatch->start(CLOCK_ALL);
 
-	conf = new GraphicsConf();
-	load("graphics-default.profile", conf);
+	conf = std::unique_ptr<GraphicsConf>(new GraphicsConf());
+	load("graphics-default.profile", conf.get());
 
-	LOG(INFO, "Opening world '" << worldId << "'");
-	world = new World(worldId);
-
-	menu = new Menu(conf);
-	graphics = new Graphics(world, menu, &state, &localClientId, *conf, stopwatch);
+	world = std::unique_ptr<World>(new World(worldId));
+	menu = std::unique_ptr<Menu>(new Menu(conf.get()));
+	graphics = std::unique_ptr<Graphics>(new Graphics(world.get(), menu.get(), &state, &localClientId, *conf, stopwatch.get()));
 
 	if (serverAdress) {
 		LOG(INFO, "Connecting to remote server '" << serverAdress << "'");
-		serverInterface = new RemoteServerInterface(world, serverAdress, *conf);
+		serverInterface = std::unique_ptr<ServerInterface>(new RemoteServerInterface(world.get(), serverAdress, *conf));
 	} else {
 		LOG(INFO, "Connecting to local server");
-		serverInterface = new LocalServerInterface(world, 42, *conf);
+		serverInterface = std::unique_ptr<ServerInterface>(new LocalServerInterface(world.get(), 42, *conf));
 	}
 }
 
 Client::~Client() {
-	store("graphics-default.profile", *conf);
-	delete graphics;
-	delete menu;
+	// delete graphics so the window closes quickly
+	graphics.reset();
 
 	// world must be deleted before server interface
-	delete world;
-	delete serverInterface;
-	delete stopwatch;
+	world.reset();
+	serverInterface.reset();
 
-	delete conf;
+	store("graphics-default.profile", *conf);
 }
 
 void Client::run() {

@@ -4,6 +4,8 @@
 #include "engine/std_types.hpp"
 #include "engine/time.hpp"
 
+#include <memory>
+
 class ServerInterface;
 class World;
 class Menu;
@@ -25,12 +27,12 @@ public:
 	void run();
 
 private:
-	ServerInterface *serverInterface = nullptr;
-	World *world = nullptr;
-	Menu *menu = nullptr;
-	Graphics *graphics = nullptr;
-	GraphicsConf *conf = nullptr;
-	Stopwatch *stopwatch = nullptr;
+	std::unique_ptr<GraphicsConf> conf;
+	std::unique_ptr<World> world;
+	std::unique_ptr<Menu> menu;
+	std::unique_ptr<Graphics> graphics;
+	std::unique_ptr<ServerInterface> serverInterface;
+	std::unique_ptr<Stopwatch> stopwatch;
 
 	uint8 localClientId;
 
@@ -40,10 +42,6 @@ private:
     Time timeShift = 0;
 
 	bool closeRequested = false;
-
-
-public:
-
 
 private:
 	void sync(int perSecond);
