@@ -20,24 +20,13 @@ using namespace gui;
 GL2Renderer::GL2Renderer(
 	Client *client,
 	Graphics *graphics,
-	SDL_Window *window,
-	World *world,
-	const Menu *menu,
-	const Client::State *state,
-	const uint8 *localClientID,
-	const GraphicsConf &conf,
-	Stopwatch *stopwatch)
+	SDL_Window *window)
 	:
 	client(client),
 	graphics(graphics),
-	conf(conf),
 	window(window),
-	world(world),
-	menu(menu),
-	state(*state),
-	localClientID(*localClientID),
-	texManager(conf),
-	stopwatch(stopwatch)
+	conf(*client->getConf()),
+	texManager(conf)
 {
 	makeMaxFOV();
 	makePerspective();
@@ -445,19 +434,19 @@ void GL2Renderer::destroyFBO() {
 void GL2Renderer::tick() {
 	render();
 
-	stopwatch->start(CLOCK_FSH);
+	client->getStopwatch()->start(CLOCK_FSH);
 	//glFinish();
-	stopwatch->stop(CLOCK_FSH);
+	client->getStopwatch()->stop(CLOCK_FSH);
 
-	stopwatch->start(CLOCK_FLP);
+	client->getStopwatch()->start(CLOCK_FLP);
 	SDL_GL_SwapWindow(window);
-	stopwatch->stop(CLOCK_FLP);
+	client->getStopwatch()->stop(CLOCK_FLP);
 
     if (getCurrentTime() - lastStopWatchSave > millis(200)) {
 		lastStopWatchSave = getCurrentTime();
-		stopwatch->stop(CLOCK_ALL);
-		stopwatch->save();
-		stopwatch->start(CLOCK_ALL);
+		client->getStopwatch()->stop(CLOCK_ALL);
+		client->getStopwatch()->save();
+		client->getStopwatch()->start(CLOCK_ALL);
 	}
 
     while (getCurrentTime() - lastFPSUpdate > millis(50)) {

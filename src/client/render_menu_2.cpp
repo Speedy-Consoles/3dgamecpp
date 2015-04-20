@@ -48,7 +48,7 @@ void GL2Renderer::renderMenu() {
 	glEnd();
 	glPopMatrix();
 
-	renderWidget((const Widget *) menu->getFrame());
+	renderWidget((const Widget *) client->getMenu()->getFrame());
 
 	glPopMatrix();
 }

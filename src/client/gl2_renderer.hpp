@@ -46,15 +46,8 @@ private:
 
 	Client *client;
 	Graphics *graphics;
-
-	GraphicsConf conf;
-
 	SDL_Window *window;
-	World *world;
-	const Menu *menu;
-	const Client::State &state;
-
-	const uint8 &localClientID;
+	GraphicsConf conf;
 
 	// rendering helpers
 	TextureManager texManager;
@@ -62,7 +55,6 @@ private:
 
 	// performance info
 	bool debugActive = false;
-	Stopwatch *stopwatch;
 	int prevFPS[20];
 	int fpsCounter = 0;
 	int fpsSum = 0;
@@ -116,9 +108,7 @@ private:
 //	bool fxaa = false;
 
 public:
-	GL2Renderer(Client *client, Graphics *graphics, SDL_Window *window, World *world, const Menu *menu,
-				const Client::State *state, const uint8 *localClientId,
-				const GraphicsConf &conf, Stopwatch *stopwatch = nullptr);
+	GL2Renderer(Client *client, Graphics *graphics, SDL_Window *window);
 	~GL2Renderer();
 
 	void tick();

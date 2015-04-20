@@ -29,17 +29,17 @@ void GL2Renderer::render() {
 		glDrawBuffer(GL_BACK);
 	}
 
-	stopwatch->start(CLOCK_CLR);
+	client->getStopwatch()->start(CLOCK_CLR);
 	glClear(GL_DEPTH_BUFFER_BIT);
 	logOpenGLError();
-	stopwatch->stop(CLOCK_CLR);
+	client->getStopwatch()->stop(CLOCK_CLR);
 
 	glMatrixMode(GL_MODELVIEW);
 	switchToPerspective();
 	glLoadIdentity();
 	texManager.bind(0);
 
-	Player &player = world->getPlayer(localClientID);
+	Player &player = client->getWorld()->getPlayer(client->getLocalClientId());
 	if (player.isValid()) {
 		// Render sky
 		glRotated(-player.getPitch(), 1, 0, 0);
@@ -81,13 +81,13 @@ void GL2Renderer::render() {
 	glLoadIdentity();
 	texManager.bind(0);
 
-	if (state == Client::State::PLAYING && player.isValid()) {
-		stopwatch->start(CLOCK_HUD);
+	if (client->getState() == Client::State::PLAYING && player.isValid()) {
+		client->getStopwatch()->start(CLOCK_HUD);
 		renderHud(player);
 		if (debugActive)
 			renderDebugInfo(player);
-		stopwatch->stop(CLOCK_HUD);
-	} else if (state == Client::State::IN_MENU){
+		client->getStopwatch()->stop(CLOCK_HUD);
+	} else if (client->getState() == Client::State::IN_MENU){
 		renderMenu();
 	}
 }
@@ -127,15 +127,15 @@ void GL2Renderer::renderScene() {
 	glLightfv(GL_LIGHT0, GL_POSITION, sunLightPosition.ptr());
 
 	// render chunks
-	stopwatch->start(CLOCK_CHR);
+	client->getStopwatch()->start(CLOCK_CHR);
 	renderChunks();
 	renderTarget();
-	stopwatch->stop(CLOCK_CHR);
+	client->getStopwatch()->stop(CLOCK_CHR);
 
 	// render players
-	stopwatch->start(CLOCK_PLA);
+	client->getStopwatch()->start(CLOCK_PLA);
 	renderPlayers();
-	stopwatch->stop(CLOCK_PLA);
+	client->getStopwatch()->stop(CLOCK_PLA);
 }
 
 void GL2Renderer::renderChunks() {
@@ -143,17 +143,17 @@ void GL2Renderer::renderChunks() {
 	int length = conf.render_distance * 2 + 3;
 
 	vec3i64 ccc;
-	while (world->popChangedChunk(&ccc)) {
+	while (client->getWorld()->popChangedChunk(&ccc)) {
 		int index = ((((ccc[2] % length) + length) % length) * length
 				+ (((ccc[1] % length) + length) % length)) * length
 				+ (((ccc[0] % length) + length) % length);
 		if (dlStatus[index] != NO_CHUNK)
 			dlStatus[index] = OUTDATED;
 	}
-
-	Player &localPlayer = world->getPlayer(localClientID);
-	vec3i64 pc = localPlayer.getChunkPos();
-	vec3d lookDir = getVectorFromAngles(localPlayer.getYaw(), localPlayer.getPitch());
+	
+	Player &player = client->getWorld()->getPlayer(client->getLocalClientId());
+	vec3i64 pc = player.getChunkPos();
+	vec3d lookDir = getVectorFromAngles(player.getYaw(), player.getPitch());
 
 	newFaces = 0;
 	newChunks = 0;
@@ -180,7 +180,7 @@ void GL2Renderer::renderChunks() {
 		fringeSize--;
 
 		if ((dlStatus[index] != OK || dlChunks[index] != cc) && (newChunks < MAX_NEW_CHUNKS && newFaces < MAX_NEW_QUADS)) {
-			Chunk *c = world->getChunk(cc);
+			Chunk *c = client->getWorld()->getChunk(cc);
 			if (c)
 				renderChunk(*c);
 		}
@@ -188,7 +188,7 @@ void GL2Renderer::renderChunks() {
 		if (dlStatus[index] != NO_CHUNK && dlChunks[index] == cc) {
 			if (chunkFaces[index] > 0) {
 				visibleFaces += chunkFaces[index];
-				stopwatch->start(CLOCK_DLC);
+				client->getStopwatch()->start(CLOCK_DLC);
 				glPushMatrix();
 				logOpenGLError();
 				glTranslatef(cd[0] * (int) Chunk::WIDTH, cd[1] * (int) Chunk::WIDTH, cd[2] * (int) Chunk::WIDTH);
@@ -196,7 +196,7 @@ void GL2Renderer::renderChunks() {
 				logOpenGLError();
 				glPopMatrix();
 				logOpenGLError();
-				stopwatch->stop(CLOCK_DLC);
+				client->getStopwatch()->stop(CLOCK_DLC);
 			}
 
 			for (int d = 0; d < 6; d++) {
@@ -209,7 +209,7 @@ void GL2Renderer::renderChunks() {
 				if ((uint) abs(ncd[0]) > conf.render_distance + 1
 						|| (uint) abs(ncd[1]) > conf.render_distance + 1
 						|| (uint) abs(ncd[2]) > conf.render_distance + 1
-						|| !inFrustum(ncc, localPlayer.getPos(), lookDir))
+						|| !inFrustum(ncc, player.getPos(), lookDir))
 					continue;
 
 				int nIndex = ((((ncc[2] % length) + length) % length) * length
@@ -244,14 +244,14 @@ void GL2Renderer::renderChunks() {
 }
 
 void GL2Renderer::renderTarget() {
-	Player &localPlayer = world->getPlayer(localClientID);
-	vec3i64 pc = localPlayer.getChunkPos();
+	Player &player = client->getWorld()->getPlayer(client->getLocalClientId());
+	vec3i64 pc = player.getChunkPos();
 
 	vec3i64 tbc;
 	vec3i64 tcc;
 	vec3ui8 ticc;
 	int td;
-	bool target = localPlayer.getTargetedFace(&tbc, &td);
+	bool target = player.getTargetedFace(&tbc, &td);
 	if (target) {
 		tcc = bc2cc(tbc);
 		ticc = bc2icc(tbc);
@@ -295,7 +295,7 @@ void GL2Renderer::renderTarget() {
 }
 
 void GL2Renderer::renderChunk(Chunk &c) {
-	stopwatch->start(CLOCK_NDL);
+	client->getStopwatch()->start(CLOCK_NDL);
 	vec3i64 cc = c.getCC();
 	int length = conf.render_distance * 2 + 3;
 	uint index = ((((cc[2] % length) + length) % length) * length
@@ -317,7 +317,7 @@ void GL2Renderer::renderChunk(Chunk &c) {
 	if (c.getAirBlocks() == Chunk::WIDTH * Chunk::WIDTH * Chunk::WIDTH) {
 		glNewList(dlFirstAddress + index, GL_COMPILE);
 		glEndList();
-		stopwatch->stop(CLOCK_NDL);
+		client->getStopwatch()->stop(CLOCK_NDL);
 		return;
 	}
 
@@ -342,7 +342,7 @@ void GL2Renderer::renderChunk(Chunk &c) {
 					if ((x == Chunk::WIDTH - 1 && d==0)
 							|| (y == Chunk::WIDTH - 1 && d==1)
 							|| (z == Chunk::WIDTH - 1 && d==2)) {
-						thatType = world->getBlock(cc * Chunk::WIDTH + vec3i64(x, y, z) + dir);
+						thatType = client->getWorld()->getBlock(cc * Chunk::WIDTH + vec3i64(x, y, z) + dir);
 						if (thatType != 0) {
 							if (x != -1 && y != -1 && z != -1)
 								i++;
@@ -352,7 +352,7 @@ void GL2Renderer::renderChunk(Chunk &c) {
 						thatType = blocks[ni++];
 
 					if (x == -1 || y == -1 || z == -1) {
-						thisType = world->getBlock(cc * Chunk::WIDTH + vec3i64(x, y, z));
+						thisType = client->getWorld()->getBlock(cc * Chunk::WIDTH + vec3i64(x, y, z));
 						if (thisType != 0)
 							continue;
 					} else {
@@ -381,7 +381,7 @@ void GL2Renderer::renderChunk(Chunk &c) {
 							if (		dIcc[0] < 0 || dIcc[0] >= (int) Chunk::WIDTH
 									||	dIcc[1] < 0 || dIcc[1] >= (int) Chunk::WIDTH
 									||	dIcc[2] < 0 || dIcc[2] >= (int) Chunk::WIDTH)
-								cornerBlock = world->getBlock(cc * Chunk::WIDTH + dIcc);
+								cornerBlock = client->getWorld()->getBlock(cc * Chunk::WIDTH + dIcc);
 							else
 								cornerBlock = c.getBlock(dIcc.cast<uint8>());
 							if (cornerBlock) {
@@ -455,16 +455,16 @@ void GL2Renderer::renderChunk(Chunk &c) {
 	glEndList();
 	newFaces += chunkFaces[index];
 	faces += chunkFaces[index];
-	stopwatch->stop(CLOCK_NDL);
+	client->getStopwatch()->stop(CLOCK_NDL);
 }
 
 void GL2Renderer::renderPlayers() {
 	glBindTexture(GL_TEXTURE_2D, 0);
 	glBegin(GL_QUADS);
 	for (uint i = 0; i < MAX_CLIENTS; i++) {
-		if (i == localClientID)
+		if (i == client->getLocalClientId())
 			continue;
-		Player &player = world->getPlayer(i);
+		Player &player = client->getWorld()->getPlayer(i);
 		if (!player.isValid())
 			continue;
 		vec3i64 pos = player.getPos();
@@ -554,7 +554,7 @@ void GL2Renderer::renderDebugInfo(const Player &player) {
 	RENDER_LINE("xvel: %8.1f", playerVel[0]);
 	RENDER_LINE("yvel: %8.1f", playerVel[1]);
 	RENDER_LINE("zvel: %8.1f", playerVel[2]);
-	RENDER_LINE("chunks loaded: %" PRIuPTR "", world->getNumChunks());
+	RENDER_LINE("chunks loaded: %" PRIuPTR "", client->getWorld()->getNumChunks());
 	RENDER_LINE("chunks visible: %d", visibleChunks);
 	RENDER_LINE("faces visible: %d", visibleFaces);
 	RENDER_LINE("block: %d", player.getBlock());
@@ -636,7 +636,7 @@ void GL2Renderer::renderDebugInfo(const Player &player) {
 
 	glPopMatrix();
 
-	if (stopwatch)
+	if (client->getStopwatch())
 		renderPerformance();
 }
 
@@ -687,7 +687,7 @@ void GL2Renderer::renderPerformance() {
 		glColor3f(rel_colors[i][0], rel_colors[i][1], rel_colors[i][2]);
 		glVertex2f(0, rel);
 		glVertex2f(1, rel);
-		rel += stopwatch->getRel(i);
+		rel += client->getStopwatch()->getRel(i);
 		cum_rels[i + 1] = rel;
 		center_positions[i] = (cum_rels[i] + cum_rels[i + 1]) / 2.0;
 		glVertex2f(1, rel);
@@ -696,11 +696,11 @@ void GL2Renderer::renderPerformance() {
 	glEnd();
 	glPopMatrix();
 
-	static const float REL_THRESHOLD = 0.001;
+	static const float REL_THRESHOLD = 0.001f;
 	uint labeled_ids[CLOCK_ID_NUM];
 	int num_displayed_labels = 0;
 	for (int i = 0; i < CLOCK_ID_NUM; ++i) {
-		if (stopwatch->getRel(i) > REL_THRESHOLD)
+		if (client->getStopwatch()->getRel(i) > REL_THRESHOLD)
 			labeled_ids[num_displayed_labels++] = i;
 	}
 
