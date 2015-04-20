@@ -4,10 +4,49 @@
 #include "engine/std_types.hpp"
 #include "engine/time.hpp"
 
+class ServerInterface;
+class World;
+class Menu;
+class Graphics;
+struct GraphicsConf;
+class Stopwatch;
+
 enum ClientState {
 	CONNECTING,
 	PLAYING,
 	IN_MENU,
+};
+
+class Client {
+private:
+	ServerInterface *serverInterface = nullptr;
+	World *world = nullptr;
+	Menu *menu = nullptr;
+	Graphics *graphics = nullptr;
+	GraphicsConf *conf = nullptr;
+	Stopwatch *stopwatch = nullptr;
+
+	uint8 localClientId;
+
+	ClientState state = CONNECTING;
+
+	Time time = 0;
+    Time timeShift = 0;
+
+	bool closeRequested = false;
+
+
+public:
+	Client(const Client &) = delete;
+	Client(const char *worldId, const char *serverAdress);
+	~Client();
+
+	void run();
+
+private:
+	void sync(int perSecond);
+
+	void handleInput();
 };
 
 enum ClockId {
