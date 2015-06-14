@@ -29,9 +29,7 @@ private:
 	void renderText(const char *text, float x, float y);
 };
 
-GL3MenuRenderer::~GL3MenuRenderer() {
-	// nothing
-}
+GL3MenuRenderer::~GL3MenuRenderer() = default;
 
 GL3MenuRenderer::GL3MenuRenderer(Client *client, GL3Renderer *renderer, Shaders *shaders, Graphics *graphics) :
 	impl(new GL3MenuRendererImpl(client, renderer, shaders, graphics))
