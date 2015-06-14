@@ -29,7 +29,8 @@ GL3Renderer::GL3Renderer(
 	fontTimes(&shaders),
 	fontDejavu(&shaders),
 	chunkRenderer(client, this, &shaders),
-	debugRenderer(client, this, &shaders, graphics)
+	debugRenderer(client, this, &shaders, graphics),
+	menuRenderer(client, this, &shaders, graphics)
 {
 	makeMaxFOV();
 	makePerspectiveMatrix();
@@ -314,7 +315,7 @@ void GL3Renderer::renderSky() {
 }
 
 void GL3Renderer::renderMenu() {
-
+	menuRenderer.render();
 }
 
 void GL3Renderer::renderTarget() {

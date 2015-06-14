@@ -94,6 +94,9 @@
     <ClCompile Include="..\..\src\client\gl3_debug_renderer.cpp">
       <Filter>Source Files\gfx</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\client\gl3_menu_renderer.cpp">
+      <Filter>Source Files\gfx</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\client\client.hpp">
@@ -154,6 +157,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\client\gl3_debug_renderer.hpp">
+      <Filter>Header Files\gfx</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\client\gl3_menu_renderer.hpp">
       <Filter>Header Files\gfx</Filter>
     </ClInclude>
   </ItemGroup>
