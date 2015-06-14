@@ -18,6 +18,7 @@ deps
 *.exe
 *.lib
 *.dll
+*.bmfc
 
 msvc/**/Debug
 msvc/**/Release
