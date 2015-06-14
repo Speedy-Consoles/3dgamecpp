@@ -50,7 +50,7 @@ GL3Renderer::GL3Renderer(
     // font
 	fontTimes.load("fonts/times32.fnt");
 	fontTimes.setEncoding(Font::Encoding::UTF8);
-	fontDejavu.load("fonts/dejavusans32.fnt");
+	fontDejavu.load("fonts/dejavusansmono16.fnt");
 	fontDejavu.setEncoding(Font::Encoding::UTF8);
 
 	// gl stuff

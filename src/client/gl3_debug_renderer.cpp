@@ -6,7 +6,7 @@ GL3DebugRenderer::GL3DebugRenderer(Client *client, GL3Renderer *renderer, Shader
 	graphics(graphics),
 	font(shaders)
 {
-	font.load("fonts/dejavusansmono24.fnt");
+	font.load("fonts/dejavusansmono20.fnt");
 	font.setEncoding(Font::Encoding::UTF8);
 }
 
@@ -21,7 +21,7 @@ void GL3DebugRenderer::render() {
 			font.write(x, y, 0.0f, buffer, 0);\
 			y -= font.getLineHeight()
 
-	RENDER_LINE("x: %" PRId64 "(%" PRId64 ")", player.getPos()[0],
+	RENDER_LINE("x: %" PRId64 " (%" PRId64 ")", player.getPos()[0],
 		(int64)floor(player.getPos()[0] / (double)RESOLUTION));
 	RENDER_LINE("y: %" PRId64 " (%" PRId64 ")", player.getPos()[1],
 		(int64)floor(player.getPos()[1] / (double)RESOLUTION));
