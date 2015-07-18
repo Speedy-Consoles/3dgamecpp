@@ -56,14 +56,14 @@
     <ClInclude Include="..\..\src\client\texture_manager.hpp" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\..\shaders\block_fragment_shader.frag" />
-    <None Include="..\..\shaders\block_vertex_shader.vert" />
-    <None Include="..\..\shaders\default_fragment_shader.frag" />
-    <None Include="..\..\shaders\default_vertex_shader.vert" />
+    <None Include="..\..\shaders\block.frag" />
+    <None Include="..\..\shaders\block.vert" />
+    <None Include="..\..\shaders\default.frag" />
+    <None Include="..\..\shaders\default.vert" />
     <None Include="..\..\shaders\font.frag" />
     <None Include="..\..\shaders\font.vert" />
-    <None Include="..\..\shaders\hud_fragment_shader.frag" />
-    <None Include="..\..\shaders\hud_vertex_shader.vert" />
+    <None Include="..\..\shaders\hud.frag" />
+    <None Include="..\..\shaders\hud.vert" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{F829FC7B-DD1F-4805-845E-88D91D2E8BF3}</ProjectGuid>

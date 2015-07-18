@@ -89,7 +89,7 @@ void Shader::buildProgram(GLuint programLoc, GLuint *shaders, int numShaders) {
 }
 
 DefaultShader::DefaultShader(ShaderManager *manager) :
-	Shader(manager, "shaders/default_vertex_shader.vert", "shaders/default_fragment_shader.frag")
+	Shader(manager, "shaders/default.vert", "shaders/default.frag")
 {
 	defaultLightEnabledLoc = getUniformLocation("lightEnabled");
 	defaultAmbientColorLoc = getUniformLocation("ambientLightColor");
@@ -206,7 +206,7 @@ void DefaultShader::setEndFogDistance(float distance) {
 }
 
 BlockShader::BlockShader(ShaderManager *manager) :
-	Shader(manager, "shaders/block_vertex_shader.vert", "shaders/block_fragment_shader.frag")
+	Shader(manager, "shaders/block.vert", "shaders/block.frag")
 {
 	blockLightEnabledLoc = getUniformLocation("lightEnabled");
 	blockAmbientColorLoc = getUniformLocation("ambientLightColor");
@@ -323,7 +323,7 @@ void BlockShader::setEndFogDistance(float distance) {
 }
 
 HudShader::HudShader(ShaderManager *manager) :
-	Shader(manager, "shaders/hud_vertex_shader.vert", "shaders/hud_fragment_shader.frag")
+	Shader(manager, "shaders/hud.vert", "shaders/hud.frag")
 {
 	hudProjMatLoc = getUniformLocation("projectionMatrix");
 }
