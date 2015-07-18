@@ -235,23 +235,14 @@ void GL3Renderer::tick() {
 }
 
 void GL3Renderer::render() {
-    shaders.setLightEnabled(false);
     logOpenGLError();
-	renderSky();
 
-    logOpenGLError();
-	glBindFramebuffer(GL_FRAMEBUFFER, skyFBO);
-	logOpenGLError();
 	renderSky();
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	logOpenGLError();
-	shaders.setLightEnabled(true);
 
 	glClear(GL_DEPTH_BUFFER_BIT);
-	glActiveTexture(GL_TEXTURE1);
-	glBindTexture(GL_TEXTURE_2D, skyTexture);
-	glActiveTexture(GL_TEXTURE0);
 	logOpenGLError();
+	
 	chunkRenderer.render();
 	renderTarget();
 	renderPlayers();
@@ -306,11 +297,13 @@ void GL3Renderer::renderSky() {
 	shaders.setModelMatrix(glm::mat4(1.0f));
 	shaders.setViewMatrix(viewMatrix);
 	shaders.setFogEnabled(false);
+    shaders.setLightEnabled(false);
 	shaders.prepareProgram(DEFAULT_PROGRAM);
 
 	glBindVertexArray(skyVAO);
 	glDrawArrays(GL_TRIANGLES, 0, 12);
 	shaders.setFogEnabled(true);
+	shaders.setLightEnabled(true);
 	glDepthMask(true);
 	glEnable(GL_DEPTH_TEST);
 }
