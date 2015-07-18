@@ -7,7 +7,20 @@
 #include "engine/logging.hpp"
 #include "engine/math.hpp"
 
-Shaders::Shaders() {
+ShaderManager::ShaderManager() {
+	// nothing
+}
+
+void ShaderManager::useProgram(GLuint program) {
+	if (activeProgram != program) {
+		glUseProgram(program);
+		activeProgram = program;
+	}
+}
+
+Shaders::Shaders(ShaderManager *manager) :
+	manager(manager)
+{
 	// Create the shaders
 	GLuint defaultVertexShaderLoc = glCreateShader(GL_VERTEX_SHADER);
     GLuint blockVertexShaderLoc = glCreateShader(GL_VERTEX_SHADER);
@@ -123,8 +136,7 @@ Shaders::Shaders() {
 //	tmp = glGetUniformLocation(programLocations[HUD_PROGRAM], "sampler");
 //	glUniform1i(tmp, 0);
 
-	activeProgram = DEFAULT_PROGRAM;
-	glUseProgram(programLocations[DEFAULT_PROGRAM]);
+	manager->useProgram(programLocations[DEFAULT_PROGRAM]);
 	logOpenGLError();
 }
 
@@ -293,10 +305,7 @@ void Shaders::setEndFogDistance(float distance) {
 }
 
 void Shaders::prepareProgram(ShaderProgram program) {
-	if (activeProgram != program) {
-		glUseProgram(programLocations[program]);
-		activeProgram = program;
-	}
+	manager->useProgram(programLocations[program]);
 	switch (program) {
 	case DEFAULT_PROGRAM:
 		if (!defaultLightEnabledUp) {

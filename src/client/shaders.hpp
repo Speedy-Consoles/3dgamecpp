@@ -14,7 +14,18 @@ enum ShaderProgram {
 
 static const int NUM_PROGRAMS = 4;
 
+class ShaderManager {
+	GLuint activeProgram;
+
+public:
+	ShaderManager();
+
+	void useProgram(GLuint);
+};
+
 class Shaders {
+
+	ShaderManager *manager;
 
 	// program locations
 	GLuint programLocations[NUM_PROGRAMS];
@@ -115,11 +126,8 @@ class Shaders {
 	bool fontOutlineColorUp = false;
 	bool fontModeUp = false;
 
-	// active program
-	ShaderProgram activeProgram;
-
 public:
-	Shaders();
+	Shaders(ShaderManager *manager);
 	~Shaders();
 
 	void setLightEnabled(bool enabled);

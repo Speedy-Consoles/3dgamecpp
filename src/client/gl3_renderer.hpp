@@ -43,6 +43,7 @@ private:
 	float maxFOV;
 
 	// shaders
+	ShaderManager shaderManager;
 	Shaders shaders;
 
     // font
