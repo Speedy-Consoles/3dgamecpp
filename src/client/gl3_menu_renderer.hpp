@@ -5,7 +5,7 @@
 
 class GL3Renderer;
 class Client;
-class Shaders;
+class ShaderManager;
 class Graphics;
 
 class GL3MenuRendererImpl;
@@ -14,7 +14,7 @@ class GL3MenuRendererImpl;
 class GL3MenuRenderer {
 public:
 	~GL3MenuRenderer();
-	GL3MenuRenderer(Client *client, GL3Renderer *renderer, Shaders *shaders, Graphics *graphics);
+	GL3MenuRenderer(Client *client, GL3Renderer *renderer, ShaderManager *shaderManager, Graphics *graphics);
 
 	void render();
 

@@ -9,7 +9,7 @@ class GL3Renderer;
 
 class GL3DebugRenderer {
 public:
-	GL3DebugRenderer(Client *client, GL3Renderer *renderer, Shaders *shaders, Graphics *graphics);
+	GL3DebugRenderer(Client *client, GL3Renderer *renderer, ShaderManager *shaderManager, Graphics *graphics);
 
 	void render();
 

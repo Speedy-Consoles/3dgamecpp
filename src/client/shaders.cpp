@@ -7,8 +7,222 @@
 #include "engine/logging.hpp"
 #include "engine/math.hpp"
 
-ShaderManager::ShaderManager() {
-	// nothing
+Shader::Shader(ShaderManager *manager, const char *vert_src, const char *frag_src) :
+	manager(manager)
+{
+	GLuint defaultVertexShaderLoc = glCreateShader(GL_VERTEX_SHADER);
+	GLuint defaultFragmentShaderLoc = glCreateShader(GL_FRAGMENT_SHADER);
+	LOG(TRACE, "Building '" << vert_src << "'");
+	buildShader(defaultVertexShaderLoc, vert_src);
+	LOG(TRACE, "Building '" << frag_src << "'");
+	buildShader(defaultFragmentShaderLoc, frag_src);
+
+	programLocation = glCreateProgram();
+	GLuint defaultProgramShaderLocs[2] = {defaultVertexShaderLoc, defaultFragmentShaderLoc};
+
+	LOG(TRACE, "Building program");
+	buildProgram(programLocation, defaultProgramShaderLocs, 2);
+
+	glDeleteShader(defaultVertexShaderLoc);
+	glDeleteShader(defaultFragmentShaderLoc);
+	
+	logOpenGLError();
+}
+
+Shader::~Shader() {
+	glDeleteProgram(programLocation);
+}
+
+GLuint Shader::getUniformLocation(const char *name) const {
+	return glGetUniformLocation(programLocation, name);
+}
+
+void Shader::useProgram() {
+	manager->useProgram(programLocation);
+}
+
+void Shader::buildShader(GLuint shaderLoc, const char* fileName) {
+	// Read the Vertex Shader code from the file
+	std::string shaderCode;
+	std::ifstream shaderStream(fileName, std::ios::in);
+	if (shaderStream.is_open()) {
+		std::string Line = "";
+		while (getline(shaderStream, Line))
+			shaderCode += "\n" + Line;
+		shaderStream.close();
+	} else {
+		LOG(FATAL, "Could not open file!");
+	}
+
+	// Compile Shader
+	char const * sourcePointer = shaderCode.c_str();
+	glShaderSource(shaderLoc, 1, &sourcePointer , NULL);
+	glCompileShader(shaderLoc);
+
+	// Check Vertex Shader
+	GLint Result = GL_FALSE;
+	int InfoLogLength;
+	glGetShaderiv(shaderLoc, GL_COMPILE_STATUS, &Result);
+	glGetShaderiv(shaderLoc, GL_INFO_LOG_LENGTH, &InfoLogLength);
+	std::vector<char> shaderErrorMessage(InfoLogLength);
+	glGetShaderInfoLog(shaderLoc, InfoLogLength, NULL, &shaderErrorMessage[0]);
+	if (!Result)
+		LOG(ERROR, &shaderErrorMessage[0]);
+}
+
+void Shader::buildProgram(GLuint programLoc, GLuint *shaders, int numShaders) {
+	// Link the program
+	for (int i = 0; i < numShaders; i++) {
+		glAttachShader(programLoc, shaders[i]);
+	}
+	glLinkProgram(programLoc);
+
+	// Check the program
+	GLint Result = GL_FALSE;
+	int InfoLogLength;
+	glGetProgramiv(programLoc, GL_LINK_STATUS, &Result);
+	glGetProgramiv(programLoc, GL_INFO_LOG_LENGTH, &InfoLogLength);
+	std::vector<char> programErrorMessage(std::max(InfoLogLength, int(1)));
+	glGetProgramInfoLog(programLoc, InfoLogLength, NULL, &programErrorMessage[0]);
+	if (!Result)
+		LOG(ERROR, &programErrorMessage[0]);
+}
+
+HudShader::HudShader(ShaderManager *manager) :
+	Shader(manager, "shaders/hud_vertex_shader.vert", "shaders/hud_fragment_shader.frag")
+{
+	hudProjMatLoc = getUniformLocation("projectionMatrix");
+}
+
+void HudShader::useProgram() {
+	Shader::useProgram();
+
+	if (!hudProjMatUp) {
+		glUniformMatrix4fv(hudProjMatLoc, 1, GL_FALSE, glm::value_ptr(hudProjectionMatrix));
+		hudProjMatUp = true;
+	}
+}
+
+void HudShader::setHudProjectionMatrix(const glm::mat4 &matrix) {
+	hudProjectionMatrix = matrix;
+	hudProjMatUp = false;
+}
+
+FontShader::FontShader(ShaderManager *manager) :
+	Shader(manager, "shaders/font.vert", "shaders/font.frag")
+{
+	fontTransMatLoc = getUniformLocation("transformMatrix");
+	fontIsPackedLoc = getUniformLocation("isPacked");
+	fontHasOutlineLoc = getUniformLocation("hasOutline");
+	fontPageLoc = getUniformLocation("page");
+	fontChannelLoc = getUniformLocation("chnl");
+	fontTextColorLoc = getUniformLocation("textColor");
+	fontOutlineColorLoc = getUniformLocation("outlineColor");
+	fontModeLoc = getUniformLocation("mode");
+}
+
+void FontShader::useProgram() {
+	Shader::useProgram();
+
+	if (!fontProjMatUp || !fontModelMatUp) {
+		auto transformMat = fontProjectionMatrix * fontModelMatrix;
+		glUniformMatrix4fv(fontTransMatLoc, 1, GL_FALSE, glm::value_ptr(transformMat));
+        fontProjMatUp = true;
+		fontModelMatUp = true;
+    }
+	if (!fontIsPackedUp) {
+		glUniform1i(fontIsPackedLoc, fontIsPacked);
+		fontIsPackedUp = true;
+	}
+	if (!fontHasOutlineUp) {
+		glUniform1i(fontHasOutlineLoc, fontHasOutline);
+		fontHasOutlineUp = true;
+	}
+    if (!fontPageUp) {
+        glUniform1i(fontPageLoc, fontPage);
+        fontPageUp = true;
+	}
+	if (!fontChannelUp) {
+		glUniform1i(fontChannelLoc, fontChannel);
+		fontChannelUp = true;
+	}
+	if (!fontTextColorUp) {
+		glUniform4fv(fontTextColorLoc, 1, glm::value_ptr(fontTextColor));
+		fontTextColorUp = true;
+	}
+	if (!fontOutlineColorUp) {
+		glUniform4fv(fontOutlineColorLoc, 1, glm::value_ptr(fontOutlineColor));
+		fontOutlineColorUp = true;
+	}
+	if (!fontModeUp) {
+		glUniform1i(fontModeLoc, fontMode);
+		fontModeUp = true;
+	}
+}
+
+void FontShader::setFontProjectionMatrix(const glm::mat4 &matrix) {
+    fontProjectionMatrix = matrix;
+    fontProjMatUp = false;
+}
+
+void FontShader::setFontModelMatrix(const glm::mat4 &matrix) {
+    fontModelMatrix = matrix;
+    fontModelMatUp = false;
+}
+
+void FontShader::setFontIsPacked(bool isPacked) {
+    fontIsPacked = isPacked;
+    fontIsPackedUp = false;
+}
+
+void FontShader::setFontHasOutline(bool hasOutline) {
+	fontHasOutline = hasOutline;
+	fontHasOutlineUp = false;
+}
+
+void FontShader::setFontPage(short page) {
+    fontPage = page;
+    fontPageUp = false;
+}
+
+void FontShader::setFontChannel(short channel) {
+    fontChannel = channel;
+    fontChannelUp = false;
+}
+
+void FontShader::setFontTextColor(const glm::vec4 &color) {
+	fontTextColor = color;
+	fontTextColorUp = false;
+}
+
+void FontShader::setFontOutlineColor(const glm::vec4 &color) {
+	fontOutlineColor = color;
+	fontOutlineColorUp = false;
+}
+
+void FontShader::setFontMode(FontRenderMode mode) {
+	fontMode = static_cast<int>(mode);
+	fontModeUp = false;
+}
+
+ShaderManager::ShaderManager() :
+	shaders(this)
+{
+	programs.resize(NUM_PROGRAMS);
+	programs[HUD_PROGRAM] = std::make_unique<HudShader>(this);
+	programs[FONT_PROGRAM] = std::make_unique<FontShader>(this);
+}
+
+Shaders &ShaderManager::getShaders() {
+	return shaders;
+}
+
+HudShader &ShaderManager::getHudShader() {
+	return static_cast<HudShader &>(*programs[HUD_PROGRAM]);
+}
+
+FontShader &ShaderManager::getFontShader() {
+	return static_cast<FontShader &>(*programs[FONT_PROGRAM]);
 }
 
 void ShaderManager::useProgram(GLuint program) {
@@ -24,60 +238,36 @@ Shaders::Shaders(ShaderManager *manager) :
 	// Create the shaders
 	GLuint defaultVertexShaderLoc = glCreateShader(GL_VERTEX_SHADER);
     GLuint blockVertexShaderLoc = glCreateShader(GL_VERTEX_SHADER);
-    GLuint hudVertexShaderLoc = glCreateShader(GL_VERTEX_SHADER);
-    GLuint fontVertexShaderLoc = glCreateShader(GL_VERTEX_SHADER);
 	GLuint defaultFragmentShaderLoc = glCreateShader(GL_FRAGMENT_SHADER);
     GLuint blockFragmentShaderLoc = glCreateShader(GL_FRAGMENT_SHADER);
-    GLuint hudFragmentShaderLoc = glCreateShader(GL_FRAGMENT_SHADER);
-    GLuint fontFragmentShaderLoc = glCreateShader(GL_FRAGMENT_SHADER);
 
 	LOG(DEBUG, "Building default vertex shader");
 	buildShader(defaultVertexShaderLoc, "shaders/default_vertex_shader.vert");
 	LOG(DEBUG, "Building block vertex shader");
     buildShader(blockVertexShaderLoc, "shaders/block_vertex_shader.vert");
-    LOG(DEBUG, "Building hud vertex shader");
-    buildShader(hudVertexShaderLoc, "shaders/hud_vertex_shader.vert");
-    LOG(DEBUG, "Building font vertex shader");
-    buildShader(fontVertexShaderLoc, "shaders/font.vert");
 
 	LOG(DEBUG, "Building default fragment shader");
 	buildShader(defaultFragmentShaderLoc, "shaders/default_fragment_shader.frag");
 	LOG(DEBUG, "Building block fragment shader");
     buildShader(blockFragmentShaderLoc, "shaders/block_fragment_shader.frag");
-    LOG(DEBUG, "Building hud fragment shader");
-    buildShader(hudFragmentShaderLoc, "shaders/hud_fragment_shader.frag");
-    LOG(DEBUG, "Building font fragment shader");
-    buildShader(fontFragmentShaderLoc, "shaders/font.frag");
 
 	// create the programs
 	programLocations[DEFAULT_PROGRAM] = glCreateProgram();
     programLocations[BLOCK_PROGRAM] = glCreateProgram();
-    programLocations[HUD_PROGRAM] = glCreateProgram();
-    programLocations[FONT_PROGRAM] = glCreateProgram();
 
 	GLuint defaultProgramShaderLocs[2] = {defaultVertexShaderLoc, defaultFragmentShaderLoc};
     GLuint blockProgramShaderLocs[2] = { blockVertexShaderLoc, blockFragmentShaderLoc };
-    GLuint hudProgramShaderLocs[2] = { hudVertexShaderLoc, hudFragmentShaderLoc };
-    GLuint fontProgramShaderLocs[2] = { fontVertexShaderLoc, fontFragmentShaderLoc };
 
 	LOG(DEBUG, "Building default program");
 	buildProgram(programLocations[DEFAULT_PROGRAM], defaultProgramShaderLocs, 2);
 	LOG(DEBUG, "Building block program");
     buildProgram(programLocations[BLOCK_PROGRAM], blockProgramShaderLocs, 2);
-    LOG(DEBUG, "Building hud program");
-    buildProgram(programLocations[HUD_PROGRAM], hudProgramShaderLocs, 2);
-    LOG(DEBUG, "Building font program");
-    buildProgram(programLocations[FONT_PROGRAM], fontProgramShaderLocs, 2);
 
 	// delete the shaders
 	glDeleteShader(defaultVertexShaderLoc);
     glDeleteShader(blockVertexShaderLoc);
-    glDeleteShader(hudVertexShaderLoc);
-    glDeleteShader(fontVertexShaderLoc);
 	glDeleteShader(defaultFragmentShaderLoc);
     glDeleteShader(blockFragmentShaderLoc);
-    glDeleteShader(hudFragmentShaderLoc);
-    glDeleteShader(fontFragmentShaderLoc);
 	logOpenGLError();
 
 	// get uniform locations
@@ -102,17 +292,6 @@ Shaders::Shaders(ShaderManager *manager) :
 	blockFogEnabledLoc = glGetUniformLocation(programLocations[BLOCK_PROGRAM], "fogEnabled");
 	blockFogStartDistanceLoc = glGetUniformLocation(programLocations[BLOCK_PROGRAM], "fogStartDistance");
 	blockFogEndDistanceLoc = glGetUniformLocation(programLocations[BLOCK_PROGRAM], "fogEndDistance");
-
-    hudProjMatLoc = glGetUniformLocation(programLocations[HUD_PROGRAM], "projectionMatrix");
-
-    fontTransMatLoc = glGetUniformLocation(programLocations[FONT_PROGRAM], "transformMatrix");
-	fontIsPackedLoc = glGetUniformLocation(programLocations[FONT_PROGRAM], "isPacked");
-	fontHasOutlineLoc = glGetUniformLocation(programLocations[FONT_PROGRAM], "hasOutline");
-	fontPageLoc = glGetUniformLocation(programLocations[FONT_PROGRAM], "page");
-	fontChannelLoc = glGetUniformLocation(programLocations[FONT_PROGRAM], "chnl");
-	fontTextColorLoc = glGetUniformLocation(programLocations[FONT_PROGRAM], "textColor");
-	fontOutlineColorLoc = glGetUniformLocation(programLocations[FONT_PROGRAM], "outlineColor");
-	fontModeLoc = glGetUniformLocation(programLocations[FONT_PROGRAM], "mode");
 
     logOpenGLError();
 
@@ -143,8 +322,6 @@ Shaders::Shaders(ShaderManager *manager) :
 Shaders::~Shaders() {
 	glDeleteProgram(programLocations[DEFAULT_PROGRAM]);
     glDeleteProgram(programLocations[BLOCK_PROGRAM]);
-    glDeleteProgram(programLocations[HUD_PROGRAM]);
-    glDeleteProgram(programLocations[FONT_PROGRAM]);
 }
 
 void Shaders::buildShader(GLuint shaderLoc, const char* fileName) {
@@ -236,56 +413,6 @@ void Shaders::setProjectionMatrix(const glm::mat4 &matrix) {
 	blockProjMatUp = false;
 }
 
-void Shaders::setHudProjectionMatrix(const glm::mat4 &matrix) {
-	hudProjectionMatrix = matrix;
-	hudProjMatUp = false;
-}
-
-void Shaders::setFontProjectionMatrix(const glm::mat4 &matrix) {
-    fontProjectionMatrix = matrix;
-    fontProjMatUp = false;
-}
-
-void Shaders::setFontModelMatrix(const glm::mat4 &matrix) {
-    fontModelMatrix = matrix;
-    fontModelMatUp = false;
-}
-
-void Shaders::setFontIsPacked(bool isPacked) {
-    fontIsPacked = isPacked;
-    fontIsPackedUp = false;
-}
-
-void Shaders::setFontHasOutline(bool hasOutline) {
-	fontHasOutline = hasOutline;
-	fontHasOutlineUp = false;
-}
-
-void Shaders::setFontPage(short page) {
-    fontPage = page;
-    fontPageUp = false;
-}
-
-void Shaders::setFontChannel(short channel) {
-    fontChannel = channel;
-    fontChannelUp = false;
-}
-
-void Shaders::setFontTextColor(const glm::vec4 &color) {
-	fontTextColor = color;
-	fontTextColorUp = false;
-}
-
-void Shaders::setFontOutlineColor(const glm::vec4 &color) {
-	fontOutlineColor = color;
-	fontOutlineColorUp = false;
-}
-
-void Shaders::setFontMode(FontRenderMode mode) {
-	fontMode = static_cast<int>(mode);
-	fontModeUp = false;
-}
-
 void Shaders::setFogEnabled(bool enabled) {
 	fogEnabled = enabled;
 	defaultFogEnabledUp = false;
@@ -306,6 +433,7 @@ void Shaders::setEndFogDistance(float distance) {
 
 void Shaders::prepareProgram(ShaderProgram program) {
 	manager->useProgram(programLocations[program]);
+	
 	switch (program) {
 	case DEFAULT_PROGRAM:
 		if (!defaultLightEnabledUp) {
@@ -389,48 +517,6 @@ void Shaders::prepareProgram(ShaderProgram program) {
 		if (!blockFogEndDistanceUp) {
 			glUniform1f(blockFogEndDistanceLoc, fogEndDistance);
 			blockFogEndDistanceUp = true;
-		}
-		break;
-    case FONT_PROGRAM:
-		if (!fontProjMatUp || !fontModelMatUp) {
-			auto transformMat = fontProjectionMatrix * fontModelMatrix;
-			glUniformMatrix4fv(fontTransMatLoc, 1, GL_FALSE, glm::value_ptr(transformMat));
-            fontProjMatUp = true;
-			fontModelMatUp = true;
-        }
-		if (!fontIsPackedUp) {
-			glUniform1i(fontIsPackedLoc, fontIsPacked);
-			fontIsPackedUp = true;
-		}
-		if (!fontHasOutlineUp) {
-			glUniform1i(fontHasOutlineLoc, fontHasOutline);
-			fontHasOutlineUp = true;
-		}
-        if (!fontPageUp) {
-            glUniform1i(fontPageLoc, fontPage);
-            fontPageUp = true;
-		}
-		if (!fontChannelUp) {
-			glUniform1i(fontChannelLoc, fontChannel);
-			fontChannelUp = true;
-		}
-		if (!fontTextColorUp) {
-			glUniform4fv(fontTextColorLoc, 1, glm::value_ptr(fontTextColor));
-			fontTextColorUp = true;
-		}
-		if (!fontOutlineColorUp) {
-			glUniform4fv(fontOutlineColorLoc, 1, glm::value_ptr(fontOutlineColor));
-			fontOutlineColorUp = true;
-		}
-		if (!fontModeUp) {
-			glUniform1i(fontModeLoc, fontMode);
-			fontModeUp = true;
-		}
-        break;
-	case HUD_PROGRAM:
-		if (!hudProjMatUp) {
-			glUniformMatrix4fv(hudProjMatLoc, 1, GL_FALSE, glm::value_ptr(hudProjectionMatrix));
-			hudProjMatUp = true;
 		}
 		break;
 	}

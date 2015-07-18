@@ -26,12 +26,12 @@ GL3Renderer::GL3Renderer(
 	conf(*client->getConf()),
 	window(window),
 	shaderManager(),
-	shaders(&shaderManager),
-	fontTimes(&shaders),
-	fontDejavu(&shaders),
+	shaders(shaderManager.getShaders()),
+	fontTimes(&shaderManager.getFontShader()),
+	fontDejavu(&shaderManager.getFontShader()),
 	chunkRenderer(client, this, &shaders),
-	debugRenderer(client, this, &shaders, graphics),
-	menuRenderer(client, this, &shaders, graphics)
+	debugRenderer(client, this, &shaderManager, graphics),
+	menuRenderer(client, this, &shaderManager, graphics)
 {
 	makeMaxFOV();
 	makePerspectiveMatrix();
@@ -182,8 +182,8 @@ void GL3Renderer::makeOrthogonalMatrix() {
 		hudMatrix = glm::ortho(-DEFAULT_WINDOWED_RES[1] * currentRatio / 2.0f, DEFAULT_WINDOWED_RES[1]
 				* currentRatio / 2.0f, -DEFAULT_WINDOWED_RES[1] / 2.0f,
 				DEFAULT_WINDOWED_RES[1] / 2.0f, 1.0f, -1.0f);
-    shaders.setHudProjectionMatrix(hudMatrix);
-    shaders.setFontProjectionMatrix(hudMatrix);
+    shaderManager.getHudShader().setHudProjectionMatrix(hudMatrix);
+    shaderManager.getFontShader().setFontProjectionMatrix(hudMatrix);
 }
 
 void GL3Renderer::makeMaxFOV() {
@@ -273,7 +273,7 @@ void GL3Renderer::render() {
 
 void GL3Renderer::renderHud(const Player &player) {
 	glBindVertexArray(crossHairVAO);
-	shaders.prepareProgram(HUD_PROGRAM);
+	shaderManager.getHudShader().useProgram();
 	glDrawArrays(GL_TRIANGLES, 0, 12);
 
 	/*vec2f texs[4];

@@ -4,6 +4,8 @@
 #include <GL/glew.h>
 #include <glm/mat4x4.hpp>
 #include <glm/vec3.hpp>
+#include <memory>
+#include <vector>
 
 enum ShaderProgram {
 	DEFAULT_PROGRAM,
@@ -14,13 +16,88 @@ enum ShaderProgram {
 
 static const int NUM_PROGRAMS = 4;
 
-class ShaderManager {
-	GLuint activeProgram;
+class ShaderManager;
+
+class Shader {
+	ShaderManager *manager = nullptr;
+	GLuint programLocation;
 
 public:
-	ShaderManager();
+	Shader(ShaderManager *, const char *, const char *);
+	virtual ~Shader();
 
-	void useProgram(GLuint);
+	GLuint getProgramLocation() const { return programLocation; }
+	GLuint getUniformLocation(const char *name) const;
+	void useProgram();
+
+private:
+	void buildShader(GLuint shaderLoc, const char* fileName);
+	void buildProgram(GLuint programLoc, GLuint *shaders, int numShaders);
+};
+
+class HudShader : public Shader {
+	GLint hudProjMatLoc;
+	
+	bool hudProjMatUp = false;
+	
+	glm::mat4 hudProjectionMatrix;
+
+public:
+	HudShader(ShaderManager *);
+	virtual ~HudShader() = default;
+	
+	void useProgram();
+	
+    void setHudProjectionMatrix(const glm::mat4 &matrix);
+};
+
+class FontShader : public Shader {
+    GLint fontTransMatLoc;
+	GLint fontTexLoc;
+	GLint fontIsPackedLoc;
+	GLint fontHasOutlineLoc;
+    GLint fontPageLoc;
+	GLint fontChannelLoc;
+	GLint fontTextColorLoc;
+	GLint fontOutlineColorLoc;
+	GLint fontModeLoc;
+
+    glm::mat4 fontProjectionMatrix;
+	glm::mat4 fontModelMatrix;
+	GLboolean fontIsPacked;
+	GLboolean fontHasOutline;
+    GLshort fontPage;
+	GLshort fontChannel;
+	glm::vec4 fontTextColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);;
+	glm::vec4 fontOutlineColor = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+	GLshort fontMode = 0;
+
+    bool fontProjMatUp = false;
+	bool fontModelMatUp = false;
+	bool fontIsPackedUp = false;
+	bool fontHasOutlineUp = false;
+    bool fontChannelUp = false;
+	bool fontPageUp = false;
+	bool fontTextColorUp = false;
+	bool fontOutlineColorUp = false;
+	bool fontModeUp = false;
+
+public:
+	FontShader(ShaderManager *);
+	virtual ~FontShader() = default;
+	
+	void useProgram();
+
+    void setFontProjectionMatrix(const glm::mat4 &matrix);
+	void setFontModelMatrix(const glm::mat4 &matrix);
+	void setFontIsPacked(bool isPacked);
+	void setFontHasOutline(bool hasOutline);
+    void setFontPage(short page);
+	void setFontChannel(short channel);
+	void setFontTextColor(const glm::vec4 &color);
+	void setFontOutlineColor(const glm::vec4 &color);
+	enum class FontRenderMode { DEFAULT, OUTLINE, TEXT };
+	void setFontMode(FontRenderMode mode);
 };
 
 class Shaders {
@@ -52,18 +129,6 @@ class Shaders {
 	GLint blockFogEnabledLoc;
 	GLint blockFogStartDistanceLoc;
 	GLint blockFogEndDistanceLoc;
-
-    GLint hudProjMatLoc;
-
-    GLint fontTransMatLoc;
-	GLint fontTexLoc;
-	GLint fontIsPackedLoc;
-	GLint fontHasOutlineLoc;
-    GLint fontPageLoc;
-	GLint fontChannelLoc;
-	GLint fontTextColorLoc;
-	GLint fontOutlineColorLoc;
-	GLint fontModeLoc;
 
 	// uniforms
 	GLboolean lightEnabled;
@@ -114,18 +179,6 @@ class Shaders {
 	bool blockFogStartDistanceUp = false;
 	bool blockFogEndDistanceUp = false;
 
-	bool hudProjMatUp = false;
-
-    bool fontProjMatUp = false;
-	bool fontModelMatUp = false;
-	bool fontIsPackedUp = false;
-	bool fontHasOutlineUp = false;
-    bool fontChannelUp = false;
-	bool fontPageUp = false;
-	bool fontTextColorUp = false;
-	bool fontOutlineColorUp = false;
-	bool fontModeUp = false;
-
 public:
 	Shaders(ShaderManager *manager);
 	~Shaders();
@@ -139,19 +192,6 @@ public:
 	void setViewMatrix(const glm::mat4 &matrix);
 	void setProjectionMatrix(const glm::mat4 &matrix);
 
-    void setHudProjectionMatrix(const glm::mat4 &matrix);
-
-    void setFontProjectionMatrix(const glm::mat4 &matrix);
-	void setFontModelMatrix(const glm::mat4 &matrix);
-	void setFontIsPacked(bool isPacked);
-	void setFontHasOutline(bool hasOutline);
-    void setFontPage(short page);
-	void setFontChannel(short channel);
-	void setFontTextColor(const glm::vec4 &color);
-	void setFontOutlineColor(const glm::vec4 &color);
-	enum class FontRenderMode { DEFAULT, OUTLINE, TEXT };
-	void setFontMode(FontRenderMode mode);
-
 	void setFogEnabled(bool enabled);
 	void setStartFogDistance(float distance);
 	void setEndFogDistance(float distance);
@@ -160,6 +200,21 @@ public:
 private:
 	void buildShader(GLuint shaderLoc, const char* fileName);
 	void buildProgram(GLuint programLoc, GLuint *shaders, int numShaders);
+};
+
+class ShaderManager {
+	Shaders shaders;
+	std::vector<std::unique_ptr<Shader>> programs;
+	GLuint activeProgram;
+
+public:
+	ShaderManager();
+	
+	Shaders &getShaders();
+	HudShader &getHudShader();
+	FontShader &getFontShader();
+
+	void useProgram(GLuint);
 };
 
 #endif /* SHADERS_HPP */

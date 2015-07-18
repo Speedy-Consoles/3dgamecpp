@@ -44,7 +44,7 @@ private:
 
 	// shaders
 	ShaderManager shaderManager;
-	Shaders shaders;
+	Shaders &shaders;
 
     // font
 	BMFont fontTimes;

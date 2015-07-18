@@ -66,7 +66,7 @@ public:
 		std::vector<int> kerningPairs;
 	};
 
-	BMFont(Shaders *shaders);
+	BMFont(FontShader *shader);
 	~BMFont();
 
 	int load(const char *fontFile);
@@ -104,7 +104,7 @@ private:
 	bool hasOutline = false;
 	short pages = 0;
 
-	Shaders *shaders = nullptr;
+	FontShader *shader = nullptr;
 
 	glm::vec4 textColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
 	glm::vec4 outlineColor = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);

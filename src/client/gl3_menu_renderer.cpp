@@ -12,7 +12,7 @@ using namespace gui;
 
 class GL3MenuRendererImpl {
 public:
-	GL3MenuRendererImpl(Client *client, GL3Renderer *renderer, Shaders *shaders, Graphics *graphics);
+	GL3MenuRendererImpl(Client *client, GL3Renderer *renderer, ShaderManager *shaderManager, Graphics *graphics);
 	void render();
 
 private:
@@ -31,8 +31,8 @@ private:
 
 GL3MenuRenderer::~GL3MenuRenderer() = default;
 
-GL3MenuRenderer::GL3MenuRenderer(Client *client, GL3Renderer *renderer, Shaders *shaders, Graphics *graphics) :
-	impl(new GL3MenuRendererImpl(client, renderer, shaders, graphics))
+GL3MenuRenderer::GL3MenuRenderer(Client *client, GL3Renderer *renderer, ShaderManager *shaderManager, Graphics *graphics) :
+	impl(new GL3MenuRendererImpl(client, renderer, shaderManager, graphics))
 {
 	// nothing
 }
@@ -43,11 +43,11 @@ void GL3MenuRenderer::render() {
 
 // PIMPL
 
-GL3MenuRendererImpl::GL3MenuRendererImpl(Client *client, GL3Renderer *renderer, Shaders *shaders, Graphics *graphics) :
+GL3MenuRendererImpl::GL3MenuRendererImpl(Client *client, GL3Renderer *renderer, ShaderManager *shaderManager, Graphics *graphics) :
 	client(client),
 	renderer(renderer),
 	graphics(graphics),
-	font(shaders)
+	font(&shaderManager->getFontShader())
 {
 	font.load("fonts/dejavusansmono20.fnt");
 	font.setEncoding(Font::Encoding::UTF8);

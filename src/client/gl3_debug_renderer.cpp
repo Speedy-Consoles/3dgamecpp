@@ -1,10 +1,10 @@
 #include "gl3_debug_renderer.hpp"
 
-GL3DebugRenderer::GL3DebugRenderer(Client *client, GL3Renderer *renderer, Shaders *shaders, Graphics *graphics) :
+GL3DebugRenderer::GL3DebugRenderer(Client *client, GL3Renderer *renderer, ShaderManager *shaderManager, Graphics *graphics) :
 	client(client),
 	renderer(renderer),
 	graphics(graphics),
-	font(shaders)
+	font(&shaderManager->getFontShader())
 {
 	font.load("fonts/dejavusansmono20.fnt");
 	font.setEncoding(Font::Encoding::UTF8);
