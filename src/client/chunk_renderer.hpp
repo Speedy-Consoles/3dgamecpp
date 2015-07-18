@@ -22,7 +22,7 @@ private:
 
 	Client *client;
 	GL3Renderer *renderer;
-	Shaders *shaders;
+	ShaderManager *shaderManager;
 	GraphicsConf conf;
 
 	// performance limits
@@ -72,7 +72,7 @@ private:
 	BlockVertexData blockVertexBuffer[Chunk::WIDTH * Chunk::WIDTH * (Chunk::WIDTH + 1) * 3 * 2 * 3];
 
 public:
-	ChunkRenderer(Client *client, GL3Renderer *renderer, Shaders *shaders);
+	ChunkRenderer(Client *client, GL3Renderer *renderer, ShaderManager *shaderManager);
 	~ChunkRenderer();
 
 	void setConf(const GraphicsConf &);

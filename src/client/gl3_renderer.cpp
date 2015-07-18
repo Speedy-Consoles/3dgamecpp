@@ -26,10 +26,9 @@ GL3Renderer::GL3Renderer(
 	conf(*client->getConf()),
 	window(window),
 	shaderManager(),
-	shaders(shaderManager.getShaders()),
 	fontTimes(&shaderManager.getFontShader()),
 	fontDejavu(&shaderManager.getFontShader()),
-	chunkRenderer(client, this, &shaders),
+	chunkRenderer(client, this, &shaderManager),
 	debugRenderer(client, this, &shaderManager, graphics),
 	menuRenderer(client, this, &shaderManager, graphics)
 {
@@ -43,18 +42,20 @@ GL3Renderer::GL3Renderer(
 	defaultShader.setDiffuseLightDirection(diffuseDirection);
 	defaultShader.setDiffuseLightColor(diffuseColor);
 
-	shaders.setAmbientLightColor(ambientColor);
-	shaders.setDiffuseLightDirection(diffuseDirection);
-	shaders.setDiffuseLightColor(diffuseColor);
+	auto &blockShader = shaderManager.getBlockShader();
+	blockShader.setAmbientLightColor(ambientColor);
+	blockShader.setDiffuseLightDirection(diffuseDirection);
+	blockShader.setDiffuseLightColor(diffuseColor);
 
 	// fog
 	auto endFog = (conf.render_distance - 1) * Chunk::WIDTH;
 	auto startFog = (conf.render_distance - 1) * Chunk::WIDTH * 1 / 2.0;
+
 	defaultShader.setEndFogDistance(endFog);
 	defaultShader.setStartFogDistance(startFog);
 
-	shaders.setEndFogDistance(endFog);
-	shaders.setStartFogDistance(startFog);
+	blockShader.setEndFogDistance(endFog);
+	blockShader.setStartFogDistance(startFog);
 
 	buildCrossHair();
 	buildSky();
@@ -180,7 +181,8 @@ void GL3Renderer::makePerspectiveMatrix() {
 			(float) currentRatio, ZNEAR, zFar);
 	auto &defaultShader = shaderManager.getDefaultShader();
 	defaultShader.setProjectionMatrix(perspectiveMatrix);
-	shaders.setProjectionMatrix(perspectiveMatrix);
+	auto &blockShader = shaderManager.getBlockShader();
+	blockShader.setProjectionMatrix(perspectiveMatrix);
 }
 
 void GL3Renderer::makeOrthogonalMatrix() {
@@ -221,8 +223,9 @@ void GL3Renderer::setConf(const GraphicsConf &conf) {
 		defaultShader.setEndFogDistance(endFog);
 		defaultShader.setStartFogDistance(startFog);
 
-		shaders.setEndFogDistance(endFog);
-		shaders.setStartFogDistance(startFog);
+		auto &blockShader = shaderManager.getBlockShader();
+		blockShader.setEndFogDistance(endFog);
+		blockShader.setStartFogDistance(startFog);
 	}
 
 	if (conf.fov != old_conf.fov) {

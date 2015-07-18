@@ -91,6 +91,62 @@ public:
 	void setEndFogDistance(float distance);
 };
 
+class BlockShader : public Shader {
+	GLint blockLightEnabledLoc;
+	GLint blockAmbientColorLoc;
+	GLint blockDiffColorLoc;
+	GLint blockDiffDirLoc;
+	GLint blockModelMatLoc;
+	GLint blockViewMatLoc;
+	GLint blockProjMatLoc;
+	GLint blockFogEnabledLoc;
+	GLint blockFogStartDistanceLoc;
+	GLint blockFogEndDistanceLoc;
+
+	bool blockLightEnabledUp = false;
+	bool blockAmbientColorUp = false;
+	bool blockDiffColorUp = false;
+	bool blockDiffDirUp = false;
+	bool blockModelMatUp = false;
+	bool blockViewMatUp = false;
+	bool blockProjMatUp = false;
+	bool blockFogEnabledUp = false;
+	bool blockFogStartDistanceUp = false;
+	bool blockFogEndDistanceUp = false;
+
+	GLboolean lightEnabled;
+	glm::vec3 ambientColor;
+	glm::vec3 diffuseColor;
+	glm::vec3 diffuseDirection;
+
+	glm::mat4 modelMatrix;
+	glm::mat4 viewMatrix;
+	glm::mat4 projectionMatrix;
+
+	GLboolean fogEnabled;
+	GLfloat fogStartDistance;
+	GLfloat fogEndDistance;
+
+public:
+	BlockShader(ShaderManager *);
+	virtual ~BlockShader() = default;
+
+	void useProgram();
+
+	void setLightEnabled(bool enabled);
+	void setDiffuseLightColor(const glm::vec3 &color);
+	void setDiffuseLightDirection(const glm::vec3 &direction);
+	void setAmbientLightColor(const glm::vec3 &color);
+
+	void setModelMatrix(const glm::mat4 &matrix);
+	void setViewMatrix(const glm::mat4 &matrix);
+	void setProjectionMatrix(const glm::mat4 &matrix);
+
+	void setFogEnabled(bool enabled);
+	void setStartFogDistance(float distance);
+	void setEndFogDistance(float distance);
+};
+
 class HudShader : public Shader {
 	GLint hudProjMatLoc;
 	
@@ -156,97 +212,15 @@ public:
 	void setFontMode(FontRenderMode mode);
 };
 
-class Shaders {
-
-	ShaderManager *manager;
-
-	// program locations
-	GLuint programLocations[NUM_PROGRAMS];
-
-	// uniform locations
-
-	GLint blockLightEnabledLoc;
-	GLint blockAmbientColorLoc;
-	GLint blockDiffColorLoc;
-	GLint blockDiffDirLoc;
-	GLint blockModelMatLoc;
-	GLint blockViewMatLoc;
-	GLint blockProjMatLoc;
-	GLint blockFogEnabledLoc;
-	GLint blockFogStartDistanceLoc;
-	GLint blockFogEndDistanceLoc;
-
-	// uniforms
-	GLboolean lightEnabled;
-	glm::vec3 ambientColor;
-	glm::vec3 diffuseColor;
-	glm::vec3 diffuseDirection;
-
-	glm::mat4 modelMatrix;
-	glm::mat4 viewMatrix;
-	glm::mat4 projectionMatrix;
-
-	glm::mat4 hudProjectionMatrix;
-
-    glm::mat4 fontProjectionMatrix;
-	glm::mat4 fontModelMatrix;
-	GLboolean fontIsPacked;
-	GLboolean fontHasOutline;
-    GLshort fontPage;
-	GLshort fontChannel;
-	glm::vec4 fontTextColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);;
-	glm::vec4 fontOutlineColor = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
-	GLshort fontMode = 0;
-
-	GLboolean fogEnabled;
-	GLfloat fogStartDistance;
-	GLfloat fogEndDistance;
-
-	// uniform up-to-dateness
-	bool blockLightEnabledUp = false;
-	bool blockAmbientColorUp = false;
-	bool blockDiffColorUp = false;
-	bool blockDiffDirUp = false;
-	bool blockModelMatUp = false;
-	bool blockViewMatUp = false;
-	bool blockProjMatUp = false;
-	bool blockFogEnabledUp = false;
-	bool blockFogStartDistanceUp = false;
-	bool blockFogEndDistanceUp = false;
-
-public:
-	Shaders(ShaderManager *manager);
-	~Shaders();
-
-	void setLightEnabled(bool enabled);
-	void setDiffuseLightColor(const glm::vec3 &color);
-	void setDiffuseLightDirection(const glm::vec3 &direction);
-	void setAmbientLightColor(const glm::vec3 &color);
-
-	void setModelMatrix(const glm::mat4 &matrix);
-	void setViewMatrix(const glm::mat4 &matrix);
-	void setProjectionMatrix(const glm::mat4 &matrix);
-
-	void setFogEnabled(bool enabled);
-	void setStartFogDistance(float distance);
-	void setEndFogDistance(float distance);
-
-	void prepareProgram(ShaderProgram program);
-private:
-	void buildShader(GLuint shaderLoc, const char* fileName);
-	void buildProgram(GLuint programLoc, GLuint *shaders, int numShaders);
-};
-
 class ShaderManager {
-	Shaders shaders;
 	std::vector<std::unique_ptr<Shader>> programs;
 	GLuint activeProgram;
 
 public:
 	ShaderManager();
 	
-	Shaders &getShaders();
 	DefaultShader &getDefaultShader();
+	BlockShader &getBlockShader();
 	HudShader &getHudShader();
 	FontShader &getFontShader();
 

@@ -11,8 +11,8 @@
 #include "game/player.hpp"
 #include "util.hpp"
 
-ChunkRenderer::ChunkRenderer(Client *client, GL3Renderer *renderer, Shaders *shaders)
-		: client(client), renderer(renderer), shaders(shaders), conf(*client->getConf()) {
+ChunkRenderer::ChunkRenderer(Client *client, GL3Renderer *renderer, ShaderManager *shaderManager)
+		: client(client), renderer(renderer), shaderManager(shaderManager), conf(*client->getConf()) {
 	initRenderDistanceDependent();
 	loadTextures();
 }
@@ -183,9 +183,9 @@ void ChunkRenderer::render() {
 		(float) -((playerPos[1] % m + m) % m) / RESOLUTION,
 		(float) -((playerPos[2] % m + m) % m) / RESOLUTION)
 	);
-	shaders->setViewMatrix(viewMatrix);
-
-	shaders->setLightEnabled(true);
+	auto *shader = &shaderManager->getBlockShader();
+	shader->setViewMatrix(viewMatrix);
+	shader->setLightEnabled(true);
 
 	glBindTexture(GL_TEXTURE_2D_ARRAY, blockTextures);
 
@@ -238,8 +238,8 @@ void ChunkRenderer::render() {
 				visibleFaces += chunkFaces[index];
 				glBindVertexArray(vaos[index]);
 				glm::mat4 modelMatrix = glm::translate(glm::mat4(1.0f), glm::vec3((float) (cd[0] * (int) Chunk::WIDTH), (float) (cd[1] * (int) Chunk::WIDTH), (float) (cd[2] * (int) Chunk::WIDTH)));
-				shaders->setModelMatrix(modelMatrix);
-				shaders->prepareProgram(BLOCK_PROGRAM);
+				shader->setModelMatrix(modelMatrix);
+				shader->useProgram();
 				glDrawArrays(GL_TRIANGLES, 0, chunkFaces[index] * 3);
 				logOpenGLError();
 			}
