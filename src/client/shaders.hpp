@@ -35,6 +35,62 @@ private:
 	void buildProgram(GLuint programLoc, GLuint *shaders, int numShaders);
 };
 
+class DefaultShader : public Shader {
+	GLint defaultLightEnabledLoc;
+	GLint defaultAmbientColorLoc;
+	GLint defaultDiffColorLoc;
+	GLint defaultDiffDirLoc;
+	GLint defaultModelMatLoc;
+	GLint defaultViewMatLoc;
+	GLint defaultProjMatLoc;
+	GLint defaultFogEnabledLoc;
+	GLint defaultFogStartDistanceLoc;
+	GLint defaultFogEndDistanceLoc;
+
+	bool defaultLightEnabledUp = false;
+	bool defaultAmbientColorUp = false;
+	bool defaultDiffColorUp = false;
+	bool defaultDiffDirUp = false;
+	bool defaultModelMatUp = false;
+	bool defaultViewMatUp = false;
+	bool defaultProjMatUp = false;
+	bool defaultFogEnabledUp = false;
+	bool defaultFogStartDistanceUp = false;
+	bool defaultFogEndDistanceUp = false;
+
+	GLboolean lightEnabled;
+	glm::vec3 ambientColor;
+	glm::vec3 diffuseColor;
+	glm::vec3 diffuseDirection;
+
+	glm::mat4 modelMatrix;
+	glm::mat4 viewMatrix;
+	glm::mat4 projectionMatrix;
+
+	GLboolean fogEnabled;
+	GLfloat fogStartDistance;
+	GLfloat fogEndDistance;
+
+public:
+	DefaultShader(ShaderManager *);
+	virtual ~DefaultShader() = default;
+
+	void useProgram();
+
+	void setLightEnabled(bool enabled);
+	void setDiffuseLightColor(const glm::vec3 &color);
+	void setDiffuseLightDirection(const glm::vec3 &direction);
+	void setAmbientLightColor(const glm::vec3 &color);
+
+	void setModelMatrix(const glm::mat4 &matrix);
+	void setViewMatrix(const glm::mat4 &matrix);
+	void setProjectionMatrix(const glm::mat4 &matrix);
+
+	void setFogEnabled(bool enabled);
+	void setStartFogDistance(float distance);
+	void setEndFogDistance(float distance);
+};
+
 class HudShader : public Shader {
 	GLint hudProjMatLoc;
 	
@@ -108,16 +164,6 @@ class Shaders {
 	GLuint programLocations[NUM_PROGRAMS];
 
 	// uniform locations
-	GLint defaultLightEnabledLoc;
-	GLint defaultAmbientColorLoc;
-	GLint defaultDiffColorLoc;
-	GLint defaultDiffDirLoc;
-	GLint defaultModelMatLoc;
-	GLint defaultViewMatLoc;
-	GLint defaultProjMatLoc;
-	GLint defaultFogEnabledLoc;
-	GLint defaultFogStartDistanceLoc;
-	GLint defaultFogEndDistanceLoc;
 
 	GLint blockLightEnabledLoc;
 	GLint blockAmbientColorLoc;
@@ -157,17 +203,6 @@ class Shaders {
 	GLfloat fogEndDistance;
 
 	// uniform up-to-dateness
-	bool defaultLightEnabledUp = false;
-	bool defaultAmbientColorUp = false;
-	bool defaultDiffColorUp = false;
-	bool defaultDiffDirUp = false;
-	bool defaultModelMatUp = false;
-	bool defaultViewMatUp = false;
-	bool defaultProjMatUp = false;
-	bool defaultFogEnabledUp = false;
-	bool defaultFogStartDistanceUp = false;
-	bool defaultFogEndDistanceUp = false;
-
 	bool blockLightEnabledUp = false;
 	bool blockAmbientColorUp = false;
 	bool blockDiffColorUp = false;
@@ -211,6 +246,7 @@ public:
 	ShaderManager();
 	
 	Shaders &getShaders();
+	DefaultShader &getDefaultShader();
 	HudShader &getHudShader();
 	FontShader &getFontShader();
 

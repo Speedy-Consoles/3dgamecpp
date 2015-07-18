@@ -38,13 +38,23 @@ GL3Renderer::GL3Renderer(
 	makeOrthogonalMatrix();
 
 	// light
+	auto &defaultShader = shaderManager.getDefaultShader();
+	defaultShader.setAmbientLightColor(ambientColor);
+	defaultShader.setDiffuseLightDirection(diffuseDirection);
+	defaultShader.setDiffuseLightColor(diffuseColor);
+
 	shaders.setAmbientLightColor(ambientColor);
 	shaders.setDiffuseLightDirection(diffuseDirection);
 	shaders.setDiffuseLightColor(diffuseColor);
 
 	// fog
-	shaders.setEndFogDistance((conf.render_distance - 1) * Chunk::WIDTH);
-	shaders.setStartFogDistance((conf.render_distance - 1) * Chunk::WIDTH * 1 / 2.0);
+	auto endFog = (conf.render_distance - 1) * Chunk::WIDTH;
+	auto startFog = (conf.render_distance - 1) * Chunk::WIDTH * 1 / 2.0;
+	defaultShader.setEndFogDistance(endFog);
+	defaultShader.setStartFogDistance(startFog);
+
+	shaders.setEndFogDistance(endFog);
+	shaders.setStartFogDistance(startFog);
 
 	buildCrossHair();
 	buildSky();
@@ -168,6 +178,8 @@ void GL3Renderer::makePerspectiveMatrix() {
 	float zFar = Chunk::WIDTH * sqrt(3 * (conf.render_distance + 1) * (conf.render_distance + 1));
 	glm::mat4 perspectiveMatrix = glm::perspective((float) angle,
 			(float) currentRatio, ZNEAR, zFar);
+	auto &defaultShader = shaderManager.getDefaultShader();
+	defaultShader.setProjectionMatrix(perspectiveMatrix);
 	shaders.setProjectionMatrix(perspectiveMatrix);
 }
 
@@ -201,8 +213,16 @@ void GL3Renderer::setConf(const GraphicsConf &conf) {
 
 	if (conf.render_distance != old_conf.render_distance) {
 		makePerspectiveMatrix();
-		shaders.setEndFogDistance((conf.render_distance - 1) * Chunk::WIDTH);
-		shaders.setStartFogDistance((conf.render_distance - 1) * Chunk::WIDTH * 1 / 2.0);
+
+		auto endFog = (conf.render_distance - 1) * Chunk::WIDTH;
+		auto startFog = (conf.render_distance - 1) * Chunk::WIDTH * 1 / 2.0;
+
+		auto &defaultShader = shaderManager.getDefaultShader();
+		defaultShader.setEndFogDistance(endFog);
+		defaultShader.setStartFogDistance(startFog);
+
+		shaders.setEndFogDistance(endFog);
+		shaders.setStartFogDistance(startFog);
 	}
 
 	if (conf.fov != old_conf.fov) {
@@ -294,16 +314,17 @@ void GL3Renderer::renderSky() {
 		return;
 
 	glm::mat4 viewMatrix = glm::rotate(glm::mat4(1.0f), (float) (-player.getPitch() / 360.0 * TAU), glm::vec3(1.0f, 0.0f, 0.0f));
-	shaders.setModelMatrix(glm::mat4(1.0f));
-	shaders.setViewMatrix(viewMatrix);
-	shaders.setFogEnabled(false);
-    shaders.setLightEnabled(false);
-	shaders.prepareProgram(DEFAULT_PROGRAM);
+	auto &defaultShader = shaderManager.getDefaultShader();
+	defaultShader.setModelMatrix(glm::mat4(1.0f));
+	defaultShader.setViewMatrix(viewMatrix);
+	defaultShader.setFogEnabled(false);
+    defaultShader.setLightEnabled(false);
+	defaultShader.useProgram();
 
 	glBindVertexArray(skyVAO);
 	glDrawArrays(GL_TRIANGLES, 0, 12);
-	shaders.setFogEnabled(true);
-	shaders.setLightEnabled(true);
+	defaultShader.setFogEnabled(true);
+	defaultShader.setLightEnabled(true);
 	glDepthMask(true);
 	glEnable(GL_DEPTH_TEST);
 }
@@ -328,8 +349,9 @@ void GL3Renderer::renderTarget() {
 		(float) -((playerPos[1] % m + m) % m) / RESOLUTION,
 		(float) -((playerPos[2] % m + m) % m) / RESOLUTION)
 	);
-	shaders.setViewMatrix(viewMatrix);
-	shaders.prepareProgram(DEFAULT_PROGRAM);
+	auto &defaultShader = shaderManager.getDefaultShader();
+	defaultShader.setViewMatrix(viewMatrix);
+	defaultShader.useProgram();
 	// TODO
 }
 

@@ -88,6 +88,123 @@ void Shader::buildProgram(GLuint programLoc, GLuint *shaders, int numShaders) {
 		LOG(ERROR, &programErrorMessage[0]);
 }
 
+DefaultShader::DefaultShader(ShaderManager *manager) :
+	Shader(manager, "shaders/default_vertex_shader.vert", "shaders/default_fragment_shader.frag")
+{
+	defaultLightEnabledLoc = getUniformLocation("lightEnabled");
+	defaultAmbientColorLoc = getUniformLocation("ambientLightColor");
+	defaultDiffColorLoc = getUniformLocation("diffuseLightColor");
+	defaultDiffDirLoc = getUniformLocation("diffuseLightDirection");
+	defaultModelMatLoc = getUniformLocation("modelMatrix");
+	defaultViewMatLoc = getUniformLocation("viewMatrix");
+	defaultProjMatLoc = getUniformLocation("projectionMatrix");
+	defaultFogEnabledLoc = getUniformLocation("fogEnabled");
+	defaultFogStartDistanceLoc = getUniformLocation("fogStartDistance");
+	defaultFogEndDistanceLoc = getUniformLocation("fogEndDistance");
+
+	GLint tmp;
+	glUseProgram(getProgramLocation());
+	tmp = getUniformLocation("textureSampler");
+	glUniform1i(tmp, 0);
+	tmp = getUniformLocation("fogSampler");
+	glUniform1i(tmp, 1);
+}
+
+void DefaultShader::useProgram() {
+	Shader::useProgram();
+
+	if (!defaultLightEnabledUp) {
+		glUniform1i(defaultLightEnabledLoc, lightEnabled);
+		defaultLightEnabledUp = true;
+	}
+	if (!defaultAmbientColorUp) {
+		glUniform3fv(defaultAmbientColorLoc, 1, glm::value_ptr(ambientColor));
+		defaultAmbientColorUp = true;
+	}
+	if (!defaultDiffColorUp) {
+		glUniform3fv(defaultDiffColorLoc, 1, glm::value_ptr(diffuseColor));
+		defaultDiffColorUp = true;
+	}
+	if (!defaultDiffDirUp) {
+		glUniform3fv(defaultDiffDirLoc, 1, glm::value_ptr(diffuseDirection));
+		defaultDiffDirUp = true;
+	}
+	if (!defaultModelMatUp) {
+		glUniformMatrix4fv(defaultModelMatLoc, 1, GL_FALSE, glm::value_ptr(modelMatrix));
+		defaultModelMatUp = true;
+	}
+	if (!defaultViewMatUp) {
+		glUniformMatrix4fv(defaultViewMatLoc, 1, GL_FALSE, glm::value_ptr(viewMatrix));
+		defaultViewMatUp = true;
+	}
+	if (!defaultProjMatUp) {
+		glUniformMatrix4fv(defaultProjMatLoc, 1, GL_FALSE, glm::value_ptr(projectionMatrix));
+		defaultProjMatUp = true;
+	}
+	if (!defaultFogEnabledUp) {
+		glUniform1i(defaultFogEnabledLoc, fogEnabled);
+		defaultFogEnabledUp = true;
+	}
+	if (!defaultFogStartDistanceUp) {
+		glUniform1f(defaultFogStartDistanceLoc, fogStartDistance);
+		defaultFogStartDistanceUp = true;
+	}
+	if (!defaultFogEndDistanceUp) {
+		glUniform1f(defaultFogEndDistanceLoc, fogEndDistance);
+		defaultFogEndDistanceUp = true;
+	}
+}
+
+void DefaultShader::setLightEnabled(bool enabled) {
+	lightEnabled = enabled;
+	defaultLightEnabledUp = false;
+}
+
+void DefaultShader::setDiffuseLightColor(const glm::vec3 &color) {
+	diffuseColor = color;
+	defaultDiffColorUp = false;
+}
+
+void DefaultShader::setDiffuseLightDirection(const glm::vec3 &direction) {
+	diffuseDirection = direction;
+	defaultDiffDirUp = false;
+}
+
+void DefaultShader::setAmbientLightColor(const glm::vec3 &color) {
+	ambientColor = color;
+	defaultAmbientColorUp = false;
+}
+
+void DefaultShader::setModelMatrix(const glm::mat4 &matrix) {
+	modelMatrix = matrix;
+	defaultModelMatUp = false;
+}
+
+void DefaultShader::setViewMatrix(const glm::mat4 &matrix) {
+	viewMatrix = matrix;
+	defaultViewMatUp = false;
+}
+
+void DefaultShader::setProjectionMatrix(const glm::mat4 &matrix) {
+	projectionMatrix = matrix;
+	defaultProjMatUp = false;
+}
+
+void DefaultShader::setFogEnabled(bool enabled) {
+	fogEnabled = enabled;
+	defaultFogEnabledUp = false;
+}
+
+void DefaultShader::setStartFogDistance(float distance) {
+	fogStartDistance = distance;
+	defaultFogStartDistanceUp = false;
+}
+
+void DefaultShader::setEndFogDistance(float distance) {
+	fogEndDistance = distance;
+	defaultFogEndDistanceUp = false;
+}
+
 HudShader::HudShader(ShaderManager *manager) :
 	Shader(manager, "shaders/hud_vertex_shader.vert", "shaders/hud_fragment_shader.frag")
 {
@@ -209,12 +326,17 @@ ShaderManager::ShaderManager() :
 	shaders(this)
 {
 	programs.resize(NUM_PROGRAMS);
+	programs[DEFAULT_PROGRAM] = std::make_unique<DefaultShader>(this);
 	programs[HUD_PROGRAM] = std::make_unique<HudShader>(this);
 	programs[FONT_PROGRAM] = std::make_unique<FontShader>(this);
 }
 
 Shaders &ShaderManager::getShaders() {
 	return shaders;
+}
+
+DefaultShader &ShaderManager::getDefaultShader() {
+	return static_cast<DefaultShader &>(*programs[DEFAULT_PROGRAM]);
 }
 
 HudShader &ShaderManager::getHudShader() {
@@ -236,51 +358,29 @@ Shaders::Shaders(ShaderManager *manager) :
 	manager(manager)
 {
 	// Create the shaders
-	GLuint defaultVertexShaderLoc = glCreateShader(GL_VERTEX_SHADER);
     GLuint blockVertexShaderLoc = glCreateShader(GL_VERTEX_SHADER);
-	GLuint defaultFragmentShaderLoc = glCreateShader(GL_FRAGMENT_SHADER);
     GLuint blockFragmentShaderLoc = glCreateShader(GL_FRAGMENT_SHADER);
 
-	LOG(DEBUG, "Building default vertex shader");
-	buildShader(defaultVertexShaderLoc, "shaders/default_vertex_shader.vert");
 	LOG(DEBUG, "Building block vertex shader");
     buildShader(blockVertexShaderLoc, "shaders/block_vertex_shader.vert");
 
-	LOG(DEBUG, "Building default fragment shader");
-	buildShader(defaultFragmentShaderLoc, "shaders/default_fragment_shader.frag");
 	LOG(DEBUG, "Building block fragment shader");
     buildShader(blockFragmentShaderLoc, "shaders/block_fragment_shader.frag");
 
 	// create the programs
-	programLocations[DEFAULT_PROGRAM] = glCreateProgram();
     programLocations[BLOCK_PROGRAM] = glCreateProgram();
 
-	GLuint defaultProgramShaderLocs[2] = {defaultVertexShaderLoc, defaultFragmentShaderLoc};
     GLuint blockProgramShaderLocs[2] = { blockVertexShaderLoc, blockFragmentShaderLoc };
 
-	LOG(DEBUG, "Building default program");
-	buildProgram(programLocations[DEFAULT_PROGRAM], defaultProgramShaderLocs, 2);
 	LOG(DEBUG, "Building block program");
     buildProgram(programLocations[BLOCK_PROGRAM], blockProgramShaderLocs, 2);
 
 	// delete the shaders
-	glDeleteShader(defaultVertexShaderLoc);
     glDeleteShader(blockVertexShaderLoc);
-	glDeleteShader(defaultFragmentShaderLoc);
     glDeleteShader(blockFragmentShaderLoc);
 	logOpenGLError();
 
 	// get uniform locations
-	defaultLightEnabledLoc = glGetUniformLocation(programLocations[DEFAULT_PROGRAM], "lightEnabled");
-	defaultAmbientColorLoc = glGetUniformLocation(programLocations[DEFAULT_PROGRAM], "ambientLightColor");
-	defaultDiffColorLoc = glGetUniformLocation(programLocations[DEFAULT_PROGRAM], "diffuseLightColor");
-	defaultDiffDirLoc = glGetUniformLocation(programLocations[DEFAULT_PROGRAM], "diffuseLightDirection");
-	defaultModelMatLoc = glGetUniformLocation(programLocations[DEFAULT_PROGRAM], "modelMatrix");
-	defaultViewMatLoc = glGetUniformLocation(programLocations[DEFAULT_PROGRAM], "viewMatrix");
-	defaultProjMatLoc = glGetUniformLocation(programLocations[DEFAULT_PROGRAM], "projectionMatrix");
-	defaultFogEnabledLoc = glGetUniformLocation(programLocations[DEFAULT_PROGRAM], "fogEnabled");
-	defaultFogStartDistanceLoc = glGetUniformLocation(programLocations[DEFAULT_PROGRAM], "fogStartDistance");
-	defaultFogEndDistanceLoc = glGetUniformLocation(programLocations[DEFAULT_PROGRAM], "fogEndDistance");
 
 	blockLightEnabledLoc = glGetUniformLocation(programLocations[BLOCK_PROGRAM], "lightEnabled");
 	blockAmbientColorLoc = glGetUniformLocation(programLocations[BLOCK_PROGRAM], "ambientLightColor");
@@ -294,14 +394,7 @@ Shaders::Shaders(ShaderManager *manager) :
 	blockFogEndDistanceLoc = glGetUniformLocation(programLocations[BLOCK_PROGRAM], "fogEndDistance");
 
     logOpenGLError();
-
-	glUseProgram(programLocations[DEFAULT_PROGRAM]);
-	GLint tmp = glGetUniformLocation(programLocations[DEFAULT_PROGRAM], "textureSampler");
-	glUniform1i(tmp, 0);
-	tmp = glGetUniformLocation(programLocations[DEFAULT_PROGRAM], "fogSampler");
-	glUniform1i(tmp, 1);
-
-    logOpenGLError();
+	GLint tmp;
 
 	glUseProgram(programLocations[BLOCK_PROGRAM]);
 	tmp = glGetUniformLocation(programLocations[BLOCK_PROGRAM], "textureSampler");
@@ -311,16 +404,11 @@ Shaders::Shaders(ShaderManager *manager) :
 
     logOpenGLError();
 
-//	glUseProgram(programLocations[HUD_PROGRAM]);
-//	tmp = glGetUniformLocation(programLocations[HUD_PROGRAM], "sampler");
-//	glUniform1i(tmp, 0);
-
 	manager->useProgram(programLocations[DEFAULT_PROGRAM]);
 	logOpenGLError();
 }
 
 Shaders::~Shaders() {
-	glDeleteProgram(programLocations[DEFAULT_PROGRAM]);
     glDeleteProgram(programLocations[BLOCK_PROGRAM]);
 }
 
@@ -373,61 +461,51 @@ void Shaders::buildProgram(GLuint programLoc, GLuint *shaders, int numShaders) {
 
 void Shaders::setLightEnabled(bool enabled) {
 	lightEnabled = enabled;
-	defaultLightEnabledUp = false;
 	blockLightEnabledUp = false;
 }
 
 void Shaders::setDiffuseLightColor(const glm::vec3 &color) {
 	diffuseColor = color;
-	defaultDiffColorUp = false;
 	blockDiffColorUp = false;
 }
 
 void Shaders::setDiffuseLightDirection(const glm::vec3 &direction) {
 	diffuseDirection = direction;
-	defaultDiffDirUp = false;
 	blockDiffDirUp = false;
 }
 
 void Shaders::setAmbientLightColor(const glm::vec3 &color) {
 	ambientColor = color;
-	defaultAmbientColorUp = false;
 	blockAmbientColorUp = false;
 }
 
 void Shaders::setModelMatrix(const glm::mat4 &matrix) {
 	modelMatrix = matrix;
-	defaultModelMatUp = false;
 	blockModelMatUp = false;
 }
 
 void Shaders::setViewMatrix(const glm::mat4 &matrix) {
 	viewMatrix = matrix;
-	defaultViewMatUp = false;
 	blockViewMatUp = false;
 }
 
 void Shaders::setProjectionMatrix(const glm::mat4 &matrix) {
 	projectionMatrix = matrix;
-	defaultProjMatUp = false;
 	blockProjMatUp = false;
 }
 
 void Shaders::setFogEnabled(bool enabled) {
 	fogEnabled = enabled;
-	defaultFogEnabledUp = false;
 	blockFogEnabledUp = false;
 }
 
 void Shaders::setStartFogDistance(float distance) {
 	fogStartDistance = distance;
-	defaultFogStartDistanceUp = false;
 	blockFogStartDistanceUp = false;
 }
 
 void Shaders::setEndFogDistance(float distance) {
 	fogEndDistance = distance;
-	defaultFogEndDistanceUp = false;
 	blockFogEndDistanceUp = false;
 }
 
@@ -435,48 +513,6 @@ void Shaders::prepareProgram(ShaderProgram program) {
 	manager->useProgram(programLocations[program]);
 	
 	switch (program) {
-	case DEFAULT_PROGRAM:
-		if (!defaultLightEnabledUp) {
-			glUniform1i(defaultLightEnabledLoc, lightEnabled);
-			defaultLightEnabledUp = true;
-		}
-		if (!defaultAmbientColorUp) {
-			glUniform3fv(defaultAmbientColorLoc, 1, glm::value_ptr(ambientColor));
-			defaultAmbientColorUp = true;
-		}
-		if (!defaultDiffColorUp) {
-			glUniform3fv(defaultDiffColorLoc, 1, glm::value_ptr(diffuseColor));
-			defaultDiffColorUp = true;
-		}
-		if (!defaultDiffDirUp) {
-			glUniform3fv(defaultDiffDirLoc, 1, glm::value_ptr(diffuseDirection));
-			defaultDiffDirUp = true;
-		}
-		if (!defaultModelMatUp) {
-			glUniformMatrix4fv(defaultModelMatLoc, 1, GL_FALSE, glm::value_ptr(modelMatrix));
-			defaultModelMatUp = true;
-		}
-		if (!defaultViewMatUp) {
-			glUniformMatrix4fv(defaultViewMatLoc, 1, GL_FALSE, glm::value_ptr(viewMatrix));
-			defaultViewMatUp = true;
-		}
-		if (!defaultProjMatUp) {
-			glUniformMatrix4fv(defaultProjMatLoc, 1, GL_FALSE, glm::value_ptr(projectionMatrix));
-			defaultProjMatUp = true;
-		}
-		if (!defaultFogEnabledUp) {
-			glUniform1i(defaultFogEnabledLoc, fogEnabled);
-			defaultFogEnabledUp = true;
-		}
-		if (!defaultFogStartDistanceUp) {
-			glUniform1f(defaultFogStartDistanceLoc, fogStartDistance);
-			defaultFogStartDistanceUp = true;
-		}
-		if (!defaultFogEndDistanceUp) {
-			glUniform1f(defaultFogEndDistanceLoc, fogEndDistance);
-			defaultFogEndDistanceUp = true;
-		}
-		break;
 	case BLOCK_PROGRAM:
 		if (!blockLightEnabledUp) {
 			glUniform1i(blockLightEnabledLoc, lightEnabled);
