@@ -55,22 +55,22 @@ int main(int argc, char *argv[]) {
 }
 
 Client::Client(const char *worldId, const char *serverAdress) {
-	stopwatch = std::unique_ptr<Stopwatch>(new Stopwatch(CLOCK_ID_NUM));
+	stopwatch = std::make_unique<Stopwatch>(CLOCK_ID_NUM);
 	stopwatch->start(CLOCK_ALL);
 
-	conf = std::unique_ptr<GraphicsConf>(new GraphicsConf());
+	conf = std::make_unique<GraphicsConf>();
 	load("graphics-default.profile", conf.get());
 
-	world = std::unique_ptr<World>(new World(worldId));
-	menu = std::unique_ptr<Menu>(new Menu(conf.get()));
-	graphics = std::unique_ptr<Graphics>(new Graphics(this, world.get(), menu.get(), &state, &localClientId, *conf, stopwatch.get()));
+	blockManager = std::make_unique<BlockManager>();
+	menu = std::make_unique<Menu>(conf.get());
+	graphics = std::make_unique<Graphics>(this, world.get(), menu.get(), &state, &localClientId, *conf, stopwatch.get());
 
 	if (serverAdress) {
 		LOG(INFO, "Connecting to remote server '" << serverAdress << "'");
-		serverInterface = std::unique_ptr<ServerInterface>(new RemoteServerInterface(world.get(), serverAdress, *conf));
+		serverInterface = std::make_unique<RemoteServerInterface>(world.get(), serverAdress, *conf);
 	} else {
 		LOG(INFO, "Connecting to local server");
-		serverInterface = std::unique_ptr<ServerInterface>(new LocalServerInterface(world.get(), 42, *conf));
+		serverInterface = std::make_unique<LocalServerInterface>(world.get(), 42, *conf);
 	}
 }
 
