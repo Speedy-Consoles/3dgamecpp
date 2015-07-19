@@ -12,6 +12,7 @@ class Menu;
 class Graphics;
 struct GraphicsConf;
 class Stopwatch;
+class BlockManager;
 
 class Client {
 public:
@@ -30,6 +31,7 @@ public:
 	uint8 getLocalClientId() const;
 	
 	GraphicsConf *getConf() { return conf.get(); }
+	BlockManager *getBlockManager() { return blockManager.get(); }
 	World *getWorld() { return world.get(); }
 	Menu *getMenu() { return menu.get(); }
 	Graphics *getGraphics() { return graphics.get(); }
@@ -40,6 +42,7 @@ public:
 
 private:
 	std::unique_ptr<GraphicsConf> conf;
+	std::unique_ptr<BlockManager> blockManager;
 	std::unique_ptr<World> world;
 	std::unique_ptr<Menu> menu;
 	std::unique_ptr<Graphics> graphics;

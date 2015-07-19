@@ -1,0 +1,52 @@
+# basic blocks
+air    0
+dirt   1
+grass  2
+stone  3
+{
+	multi 36
+}
+sand   4
+gravel 5
+wood   6
+planks 7
+cobble 8
+mossy  9
+bricks 10
+
+ore
+{
+	coal    11
+	iron    12
+	gold    13
+	diamond 14
+	lapiz   15
+	emerald 16
+}
+
+wool
+{
+	white      17
+	orange     18
+	magenta    19
+	blue       20
+	yellow     21
+	green      22
+	pink       23
+	dark_gray  24
+	light_gray 25
+	cyan       26
+	violet     27
+	purple     28
+	brown      29
+	dark_green 30
+	red        31
+	black      32
+}
+
+test
+{
+	orient 33
+	multi4 34
+	wang   35
+}

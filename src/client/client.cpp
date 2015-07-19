@@ -15,6 +15,7 @@
 #include "stopwatch.hpp"
 #include "engine/time.hpp"
 #include "game/world.hpp"
+#include "game/block_manager.hpp"
 #include "menu.hpp"
 #include "gui/frame.hpp"
 #include "engine/logging.hpp"
@@ -62,6 +63,9 @@ Client::Client(const char *worldId, const char *serverAdress) {
 	load("graphics-default.profile", conf.get());
 
 	blockManager = std::make_unique<BlockManager>();
+	blockManager->load("block_ids.txt");
+
+	world = std::make_unique<World>(worldId);
 	menu = std::make_unique<Menu>(conf.get());
 	graphics = std::make_unique<Graphics>(this, world.get(), menu.get(), &state, &localClientId, *conf, stopwatch.get());
 
@@ -149,7 +153,7 @@ void Client::handleInput() {
 			if (state == State::PLAYING) {
 				auto block = player.getBlock();
 				block += event.wheel.y;
-				static const int NUMBER_OF_BLOCKS = 36;
+				static const int NUMBER_OF_BLOCKS = blockManager->getBlockNumber();
 				while (block > NUMBER_OF_BLOCKS) {
 					block -= NUMBER_OF_BLOCKS;
 				}
