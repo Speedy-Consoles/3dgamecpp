@@ -30,6 +30,7 @@
     <ClCompile Include="..\..\src\client\render_2.cpp" />
     <ClCompile Include="..\..\src\client\render_menu_2.cpp" />
     <ClCompile Include="..\..\src\client\shaders.cpp" />
+    <ClCompile Include="..\..\src\client\texture_loader.cpp" />
     <ClCompile Include="..\..\src\client\texture_manager.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -53,6 +54,7 @@
     <ClInclude Include="..\..\src\client\renderer.hpp" />
     <ClInclude Include="..\..\src\client\server_interface.hpp" />
     <ClInclude Include="..\..\src\client\shaders.hpp" />
+    <ClInclude Include="..\..\src\client\texture_loader.hpp" />
     <ClInclude Include="..\..\src\client\texture_manager.hpp" />
   </ItemGroup>
   <ItemGroup>

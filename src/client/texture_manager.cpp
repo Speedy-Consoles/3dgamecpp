@@ -16,7 +16,9 @@ static const auto TEX2D = GL_TEXTURE_2D;
 TextureManager::TextureManager(const GraphicsConf &conf) :
 	conf(conf)
 {
-	// nothing
+	/*TextureLoader *textureLoader = new TextureLoader("block_textures.txt");
+	textureLoader->load();
+	delete textureLoader;*/
 }
 
 TextureManager::~TextureManager() {
@@ -80,7 +82,7 @@ void TextureManager::loadTextures(uint *blocks, const char *filename, int xTiles
 			int ret_code = SDL_BlitSurface(img, &rect, tmp, nullptr);
 			if (ret_code)
 				LOG(ERROR, "Blit unsuccessful: " << SDL_GetError());
-			loadTexture(block, tmp, SINGLE_TEXTURE);
+			loadTexture(block, tmp, TextureType::SINGLE_TEXTURE);
 			++loaded;
 		}
 	}
@@ -154,14 +156,14 @@ bool TextureManager::bind(uint block) {
 	GLuint oldTex = lastBound.tex;
 
 	if (block == 0) {
-		lastBound = {0, 0, SINGLE_TEXTURE, 0, 0, 1, 1};
+		lastBound = {0, 0, TextureType::SINGLE_TEXTURE, 0, 0, 1, 1};
 		return oldTex != 0;
 	}
 
 	auto iter = textures.find(block);
 	if (iter == textures.end()) {
-		LOG(TRACE, "texture " << block << " not found");
-		lastBound = {0, 0, SINGLE_TEXTURE, 0, 0, 1, 1};
+		//LOG(TRACE, "texture " << block << " not found");
+		lastBound = {0, 0, TextureType::SINGLE_TEXTURE, 0, 0, 1, 1};
 		return oldTex != 0;
 	} else {
 		lastBound = iter->second;
@@ -181,7 +183,7 @@ void TextureManager::getTextureVertices(vec2f out[4]) const {
 	float w = lastBound.w;
 	float h = lastBound.h;
 
-	if (lastBound.type == WANG_TILES || lastBound.type == MULTI_x4) {
+	if (lastBound.type == TextureType::WANG_TILES || lastBound.type == TextureType::MULTI_x4) {
 		w *= 0.25;
 		h *= 0.25;
 	}
@@ -244,7 +246,7 @@ void TextureManager::getTextureVertices(vec3i64 bc, uint8 dir, vec2f out[4]) con
 	float w = lastBound.w;
 	float h = lastBound.h;
 
-	if (lastBound.type == WANG_TILES || lastBound.type == MULTI_x4) {
+	if (lastBound.type == TextureType::WANG_TILES || lastBound.type == TextureType::MULTI_x4) {
 		enum { RIGHT, BACK, TOP, LEFT, FRONT, BOTTOM };
 		vec3i64 vl, vr, vb, vt;
 		switch (dir) {
@@ -292,7 +294,7 @@ void TextureManager::getTextureVertices(vec3i64 bc, uint8 dir, vec2f out[4]) con
 			break;
 		}
 
-		if (lastBound.type == WANG_TILES) {
+		if (lastBound.type == TextureType::WANG_TILES) {
 			uint8 left, right, top, bot;
 			switch (dir) {
 			default:
@@ -325,7 +327,7 @@ void TextureManager::getTextureVertices(vec3i64 bc, uint8 dir, vec2f out[4]) con
 			else if (!bot  && !top)   y += h * 2;
 			else if (!bot  &&  top)   y += h * 3;
 		} // wang tiles
-		else if (lastBound.type == MULTI_x4) {
+		else if (lastBound.type == TextureType::MULTI_x4) {
 			w *= 0.25;
 			h *= 0.25;
 
@@ -343,4 +345,34 @@ void TextureManager::getTextureVertices(vec3i64 bc, uint8 dir, vec2f out[4]) con
 	out[1] = {x + w, y    };
 	out[2] = {x + w, y + h};
 	out[3] = {x    , y + h};
+}
+
+void TextureManager::add(SDL_Surface *img, const std::vector<TextureEntry> &entries) {
+	SDL_Surface *tmp = nullptr;
+
+	for (const auto &entry : entries) {
+		int width = entry.w > 0 ? entry.w : img->w;
+		int height = entry.h > 0 ? entry.h : img->h;
+		if (tmp == nullptr || tmp->w != width || tmp->h != height) {
+			if (tmp)
+				SDL_FreeSurface(tmp);
+			tmp = SDL_CreateRGBSurface(
+					0, width, height, 32,
+					0x000000FF, 0x0000FF00, 0x00FF0000, 0xFF000000);
+			if (!tmp) {
+				LOG(ERROR, "Temporary SDL_Surface could not be created");
+				return;
+			}
+		}
+
+		SDL_Rect rect{entry.x, entry.y, width, height};
+		int ret_code = SDL_BlitSurface(img, &rect, tmp, nullptr);
+		if (ret_code)
+			LOG(ERROR, "Blit unsuccessful: " << SDL_GetError());
+
+		loadTexture(entry.id, tmp, entry.type);
+	}
+
+	if (tmp)
+		SDL_FreeSurface(tmp);
 }

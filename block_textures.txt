@@ -1,0 +1,58 @@
+# main atlas with all the good stuff
+texture file="img/textures_1.png" width=16 height=16 {
+	# basic blocks
+#	block name=dirt   row=0 col=0
+	block name=grass  row=0 col=1
+	block name=stone  row=0 col=2
+	block name=sand   row=0 col=3
+	block name=gravel row=0 col=4
+	block name=wood   row=0 col=5
+	block name=planks row=0 col=6
+	block name=cobble row=0 col=7
+	block name=mossy  row=0 col=8
+	block name=bricks row=0 col=9
+	
+	# ores
+	block name=ore.coal    row=0 col=10
+	block name=ore.iron    row=0 col=11
+	block name=ore.gold    row=0 col=12
+	block name=ore.diamond row=0 col=13
+	block name=ore.lapiz   row=0 col=14
+	block name=ore.emerald row=0 col=15
+	
+	# wool
+	block name=wool.white      row=1 col=0
+	block name=wool.orange     row=1 col=1
+	block name=wool.magenta    row=1 col=2
+	block name=wool.blue       row=1 col=3
+	block name=wool.yellow     row=1 col=4
+	block name=wool.green      row=1 col=5
+	block name=wool.pink       row=1 col=6
+	block name=wool.dark_gray  row=1 col=7
+	block name=wool.light_gray row=1 col=8
+	block name=wool.cyan       row=1 col=9
+	block name=wool.violet     row=1 col=10
+	block name=wool.purple     row=1 col=11
+	block name=wool.brown      row=1 col=12
+	block name=wool.dark_green row=1 col=13
+	block name=wool.red        row=1 col=14
+	block name=wool.black      row=1 col=15
+	
+	block name=test.orient row=2 col=0
+}
+
+texture file="img/diff_earth.png" {
+	block name=dirt type=wang
+}
+
+texture file="img/multi4_test.png" {
+	block name=test.multi4 type=multi4
+}
+
+texture file="img/wang_test.png" {
+	block name=test.wang type=wang
+}
+
+texture file="img/stone_diff.png" {
+	block name=stone.multi type=multi4
+}

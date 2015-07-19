@@ -66,17 +66,17 @@ BlockLoader::~BlockLoader() {
 	if (f) fclose(f);
 }
 
-enum ParserState {
-	FIRST,
-	SECOND,
-};
-
 void BlockLoader::load() {
+	enum class State {
+		FIRST,
+		SECOND,
+	};
+
 	ch = getc(f);
 
 	std::string lastKey = "";
 	std::vector<std::string> stack;
-	ParserState state = FIRST;
+	State state = State::FIRST;
 
 	while (true) {
 		getNextToken();
@@ -87,13 +87,13 @@ void BlockLoader::load() {
 			}
 			return;
 		} else if (tok.id == TOK_STRING) {
-			if (state != FIRST) {
+			if (state != State::FIRST) {
 				throw ParsingError{tok.row, tok.col, "Unexpected key"};
 			}
 			lastKey = tok.str;
-			state = SECOND;
+			state = State::SECOND;
 		} else if (tok.id == TOK_NUMERAL) {
-			if (state != SECOND) {
+			if (state != State::SECOND) {
 				throw ParsingError{tok.row, tok.col, "Unexpected value"};
 			}
 			std::string key;
@@ -103,32 +103,24 @@ void BlockLoader::load() {
 			}
 			key += lastKey;
 			emit(key, tok.i);
-			state = FIRST;
+			state = State::FIRST;
 		} else if (tok.id == TOK_LBRACE) {
 			if (lastKey == "") {
 				throw ParsingError{tok.row, tok.col, "Unexpected {"};
 			}
 			stack.push_back(lastKey);
-			state = FIRST;
+			state = State::FIRST;
 		} else if (tok.id == TOK_RBRACE) {
 			if (stack.size() <= 0) {
 				throw ParsingError{tok.row, tok.col, "Unexpected }"};
 			}
 			stack.pop_back();
-			state = FIRST;
+			state = State::FIRST;
 		} else {
 			throw ParsingError{tok.row, tok.col, "Unknown token"};
 		}
 	}
 }
-
-enum State {
-	START,
-	TERM,
-	NUMERAL,
-	STRING,
-	COMMENT,
-};
 
 void BlockLoader::getNextChar() {
 	if (ch == '\n') {
@@ -142,12 +134,20 @@ void BlockLoader::getNextChar() {
 }
 
 void BlockLoader::getNextToken() {
+	enum class State {
+		START,
+		TERM,
+		NUMERAL,
+		STRING,
+		COMMENT,
+	};
+
 	tok = {TOK_EOF, -1, -1, -1, ""};
 	tok.str.reserve(64);
-	State state = START;
-	while (state != TERM) {
+	State state = State::START;
+	while (state != State::TERM) {
 		switch (state) {
-		case START:
+		case State::START:
 			// eat whitespace
 			while (isblank(ch) || ch == '\n')
 				getNextChar();
@@ -157,28 +157,28 @@ void BlockLoader::getNextToken() {
 			// select next state
 			if (ch == '\0' || ch == EOF) {
 				tok.id = TOK_EOF;
-				state = TERM;
+				state = State::TERM;
 			} else if (ch == '#') {
-				state = COMMENT;
+				state = State::COMMENT;
 			} else if (ch == '{') {
 				getNextChar();
 				tok.id = TOK_LBRACE;
 				tok.str = "{";
-				state = TERM;
+				state = State::TERM;
 			} else if (ch == '}') {
 				getNextChar();
 				tok.id = TOK_RBRACE;
 				tok.str = "}";
-				state = TERM;
+				state = State::TERM;
 			} else if (isdigit(ch)) {
-				state = NUMERAL;
+				state = State::NUMERAL;
 			} else if (isalpha(ch) || ch == '_') {
-				state = STRING;
+				state = State::STRING;
 			} else {
 				throw ParsingError{row, col, "Unknown token"};
 			}
 			continue;
-		case NUMERAL: {
+		case State::NUMERAL: {
 			while (isdigit(ch)) {
 				tok.str += ch;
 				getNextChar();
@@ -187,22 +187,22 @@ void BlockLoader::getNextToken() {
 			tok.i = strtoul(start, nullptr, 10);
 			tok.id = TOK_NUMERAL;
 
-			state = TERM;
+			state = State::TERM;
 			continue;
 		}
-		case STRING:
+		case State::STRING:
 			while (isalnum(ch) || ch == '_' || ch == '.') {
 				tok.str += ch;
 				getNextChar();
 			}
 			tok.id = TOK_STRING;
-			state = TERM;
+			state = State::TERM;
 			continue;
-		case COMMENT:
+		case State::COMMENT:
 			while (ch != '\n') {
 				getNextChar();
 			}
-			state = START;
+			state = State::START;
 			continue;
 		}
 	}

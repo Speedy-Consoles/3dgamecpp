@@ -125,29 +125,10 @@ void GL2Renderer::initGL() {
 
 	// textures
 	LOG(DEBUG, "Loading textures");
-	uint blocks[] = {
-		 1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15, 16,
-		17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32,
-		33,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
-		 0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
-		 0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
-		 0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
-		 0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
-		 0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
-		 0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
-		 0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
-		 0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
-		 0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
-		 0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
-		 0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
-		 0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
-		 0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
-	};
-	texManager.loadTextures(blocks, "img/textures_1.png", 16, 16);
-	texManager.loadTexture(1, "img/diff_earth.png", TextureManager::WANG_TILES);
-	texManager.loadTexture(34, "img/multi4_test.png", TextureManager::MULTI_x4);
-	texManager.loadTexture(35, "img/wang_test.png", TextureManager::WANG_TILES);
-	texManager.loadTexture(36, "img/stone_diff.png", TextureManager::MULTI_x4);
+	const char *block_textures_file = "block_textures.txt";
+	if (texManager.load(block_textures_file, client->getBlockManager())) {
+		LOG(WARNING, "There was a problem loading '" << block_textures_file << "'");
+	}
 
 	// fog
 	glEnable(GL_FOG);

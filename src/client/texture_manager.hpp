@@ -8,6 +8,8 @@
 #ifndef TEXTURE_MANAGER_HPP_
 #define TEXTURE_MANAGER_HPP_
 
+#include "texture_loader.hpp"
+
 #include <GL/glew.h>
 #include <GL/gl.h>
 #include <unordered_map>
@@ -19,15 +21,10 @@
 
 struct SDL_Surface;
 
-class TextureManager {
-public:
-	enum TextureType {
-		SINGLE_TEXTURE,
-		TEXTURE_ATLAS,
-		WANG_TILES,
-		MULTI_x4,
-	};
+class TextureLoader;
 
+class TextureManager : public AbstractTextureManager {
+public:
 	TextureManager(const GraphicsConf &);
 	~TextureManager();
 
@@ -38,7 +35,7 @@ public:
 	TextureManager &operator = (TextureManager &&) = delete;
 
 	void loadTextures(uint *blocks, const char *filename, int xTiles, int yTiles);
-	GLuint loadTexture(uint block, const char *filename, TextureType type = SINGLE_TEXTURE);
+	GLuint loadTexture(uint block, const char *filename, TextureType type);
 
 	void setConfig(const GraphicsConf &);
 
@@ -48,6 +45,9 @@ public:
 	GLuint getTexture();
 	void getTextureVertices(vec2f out[4]) const;
 	void getTextureVertices(vec3i64 bc, uint8 dir, vec2f out[4]) const;
+
+protected:
+	void add(SDL_Surface *img, const std::vector<TextureEntry> &entries) override;
 
 private:
 	GraphicsConf conf;
@@ -59,7 +59,7 @@ private:
 		float x, y, w, h;
 	};
 	std::unordered_map<uint, Entry> textures;
-	Entry lastBound = Entry{0, 0, SINGLE_TEXTURE, 0, 0, 0};
+	Entry lastBound = Entry{0, 0, TextureType::SINGLE_TEXTURE, 0, 0, 0};
 
 	std::list<GLuint> loadedTextures;
 
