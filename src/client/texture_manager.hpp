@@ -34,9 +34,6 @@ public:
 	TextureManager &operator = (const TextureManager &) = delete;
 	TextureManager &operator = (TextureManager &&) = delete;
 
-	void loadTextures(uint *blocks, const char *filename, int xTiles, int yTiles);
-	GLuint loadTexture(uint block, const char *filename, TextureType type);
-
 	void setConfig(const GraphicsConf &);
 
 	bool isWangTileBound() const;

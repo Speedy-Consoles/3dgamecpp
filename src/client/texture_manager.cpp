@@ -16,9 +16,7 @@ static const auto TEX2D = GL_TEXTURE_2D;
 TextureManager::TextureManager(const GraphicsConf &conf) :
 	conf(conf)
 {
-	/*TextureLoader *textureLoader = new TextureLoader("block_textures.txt");
-	textureLoader->load();
-	delete textureLoader;*/
+	// nothing
 }
 
 TextureManager::~TextureManager() {
@@ -53,85 +51,6 @@ static void setLoadingOptions(GraphicsConf &conf) {
 		glTexParameteri(TEX2D, GL_TEXTURE_MAX_LEVEL, conf.tex_mipmapping);
 		glTexParameteri(TEX2D, GL_GENERATE_MIPMAP, GL_TRUE);
 	}
-}
-
-void TextureManager::loadTextures(uint *blocks, const char *filename, int xTiles, int yTiles) {
-	SDL_Surface *img = IMG_Load(filename);
-	if (!img) {
-		LOG(ERROR, "File '" << filename << "' could not be loaded");
-		return;
-	}
-	int tileW = img->w / xTiles;
-	int tileH = img->h / yTiles;
-	SDL_Surface *tmp = SDL_CreateRGBSurface(
-			0, tileW, tileH, 32,
-			0x000000FF, 0x0000FF00, 0x00FF0000, 0xFF000000);
-	if (!tmp) {
-		LOG(ERROR, "Temporary SDL_Surface could not be created");
-		return;
-	}
-
-	size_t loaded = 0;
-	auto blocks_ptr = blocks;
-	for (int j = 0; j < yTiles; ++j) {
-		for (int i = 0; i < xTiles; ++i) {
-			uint block = *blocks_ptr++;
-			if (block == 0)
-				continue;
-			SDL_Rect rect{i * tileW, j * tileH, tileW, tileH};
-			int ret_code = SDL_BlitSurface(img, &rect, tmp, nullptr);
-			if (ret_code)
-				LOG(ERROR, "Blit unsuccessful: " << SDL_GetError());
-			loadTexture(block, tmp, TextureType::SINGLE_TEXTURE);
-			++loaded;
-		}
-	}
-
-	SDL_FreeSurface(tmp);
-	SDL_FreeSurface(img);
-
-	GLenum e = glGetError();
-	if (e != GL_NO_ERROR) {
-		LOG(ERROR, "Loading '" << filename << "': " << gluErrorString(e));
-	}
-
-	LOG(DEBUG, "Loaded " << loaded << " textures from '" << filename << "'");
-}
-
-GLuint TextureManager::loadTexture(uint block, const char *filename, TextureType type) {
-	SDL_Surface *img = IMG_Load(filename);
-	if (!img) {
-		LOG(ERROR, "File '" << filename << "' could not be opened");
-		return 0;
-	}
-	GLuint tex = loadTexture(block, img, type);
-	SDL_FreeSurface(img);
-	if (!tex) {
-		LOG(ERROR, "File '" << filename << "' could not be opened");
-		return 0;
-	}
-	return tex;
-}
-
-GLuint TextureManager::loadTexture(uint block, SDL_Surface *img, TextureType type) {
-	GLuint tex;
-	glGenTextures(1, &tex);
-	glBindTexture(TEX2D, tex);
-	setLoadingOptions(conf);
-	glTexImage2D(TEX2D, 0, 4, img->w, img->h, 0,
-			GL_RGBA, GL_UNSIGNED_BYTE, img->pixels);
-
-	GLenum e = glGetError();
-	if (e != GL_NO_ERROR) {
-		LOG(ERROR, "Could not load texture: " << gluErrorString(e));
-		return 0;
-	}
-
-	Entry entry{block, tex, type, 0, 1, 1, -1};
-	textures.insert({block, entry});
-	loadedTextures.push_back(tex);
-
-	return tex;
 }
 
 void TextureManager::setConfig(const GraphicsConf &c) {
@@ -375,4 +294,25 @@ void TextureManager::add(SDL_Surface *img, const std::vector<TextureEntry> &entr
 
 	if (tmp)
 		SDL_FreeSurface(tmp);
+}
+
+GLuint TextureManager::loadTexture(uint block, SDL_Surface *img, TextureType type) {
+	GLuint tex;
+	glGenTextures(1, &tex);
+	glBindTexture(TEX2D, tex);
+	setLoadingOptions(conf);
+	glTexImage2D(TEX2D, 0, 4, img->w, img->h, 0,
+			GL_RGBA, GL_UNSIGNED_BYTE, img->pixels);
+
+	GLenum e = glGetError();
+	if (e != GL_NO_ERROR) {
+		LOG(ERROR, "Could not load texture: " << gluErrorString(e));
+		return 0;
+	}
+
+	Entry entry{block, tex, type, 0, 1, 1, -1};
+	textures.insert({block, entry});
+	loadedTextures.push_back(tex);
+
+	return tex;
 }
