@@ -24,17 +24,17 @@ texture file="img/textures_1.png" width=16 height=16 {
 	block name=wool.white      row=1 col=0
 	block name=wool.orange     row=1 col=1
 	block name=wool.magenta    row=1 col=2
-	block name=wool.blue       row=1 col=3
+	block name=wool.azure      row=1 col=3
 	block name=wool.yellow     row=1 col=4
-	block name=wool.green      row=1 col=5
+	block name=wool.lime       row=1 col=5
 	block name=wool.pink       row=1 col=6
 	block name=wool.dark_gray  row=1 col=7
 	block name=wool.light_gray row=1 col=8
 	block name=wool.cyan       row=1 col=9
-	block name=wool.violet     row=1 col=10
-	block name=wool.purple     row=1 col=11
+	block name=wool.purple     row=1 col=10
+	block name=wool.blue       row=1 col=11
 	block name=wool.brown      row=1 col=12
-	block name=wool.dark_green row=1 col=13
+	block name=wool.green      row=1 col=13
 	block name=wool.red        row=1 col=14
 	block name=wool.black      row=1 col=15
 	

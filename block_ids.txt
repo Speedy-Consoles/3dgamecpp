@@ -29,17 +29,17 @@ wool
 	white      17
 	orange     18
 	magenta    19
-	blue       20
+	azure      20
 	yellow     21
-	green      22
+	lime       22
 	pink       23
 	dark_gray  24
 	light_gray 25
 	cyan       26
-	violet     27
-	purple     28
+	purple     27
+	blue       28
 	brown      29
-	dark_green 30
+	green      30
 	red        31
 	black      32
 }
