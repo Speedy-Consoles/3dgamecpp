@@ -6,14 +6,17 @@
 #include <memory>
 #include <vector>
 
+struct ParsingError {
+	int row, col;
+	std::string error;
+};
+
 enum TokenId {
 	TOK_EOF,
 	TOK_LBRACE,
 	TOK_RBRACE,
 	TOK_STRING,
 	TOK_NUMERAL,
-	TOK_ERROR = -1,
-	TOK_NONE = -2,
 };
 
 struct Token {
@@ -38,7 +41,7 @@ public:
 	BlockLoader(const char *path, AbstractBlockManager *bm);
 	~BlockLoader();
 
-	int load();
+	void load();
 
 private:
 	int ch = 0;
@@ -68,7 +71,7 @@ enum ParserState {
 	SECOND,
 };
 
-int BlockLoader::load() {
+void BlockLoader::load() {
 	ch = getc(f);
 
 	std::string lastKey = "";
@@ -78,25 +81,20 @@ int BlockLoader::load() {
 	while (true) {
 		getNextToken();
 
-		if (tok.id == TOK_ERROR) {
-			return 1;
-		} else if (tok.id == TOK_EOF) {
+		if (tok.id == TOK_EOF) {
 			if (stack.size() > 0) {
-				LOG(ERROR, "unexpected eof in '" << path << "'");
-				return 1;
+				throw ParsingError{tok.row, tok.col, "Unexpected EOF"};
 			}
-			return 0;
+			return;
 		} else if (tok.id == TOK_STRING) {
 			if (state != FIRST) {
-				LOG(ERROR, "unexpected key in '" << path << "' at " << tok.row + 1 << ":" << tok.col + 1);
-				return 1;
+				throw ParsingError{tok.row, tok.col, "Unexpected key"};
 			}
 			lastKey = tok.str;
 			state = SECOND;
 		} else if (tok.id == TOK_NUMERAL) {
 			if (state != SECOND) {
-				LOG(ERROR, "unexpected value in '" << path << "' at " << tok.row + 1 << ":" << tok.col + 1);
-				return 1;
+				throw ParsingError{tok.row, tok.col, "Unexpected value"};
 			}
 			std::string key;
 			for (const auto &value : stack) {
@@ -108,21 +106,18 @@ int BlockLoader::load() {
 			state = FIRST;
 		} else if (tok.id == TOK_LBRACE) {
 			if (lastKey == "") {
-				LOG(ERROR, "unexpected { in '" << path << "' at " << tok.row + 1 << ":" << tok.col + 1);
-				return 1;
+				throw ParsingError{tok.row, tok.col, "Unexpected {"};
 			}
 			stack.push_back(lastKey);
 			state = FIRST;
 		} else if (tok.id == TOK_RBRACE) {
 			if (stack.size() <= 0) {
-				LOG(ERROR, "unexpected } in '" << path << "' at " << tok.row + 1 << ":" << tok.col + 1);
-				return 1;
+				throw ParsingError{tok.row, tok.col, "Unexpected }"};
 			}
 			stack.pop_back();
 			state = FIRST;
 		} else {
-			LOG(ERROR, "unknown token in '" << path << "' at " << tok.row + 1 << ":" << tok.col + 1);
-			return 1;
+			throw ParsingError{tok.row, tok.col, "Unknown token"};
 		}
 	}
 }
@@ -138,16 +133,16 @@ enum State {
 void BlockLoader::getNextChar() {
 	if (ch == '\n') {
 		++row;
-		pos = 0;
 		col = 0;
+	} else {
+		++pos;
+		++col;
 	}
 	ch = getc(f);
-	++pos;
-	++col;
 }
 
 void BlockLoader::getNextToken() {
-	tok = {TOK_ERROR, -1, -1, -1, ""};
+	tok = {TOK_EOF, -1, -1, -1, ""};
 	tok.str.reserve(64);
 	State state = START;
 	while (state != TERM) {
@@ -180,9 +175,7 @@ void BlockLoader::getNextToken() {
 			} else if (isalpha(ch) || ch == '_') {
 				state = STRING;
 			} else {
-				tok.err = "unexpected symbol";
-				tok.str = ch;
-				state = TERM;
+				throw ParsingError{row, col, "Unknown token"};
 			}
 			continue;
 		case NUMERAL: {
@@ -191,13 +184,8 @@ void BlockLoader::getNextToken() {
 				getNextChar();
 			}
 			const char *start = tok.str.c_str();
-			char *end;
-			tok.i = strtoul(start, &end, 10);
-			if (end - start == tok.str.length()) {
-				tok.id = TOK_NUMERAL;
-			} else {
-				tok.err = "parsing error";
-			}
+			tok.i = strtoul(start, nullptr, 10);
+			tok.id = TOK_NUMERAL;
 
 			state = TERM;
 			continue;
@@ -226,5 +214,11 @@ void BlockLoader::emit(std::string key, int value) {
 
 int AbstractBlockManager::load(const char *path) {
 	auto loader = std::make_unique<BlockLoader>(path, this);
-	return loader->load();
+	try {
+		loader->load();
+	} catch (ParsingError &e) {
+		LOG(ERROR, path << ":" << (e.row + 1) << ":" << (e.col + 1) << ": " << e.error);
+		return 1;
+	}
+	return 0;
 }
