@@ -98,6 +98,9 @@
     <ClInclude Include="..\..\src\game\block_manager.hpp">
       <Filter>Header Files\game</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\game\block_loader.hpp">
+      <Filter>Header Files\game</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\stopwatch.cpp">
@@ -152,6 +155,9 @@
       <Filter>Source Files\engine</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\game\block_manager.cpp">
+      <Filter>Source Files\game</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\game\block_loader.cpp">
       <Filter>Source Files\game</Filter>
     </ClCompile>
   </ItemGroup>

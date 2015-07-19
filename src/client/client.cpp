@@ -63,7 +63,11 @@ Client::Client(const char *worldId, const char *serverAdress) {
 	load("graphics-default.profile", conf.get());
 
 	blockManager = std::make_unique<BlockManager>();
-	blockManager->load("block_ids.txt");
+	const char *block_ids_file = "block_ids.txt";
+	if (blockManager->load(block_ids_file)) {
+		LOG(ERROR, "Problem loading '" << block_ids_file << "'");
+	}
+	LOG(INFO, "" << blockManager->getBlockNumber() << " blocks were loaded from '" << block_ids_file << "'");
 
 	world = std::make_unique<World>(worldId);
 	menu = std::make_unique<Menu>(conf.get());

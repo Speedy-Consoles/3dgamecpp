@@ -26,6 +26,7 @@
     <ClInclude Include="..\..\src\engine\time.hpp" />
     <ClInclude Include="..\..\src\engine\unicode_int.hpp" />
     <ClInclude Include="..\..\src\engine\vmath.hpp" />
+    <ClInclude Include="..\..\src\game\block_loader.hpp" />
     <ClInclude Include="..\..\src\game\block_manager.hpp" />
     <ClInclude Include="..\..\src\game\chunk.hpp" />
     <ClInclude Include="..\..\src\game\perlin.hpp" />
@@ -45,6 +46,7 @@
     <ClCompile Include="..\..\src\engine\socket.cpp" />
     <ClCompile Include="..\..\src\engine\time.cpp" />
     <ClCompile Include="..\..\src\engine\unicode_int.cpp" />
+    <ClCompile Include="..\..\src\game\block_loader.cpp" />
     <ClCompile Include="..\..\src\game\block_manager.cpp" />
     <ClCompile Include="..\..\src\game\chunk.cpp" />
     <ClCompile Include="..\..\src\game\perlin.cpp" />
