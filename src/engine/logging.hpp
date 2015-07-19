@@ -40,7 +40,7 @@ namespace logging {
 #define DEFAULT_LOGGER
 #define LOG(sev, msg) {\
 	std::stringstream ss;\
-	ss << __FILE__ << ":" << __LINE__ << ": " << sev << ": " << msg;\
+	ss << sev  << ": " << __FILE__ << ":" << __LINE__ <<  ": " << msg;\
 	std::cout << ss.str() << std::endl;\
 	logging::stream << ss.str() << std::endl;\
 }
