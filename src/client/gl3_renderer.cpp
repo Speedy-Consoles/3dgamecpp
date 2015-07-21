@@ -30,7 +30,8 @@ GL3Renderer::GL3Renderer(
 	fontDejavu(&shaderManager.getFontShader()),
 	chunkRenderer(client, this, &shaderManager),
 	debugRenderer(client, this, &shaderManager, graphics),
-	menuRenderer(client, this, &shaderManager, graphics)
+	menuRenderer(client, this, &shaderManager, graphics),
+	skyRenderer(client, this, &shaderManager, graphics)
 {
 	makeMaxFOV();
 	makePerspectiveMatrix();
@@ -58,7 +59,6 @@ GL3Renderer::GL3Renderer(
 	blockShader.setStartFogDistance(startFog);
 
 	buildCrossHair();
-	buildSky();
 
     // font
 	fontTimes.load("fonts/times32.fnt");
@@ -72,27 +72,10 @@ GL3Renderer::GL3Renderer(
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glEnable(GL_CULL_FACE);
 	logOpenGLError();
-
-	// fog fbo and texture
-	glGenTextures(1, &skyTexture);
-	glBindTexture(GL_TEXTURE_2D, skyTexture);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, graphics->getWidth(), graphics->getHeight(), 0, GL_RGBA, GL_FLOAT, 0);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	logOpenGLError();
-
-	glGenFramebuffers(1, &skyFBO);
-	glBindFramebuffer(GL_FRAMEBUFFER, skyFBO);
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, skyTexture, 0);
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-	logOpenGLError();
 }
 
 GL3Renderer::~GL3Renderer() {
 	LOG(DEBUG, "Destroying GL3 renderer");
-
-	glDeleteFramebuffers(1, &skyFBO);
-	glDeleteTextures(1, &skyTexture);
 }
 
 void GL3Renderer::buildCrossHair() {
@@ -126,43 +109,9 @@ void GL3Renderer::buildCrossHair() {
 	glBindVertexArray(0);
 }
 
-void GL3Renderer::buildSky() {
-	glGenVertexArrays(1, &skyVAO);
-	glGenBuffers(1, &skyVBO);
-	glBindVertexArray(skyVAO);
-	glBindBuffer(GL_ARRAY_BUFFER, skyVBO);
-
-	VertexData vertexData[12] = {
-			// x      y      z       r            g            b            a
-			{{-2.0f, -2.0f,  2.0f}, {fogColor[0], fogColor[1], fogColor[2], 1.0f}},
-			{{ 2.0f, -2.0f,  2.0f}, {fogColor[0], fogColor[1], fogColor[2], 1.0f}},
-			{{ 2.0f,  0.3f, -1.0f}, {fogColor[0], fogColor[1], fogColor[2], 1.0f}},
-			{{ 2.0f,  0.3f, -1.0f}, {fogColor[0], fogColor[1], fogColor[2], 1.0f}},
-			{{-2.0f,  0.3f, -1.0f}, {fogColor[0], fogColor[1], fogColor[2], 1.0f}},
-			{{-2.0f, -2.0f,  2.0f}, {fogColor[0], fogColor[1], fogColor[2], 1.0f}},
-
-			{{-2.0f,  0.3f, -1.0f}, {fogColor[0], fogColor[1], fogColor[2], 1.0f}},
-			{{ 2.0f,  0.3f, -1.0f}, {fogColor[0], fogColor[1], fogColor[2], 1.0f}},
-			{{ 2.0f,  2.0f,  2.0f}, {skyColor[0], skyColor[1], skyColor[2], 1.0f}},
-			{{ 2.0f,  2.0f,  2.0f}, {skyColor[0], skyColor[1], skyColor[2], 1.0f}},
-			{{-2.0f,  2.0f,  2.0f}, {skyColor[0], skyColor[1], skyColor[2], 1.0f}},
-			{{-2.0f,  0.3f, -1.0f}, {fogColor[0], fogColor[1], fogColor[2], 1.0f}},
-	};
-
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertexData), vertexData, GL_STATIC_DRAW);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 28, 0);
-	glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 28, (void *) 12);
-	glEnableVertexAttribArray(0);
-	glEnableVertexAttribArray(1);
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-	glBindVertexArray(0);
-}
-
 void GL3Renderer::resize() {
 	makePerspectiveMatrix();
 	makeOrthogonalMatrix();
-	glBindTexture(GL_TEXTURE_2D, skyTexture);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, graphics->getWidth(), graphics->getHeight(), 0, GL_RGBA, GL_FLOAT, 0);
 }
 
 void GL3Renderer::makePerspectiveMatrix() {
@@ -260,7 +209,7 @@ void GL3Renderer::tick() {
 void GL3Renderer::render() {
     logOpenGLError();
 
-	renderSky();
+	skyRenderer.render();
 	logOpenGLError();
 
 	glClear(GL_DEPTH_BUFFER_BIT);
@@ -279,7 +228,7 @@ void GL3Renderer::render() {
 		if (client->isDebugOn())
 			debugRenderer.render();
 	} else if (client->getState() == Client::State::IN_MENU){
-		renderMenu();
+		menuRenderer.render();
 	}
 	glDepthMask(true);
 	glEnable(GL_DEPTH_TEST);
@@ -307,33 +256,6 @@ void GL3Renderer::renderHud(const Player &player) {
 		glTexCoord2f(texs[3][0], texs[3][1]); glVertex2f(0, d);
 	glEnd();
 	glPopMatrix();*/
-}
-
-void GL3Renderer::renderSky() {
-	glDisable(GL_DEPTH_TEST);
-	glDepthMask(false);
-	Player &player = client->getWorld()->getPlayer(client->getLocalClientId());
-	if (!player.isValid())
-		return;
-
-	glm::mat4 viewMatrix = glm::rotate(glm::mat4(1.0f), (float) (-player.getPitch() / 360.0 * TAU), glm::vec3(1.0f, 0.0f, 0.0f));
-	auto &defaultShader = shaderManager.getDefaultShader();
-	defaultShader.setModelMatrix(glm::mat4(1.0f));
-	defaultShader.setViewMatrix(viewMatrix);
-	defaultShader.setFogEnabled(false);
-    defaultShader.setLightEnabled(false);
-	defaultShader.useProgram();
-
-	glBindVertexArray(skyVAO);
-	glDrawArrays(GL_TRIANGLES, 0, 12);
-	defaultShader.setFogEnabled(true);
-	defaultShader.setLightEnabled(true);
-	glDepthMask(true);
-	glEnable(GL_DEPTH_TEST);
-}
-
-void GL3Renderer::renderMenu() {
-	menuRenderer.render();
 }
 
 void GL3Renderer::renderTarget() {

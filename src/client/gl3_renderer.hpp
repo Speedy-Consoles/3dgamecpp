@@ -10,6 +10,7 @@
 #include "chunk_renderer.hpp"
 #include "gl3_debug_renderer.hpp"
 #include "gl3_menu_renderer.hpp"
+#include "gl3_sky_renderer.hpp"
 #include "bmfont.hpp"
 
 #include "game/chunk.hpp"
@@ -53,16 +54,11 @@ private:
 	ChunkRenderer chunkRenderer;
 	GL3DebugRenderer debugRenderer;
 	GL3MenuRenderer menuRenderer;
+	GL3SkyRenderer skyRenderer;
 
 	// vao, vbo locations
 	GLuint crossHairVAO;
 	GLuint crossHairVBO;
-	GLuint skyVAO;
-	GLuint skyVBO;
-
-	// scene fbo
-	GLuint skyFBO;
-	GLuint skyTexture;
 
 	// performance info
 	int prevFPS[20];
@@ -111,16 +107,9 @@ public:
 	void setConf(const GraphicsConf &);
 
 private:
-	void loadShaderPrograms();
-	void buildShader(GLuint shaderLoc, const char* fileName);
-	void buildProgram(GLuint programLoc, GLuint *shaders, int numShaders);
-
 	void buildCrossHair();
-	void buildSky();
 
 	void render();
-	void renderSky();
-	void renderMenu();
 	void renderTarget();
 	void renderPlayers();
 	void renderHud(const Player &player);
