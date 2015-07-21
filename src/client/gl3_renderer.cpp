@@ -159,6 +159,9 @@ void GL3Renderer::makeMaxFOV() {
 }
 
 void GL3Renderer::setConf(const GraphicsConf &conf) {
+	auto &defaultShader = shaderManager.getDefaultShader();
+	auto &blockShader = shaderManager.getBlockShader();
+
 	GraphicsConf old_conf = this->conf;
 	this->conf = conf;
 
@@ -168,11 +171,9 @@ void GL3Renderer::setConf(const GraphicsConf &conf) {
 		auto endFog = (conf.render_distance - 1) * Chunk::WIDTH;
 		auto startFog = (conf.render_distance - 1) * Chunk::WIDTH * 1 / 2.0;
 
-		auto &defaultShader = shaderManager.getDefaultShader();
 		defaultShader.setEndFogDistance(endFog);
 		defaultShader.setStartFogDistance(startFog);
 
-		auto &blockShader = shaderManager.getBlockShader();
 		blockShader.setEndFogDistance(endFog);
 		blockShader.setStartFogDistance(startFog);
 	}
@@ -181,6 +182,10 @@ void GL3Renderer::setConf(const GraphicsConf &conf) {
 		makePerspectiveMatrix();
 		makeMaxFOV();
 	}
+
+	bool fog = conf.fog == Fog::FANCY || conf.fog == Fog::FAST;
+	defaultShader.setFogEnabled(fog);
+	blockShader.setFogEnabled(fog);
 }
 
 void GL3Renderer::tick() {
