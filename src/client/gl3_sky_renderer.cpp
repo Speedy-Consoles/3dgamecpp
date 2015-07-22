@@ -65,17 +65,20 @@ void GL3SkyRenderer::render() {
     logOpenGLError();
 	renderSky();
 
-    logOpenGLError();
-	glBindFramebuffer(GL_FRAMEBUFFER, skyFBO);
-	logOpenGLError();
-	renderSky();
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-	logOpenGLError();
+	auto fog = renderer->getConf().fog;
 
-	glClear(GL_DEPTH_BUFFER_BIT);
-	glActiveTexture(GL_TEXTURE1);
-	glBindTexture(GL_TEXTURE_2D, skyTexture);
-	glActiveTexture(GL_TEXTURE0);
+	if (fog == Fog::FANCY || fog == Fog::FAST) {
+		logOpenGLError();
+		glBindFramebuffer(GL_FRAMEBUFFER, skyFBO);
+		logOpenGLError();
+		renderSky();
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		logOpenGLError();
+
+		glActiveTexture(GL_TEXTURE1);
+		glBindTexture(GL_TEXTURE_2D, skyTexture);
+		glActiveTexture(GL_TEXTURE0);
+	}
 }
 
 void GL3SkyRenderer::renderSky() {

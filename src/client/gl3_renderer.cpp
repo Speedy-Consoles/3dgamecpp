@@ -212,12 +212,11 @@ void GL3Renderer::tick() {
 }
 
 void GL3Renderer::render() {
+	glClear(GL_DEPTH_BUFFER_BIT);
+
     logOpenGLError();
 
 	skyRenderer.render();
-	logOpenGLError();
-
-	glClear(GL_DEPTH_BUFFER_BIT);
 	logOpenGLError();
 	
 	chunkRenderer.render();
