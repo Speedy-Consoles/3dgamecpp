@@ -8,6 +8,8 @@ CLIENT_OBJECT_FILES = \
 	client/render_2.cpp.o\
 	client/render_menu_2.cpp.o\
 	client/gl3_renderer.cpp.o\
+	client/gl3_menu_renderer.cpp.o\
+	client/gl3_sky_renderer.cpp.o\
 	client/shaders.cpp.o\
 	client/chunk_renderer.cpp.o\
 	client/gl3_debug_renderer.cpp.o\
@@ -16,6 +18,7 @@ CLIENT_OBJECT_FILES = \
 	client/remote_server_interface.cpp.o\
 	client/menu.cpp.o\
 	client/texture_manager.cpp.o\
+	client/texture_loader.cpp.o\
 	client/gui/button.cpp.o\
 	client/gui/frame.cpp.o\
 	client/gui/label.cpp.o\
@@ -29,6 +32,8 @@ SERVER_OBJECT_FILES = \
 # stuff needed by both client and server
 SHARED_ARCHIVE_NAME = shared_archive
 SHARED_OBJECT_FILES = \
+	game/block_loader.cpp.o\
+	game/block_manager.cpp.o\
 	game/chunk.cpp.o\
 	game/perlin.cpp.o\
 	game/player.cpp.o\
