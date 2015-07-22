@@ -442,10 +442,10 @@ void FontShader::setFontMode(FontRenderMode mode) {
 ShaderManager::ShaderManager()
 {
 	programs.resize(NUM_PROGRAMS);
-	programs[DEFAULT_PROGRAM] = std::make_unique<DefaultShader>(this);
-	programs[BLOCK_PROGRAM] = std::make_unique<BlockShader>(this);
-	programs[HUD_PROGRAM] = std::make_unique<HudShader>(this);
-	programs[FONT_PROGRAM] = std::make_unique<FontShader>(this);
+	programs[DEFAULT_PROGRAM] = std::unique_ptr<DefaultShader>(new DefaultShader(this));
+	programs[BLOCK_PROGRAM] = std::unique_ptr<BlockShader>(new BlockShader(this));
+	programs[HUD_PROGRAM] = std::unique_ptr<HudShader>(new HudShader(this));
+	programs[FONT_PROGRAM] = std::unique_ptr<FontShader>(new FontShader(this));
 }
 
 DefaultShader &ShaderManager::getDefaultShader() {

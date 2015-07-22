@@ -408,7 +408,7 @@ void TextureLoader::getNextToken() {
 }
 
 int AbstractTextureManager::load(const char *path, const BlockManager *bm) {
-	auto loader = std::make_unique<TextureLoader>(path, bm, this);
+	auto loader = std::unique_ptr<TextureLoader>(new TextureLoader(path, bm, this));
 	try {
 		loader->load();
 	} catch (ParsingError &e) {
