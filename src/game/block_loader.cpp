@@ -213,7 +213,7 @@ void BlockLoader::emit(std::string key, int value) {
 }
 
 int AbstractBlockManager::load(const char *path) {
-	auto loader = std::make_unique<BlockLoader>(path, this);
+	auto loader = std::unique_ptr<BlockLoader>(new BlockLoader(path, this));
 	try {
 		loader->load();
 	} catch (ParsingError &e) {
