@@ -156,53 +156,73 @@ void DefaultShader::useProgram() {
 }
 
 void DefaultShader::setLightEnabled(bool enabled) {
-	_lightEnabled = enabled;
-	_lightEnabledDirty = true;
+	if (_lightEnabled != enabled) {
+		_lightEnabled = enabled;
+		_lightEnabledDirty = true;
+	}
 }
 
 void DefaultShader::setDiffuseLightColor(const glm::vec3 &color) {
-	_diffuseColor = color;
-	_diffuseColorDirty = true;
+	if (_diffuseColor != color) {
+		_diffuseColor = color;
+		_diffuseColorDirty = true;
+	}
 }
 
 void DefaultShader::setDiffuseLightDirection(const glm::vec3 &direction) {
-	_diffuseDirection = direction;
-	_diffuseDirectionDirty = true;
+	if (_diffuseDirection != direction) {
+		_diffuseDirection = direction;
+		_diffuseDirectionDirty = true;
+	}
 }
 
 void DefaultShader::setAmbientLightColor(const glm::vec3 &color) {
-	_ambientColor = color;
-	_ambientColorDirty = true;
+	if (_ambientColor != color) {
+		_ambientColor = color;
+		_ambientColorDirty = true;
+	}
 }
 
 void DefaultShader::setModelMatrix(const glm::mat4 &matrix) {
-	_modelMatrix = matrix;
-	_modelMatrixDirty = true;
+	if (_modelMatrix != matrix) {
+		_modelMatrix = matrix;
+		_modelMatrixDirty = true;
+	}
 }
 
 void DefaultShader::setViewMatrix(const glm::mat4 &matrix) {
-	_viewMatrix = matrix;
-	_viewMatrixDirty = true;
+	if (_viewMatrix != matrix) {
+		_viewMatrix = matrix;
+		_viewMatrixDirty = true;
+	}
 }
 
 void DefaultShader::setProjectionMatrix(const glm::mat4 &matrix) {
-	_projectionMatrix = matrix;
-	_projectionMatrixDirty = true;
+	if (_projectionMatrix != matrix) {
+		_projectionMatrix = matrix;
+		_projectionMatrixDirty = true;
+	}
 }
 
 void DefaultShader::setFogEnabled(bool enabled) {
-	_fogEnabled = enabled;
-	_fogEnabledDirty = true;
+	if (_fogEnabled != enabled) {
+		_fogEnabled = enabled;
+		_fogEnabledDirty = true;
+	}
 }
 
 void DefaultShader::setStartFogDistance(float distance) {
-	_fogStartDistance = distance;
-	_fogStartDistanceDirty = true;
+	if (_fogStartDistance != distance) {
+		_fogStartDistance = distance;
+		_fogStartDistanceDirty = true;
+	}
 }
 
 void DefaultShader::setEndFogDistance(float distance) {
-	_fogEndDistance = distance;
-	_fogEndDistanceDirty = true;
+	if (_fogEndDistance != distance) {
+		_fogEndDistance = distance;
+		_fogEndDistanceDirty = true;
+	}
 }
 
 BlockShader::BlockShader(ShaderManager *manager) :
@@ -273,53 +293,73 @@ void BlockShader::useProgram() {
 }
 
 void BlockShader::setLightEnabled(bool enabled) {
-	_lightEnabled = enabled;
-	_lightEnabledDirty = true;
+	if (_lightEnabled != enabled) {
+		_lightEnabled = enabled;
+		_lightEnabledDirty = true;
+	}
 }
 
 void BlockShader::setDiffuseLightColor(const glm::vec3 &color) {
-	_diffuseColor = color;
-	_diffuseColorDirty = true;
+	if (_diffuseColor != color) {
+		_diffuseColor = color;
+		_diffuseColorDirty = true;
+	}
 }
 
 void BlockShader::setDiffuseLightDirection(const glm::vec3 &direction) {
-	_diffuseDirection = direction;
-	_diffuseDirectionDirty = true;
+	if (_diffuseDirection != direction) {
+		_diffuseDirection = direction;
+		_diffuseDirectionDirty = true;
+	}
 }
 
 void BlockShader::setAmbientLightColor(const glm::vec3 &color) {
-	_ambientColor = color;
-	_ambientColorDirty = true;
+	if (_ambientColor != color) {
+		_ambientColor = color;
+		_ambientColorDirty = true;
+	}
 }
 
 void BlockShader::setModelMatrix(const glm::mat4 &matrix) {
-	_modelMatrix = matrix;
-	_modelMatrixDirty = true;
+	if (_modelMatrix != matrix) {
+		_modelMatrix = matrix;
+		_modelMatrixDirty = true;
+	}
 }
 
 void BlockShader::setViewMatrix(const glm::mat4 &matrix) {
-	_viewMatrix = matrix;
-	_viewMatrixDirty = true;
+	if (_viewMatrix != matrix) {
+		_viewMatrix = matrix;
+		_viewMatrixDirty = true;
+	}
 }
 
 void BlockShader::setProjectionMatrix(const glm::mat4 &matrix) {
-	_projectionMatrix = matrix;
-	_projectionMatrixDirty = true;
+	if (_projectionMatrix != matrix) {
+		_projectionMatrix = matrix;
+		_projectionMatrixDirty = true;
+	}
 }
 
 void BlockShader::setFogEnabled(bool enabled) {
-	_fogEnabled = enabled;
-	_fogEnabledDirty = true;
+	if (_fogEnabled != enabled) {
+		_fogEnabled = enabled;
+		_fogEnabledDirty = true;
+	}
 }
 
 void BlockShader::setStartFogDistance(float distance) {
-	_fogStartDistance = distance;
-	_fogStartDistanceDirty = true;
+	if (_fogStartDistance != distance) {
+		_fogStartDistance = distance;
+		_fogStartDistanceDirty = true;
+	}
 }
 
 void BlockShader::setEndFogDistance(float distance) {
-	_fogEndDistance = distance;
-	_fogEndDistanceDirty = true;
+	if (_fogEndDistance != distance) {
+		_fogEndDistance = distance;
+		_fogEndDistanceDirty = true;
+	}
 }
 
 HudShader::HudShader(ShaderManager *manager) :
@@ -338,8 +378,10 @@ void HudShader::useProgram() {
 }
 
 void HudShader::setProjectionMatrix(const glm::mat4 &matrix) {
-	_projectionMatrix = matrix;
-	_projectionMatrixDirty = true;
+	if (_projectionMatrix != matrix) {
+		_projectionMatrix = matrix;
+		_projectionMatrixDirty = true;
+	}
 }
 
 FontShader::FontShader(ShaderManager *manager) :
@@ -395,48 +437,67 @@ void FontShader::useProgram() {
 }
 
 void FontShader::setProjectionMatrix(const glm::mat4 &matrix) {
-    _projectionMatrix = matrix;
-    _projectionMatrixDirty = true;
+	if (_projectionMatrix != matrix) {
+		_projectionMatrix = matrix;
+		_projectionMatrixDirty = true;
+	}
 }
 
 void FontShader::setModelMatrix(const glm::mat4 &matrix) {
-    _modelMatrix = matrix;
-    _modelMatrixDirty = true;
+	if (_modelMatrix != matrix) {
+		_modelMatrix = matrix;
+		_modelMatrixDirty = true;
+	}
 }
 
 void FontShader::setIsPacked(bool isPacked) {
-    _isPacked = isPacked;
-    _isPackedDirty = true;
+	if (_isPacked != isPacked) {
+		_isPacked = isPacked;
+		_isPackedDirty = true;
+	}
 }
 
 void FontShader::setHasOutline(bool hasOutline) {
-	_hasOutline = hasOutline;
-	_hasOutlineDirty = true;
+	if (_hasOutline != hasOutline) {
+		_hasOutline = hasOutline;
+		_hasOutlineDirty = true;
+	}
 }
 
 void FontShader::setPage(short page) {
-    _page = page;
-    _pageDirty = true;
+	if (_page != page) {
+		_page = page;
+		_pageDirty = true;
+	}
 }
 
 void FontShader::setChannel(short channel) {
-    _channel = channel;
-    _channelDirty = true;
+	if (_channel != channel) {
+		_channel = channel;
+		_channelDirty = true;
+	}
 }
 
 void FontShader::setTextColor(const glm::vec4 &color) {
-	_textColor = color;
-	_textColorDirty = true;
+	if (_textColor != color) {
+		_textColor = color;
+		_textColorDirty = true;
+	}
 }
 
 void FontShader::setOutlineColor(const glm::vec4 &color) {
-	_outlineColor = color;
-	_outlineColorDirty = true;
+	if (_outlineColor != color) {
+		_outlineColor = color;
+		_outlineColorDirty = true;
+	}
 }
 
 void FontShader::setMode(FontRenderMode m) {
-	_mode = static_cast<int>(m);
-	_modeDirty = true;
+	auto mode = static_cast<int>(m);
+	if (_mode != mode) {
+		_mode = mode;
+		_modeDirty = true;
+	}
 }
 
 ShaderManager::ShaderManager()
