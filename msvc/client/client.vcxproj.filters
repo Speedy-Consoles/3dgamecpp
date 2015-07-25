@@ -76,9 +76,6 @@
     <ClCompile Include="..\..\src\client\texture_manager.cpp">
       <Filter>Source Files\gfx</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\client\chunk_renderer.cpp">
-      <Filter>Source Files\gfx</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\client\gl3_renderer.cpp">
       <Filter>Source Files\gfx</Filter>
     </ClCompile>
@@ -101,6 +98,12 @@
       <Filter>Source Files\gfx</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\client\gl3_sky_renderer.cpp">
+      <Filter>Source Files\gfx</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\client\gl3_hud_renderer.cpp">
+      <Filter>Source Files\gfx</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\client\gl3_chunk_renderer.cpp">
       <Filter>Source Files\gfx</Filter>
     </ClCompile>
   </ItemGroup>
@@ -147,9 +150,6 @@
     <ClInclude Include="..\..\src\client\gl3_renderer.hpp">
       <Filter>Header Files\gfx</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\client\chunk_renderer.hpp">
-      <Filter>Header Files\gfx</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\client\shaders.hpp">
       <Filter>Header Files\gfx</Filter>
     </ClInclude>
@@ -172,6 +172,12 @@
       <Filter>Header Files\gfx</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\client\gl3_sky_renderer.hpp">
+      <Filter>Header Files\gfx</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\client\gl3_hud_renderer.hpp">
+      <Filter>Header Files\gfx</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\client\gl3_chunk_renderer.hpp">
       <Filter>Header Files\gfx</Filter>
     </ClInclude>
   </ItemGroup>

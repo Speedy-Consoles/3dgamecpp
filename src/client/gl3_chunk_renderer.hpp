@@ -1,5 +1,5 @@
-#ifndef CHUNK_RENDERER_HPP
-#define CHUNK_RENDERER_HPP
+#ifndef GL3_CHUNK_RENDERER_HPP_
+#define GL3_CHUNK_RENDERER_HPP_
 
 #include <GL/glew.h>
 
@@ -12,7 +12,7 @@
 class World;
 class GL3Renderer;
 
-class ChunkRenderer {
+class GL3ChunkRenderer {
 private:
 	enum VAOStatus {
 		NO_CHUNK = 0,
@@ -72,8 +72,8 @@ private:
 	BlockVertexData blockVertexBuffer[Chunk::WIDTH * Chunk::WIDTH * (Chunk::WIDTH + 1) * 3 * 2 * 3];
 
 public:
-	ChunkRenderer(Client *client, GL3Renderer *renderer, ShaderManager *shaderManager);
-	~ChunkRenderer();
+	GL3ChunkRenderer(Client *client, GL3Renderer *renderer, ShaderManager *shaderManager);
+	~GL3ChunkRenderer();
 
 	void setConf(const GraphicsConf &);
 	void render();
@@ -88,4 +88,4 @@ private:
 	void initRenderDistanceDependent();
 };
 
-#endif // CHUNK_RENDERER_HPP
+#endif // GL3_CHUNK_RENDERER_HPP_

@@ -6,7 +6,7 @@
 #include "engine/logging.hpp"
 #include "engine/math.hpp"
 
-#include "chunk_renderer.hpp"
+#include "gl3_chunk_renderer.hpp"
 #include "gl3_debug_renderer.hpp"
 #include "graphics.hpp"
 #include "menu.hpp"
@@ -29,9 +29,10 @@ GL3Renderer::GL3Renderer(
 	fontTimes(&shaderManager.getFontShader()),
 	fontDejavu(&shaderManager.getFontShader()),
 	chunkRenderer(client, this, &shaderManager),
-	debugRenderer(client, this, &shaderManager, graphics),
+	skyRenderer(client, this, &shaderManager, graphics),
+	hudRenderer(client, this, &shaderManager, graphics),
 	menuRenderer(client, this, &shaderManager, graphics),
-	skyRenderer(client, this, &shaderManager, graphics)
+	debugRenderer(client, this, &shaderManager, graphics)
 {
 	makeMaxFOV();
 	makePerspectiveMatrix();
@@ -58,8 +59,6 @@ GL3Renderer::GL3Renderer(
 	blockShader.setEndFogDistance(endFog);
 	blockShader.setStartFogDistance(startFog);
 
-	buildCrossHair();
-
     // font
 	fontTimes.load("fonts/times32.fnt");
 	fontTimes.setEncoding(Font::Encoding::UTF8);
@@ -76,37 +75,6 @@ GL3Renderer::GL3Renderer(
 
 GL3Renderer::~GL3Renderer() {
 	LOG(DEBUG, "Destroying GL3 renderer");
-}
-
-void GL3Renderer::buildCrossHair() {
-	glGenVertexArrays(1, &crossHairVAO);
-	glGenBuffers(1, &crossHairVBO);
-	glBindVertexArray(crossHairVAO);
-	glBindBuffer(GL_ARRAY_BUFFER, crossHairVBO);
-
-	HudVertexData vertexData[12] = {
-			// x        y       r     g     b     a
-			{{-20.0f,  -2.0f}, {0.0f, 0.0f, 0.0f, 0.5f}},
-			{{ 20.0f,  -2.0f}, {0.0f, 0.0f, 0.0f, 0.5f}},
-			{{ 20.0f,   2.0f}, {0.0f, 0.0f, 0.0f, 0.5f}},
-			{{ 20.0f,   2.0f}, {0.0f, 0.0f, 0.0f, 0.5f}},
-			{{-20.0f,   2.0f}, {0.0f, 0.0f, 0.0f, 0.5f}},
-			{{-20.0f,  -2.0f}, {0.0f, 0.0f, 0.0f, 0.5f}},
-			{{ -2.0f, -20.0f}, {0.0f, 0.0f, 0.0f, 0.5f}},
-			{{  2.0f, -20.0f}, {0.0f, 0.0f, 0.0f, 0.5f}},
-			{{  2.0f,  20.0f}, {0.0f, 0.0f, 0.0f, 0.5f}},
-			{{  2.0f,  20.0f}, {0.0f, 0.0f, 0.0f, 0.5f}},
-			{{ -2.0f,  20.0f}, {0.0f, 0.0f, 0.0f, 0.5f}},
-			{{ -2.0f, -20.0f}, {0.0f, 0.0f, 0.0f, 0.5f}},
-	};
-
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertexData), vertexData, GL_STATIC_DRAW);
-	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 24, 0);
-	glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 24, (void *) 8);
-	glEnableVertexAttribArray(0);
-	glEnableVertexAttribArray(1);
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-	glBindVertexArray(0);
 }
 
 void GL3Renderer::resize() {
@@ -228,7 +196,7 @@ void GL3Renderer::render() {
 	glDepthMask(false);
 	glDisable(GL_DEPTH_TEST);
 	if (client->getState() == Client::State::PLAYING) {
-		renderHud(player);
+		hudRenderer.render();
 		if (client->isDebugOn())
 			debugRenderer.render();
 	} else if (client->getState() == Client::State::IN_MENU){
@@ -236,30 +204,6 @@ void GL3Renderer::render() {
 	}
 	glDepthMask(true);
 	glEnable(GL_DEPTH_TEST);
-}
-
-void GL3Renderer::renderHud(const Player &player) {
-	glBindVertexArray(crossHairVAO);
-	shaderManager.getHudShader().useProgram();
-	glDrawArrays(GL_TRIANGLES, 0, 12);
-
-	/*vec2f texs[4];
-	texManager.bind(player.getBlock());
-	glBindTexture(GL_TEXTURE_2D, texManager.getTexture());
-	texManager.getTextureVertices(texs);
-
-	glColor4f(1, 1, 1, 1);
-
-	float d = (graphics->getWidth() < graphics->getHeight() ? graphics->getWidth() : graphics->getHeight()) * 0.05;
-	glPushMatrix();
-	glTranslatef(-graphics->getDrawWidth() * 0.48, -graphics->getDrawHeight() * 0.48, 0);
-	glBegin(GL_QUADS);
-		glTexCoord2f(texs[0][0], texs[0][1]); glVertex2f(0, 0);
-		glTexCoord2f(texs[1][0], texs[1][1]); glVertex2f(d, 0);
-		glTexCoord2f(texs[2][0], texs[2][1]); glVertex2f(d, d);
-		glTexCoord2f(texs[3][0], texs[3][1]); glVertex2f(0, d);
-	glEnd();
-	glPopMatrix();*/
 }
 
 void GL3Renderer::renderTarget() {

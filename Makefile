@@ -8,11 +8,12 @@ CLIENT_OBJECT_FILES = \
 	client/render_2.cpp.o\
 	client/render_menu_2.cpp.o\
 	client/gl3_renderer.cpp.o\
-	client/gl3_menu_renderer.cpp.o\
+	client/gl3_chunk_renderer.cpp.o\
 	client/gl3_sky_renderer.cpp.o\
-	client/shaders.cpp.o\
-	client/chunk_renderer.cpp.o\
+	client/gl3_hud_renderer.cpp.o\
 	client/gl3_debug_renderer.cpp.o\
+	client/gl3_menu_renderer.cpp.o\
+	client/shaders.cpp.o\
 	client/bmfont.cpp.o\
 	client/local_server_interface.cpp.o\
 	client/remote_server_interface.cpp.o\

@@ -12,11 +12,12 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\client\bmfont.cpp" />
-    <ClCompile Include="..\..\src\client\chunk_renderer.cpp" />
+    <ClCompile Include="..\..\src\client\gl3_chunk_renderer.cpp" />
     <ClCompile Include="..\..\src\client\client.cpp" />
     <ClCompile Include="..\..\src\client\config.cpp" />
     <ClCompile Include="..\..\src\client\gl2_renderer.cpp" />
     <ClCompile Include="..\..\src\client\gl3_debug_renderer.cpp" />
+    <ClCompile Include="..\..\src\client\gl3_hud_renderer.cpp" />
     <ClCompile Include="..\..\src\client\gl3_menu_renderer.cpp" />
     <ClCompile Include="..\..\src\client\gl3_renderer.cpp" />
     <ClCompile Include="..\..\src\client\gl3_sky_renderer.cpp" />
@@ -36,11 +37,12 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\client\bmfont.hpp" />
-    <ClInclude Include="..\..\src\client\chunk_renderer.hpp" />
+    <ClInclude Include="..\..\src\client\gl3_chunk_renderer.hpp" />
     <ClInclude Include="..\..\src\client\client.hpp" />
     <ClInclude Include="..\..\src\client\config.hpp" />
     <ClInclude Include="..\..\src\client\gl2_renderer.hpp" />
     <ClInclude Include="..\..\src\client\gl3_debug_renderer.hpp" />
+    <ClInclude Include="..\..\src\client\gl3_hud_renderer.hpp" />
     <ClInclude Include="..\..\src\client\gl3_menu_renderer.hpp" />
     <ClInclude Include="..\..\src\client\gl3_renderer.hpp" />
     <ClInclude Include="..\..\src\client\gl3_sky_renderer.hpp" />

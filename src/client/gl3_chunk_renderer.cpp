@@ -1,4 +1,4 @@
-#include "chunk_renderer.hpp"
+#include "gl3_chunk_renderer.hpp"
 
 #include <glm/mat4x4.hpp>
 #include <glm/vec3.hpp>
@@ -11,19 +11,19 @@
 #include "game/player.hpp"
 #include "util.hpp"
 
-ChunkRenderer::ChunkRenderer(Client *client, GL3Renderer *renderer, ShaderManager *shaderManager)
+GL3ChunkRenderer::GL3ChunkRenderer(Client *client, GL3Renderer *renderer, ShaderManager *shaderManager)
 		: client(client), renderer(renderer), shaderManager(shaderManager), conf(*client->getConf()) {
 	initRenderDistanceDependent();
 	loadTextures();
 }
 
-ChunkRenderer::~ChunkRenderer() {
+GL3ChunkRenderer::~GL3ChunkRenderer() {
 	LOG(DEBUG, "Destroying chunk renderer");
 	destroyRenderDistanceDependent();
 	glDeleteTextures(1, &blockTextures);
 }
 
-void ChunkRenderer::loadTextures() {
+void GL3ChunkRenderer::loadTextures() {
 	int xTiles = 16;
 	int yTiles = 16;
 	GLsizei layerCount = 256;
@@ -104,7 +104,7 @@ void ChunkRenderer::loadTextures() {
 	SDL_FreeSurface(img);
 }
 
-void ChunkRenderer::setConf(const GraphicsConf &conf) {
+void GL3ChunkRenderer::setConf(const GraphicsConf &conf) {
 	GraphicsConf old_conf = this->conf;
 	this->conf = conf;
 
@@ -114,7 +114,7 @@ void ChunkRenderer::setConf(const GraphicsConf &conf) {
 	}
 }
 
-void ChunkRenderer::initRenderDistanceDependent() {
+void GL3ChunkRenderer::initRenderDistanceDependent() {
 	int length = conf.render_distance * 2 + 1;
 	int n = length * length * length;
 	vaos = new GLuint[n];
@@ -151,7 +151,7 @@ void ChunkRenderer::initRenderDistanceDependent() {
 	faces = 0;
 }
 
-void ChunkRenderer::destroyRenderDistanceDependent() {
+void GL3ChunkRenderer::destroyRenderDistanceDependent() {
 	int length = conf.render_distance * 2 + 1;
 	glDeleteBuffers(length * length * length, vbos);
 	glDeleteVertexArrays(length * length * length, vaos);
@@ -167,7 +167,7 @@ void ChunkRenderer::destroyRenderDistanceDependent() {
 	delete vsIndices;
 }
 
-void ChunkRenderer::render() {
+void GL3ChunkRenderer::render() {
 	Player &player = client->getWorld()->getPlayer(client->getLocalClientId());
 	if (!player.isValid())
 		return;
@@ -290,7 +290,7 @@ void ChunkRenderer::render() {
 	logOpenGLError();
 }
 
-void ChunkRenderer::buildChunk(Chunk &c) {
+void GL3ChunkRenderer::buildChunk(Chunk &c) {
 	vec3i64 cc = c.getCC();
 
 	int length = conf.render_distance * 2 + 1;
@@ -426,7 +426,7 @@ void ChunkRenderer::buildChunk(Chunk &c) {
 	logOpenGLError();
 }
 
-bool ChunkRenderer::inFrustum(vec3i64 cc, vec3i64 pos, vec3d lookDir) {
+bool GL3ChunkRenderer::inFrustum(vec3i64 cc, vec3i64 pos, vec3d lookDir) {
 	double chunkDia = sqrt(3) * Chunk::WIDTH * RESOLUTION;
 	vec3d cp = (cc * Chunk::WIDTH * RESOLUTION - pos).cast<double>();
 	double chunkLookDist = lookDir * cp + chunkDia;

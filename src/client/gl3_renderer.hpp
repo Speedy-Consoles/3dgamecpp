@@ -7,10 +7,11 @@
 
 #include "renderer.hpp"
 #include "shaders.hpp"
-#include "chunk_renderer.hpp"
-#include "gl3_debug_renderer.hpp"
-#include "gl3_menu_renderer.hpp"
+#include "gl3_chunk_renderer.hpp"
 #include "gl3_sky_renderer.hpp"
+#include "gl3_hud_renderer.hpp"
+#include "gl3_menu_renderer.hpp"
+#include "gl3_debug_renderer.hpp"
 #include "bmfont.hpp"
 
 #include "game/chunk.hpp"
@@ -51,14 +52,11 @@ private:
 	BMFont fontDejavu;
 
 	// chunk renderer
-	ChunkRenderer chunkRenderer;
-	GL3DebugRenderer debugRenderer;
-	GL3MenuRenderer menuRenderer;
+	GL3ChunkRenderer chunkRenderer;
 	GL3SkyRenderer skyRenderer;
-
-	// vao, vbo locations
-	GLuint crossHairVAO;
-	GLuint crossHairVBO;
+	GL3HudRenderer hudRenderer;
+	GL3MenuRenderer menuRenderer;
+	GL3DebugRenderer debugRenderer;
 
 	// performance info
 	int prevFPS[20];
@@ -77,19 +75,6 @@ private:
 	vec3f fogColor{ 0.6f, 0.6f, 0.8f };
 	vec3f skyColor{ 0.15f, 0.15f, 0.9f };
 
-#pragma pack(push)
-#pragma pack(1)
-	struct VertexData {
-		GLfloat xyz[3];
-		GLfloat rgba[4];
-	};
-
-	struct HudVertexData {
-		GLfloat xy[2];
-		GLfloat rgba[4];
-	};
-#pragma pack(pop)
-
 public:
 	GL3Renderer(Client *client, Graphics *graphics, SDL_Window *window);
 	~GL3Renderer();
@@ -107,12 +92,9 @@ public:
 	void setConf(const GraphicsConf &);
 
 private:
-	void buildCrossHair();
-
 	void render();
 	void renderTarget();
 	void renderPlayers();
-	void renderHud(const Player &player);
 };
 
 #endif // GL_3_RENDERER_HPP
