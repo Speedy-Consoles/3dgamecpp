@@ -47,16 +47,16 @@ class DefaultShader : public Shader {
 	GLint _fogStartDistanceLoc;
 	GLint _fogEndDistanceLoc;
 
-	bool _lightEnabledDirty = false;
-	bool _ambientColorDirty = false;
-	bool _diffuseColorDirty = false;
-	bool _diffuseDirectionDirty = false;
-	bool _modelMatrixDirty = false;
-	bool _viewMatrixDirty = false;
-	bool _projectionMatrixDirty = false;
-	bool _fogEnabledDirty = false;
-	bool _fogStartDistanceDirty = false;
-	bool _fogEndDistanceDirty = false;
+	bool _lightEnabledDirty = true;
+	bool _ambientColorDirty = true;
+	bool _diffuseColorDirty = true;
+	bool _diffuseDirectionDirty = true;
+	bool _modelMatrixDirty = true;
+	bool _viewMatrixDirty = true;
+	bool _projectionMatrixDirty = true;
+	bool _fogEnabledDirty = true;
+	bool _fogStartDistanceDirty = true;
+	bool _fogEndDistanceDirty = true;
 
 	GLboolean _lightEnabled;
 	glm::vec3 _ambientColor;
@@ -103,16 +103,16 @@ class BlockShader : public Shader {
 	GLint _fogStartDistanceLoc;
 	GLint _fogEndDistanceLoc;
 
-	bool _lightEnabledDirty = false;
-	bool _ambientColorDirty = false;
-	bool _diffuseColorDirty = false;
-	bool _diffuseDirectionDirty = false;
-	bool _modelMatrixDirty = false;
-	bool _viewMatrixDirty = false;
-	bool _projectionMatrixDirty = false;
-	bool _fogEnabledDirty = false;
-	bool _fogStartDistanceDirty = false;
-	bool _fogEndDistanceDirty = false;
+	bool _lightEnabledDirty = true;
+	bool _ambientColorDirty = true;
+	bool _diffuseColorDirty = true;
+	bool _diffuseDirectionDirty = true;
+	bool _modelMatrixDirty = true;
+	bool _viewMatrixDirty = true;
+	bool _projectionMatrixDirty = true;
+	bool _fogEnabledDirty = true;
+	bool _fogStartDistanceDirty = true;
+	bool _fogEndDistanceDirty = true;
 
 	GLboolean _lightEnabled;
 	glm::vec3 _ambientColor;
@@ -150,7 +150,7 @@ public:
 class HudShader : public Shader {
 	GLint _projectionMatrixLoc;
 	
-	bool _projectionMatrixDirty = false;
+	bool _projectionMatrixDirty = true;
 	
 	glm::mat4 _projectionMatrix;
 
@@ -184,15 +184,15 @@ class FontShader : public Shader {
 	glm::vec4 _outlineColor = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
 	GLshort _mode = 0;
 
-    bool _projectionMatrixDirty = false;
-	bool _modelMatrixDirty = false;
-	bool _isPackedDirty = false;
-	bool _hasOutlineDirty = false;
-    bool _channelDirty = false;
-	bool _pageDirty = false;
-	bool _textColorDirty = false;
-	bool _outlineColorDirty = false;
-	bool _modeDirty = false;
+    bool _projectionMatrixDirty = true;
+	bool _modelMatrixDirty = true;
+	bool _isPackedDirty = true;
+	bool _hasOutlineDirty = true;
+    bool _channelDirty = true;
+	bool _pageDirty = true;
+	bool _textColorDirty = true;
+	bool _outlineColorDirty = true;
+	bool _modeDirty = true;
 
 public:
 	FontShader(ShaderManager *);
