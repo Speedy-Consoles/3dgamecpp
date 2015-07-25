@@ -122,7 +122,7 @@ void GL2Renderer::renderScene() {
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_TEXTURE_2D);
 	glEnable(GL_LIGHTING);
-	if (conf.fog != Fog::NONE) glEnable(GL_FOG);
+	if (client->getConf().fog != Fog::NONE) glEnable(GL_FOG);
 
 	glLightfv(GL_LIGHT0, GL_POSITION, sunLightPosition.ptr());
 
@@ -140,7 +140,7 @@ void GL2Renderer::renderScene() {
 
 void GL2Renderer::renderChunks() {
 
-	int length = conf.render_distance * 2 + 3;
+	int length = client->getConf().render_distance * 2 + 3;
 
 	vec3i64 ccc;
 	while (client->getWorld()->popChangedChunk(&ccc)) {
@@ -206,9 +206,9 @@ void GL2Renderer::renderChunks() {
 				vec3i64 ncc = cc + DIRS[d].cast<int64>();
 				vec3i64 ncd = ncc - pc;
 
-				if ((uint) abs(ncd[0]) > conf.render_distance + 1
-						|| (uint) abs(ncd[1]) > conf.render_distance + 1
-						|| (uint) abs(ncd[2]) > conf.render_distance + 1
+				if ((uint) abs(ncd[0]) > client->getConf().render_distance + 1
+						|| (uint) abs(ncd[1]) > client->getConf().render_distance + 1
+						|| (uint) abs(ncd[2]) > client->getConf().render_distance + 1
 						|| !inFrustum(ncc, player.getPos(), lookDir))
 					continue;
 
@@ -297,7 +297,7 @@ void GL2Renderer::renderTarget() {
 void GL2Renderer::renderChunk(Chunk &c) {
 	client->getStopwatch()->start(CLOCK_NDL);
 	vec3i64 cc = c.getCC();
-	int length = conf.render_distance * 2 + 3;
+	int length = client->getConf().render_distance * 2 + 3;
 	uint index = ((((cc[2] % length) + length) % length) * length
 			+ (((cc[1] % length) + length) % length)) * length
 			+ (((cc[0] % length) + length) % length);

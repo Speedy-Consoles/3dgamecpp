@@ -23,11 +23,13 @@ private:
 	Client *client;
 	GL3Renderer *renderer;
 	ShaderManager *shaderManager;
-	GraphicsConf conf;
 
 	// performance limits
 	static const int MAX_NEW_QUADS = 6000;
 	static const int MAX_NEW_CHUNKS = 500;
+
+	// cache
+	int visibleDiameter;
 
 	// vao, vbo locations
 	GLuint *vaos;
@@ -75,7 +77,7 @@ public:
 	GL3ChunkRenderer(Client *client, GL3Renderer *renderer, ShaderManager *shaderManager);
 	~GL3ChunkRenderer();
 
-	void setConf(const GraphicsConf &);
+	void setConf(const GraphicsConf &, const GraphicsConf &);
 	void render();
 
 private:

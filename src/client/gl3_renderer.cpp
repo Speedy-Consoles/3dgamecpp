@@ -23,7 +23,6 @@ GL3Renderer::GL3Renderer(
 	:
 	client(client),
 	graphics(graphics),
-	conf(*client->getConf()),
 	window(window),
 	shaderManager(),
 	fontTimes(&shaderManager.getFontShader()),
@@ -50,8 +49,8 @@ GL3Renderer::GL3Renderer(
 	blockShader.setDiffuseLightColor(diffuseColor);
 
 	// fog
-	auto endFog = (conf.render_distance - 1) * Chunk::WIDTH;
-	auto startFog = (conf.render_distance - 1) * Chunk::WIDTH * 1 / 2.0;
+	auto endFog = (client->getConf().render_distance - 1) * Chunk::WIDTH;
+	auto startFog = (client->getConf().render_distance - 1) * Chunk::WIDTH * 1 / 2.0;
 
 	defaultShader.setEndFogDistance(endFog);
 	defaultShader.setStartFogDistance(startFog);
@@ -100,13 +99,13 @@ void GL3Renderer::makePerspectiveMatrix() {
 	double currentRatio = graphics->getWidth() / (double) graphics->getHeight();
 	double angle;
 
-	float yfov = conf.fov / normalRatio * TAU / 360.0;
+	float yfov = client->getConf().fov / normalRatio * TAU / 360.0;
 	if (currentRatio > normalRatio)
 		angle = atan(tan(yfov / 2) * normalRatio / currentRatio) * 2;
 	else
 		angle = yfov;
 
-	float zFar = Chunk::WIDTH * sqrt(3 * (conf.render_distance + 1) * (conf.render_distance + 1));
+	float zFar = Chunk::WIDTH * sqrt(3 * (client->getConf().render_distance + 1) * (client->getConf().render_distance + 1));
 	glm::mat4 perspectiveMatrix = glm::perspective((float) angle,
 			(float) currentRatio, ZNEAR, zFar);
 	auto &defaultShader = shaderManager.getDefaultShader();
@@ -132,21 +131,18 @@ void GL3Renderer::makeOrthogonalMatrix() {
 
 void GL3Renderer::makeMaxFOV() {
 	float ratio = (float) DEFAULT_WINDOWED_RES[0] / DEFAULT_WINDOWED_RES[1];
-	float yfov = conf.fov / ratio * TAU / 360.0;
+	float yfov = client->getConf().fov / ratio * TAU / 360.0;
 	if (ratio < 1.0)
 		maxFOV = yfov;
 	else
 		maxFOV = atan(ratio * tan(yfov / 2)) * 2;
 }
 
-void GL3Renderer::setConf(const GraphicsConf &conf) {
+void GL3Renderer::setConf(const GraphicsConf &conf, const GraphicsConf &old) {
 	auto &defaultShader = shaderManager.getDefaultShader();
 	auto &blockShader = shaderManager.getBlockShader();
 
-	GraphicsConf old_conf = this->conf;
-	this->conf = conf;
-
-	if (conf.render_distance != old_conf.render_distance) {
+	if (conf.render_distance != old.render_distance) {
 		makePerspectiveMatrix();
 
 		auto endFog = (conf.render_distance - 1) * Chunk::WIDTH;
@@ -159,7 +155,7 @@ void GL3Renderer::setConf(const GraphicsConf &conf) {
 		blockShader.setStartFogDistance(startFog);
 	}
 
-	if (conf.fov != old_conf.fov) {
+	if (conf.fov != old.fov) {
 		makePerspectiveMatrix();
 		makeMaxFOV();
 	}
@@ -199,7 +195,7 @@ void GL3Renderer::render() {
 	GL(Disable(GL_DEPTH_TEST));
 	GL(DepthMask(false));
 	skyRenderer.render();
-	if (conf.fog == Fog::FANCY || conf.fog == Fog::FAST) {
+	if (client->getConf().fog == Fog::FANCY || client->getConf().fog == Fog::FAST) {
 		GL(BindFramebuffer(GL_FRAMEBUFFER, skyFbo));
 		skyRenderer.render();
 		GL(BindFramebuffer(GL_FRAMEBUFFER, 0));

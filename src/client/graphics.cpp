@@ -139,15 +139,12 @@ float Graphics::getScalingFactor() const {
 	return (float) drawWidth / width;
 }
 
-void Graphics::setConf(const GraphicsConf &conf) {
-	GraphicsConf old_conf = this->conf;
-	this->conf = conf;
-
-	if (conf.fullscreen != old_conf.fullscreen) {
+void Graphics::setConf(const GraphicsConf &conf, const GraphicsConf &old) {
+	if (conf.fullscreen != old.fullscreen) {
 		SDL_SetWindowFullscreen(window, conf.fullscreen ? SDL_WINDOW_FULLSCREEN : 0);
 	}
 
-	renderer->setConf(conf);
+	renderer->setConf(conf, old);
 }
 
 void Graphics::tick() {

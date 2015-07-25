@@ -25,15 +25,14 @@ GL2Renderer::GL2Renderer(
 	client(client),
 	graphics(graphics),
 	window(window),
-	conf(*client->getConf()),
-	texManager(conf)
+	texManager(client)
 {
 	makeMaxFOV();
 	makePerspective();
 	makeOrthogonal();
 
 	// update framebuffer object
-	if (conf.aa != AntiAliasing::NONE)
+	if (client->getConf().aa != AntiAliasing::NONE)
 		createFBO();
 
 	initGL();
@@ -50,8 +49,7 @@ GL2Renderer::~GL2Renderer() {
 }
 
 void GL2Renderer::destroyRenderDistanceDependent() {
-	int length = conf.render_distance * 2 + 3;
-	glDeleteLists(dlFirstAddress, length * length * length);
+	glDeleteLists(dlFirstAddress, renderDistance * renderDistance * renderDistance);
 	delete dlChunks;
 	delete dlStatus;
 	delete chunkFaces;
@@ -163,8 +161,8 @@ void GL2Renderer::initGL() {
 }
 
 void GL2Renderer::initRenderDistanceDependent() {
-	int length = conf.render_distance * 2 + 3;
-	int n = length * length * length;
+	renderDistance = client->getConf().render_distance * 2 + 3;
+	int n = renderDistance * renderDistance * renderDistance;
 	dlFirstAddress = glGenLists(n);
 	dlChunks = new vec3i64[n];
 	dlStatus = new uint8[n];
@@ -172,7 +170,7 @@ void GL2Renderer::initRenderDistanceDependent() {
 	chunkPassThroughs = new uint16[n];
 	vsExits = new uint8[n];
 	vsVisited = new bool[n];
-	vsFringeCapacity = length * length * 6;
+	vsFringeCapacity = renderDistance * renderDistance * 6;
 	vsFringe = new vec3i64[vsFringeCapacity];
 	vsIndices = new int[vsFringeCapacity];
 	for (int i = 0; i < n; i++) {
@@ -191,7 +189,7 @@ void GL2Renderer::resize() {
 	// update framebuffer object
 	if (fbo)
 		destroyFBO();
-	if (conf.aa != AntiAliasing::NONE)
+	if (client->getConf().aa != AntiAliasing::NONE)
 		createFBO();
 }
 
@@ -200,7 +198,7 @@ void GL2Renderer::makePerspective() {
 	double currentRatio = graphics->getWidth() / (double) graphics->getHeight();
 	double angle;
 
-	float yfov = conf.fov / normalRatio * TAU / 360.0;
+	float yfov = client->getConf().fov / normalRatio * TAU / 360.0;
 	if (currentRatio > normalRatio)
 		angle = atan(tan(yfov / 2) * normalRatio / currentRatio) * 2;
 	else
@@ -208,7 +206,7 @@ void GL2Renderer::makePerspective() {
 
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
-	double zFar = Chunk::WIDTH * sqrt(3 * (conf.render_distance + 1) * (conf.render_distance + 1));
+	double zFar = Chunk::WIDTH * sqrt(3 * (client->getConf().render_distance + 1) * (client->getConf().render_distance + 1));
 	gluPerspective((float) (angle * 360.0 / TAU),
 			(float) currentRatio, ZNEAR, zFar);
 	glGetDoublev(GL_PROJECTION_MATRIX, perspectiveMatrix);
@@ -233,14 +231,14 @@ void GL2Renderer::makeOrthogonal() {
 }
 
 void GL2Renderer::makeFog() {
-	double fogEnd = std::max(0.0, Chunk::WIDTH * (conf.render_distance - 1.0));
+	double fogEnd = std::max(0.0, Chunk::WIDTH * (client->getConf().render_distance - 1.0));
 	glFogf(GL_FOG_START, fogEnd - ZNEAR - fogEnd / 3.0);
 	glFogf(GL_FOG_END, fogEnd - ZNEAR);
 }
 
 void GL2Renderer::makeMaxFOV() {
 	float ratio = (float) DEFAULT_WINDOWED_RES[0] / DEFAULT_WINDOWED_RES[1];
-	float yfov = conf.fov / ratio * TAU / 360.0;
+	float yfov = client->getConf().fov / ratio * TAU / 360.0;
 	if (ratio < 1.0)
 		maxFOV = yfov;
 	else
@@ -258,20 +256,18 @@ static uint getMSLevelFromAA(AntiAliasing aa) {
 	}
 }
 
-void GL2Renderer::setConf(const GraphicsConf &conf) {
-	GraphicsConf old_conf = this->conf;
-
-	if (conf.render_distance != old_conf.render_distance) {
+void GL2Renderer::setConf(const GraphicsConf &conf, const GraphicsConf &old) {
+	if (conf.render_distance != old.render_distance) {
 		destroyRenderDistanceDependent();
 	}
 
-	this->conf = conf;
+	renderDistance = conf.render_distance;
 
-	if (conf.render_distance != old_conf.render_distance) {
+	if (conf.render_distance != old.render_distance) {
 		initRenderDistanceDependent();
 	}
 
-	if (conf.fov != old_conf.fov || conf.render_distance != old_conf.render_distance) {
+	if (conf.fov != old.fov || conf.render_distance != old.render_distance) {
 		makeMaxFOV();
 		makePerspective();
 		makeFog();
@@ -290,18 +286,18 @@ void GL2Renderer::setConf(const GraphicsConf &conf) {
 		}
 	}
 
-	if (conf.aa != old_conf.aa) {
+	if (conf.aa != old.aa) {
 		if (fbo)
 			destroyFBO();
 		if (conf.aa != AntiAliasing::NONE)
 			createFBO();
 	}
 
-	texManager.setConfig(conf);
+	texManager.setConfig(conf, old);
 }
 
 void GL2Renderer::createFBO() {
-	uint msLevel = getMSLevelFromAA(conf.aa);
+	uint msLevel = getMSLevelFromAA(client->getConf().aa);
 //	LOG(INFO) << "Creating framebuffer with MSAA=" << msaa
 //			<< " and fxaa " << (fxaa ? "enabled" : "disabled");
 //	bool needs_render_to_texture = false;
@@ -337,7 +333,7 @@ void GL2Renderer::createFBO() {
 	glGenRenderbuffers(1, &fbo_depth_buffer);
 	glBindRenderbuffer(GL_RENDERBUFFER, fbo_depth_buffer);
 	logOpenGLError();
-	if (conf.aa != AntiAliasing::NONE) {
+	if (client->getConf().aa != AntiAliasing::NONE) {
 		glRenderbufferStorageMultisample(
 				GL_RENDERBUFFER, msLevel, GL_DEPTH_COMPONENT24, graphics->getWidth(), graphics->getHeight()
 		);

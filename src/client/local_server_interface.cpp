@@ -4,8 +4,7 @@
 
 #include "engine/logging.hpp"
 
-LocalServerInterface::LocalServerInterface(World *world, uint64 seed, const GraphicsConf &conf)
-		: conf(conf) {
+LocalServerInterface::LocalServerInterface(World *world, uint64 seed, const GraphicsConf &conf) {
 	this->world = world;
 	this->world->addPlayer(0);
 	player = &world->getPlayer(0);
@@ -65,11 +64,8 @@ void LocalServerInterface::sendInput() {
 
 }
 
-void LocalServerInterface::setConf(const GraphicsConf &conf) {
-	GraphicsConf old_conf = this->conf;
-	this->conf = conf;
-
-	if (conf.render_distance != old_conf.render_distance) {
+void LocalServerInterface::setConf(const GraphicsConf &conf, const GraphicsConf &old) {
+	if (conf.render_distance != old.render_distance) {
 		chunkLoader->setRenderDistance(conf.render_distance);
 		world->clearChunks();
 		while (chunkLoader->getRenderDistance() != conf.render_distance)

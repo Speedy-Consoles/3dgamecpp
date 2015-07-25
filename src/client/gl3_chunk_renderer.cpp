@@ -12,7 +12,7 @@
 #include "util.hpp"
 
 GL3ChunkRenderer::GL3ChunkRenderer(Client *client, GL3Renderer *renderer, ShaderManager *shaderManager)
-		: client(client), renderer(renderer), shaderManager(shaderManager), conf(*client->getConf()) {
+		: client(client), renderer(renderer), shaderManager(shaderManager) {
 	initRenderDistanceDependent();
 	loadTextures();
 }
@@ -102,19 +102,16 @@ void GL3ChunkRenderer::loadTextures() {
 	SDL_FreeSurface(img);
 }
 
-void GL3ChunkRenderer::setConf(const GraphicsConf &conf) {
-	GraphicsConf old_conf = this->conf;
-	this->conf = conf;
-
-	if (conf.render_distance != old_conf.render_distance) {
+void GL3ChunkRenderer::setConf(const GraphicsConf &conf, const GraphicsConf &old) {
+	if (conf.render_distance != old.render_distance) {
 		destroyRenderDistanceDependent();
 		initRenderDistanceDependent();
 	}
 }
 
 void GL3ChunkRenderer::initRenderDistanceDependent() {
-	int length = conf.render_distance * 2 + 1;
-	int n = length * length * length;
+	visibleDiameter = client->getConf().render_distance * 2 + 1;
+	int n = visibleDiameter * visibleDiameter * visibleDiameter;
 	vaos = new GLuint[n];
 	vbos = new GLuint[n];
 	GL(GenVertexArrays(n, vaos));
@@ -125,7 +122,7 @@ void GL3ChunkRenderer::initRenderDistanceDependent() {
 	chunkPassThroughs = new uint16[n];
 	vsExits = new uint8[n];
 	vsVisited = new bool[n];
-	vsFringeCapacity = length * length * 6;
+	vsFringeCapacity = visibleDiameter * visibleDiameter * 6;
 	vsFringe = new vec3i64[vsFringeCapacity];
 	vsIndices = new int[vsFringeCapacity];
 	for (int i = 0; i < n; i++) {
@@ -150,9 +147,9 @@ void GL3ChunkRenderer::initRenderDistanceDependent() {
 }
 
 void GL3ChunkRenderer::destroyRenderDistanceDependent() {
-	int length = conf.render_distance * 2 + 1;
-	GL(DeleteBuffers(length * length * length, vbos));
-	GL(DeleteVertexArrays(length * length * length, vaos));
+	int n = visibleDiameter * visibleDiameter * visibleDiameter;
+	GL(DeleteBuffers(n, vbos));
+	GL(DeleteVertexArrays(n, vaos));
 	delete vaos;
 	delete vbos;
 	delete vaoChunks;
@@ -188,13 +185,11 @@ void GL3ChunkRenderer::render() {
 	GL(ActiveTexture(GL_TEXTURE0));
 	GL(BindTexture(GL_TEXTURE_2D_ARRAY, blockTextures));
 
-	int length = conf.render_distance * 2 + 1;
-
 	vec3i64 ccc;
 	while (client->getWorld()->popChangedChunk(&ccc)) {
-		int index = ((((ccc[2] % length) + length) % length) * length
-				+ (((ccc[1] % length) + length) % length)) * length
-				+ (((ccc[0] % length) + length) % length);
+		int index = ((((ccc[2] % visibleDiameter) + visibleDiameter) % visibleDiameter) * visibleDiameter
+				+ (((ccc[1] % visibleDiameter) + visibleDiameter) % visibleDiameter)) * visibleDiameter
+				+ (((ccc[0] % visibleDiameter) + visibleDiameter) % visibleDiameter);
 		if (vaoStatus[index] != NO_CHUNK)
 			vaoStatus[index] = OUTDATED;
 	}
@@ -206,9 +201,9 @@ void GL3ChunkRenderer::render() {
 	newChunks = 0;
 
 	vsFringe[0] = pc;
-	vsIndices[0] = ((((pc[2] % length) + length) % length) * length
-			+ (((pc[1] % length) + length) % length)) * length
-			+ (((pc[0] % length) + length) % length);
+	vsIndices[0] = ((((pc[2] % visibleDiameter) + visibleDiameter) % visibleDiameter) * visibleDiameter
+			+ (((pc[1] % visibleDiameter) + visibleDiameter) % visibleDiameter)) * visibleDiameter
+			+ (((pc[0] % visibleDiameter) + visibleDiameter) % visibleDiameter);
 	vsExits[vsIndices[0]] = 0x3F;
 	vsVisited[vsIndices[0]] = true;
 	int fringeSize = 1;
@@ -249,15 +244,15 @@ void GL3ChunkRenderer::render() {
 				vec3i64 ncc = cc + DIRS[d].cast<int64>();
 				vec3i64 ncd = ncc - pc;
 
-				if ((uint) abs(ncd[0]) > conf.render_distance
-						|| (uint) abs(ncd[1]) > conf.render_distance
-						|| (uint) abs(ncd[2]) > conf.render_distance
+				if ((uint) abs(ncd[0]) > client->getConf().render_distance
+						|| (uint) abs(ncd[1]) > client->getConf().render_distance
+						|| (uint) abs(ncd[2]) > client->getConf().render_distance
 						|| !inFrustum(ncc, player.getPos(), lookDir))
 					continue;
 
-				int nIndex = ((((ncc[2] % length) + length) % length) * length
-						+ (((ncc[1] % length) + length) % length)) * length
-						+ (((ncc[0] % length) + length) % length);
+				int nIndex = ((((ncc[2] % visibleDiameter) + visibleDiameter) % visibleDiameter) * visibleDiameter
+						+ (((ncc[1] % visibleDiameter) + visibleDiameter) % visibleDiameter)) * visibleDiameter
+						+ (((ncc[0] % visibleDiameter) + visibleDiameter) % visibleDiameter);
 
 				if (!vsVisited[nIndex]) {
 					vsVisited[nIndex] = true;
@@ -290,10 +285,9 @@ void GL3ChunkRenderer::render() {
 void GL3ChunkRenderer::buildChunk(Chunk &c) {
 	vec3i64 cc = c.getCC();
 
-	int length = conf.render_distance * 2 + 1;
-	uint index = ((((cc[2] % length) + length) % length) * length
-			+ (((cc[1] % length) + length) % length)) * length
-			+ (((cc[0] % length) + length) % length);
+	uint index = ((((cc[2] % visibleDiameter) + visibleDiameter) % visibleDiameter) * visibleDiameter
+			+ (((cc[1] % visibleDiameter) + visibleDiameter) % visibleDiameter)) * visibleDiameter
+			+ (((cc[0] % visibleDiameter) + visibleDiameter) % visibleDiameter);
 
 	if (vaoStatus[index] != NO_CHUNK)
 		faces -= chunkFaces[index];

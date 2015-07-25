@@ -59,8 +59,8 @@ Client::Client(const char *worldId, const char *serverAdress) {
 	stopwatch = std::unique_ptr<Stopwatch>(new Stopwatch(CLOCK_ID_NUM));
 	stopwatch->start(CLOCK_ALL);
 
-	conf = std::unique_ptr<GraphicsConf>(new GraphicsConf());
-	load("graphics-default.profile", conf.get());
+	_conf = std::unique_ptr<GraphicsConf>(new GraphicsConf());
+	load("graphics-default.profile", *_conf);
 
 	blockManager = std::unique_ptr<BlockManager>(new BlockManager());
 	const char *block_ids_file = "block_ids.txt";
@@ -70,15 +70,15 @@ Client::Client(const char *worldId, const char *serverAdress) {
 	LOG(INFO, "" << blockManager->getBlockNumber() << " blocks were loaded from '" << block_ids_file << "'");
 
 	world = std::unique_ptr<World>(new World(worldId));
-	menu = std::unique_ptr<Menu>(new Menu(conf.get()));
-	graphics = std::unique_ptr<Graphics>(new Graphics(this, world.get(), menu.get(), &state, &localClientId, *conf, stopwatch.get()));
+	menu = std::unique_ptr<Menu>(new Menu(this));
+	graphics = std::unique_ptr<Graphics>(new Graphics(this, world.get(), menu.get(), &state, &localClientId, *_conf, stopwatch.get()));
 
 	if (serverAdress) {
 		LOG(INFO, "Connecting to remote server '" << serverAdress << "'");
-		serverInterface = std::unique_ptr<RemoteServerInterface>(new RemoteServerInterface(world.get(), serverAdress, *conf));
+		serverInterface = std::unique_ptr<RemoteServerInterface>(new RemoteServerInterface(world.get(), serverAdress, *_conf));
 	} else {
 		LOG(INFO, "Connecting to local server");
-		serverInterface = std::unique_ptr<LocalServerInterface>(new LocalServerInterface(world.get(), 42, *conf));
+		serverInterface = std::unique_ptr<LocalServerInterface>(new LocalServerInterface(world.get(), 42, *_conf));
 	}
 }
 
@@ -90,7 +90,7 @@ Client::~Client() {
 	world.reset();
 	serverInterface.reset();
 
-	store("graphics-default.profile", *conf);
+	store("graphics-default.profile", *_conf);
 }
 
 uint8 Client::getLocalClientId() const {
@@ -140,6 +140,12 @@ void Client::run() {
 		tick++;
 	}
 	serverInterface->stop();
+}
+
+void Client::setConf(const GraphicsConf &conf) {
+	graphics->setConf(conf, *_conf);
+	serverInterface->setConf(conf, *_conf);
+	*_conf = conf;
 }
 
 void Client::sync(int perSecond) {
@@ -205,17 +211,19 @@ void Client::handleInput() {
 						serverInterface->toggleFly();
 					}
 					break;
-				case SDL_SCANCODE_M:
-					switch (conf->aa) {
-					case AntiAliasing::NONE:    conf->aa = AntiAliasing::MSAA_2; break;
-					case AntiAliasing::MSAA_2:  conf->aa = AntiAliasing::MSAA_4; break;
-					case AntiAliasing::MSAA_4:  conf->aa = AntiAliasing::MSAA_8; break;
-					case AntiAliasing::MSAA_8:  conf->aa = AntiAliasing::MSAA_16; break;
-					case AntiAliasing::MSAA_16: conf->aa = AntiAliasing::NONE; break;
+				case SDL_SCANCODE_M: {
+					GraphicsConf conf = *_conf;
+					switch (conf.aa) {
+					case AntiAliasing::NONE:    conf.aa = AntiAliasing::MSAA_2; break;
+					case AntiAliasing::MSAA_2:  conf.aa = AntiAliasing::MSAA_4; break;
+					case AntiAliasing::MSAA_4:  conf.aa = AntiAliasing::MSAA_8; break;
+					case AntiAliasing::MSAA_8:  conf.aa = AntiAliasing::MSAA_16; break;
+					case AntiAliasing::MSAA_16: conf.aa = AntiAliasing::NONE; break;
 					}
-					graphics->setConf(*conf);
+					setConf(conf);
 					menu->update();
 					break;
+				}
 //				case SDL_SCANCODE_N:
 //					switch (graphics->getFXAA()) {
 //					case true: graphics->disableFXAA(); break;
@@ -226,10 +234,12 @@ void Client::handleInput() {
 					if (SDL_GetModState() & KMOD_LCTRL)
 						closeRequested = true;
 					break;
-				case SDL_SCANCODE_F11:
-					conf->fullscreen = !conf->fullscreen;
-					graphics->setConf(*conf);
+				case SDL_SCANCODE_F11: {
+					GraphicsConf conf = *_conf;
+					conf.fullscreen = !conf.fullscreen;
+					setConf(conf);
 					break;
+				}
 				case SDL_SCANCODE_F3:
 					_isDebugOn = !_isDebugOn;
 					break;
@@ -326,11 +336,6 @@ void Client::handleInput() {
 			}
 			break;
 		}
-	}
-
-	if (menu->check()){
-		graphics->setConf(*conf);
-		serverInterface->setConf(*conf);
 	}
 
 	const uint8 *keyboard = SDL_GetKeyboardState(nullptr);

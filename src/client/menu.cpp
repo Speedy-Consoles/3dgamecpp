@@ -27,8 +27,8 @@ Menu::~Menu() {
 	delete frame;
 }
 
-Menu::Menu(GraphicsConf *c) :
-		clientConf(c), bufferConf(*c)
+Menu::Menu(Client *client) :
+		_client(client)
 {
 	int yIncr = 20;
 	int y = yIncr;
@@ -46,9 +46,7 @@ Menu::Menu(GraphicsConf *c) :
 	fsButton->add(false, "Off");
 	fsButton->add(true, "On");
 	fsButton->setOnDataChange([this](bool b){
-		this->bufferConf.fullscreen = b;
-		this->clientConf->fullscreen = b;
-		this->dirty = true;
+		this->setFullscreen(b);
 	});
 	frame->add(fsButton);
 	y += yIncr;
@@ -61,7 +59,7 @@ Menu::Menu(GraphicsConf *c) :
 	aaButton->add(AntiAliasing::MSAA_8, "MSAA x8");
 	aaButton->add(AntiAliasing::MSAA_16, "MSAA x16");
 	aaButton->setOnDataChange([this](AntiAliasing aa){
-		this->bufferConf.aa = aa;
+		this->setAntiAliasing(aa);
 	});
 	frame->add(aaButton);
 	y += yIncr;
@@ -72,9 +70,7 @@ Menu::Menu(GraphicsConf *c) :
 	fogButton->add(Fog::FAST, "Fast");
 	fogButton->add(Fog::FANCY, "Fancy");
 	fogButton->setOnDataChange([this](Fog fog){
-		this->bufferConf.fog = fog;
-		this->clientConf->fog = fog;
-		this->dirty = true;
+		this->setFog(fog);
 	});
 	frame->add(fogButton);
 	y += yIncr;
@@ -87,8 +83,8 @@ Menu::Menu(GraphicsConf *c) :
 	rdButton->add(16, "16");
 	rdButton->add(24, "24");
 	rdButton->add(32, "32");
-	rdButton->setOnDataChange([this](int rd){
-		this->bufferConf.render_distance = rd;
+	rdButton->setOnDataChange([this](int d){
+		this->setRenderDistance(d);
 	});
 	frame->add(rdButton);
 	y += yIncr;
@@ -96,20 +92,9 @@ Menu::Menu(GraphicsConf *c) :
 	frame->add(new Label(0, y, 180, 20, "Mipmapping:"));
 	mipButton = new CycleButton<uint>(180, y, 100, 20);
 	mipButton->add(0, "Off");
-//	mipButton->add(1, "1");
-//	mipButton->add(2, "2");
-//	mipButton->add(3, "3");
-//	mipButton->add(4, "4");
-//	mipButton->add(5, "5");
-//	mipButton->add(6, "6");
-//	mipButton->add(7, "7");
-//	mipButton->add(8, "8");
-//	mipButton->add(9, "9");
 	mipButton->add(1000, "Max");
-	mipButton->setOnDataChange([this](uint mip){
-		this->bufferConf.tex_mipmapping = mip;
-		this->clientConf->tex_mipmapping = mip;
-		dirty = true;
+	mipButton->setOnDataChange([this](uint level){
+		this->setMipmapping(level);
 	});
 	frame->add(mipButton);
 	y += yIncr;
@@ -119,9 +104,7 @@ Menu::Menu(GraphicsConf *c) :
 	filtButton->add(TexFiltering::NEAREST, "Nearest");
 	filtButton->add(TexFiltering::LINEAR, "Linear");
 	filtButton->setOnDataChange([this](TexFiltering filt){
-		this->bufferConf.tex_filtering = filt;
-		this->clientConf->tex_filtering = filt;
-		dirty = true;
+		this->setTextureFiltering(filt);
 	});
 	frame->add(filtButton);
 	y += yIncr;
@@ -129,18 +112,57 @@ Menu::Menu(GraphicsConf *c) :
 	update();
 }
 
-void Menu::apply() {
-	*clientConf = bufferConf;
-	dirty = true;
+void Menu::update() {
+	const GraphicsConf &conf = _client->getConf();
+	fsButton->set(conf.fullscreen);
+	aaButton->set(conf.aa);
+	fogButton->set(conf.fog);
+	rdButton->set(conf.render_distance);
+	mipButton->set(conf.tex_mipmapping);
+	filtButton->set(conf.tex_filtering);
+
+	bufferConf = conf;
+	_dirty = false;
 }
 
-void Menu::update() {
-	fsButton->set(clientConf->fullscreen);
-	aaButton->set(clientConf->aa);
-	fogButton->set(clientConf->fog);
-	rdButton->set(clientConf->render_distance);
-	mipButton->set(clientConf->tex_mipmapping);
-	filtButton->set(clientConf->tex_filtering);
 
-	bufferConf = *clientConf;
+void Menu::apply() {
+	if (_dirty) {
+		_client->setConf(bufferConf);
+		_dirty = false;
+	}
+}
+
+void Menu::setFullscreen(bool b) {
+	bufferConf.fullscreen = b;
+	_dirty = true;
+}
+
+void Menu::setAntiAliasing(AntiAliasing aa) {
+	bufferConf.aa = aa;
+	_dirty = true;
+	apply();
+}
+
+void Menu::setFog(Fog fog) {
+	bufferConf.fog = fog;
+	_dirty = true;
+	apply();
+}
+
+void Menu::setRenderDistance(int d) {
+	bufferConf.render_distance = d;
+	_dirty = true;
+}
+
+void Menu::setMipmapping(uint level) {
+	bufferConf.tex_mipmapping = level;
+	_dirty = true;
+	apply();
+}
+
+void Menu::setTextureFiltering(TexFiltering filt) {
+	bufferConf.tex_filtering = filt;
+	_dirty = true;
+	apply();
 }

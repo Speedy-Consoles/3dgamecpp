@@ -17,7 +17,6 @@
 #include "game/chunk.hpp"
 #include "util.hpp"
 #include "client.hpp"
-#include "config.hpp"
 
 class Graphics;
 struct SDL_Window;
@@ -38,7 +37,6 @@ private:
 	Client *client = nullptr;
 	Graphics *graphics = nullptr;
 	SDL_Window *window = nullptr;
-	GraphicsConf conf;
 
 	// 3D values
 	float ZNEAR = 0.1f;
@@ -84,16 +82,14 @@ public:
 	~GL3Renderer();
 
 	void tick();
-
 	void resize();
+	void setConf(const GraphicsConf &, const GraphicsConf &);
+
 	void makePerspectiveMatrix();
 	void makeOrthogonalMatrix();
 	void makeMaxFOV();
 
 	float getMaxFOV() { return maxFOV; }
-
-	const GraphicsConf &getConf() const { return conf; }
-	void setConf(const GraphicsConf &);
 
 private:
 	void render();

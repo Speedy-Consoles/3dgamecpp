@@ -163,7 +163,7 @@ void store(const char *filename, const GraphicsConf &conf) {
 	write_info(filename, pt);
 }
 
-void load(const char *filename, GraphicsConf *conf) {
+void load(const char *filename, GraphicsConf &conf) {
 	ptree pt;
 	try {
 		read_info(filename, pt);
@@ -171,30 +171,30 @@ void load(const char *filename, GraphicsConf *conf) {
 		LOG(WARNING, "'" << filename << "' could not be opened");
 	}
 
-	conf->render_backend = pt.get("graphics.render_backend",
+	conf.render_backend = pt.get("graphics.render_backend",
 			DEFAULT_RENDER_BACKEND);
-	conf->fullscreen = pt.get("graphics.is_fullscreen",
+	conf.fullscreen = pt.get("graphics.is_fullscreen",
 			DEFAULT_FULLSCREEN);
-	conf->windowed_res[0] = pt.get("graphics.windowed_res.w",
+	conf.windowed_res[0] = pt.get("graphics.windowed_res.w",
 			DEFAULT_WINDOWED_RES[0]);
-	conf->windowed_res[1] = pt.get("graphics.windowed_res.h",
+	conf.windowed_res[1] = pt.get("graphics.windowed_res.h",
 			DEFAULT_WINDOWED_RES[1]);
-	conf->fullscreen_res[0] = pt.get("graphics.fullscreen_res.w",
+	conf.fullscreen_res[0] = pt.get("graphics.fullscreen_res.w",
 			DEFAULT_FULLSCREEN_RES[0]);
-	conf->fullscreen_res[1] = pt.get("graphics.fullscreen_res.h",
+	conf.fullscreen_res[1] = pt.get("graphics.fullscreen_res.h",
 			DEFAULT_FULLSCREEN_RES[1]);
-	conf->aa = pt.get("graphics.aa",
+	conf.aa = pt.get("graphics.aa",
 			DEFAULT_ANTI_ALIASING);
-	conf->fog = pt.get("graphics.fog",
+	conf.fog = pt.get("graphics.fog",
 			DEFAULT_FOG);
-	conf->render_distance = pt.get("graphics.render_distance",
+	conf.render_distance = pt.get("graphics.render_distance",
 			DEFAULT_RENDER_DISTANCE);
-	conf->fov = pt.get("graphics.fov",
+	conf.fov = pt.get("graphics.fov",
 			DEFAULT_FOV);
-	conf->tex_mipmapping = pt.get("graphics.textures.mipmapping",
+	conf.tex_mipmapping = pt.get("graphics.textures.mipmapping",
 			DEFAULT_TEX_MIPMAPPING);
-	conf->tex_filtering = pt.get("graphics.textures.filtering",
+	conf.tex_filtering = pt.get("graphics.textures.filtering",
 			DEFAULT_TEX_FILTERING);
-	conf->tex_atlas = pt.get("graphics.textures.use_atlas",
+	conf.tex_atlas = pt.get("graphics.textures.use_atlas",
 			DEFAULT_TEX_ATLAS);
 }

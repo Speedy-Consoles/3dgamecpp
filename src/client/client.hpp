@@ -30,7 +30,7 @@ public:
 	bool isDebugOn() const { return _isDebugOn; }
 	uint8 getLocalClientId() const;
 	
-	GraphicsConf *getConf() { return conf.get(); }
+	const GraphicsConf &getConf() const { return *_conf.get(); }
 	BlockManager *getBlockManager() { return blockManager.get(); }
 	World *getWorld() { return world.get(); }
 	Menu *getMenu() { return menu.get(); }
@@ -38,10 +38,12 @@ public:
 	ServerInterface *getServerInterface() { return serverInterface.get(); }
 	Stopwatch *getStopwatch() { return stopwatch.get(); }
 
+	void setConf(const GraphicsConf &);
+
 	void run();
 
 private:
-	std::unique_ptr<GraphicsConf> conf;
+	std::unique_ptr<GraphicsConf> _conf;
 	std::unique_ptr<BlockManager> blockManager;
 	std::unique_ptr<World> world;
 	std::unique_ptr<Menu> menu;

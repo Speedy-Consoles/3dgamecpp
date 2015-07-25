@@ -7,14 +7,15 @@
 
 #include "texture_manager.hpp"
 
-#include <SDL2/SDL_image.h>
-
+#include "client/client.hpp"
 #include "engine/logging.hpp"
+
+#include <SDL2/SDL_image.h>
 
 static const auto TEX2D = GL_TEXTURE_2D;
 
-TextureManager::TextureManager(const GraphicsConf &conf) :
-	conf(conf)
+TextureManager::TextureManager(Client *client) :
+	client(client)
 {
 	// nothing
 }
@@ -26,7 +27,7 @@ TextureManager::~TextureManager() {
 	}
 }
 
-static void setLoadingOptions(GraphicsConf &conf) {
+static void setLoadingOptions(const GraphicsConf &conf) {
 	bool mipmapping = conf.tex_mipmapping > 0;
 	GLenum mag_filter, min_filter;
 
@@ -53,12 +54,9 @@ static void setLoadingOptions(GraphicsConf &conf) {
 	}
 }
 
-void TextureManager::setConfig(const GraphicsConf &c) {
-	GraphicsConf old_conf = conf;
-	conf = c;
-
-	if (conf.tex_mipmapping != old_conf.tex_mipmapping ||
-			conf.tex_filtering != old_conf.tex_filtering)
+void TextureManager::setConfig(const GraphicsConf &conf, const GraphicsConf &old) {
+	if (conf.tex_mipmapping != old.tex_mipmapping ||
+			conf.tex_filtering != old.tex_filtering)
 	{
 		for (auto iter : loadedTextures) {
 			GLuint tex = iter;
@@ -300,7 +298,7 @@ GLuint TextureManager::loadTexture(uint block, SDL_Surface *img, TextureType typ
 	GLuint tex;
 	glGenTextures(1, &tex);
 	glBindTexture(TEX2D, tex);
-	setLoadingOptions(conf);
+	setLoadingOptions(client->getConf());
 	glTexImage2D(TEX2D, 0, 4, img->w, img->h, 0,
 			GL_RGBA, GL_UNSIGNED_BYTE, img->pixels);
 

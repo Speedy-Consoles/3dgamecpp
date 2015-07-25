@@ -48,9 +48,7 @@ public:
 	void tick();
 
 	void resize(int width, int height);
-
-	const GraphicsConf &getConf() const { return conf; }
-	void setConf(const GraphicsConf &);
+	void setConf(const GraphicsConf &, const GraphicsConf &);
 
 	int getHeight() const;
 	int getWidth() const;

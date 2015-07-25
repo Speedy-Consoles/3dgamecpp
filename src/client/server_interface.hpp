@@ -32,7 +32,7 @@ public:
 
 	virtual void sendInput() = 0;
 
-	virtual void setConf(const GraphicsConf &) = 0;
+	virtual void setConf(const GraphicsConf &, const GraphicsConf &) = 0;
 
 	virtual int getLocalClientId() = 0;
 

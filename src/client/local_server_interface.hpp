@@ -11,8 +11,6 @@ private:
 	Player *player;
 	ChunkLoader *chunkLoader;
 
-	GraphicsConf conf;
-
 public:
 	LocalServerInterface(World *world, uint64 seed, const GraphicsConf &conf);
 
@@ -33,7 +31,7 @@ public:
 
 	void sendInput() override;
 
-	void setConf(const GraphicsConf &) override;
+	void setConf(const GraphicsConf &, const GraphicsConf &) override;
 
 	int getLocalClientId() override;
 

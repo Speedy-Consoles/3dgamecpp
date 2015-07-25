@@ -56,6 +56,6 @@ struct GraphicsConf {
 };
 
 void store(const char *filename, const GraphicsConf &conf);
-void load(const char *filename, GraphicsConf *conf);
+void load(const char *filename, GraphicsConf &conf);
 
 #endif // CONFIG_HPP_

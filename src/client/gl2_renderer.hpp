@@ -47,7 +47,6 @@ private:
 	Client *client;
 	Graphics *graphics;
 	SDL_Window *window;
-	GraphicsConf conf;
 
 	// rendering helpers
 	TextureManager texManager;
@@ -65,6 +64,9 @@ private:
 	int faces = 0;
 	int visibleChunks = 0;
 	int visibleFaces = 0;
+
+	// cache
+	int renderDistance;
 
 	// display lists
 	GLuint dlFirstAddress;
@@ -111,11 +113,8 @@ public:
 	~GL2Renderer();
 
 	void tick();
-
 	void resize();
-
-	const GraphicsConf &getConf() const { return conf; }
-	void setConf(const GraphicsConf &);
+	void setConf(const GraphicsConf &, const GraphicsConf &);
 
 private:
 	void initGL();

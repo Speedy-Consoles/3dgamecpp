@@ -13,7 +13,6 @@
 
 class RemoteServerInterface : public ServerInterface {
 private:
-	GraphicsConf conf;
 	uint8 localPlayerId;
 	World *world;
 
@@ -52,7 +51,7 @@ public:
 
 	void sendInput() override;
 
-	void setConf(const GraphicsConf &) override;
+	void setConf(const GraphicsConf &, const GraphicsConf &) override;
 
 	int getLocalClientId() override;
 

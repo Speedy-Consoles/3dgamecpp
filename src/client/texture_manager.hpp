@@ -22,10 +22,11 @@
 struct SDL_Surface;
 
 class TextureLoader;
+class Client;
 
 class TextureManager : public AbstractTextureManager {
 public:
-	TextureManager(const GraphicsConf &);
+	TextureManager(Client *);
 	~TextureManager();
 
 	// not copyable or movable
@@ -34,7 +35,7 @@ public:
 	TextureManager &operator = (const TextureManager &) = delete;
 	TextureManager &operator = (TextureManager &&) = delete;
 
-	void setConfig(const GraphicsConf &);
+	void setConfig(const GraphicsConf &, const GraphicsConf &);
 
 	bool isWangTileBound() const;
 
@@ -47,7 +48,7 @@ protected:
 	void add(SDL_Surface *img, const std::vector<TextureEntry> &entries) override;
 
 private:
-	GraphicsConf conf;
+	Client *client;
 
 	struct Entry {
 		uint block;

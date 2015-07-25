@@ -12,7 +12,6 @@ using namespace boost;
 using namespace boost::asio::ip;
 
 RemoteServerInterface::RemoteServerInterface(World *world, const char *address, const GraphicsConf &conf) :
-		conf(conf),
 		world(world),
 		ios(),
 		w(new boost::asio::io_service::work(ios)),
@@ -205,11 +204,8 @@ void RemoteServerInterface::sendInput() {
 	}
 }
 
-void RemoteServerInterface::setConf(const GraphicsConf &conf) {
-	GraphicsConf old_conf = this->conf;
-	this->conf = conf;
-
-	if (conf.render_distance != old_conf.render_distance) {
+void RemoteServerInterface::setConf(const GraphicsConf &conf, const GraphicsConf &old) {
+	if (conf.render_distance != old.render_distance) {
 		// TODO
 	}
 }
