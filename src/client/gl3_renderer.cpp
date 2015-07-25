@@ -145,8 +145,8 @@ void GL3Renderer::makeOrthogonalMatrix() {
 		hudMatrix = glm::ortho(-DEFAULT_WINDOWED_RES[1] * currentRatio / 2.0f, DEFAULT_WINDOWED_RES[1]
 				* currentRatio / 2.0f, -DEFAULT_WINDOWED_RES[1] / 2.0f,
 				DEFAULT_WINDOWED_RES[1] / 2.0f, 1.0f, -1.0f);
-    shaderManager.getHudShader().setHudProjectionMatrix(hudMatrix);
-    shaderManager.getFontShader().setFontProjectionMatrix(hudMatrix);
+    shaderManager.getHudShader().setProjectionMatrix(hudMatrix);
+    shaderManager.getFontShader().setProjectionMatrix(hudMatrix);
 }
 
 void GL3Renderer::makeMaxFOV() {

@@ -251,10 +251,10 @@ void BMFont::beginRender() {
 	glEnableVertexAttribArray(0); // coord
 	glEnableVertexAttribArray(1); // texCoord
 	glBindTexture(GL_TEXTURE_2D_ARRAY, tex);
-	shader->setFontIsPacked(isPacked);
-	shader->setFontHasOutline(hasOutline);
-	shader->setFontTextColor(textColor);
-	shader->setFontOutlineColor(outlineColor);
+	shader->setIsPacked(isPacked);
+	shader->setHasOutline(hasOutline);
+	shader->setTextColor(textColor);
+	shader->setOutlineColor(outlineColor);
 	logOpenGLError();
 }
 
@@ -278,9 +278,9 @@ float BMFont::renderGlyph(float x, float y, float z, int glyph) {
 	glm::mat4 ident(1.0f);
 	auto transl = glm::vec3(x + ox, y - (h + oy), 0.0f);
 	auto modelMat = glm::translate(ident, transl);
-	shader->setFontModelMatrix(modelMat);
-	shader->setFontPage(ch->page);
-	shader->setFontChannel(ch->chnl);
+	shader->setModelMatrix(modelMat);
+	shader->setPage(ch->page);
+	shader->setChannel(ch->chnl);
 
 	shader->useProgram();
 	glDrawArrays(GL_TRIANGLES, 0, 6);
@@ -298,10 +298,10 @@ BMFont::CharDesc *BMFont::getChar(int id)
 
 void BMFont::writeInternal(float x, float y, float z, const char *text, int count, float spacing) {
 	if (hasOutline && outline) {
-		shader->setFontMode(FontShader::FontRenderMode::OUTLINE);
+		shader->setMode(FontShader::FontRenderMode::OUTLINE);
 		Font::writeInternal(x, y, z, text, count, spacing);
 	}
-	shader->setFontMode(FontShader::FontRenderMode::TEXT);
+	shader->setMode(FontShader::FontRenderMode::TEXT);
 	Font::writeInternal(x, y, z, text, count, spacing);
 }
 

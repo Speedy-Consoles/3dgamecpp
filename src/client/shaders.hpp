@@ -19,14 +19,14 @@ static const int NUM_PROGRAMS = 4;
 class ShaderManager;
 
 class Shader {
-	ShaderManager *manager = nullptr;
-	GLuint programLocation;
+	ShaderManager *_manager = nullptr;
+	GLuint _programLocation;
 
 public:
 	Shader(ShaderManager *, const char *, const char *);
 	virtual ~Shader();
 
-	GLuint getProgramLocation() const { return programLocation; }
+	GLuint getProgramLocation() const { return _programLocation; }
 	GLuint getUniformLocation(const char *name) const;
 	void useProgram();
 
@@ -36,40 +36,40 @@ private:
 };
 
 class DefaultShader : public Shader {
-	GLint defaultLightEnabledLoc;
-	GLint defaultAmbientColorLoc;
-	GLint defaultDiffColorLoc;
-	GLint defaultDiffDirLoc;
-	GLint defaultModelMatLoc;
-	GLint defaultViewMatLoc;
-	GLint defaultProjMatLoc;
-	GLint defaultFogEnabledLoc;
-	GLint defaultFogStartDistanceLoc;
-	GLint defaultFogEndDistanceLoc;
+	GLint _lightEnabledLoc;
+	GLint _ambientColorLoc;
+	GLint _diffuseColorLoc;
+	GLint _diffuseDirectionLoc;
+	GLint _modelMatrixLoc;
+	GLint _viewMatrixLoc;
+	GLint _projectionMatrixLoc;
+	GLint _fogEnabledLoc;
+	GLint _fogStartDistanceLoc;
+	GLint _fogEndDistanceLoc;
 
-	bool defaultLightEnabledUp = false;
-	bool defaultAmbientColorUp = false;
-	bool defaultDiffColorUp = false;
-	bool defaultDiffDirUp = false;
-	bool defaultModelMatUp = false;
-	bool defaultViewMatUp = false;
-	bool defaultProjMatUp = false;
-	bool defaultFogEnabledUp = false;
-	bool defaultFogStartDistanceUp = false;
-	bool defaultFogEndDistanceUp = false;
+	bool _lightEnabledDirty = false;
+	bool _ambientColorDirty = false;
+	bool _diffuseColorDirty = false;
+	bool _diffuseDirectionDirty = false;
+	bool _modelMatrixDirty = false;
+	bool _viewMatrixDirty = false;
+	bool _projectionMatrixDirty = false;
+	bool _fogEnabledDirty = false;
+	bool _fogStartDistanceDirty = false;
+	bool _fogEndDistanceDirty = false;
 
-	GLboolean lightEnabled;
-	glm::vec3 ambientColor;
-	glm::vec3 diffuseColor;
-	glm::vec3 diffuseDirection;
+	GLboolean _lightEnabled;
+	glm::vec3 _ambientColor;
+	glm::vec3 _diffuseColor;
+	glm::vec3 _diffuseDirection;
 
-	glm::mat4 modelMatrix;
-	glm::mat4 viewMatrix;
-	glm::mat4 projectionMatrix;
+	glm::mat4 _modelMatrix;
+	glm::mat4 _viewMatrix;
+	glm::mat4 _projectionMatrix;
 
-	GLboolean fogEnabled;
-	GLfloat fogStartDistance;
-	GLfloat fogEndDistance;
+	GLboolean _fogEnabled;
+	GLfloat _fogStartDistance;
+	GLfloat _fogEndDistance;
 
 public:
 	DefaultShader(ShaderManager *);
@@ -92,40 +92,40 @@ public:
 };
 
 class BlockShader : public Shader {
-	GLint blockLightEnabledLoc;
-	GLint blockAmbientColorLoc;
-	GLint blockDiffColorLoc;
-	GLint blockDiffDirLoc;
-	GLint blockModelMatLoc;
-	GLint blockViewMatLoc;
-	GLint blockProjMatLoc;
-	GLint blockFogEnabledLoc;
-	GLint blockFogStartDistanceLoc;
-	GLint blockFogEndDistanceLoc;
+	GLint _lightEnabledLoc;
+	GLint _ambientColorLoc;
+	GLint _diffuseColorLoc;
+	GLint _diffuseDirectionLoc;
+	GLint _modelMatrixLoc;
+	GLint _viewMatrixLoc;
+	GLint _projectionMatrixLoc;
+	GLint _fogEnabledLoc;
+	GLint _fogStartDistanceLoc;
+	GLint _fogEndDistanceLoc;
 
-	bool blockLightEnabledUp = false;
-	bool blockAmbientColorUp = false;
-	bool blockDiffColorUp = false;
-	bool blockDiffDirUp = false;
-	bool blockModelMatUp = false;
-	bool blockViewMatUp = false;
-	bool blockProjMatUp = false;
-	bool blockFogEnabledUp = false;
-	bool blockFogStartDistanceUp = false;
-	bool blockFogEndDistanceUp = false;
+	bool _lightEnabledDirty = false;
+	bool _ambientColorDirty = false;
+	bool _diffuseColorDirty = false;
+	bool _diffuseDirectionDirty = false;
+	bool _modelMatrixDirty = false;
+	bool _viewMatrixDirty = false;
+	bool _projectionMatrixDirty = false;
+	bool _fogEnabledDirty = false;
+	bool _fogStartDistanceDirty = false;
+	bool _fogEndDistanceDirty = false;
 
-	GLboolean lightEnabled;
-	glm::vec3 ambientColor;
-	glm::vec3 diffuseColor;
-	glm::vec3 diffuseDirection;
+	GLboolean _lightEnabled;
+	glm::vec3 _ambientColor;
+	glm::vec3 _diffuseColor;
+	glm::vec3 _diffuseDirection;
 
-	glm::mat4 modelMatrix;
-	glm::mat4 viewMatrix;
-	glm::mat4 projectionMatrix;
+	glm::mat4 _modelMatrix;
+	glm::mat4 _viewMatrix;
+	glm::mat4 _projectionMatrix;
 
-	GLboolean fogEnabled;
-	GLfloat fogStartDistance;
-	GLfloat fogEndDistance;
+	GLboolean _fogEnabled;
+	GLfloat _fogStartDistance;
+	GLfloat _fogEndDistance;
 
 public:
 	BlockShader(ShaderManager *);
@@ -148,11 +148,11 @@ public:
 };
 
 class HudShader : public Shader {
-	GLint hudProjMatLoc;
+	GLint _projectionMatrixLoc;
 	
-	bool hudProjMatUp = false;
+	bool _projectionMatrixDirty = false;
 	
-	glm::mat4 hudProjectionMatrix;
+	glm::mat4 _projectionMatrix;
 
 public:
 	HudShader(ShaderManager *);
@@ -160,39 +160,39 @@ public:
 	
 	void useProgram();
 	
-    void setHudProjectionMatrix(const glm::mat4 &matrix);
+    void setProjectionMatrix(const glm::mat4 &matrix);
 };
 
 class FontShader : public Shader {
-    GLint fontTransMatLoc;
-	GLint fontTexLoc;
-	GLint fontIsPackedLoc;
-	GLint fontHasOutlineLoc;
-    GLint fontPageLoc;
-	GLint fontChannelLoc;
-	GLint fontTextColorLoc;
-	GLint fontOutlineColorLoc;
-	GLint fontModeLoc;
+    GLint _mvpMatrixLoc;
+	GLint _texLoc;
+	GLint _isPackedLoc;
+	GLint _hasOutlineLoc;
+    GLint _pageLoc;
+	GLint _channelLoc;
+	GLint _textColorLoc;
+	GLint _outlineColorLoc;
+	GLint _modeLoc;
 
-    glm::mat4 fontProjectionMatrix;
-	glm::mat4 fontModelMatrix;
-	GLboolean fontIsPacked;
-	GLboolean fontHasOutline;
-    GLshort fontPage;
-	GLshort fontChannel;
-	glm::vec4 fontTextColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);;
-	glm::vec4 fontOutlineColor = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
-	GLshort fontMode = 0;
+    glm::mat4 _projectionMatrix;
+	glm::mat4 _modelMatrix;
+	GLboolean _isPacked;
+	GLboolean _hasOutline;
+    GLshort _page;
+	GLshort _channel;
+	glm::vec4 _textColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);;
+	glm::vec4 _outlineColor = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+	GLshort _mode = 0;
 
-    bool fontProjMatUp = false;
-	bool fontModelMatUp = false;
-	bool fontIsPackedUp = false;
-	bool fontHasOutlineUp = false;
-    bool fontChannelUp = false;
-	bool fontPageUp = false;
-	bool fontTextColorUp = false;
-	bool fontOutlineColorUp = false;
-	bool fontModeUp = false;
+    bool _projectionMatrixDirty = false;
+	bool _modelMatrixDirty = false;
+	bool _isPackedDirty = false;
+	bool _hasOutlineDirty = false;
+    bool _channelDirty = false;
+	bool _pageDirty = false;
+	bool _textColorDirty = false;
+	bool _outlineColorDirty = false;
+	bool _modeDirty = false;
 
 public:
 	FontShader(ShaderManager *);
@@ -200,21 +200,21 @@ public:
 	
 	void useProgram();
 
-    void setFontProjectionMatrix(const glm::mat4 &matrix);
-	void setFontModelMatrix(const glm::mat4 &matrix);
-	void setFontIsPacked(bool isPacked);
-	void setFontHasOutline(bool hasOutline);
-    void setFontPage(short page);
-	void setFontChannel(short channel);
-	void setFontTextColor(const glm::vec4 &color);
-	void setFontOutlineColor(const glm::vec4 &color);
+    void setProjectionMatrix(const glm::mat4 &matrix);
+	void setModelMatrix(const glm::mat4 &matrix);
+	void setIsPacked(bool isPacked);
+	void setHasOutline(bool hasOutline);
+    void setPage(short page);
+	void setChannel(short channel);
+	void setTextColor(const glm::vec4 &color);
+	void setOutlineColor(const glm::vec4 &color);
 	enum class FontRenderMode { DEFAULT, OUTLINE, TEXT };
-	void setFontMode(FontRenderMode mode);
+	void setMode(FontRenderMode mode);
 };
 
 class ShaderManager {
-	std::vector<std::unique_ptr<Shader>> programs;
-	GLuint activeProgram;
+	std::vector<std::unique_ptr<Shader>> _programs;
+	GLuint _activeProgram;
 
 public:
 	ShaderManager();

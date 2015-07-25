@@ -1,6 +1,6 @@
 #version 330 core
 
-uniform mat4 transformMatrix;
+uniform mat4 mvpMatrix;
 
 layout(location = 0) in vec2 coord;
 layout(location = 1) in vec2 texCoord;
@@ -12,6 +12,6 @@ void main() {
 	fullCoord.xy = coord;
 	fullCoord.z = -1.0;
 	fullCoord.w = 1.0;
-	gl_Position = transformMatrix * fullCoord;
+	gl_Position = mvpMatrix * fullCoord;
 	vfTexCoord = texCoord;
 }
