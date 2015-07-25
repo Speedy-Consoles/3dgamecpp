@@ -30,7 +30,6 @@ struct Token {
 	std::string str;
 	union {
 		long i;
-		double d;
 		const char *err;
 	};
 };
