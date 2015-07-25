@@ -156,8 +156,9 @@ void DefaultShader::useProgram() {
 }
 
 void DefaultShader::setLightEnabled(bool enabled) {
-	if (_lightEnabled != enabled) {
-		_lightEnabled = enabled;
+	GLboolean b = enabled ? GL_TRUE : GL_FALSE;
+	if (_lightEnabled != b) {
+		_lightEnabled = b;
 		_lightEnabledDirty = true;
 	}
 }
@@ -205,8 +206,9 @@ void DefaultShader::setProjectionMatrix(const glm::mat4 &matrix) {
 }
 
 void DefaultShader::setFogEnabled(bool enabled) {
-	if (_fogEnabled != enabled) {
-		_fogEnabled = enabled;
+	GLboolean b = enabled ? GL_TRUE : GL_FALSE;
+	if (_fogEnabled != b) {
+		_fogEnabled = b;
 		_fogEnabledDirty = true;
 	}
 }
@@ -293,8 +295,9 @@ void BlockShader::useProgram() {
 }
 
 void BlockShader::setLightEnabled(bool enabled) {
-	if (_lightEnabled != enabled) {
-		_lightEnabled = enabled;
+	GLboolean b = enabled ? GL_TRUE : GL_FALSE;
+	if (_lightEnabled != b) {
+		_lightEnabled = b;
 		_lightEnabledDirty = true;
 	}
 }
@@ -342,8 +345,9 @@ void BlockShader::setProjectionMatrix(const glm::mat4 &matrix) {
 }
 
 void BlockShader::setFogEnabled(bool enabled) {
-	if (_fogEnabled != enabled) {
-		_fogEnabled = enabled;
+	GLboolean b = enabled ? GL_TRUE : GL_FALSE;
+	if (_fogEnabled != b) {
+		_fogEnabled = b;
 		_fogEnabledDirty = true;
 	}
 }
@@ -451,15 +455,17 @@ void FontShader::setModelMatrix(const glm::mat4 &matrix) {
 }
 
 void FontShader::setIsPacked(bool isPacked) {
-	if (_isPacked != isPacked) {
-		_isPacked = isPacked;
+	GLboolean b = isPacked ? GL_TRUE : GL_FALSE;
+	if (_isPacked != b) {
+		_isPacked = b;
 		_isPackedDirty = true;
 	}
 }
 
 void FontShader::setHasOutline(bool hasOutline) {
-	if (_hasOutline != hasOutline) {
-		_hasOutline = hasOutline;
+	GLboolean b = hasOutline ? GL_TRUE : GL_FALSE;
+	if (_hasOutline != b) {
+		_hasOutline = b;
 		_hasOutlineDirty = true;
 	}
 }
