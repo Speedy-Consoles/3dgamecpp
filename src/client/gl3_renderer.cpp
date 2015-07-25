@@ -59,6 +59,18 @@ GL3Renderer::GL3Renderer(
 	blockShader.setEndFogDistance(endFog);
 	blockShader.setStartFogDistance(startFog);
 
+	// sky
+	GL(GenTextures(1, &skyTex));
+	GL(BindTexture(GL_TEXTURE_2D, skyTex));
+	GL(TexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, graphics->getWidth(), graphics->getHeight(), 0, GL_RGBA, GL_FLOAT, 0));
+	GL(TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR));
+	GL(TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
+
+	GL(GenFramebuffers(1, &skyFbo));
+	GL(BindFramebuffer(GL_FRAMEBUFFER, skyFbo));
+	GL(FramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, skyTex, 0));
+	GL(BindFramebuffer(GL_FRAMEBUFFER, 0));
+
     // font
 	fontTimes.load("fonts/times32.fnt");
 	fontTimes.setEncoding(Font::Encoding::UTF8);
@@ -66,15 +78,16 @@ GL3Renderer::GL3Renderer(
 	fontDejavu.setEncoding(Font::Encoding::UTF8);
 
 	// gl stuff
-	glEnable(GL_BLEND);
-	glEnable(GL_DEPTH_TEST);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glEnable(GL_CULL_FACE);
-	logOpenGLError();
+	GL(Enable(GL_BLEND));
+	GL(BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
+	GL(Enable(GL_CULL_FACE));
 }
 
 GL3Renderer::~GL3Renderer() {
 	LOG(DEBUG, "Destroying GL3 renderer");
+
+	GL(DeleteFramebuffers(1, &skyFbo));
+	GL(DeleteTextures(1, &skyTex));
 }
 
 void GL3Renderer::resize() {
@@ -180,21 +193,30 @@ void GL3Renderer::tick() {
 }
 
 void GL3Renderer::render() {
-	glClear(GL_DEPTH_BUFFER_BIT);
+	Player &player = client->getWorld()->getPlayer(client->getLocalClientId());
 
-    logOpenGLError();
-
+	// render sky
+	GL(Disable(GL_DEPTH_TEST));
+	GL(DepthMask(false));
 	skyRenderer.render();
-	logOpenGLError();
+	if (conf.fog == Fog::FANCY || conf.fog == Fog::FAST) {
+		GL(BindFramebuffer(GL_FRAMEBUFFER, skyFbo));
+		skyRenderer.render();
+		GL(BindFramebuffer(GL_FRAMEBUFFER, 0));
+		GL(ActiveTexture(GL_TEXTURE1));
+		GL(BindTexture(GL_TEXTURE_2D, skyTex));
+	}
 	
+	// render scene
+	GL(Enable(GL_DEPTH_TEST));
+	GL(DepthMask(true));
+	GL(Clear(GL_DEPTH_BUFFER_BIT));
 	chunkRenderer.render();
 	renderTarget();
-	renderPlayers();
 
-	Player &player = client->getWorld()->getPlayer(client->getLocalClientId());
 	// render overlay
-	glDepthMask(false);
-	glDisable(GL_DEPTH_TEST);
+	GL(Disable(GL_DEPTH_TEST));
+	GL(DepthMask(false));
 	if (client->getState() == Client::State::PLAYING) {
 		hudRenderer.render();
 		if (client->isDebugOn())
@@ -202,8 +224,6 @@ void GL3Renderer::render() {
 	} else if (client->getState() == Client::State::IN_MENU){
 		menuRenderer.render();
 	}
-	glDepthMask(true);
-	glEnable(GL_DEPTH_TEST);
 }
 
 void GL3Renderer::renderTarget() {
@@ -223,11 +243,9 @@ void GL3Renderer::renderTarget() {
 		(float) -((playerPos[2] % m + m) % m) / RESOLUTION)
 	);
 	auto &defaultShader = shaderManager.getDefaultShader();
-	defaultShader.setViewMatrix(viewMatrix);
 	defaultShader.useProgram();
+	defaultShader.setViewMatrix(viewMatrix);
+	defaultShader.setLightEnabled(false);
+	defaultShader.setFogEnabled(false);
 	// TODO
-}
-
-void GL3Renderer::renderPlayers() {
-
 }

@@ -59,9 +59,6 @@ void GL3MenuRendererImpl::render() {
 
 
 void GL3MenuRendererImpl::renderWidget(const Widget *widget) {
-	glPushMatrix();
-	glTranslatef(widget->x(), widget->y(), 0);
-
 	const Label *label = nullptr;
 	const Frame *frame = nullptr;
 	const Button *button = nullptr;
@@ -73,8 +70,6 @@ void GL3MenuRendererImpl::renderWidget(const Widget *widget) {
 	} else if ((frame = dynamic_cast<const Frame *>(widget))) {
 		renderFrame(frame);
 	}
-
-	glPopMatrix();
 }
 
 void GL3MenuRendererImpl::renderFrame(const Frame *frame) {
@@ -84,7 +79,8 @@ void GL3MenuRendererImpl::renderFrame(const Frame *frame) {
 }
 
 void GL3MenuRendererImpl::renderLabel(const Label *label) {
-	glColor3f(1.0f, 1.0f, 1.0f);
+	glm::vec4 normal(1.0, 1.0, 1.0, 1.0);
+	font.setColor(normal);
 	renderText(label->text().c_str(), label->x(), label->y());
 }
 

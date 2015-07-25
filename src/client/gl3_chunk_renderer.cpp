@@ -20,7 +20,7 @@ GL3ChunkRenderer::GL3ChunkRenderer(Client *client, GL3Renderer *renderer, Shader
 GL3ChunkRenderer::~GL3ChunkRenderer() {
 	LOG(DEBUG, "Destroying chunk renderer");
 	destroyRenderDistanceDependent();
-	glDeleteTextures(1, &blockTextures);
+	GL(DeleteTextures(1, &blockTextures));
 }
 
 void GL3ChunkRenderer::loadTextures() {
@@ -30,7 +30,7 @@ void GL3ChunkRenderer::loadTextures() {
 	GLsizei mipLevelCount = 7;
 
 	GLint maxLayerCount;
-	glGetIntegerv(GL_MAX_ARRAY_TEXTURE_LAYERS, &maxLayerCount);
+	GL(GetIntegerv(GL_MAX_ARRAY_TEXTURE_LAYERS, &maxLayerCount));
 	if (maxLayerCount < layerCount) {
 		LOG(ERROR, "Not enough levels available for texture");
 		return;
@@ -51,9 +51,9 @@ void GL3ChunkRenderer::loadTextures() {
 		return;
 	}
 
-	glGenTextures(1, &blockTextures);
-	glBindTexture(GL_TEXTURE_2D_ARRAY, blockTextures);
-	glTexStorage3D(GL_TEXTURE_2D_ARRAY, mipLevelCount, GL_RGBA8, tileW, tileH, layerCount);
+	GL(GenTextures(1, &blockTextures));
+	GL(BindTexture(GL_TEXTURE_2D_ARRAY, blockTextures));
+	GL(TexStorage3D(GL_TEXTURE_2D_ARRAY, mipLevelCount, GL_RGBA8, tileW, tileH, layerCount));
 
 	uint blocks[] = {
 		 1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15, 16,
@@ -84,21 +84,19 @@ void GL3ChunkRenderer::loadTextures() {
 			int ret_code = SDL_BlitSurface(img, &rect, tmp, nullptr);
 			if (ret_code)
 				LOG(ERROR, "Blit unsuccessful: " << SDL_GetError());
-			glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, block, tileW, tileH, 1, GL_RGBA, GL_UNSIGNED_BYTE, tmp->pixels);
+			GL(TexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, block, tileW, tileH, 1, GL_RGBA, GL_UNSIGNED_BYTE, tmp->pixels));
 		}
 	}
 
-	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_BASE_LEVEL, 0);
-	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAX_LEVEL, mipLevelCount - 1);
-	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_GENERATE_MIPMAP, GL_TRUE);
-	logOpenGLError();
+	GL(TexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_BASE_LEVEL, 0));
+	GL(TexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAX_LEVEL, mipLevelCount - 1));
+	GL(TexParameteri(GL_TEXTURE_2D_ARRAY, GL_GENERATE_MIPMAP, GL_TRUE));
 
-	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_S, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, GL_REPEAT);
-	glGenerateMipmap(GL_TEXTURE_2D_ARRAY);
-	logOpenGLError();
+	GL(TexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
+	GL(TexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR));
+	GL(TexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_S, GL_REPEAT));
+	GL(TexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, GL_REPEAT));
+	GL(GenerateMipmap(GL_TEXTURE_2D_ARRAY));
 
 	SDL_FreeSurface(tmp);
 	SDL_FreeSurface(img);
@@ -119,8 +117,8 @@ void GL3ChunkRenderer::initRenderDistanceDependent() {
 	int n = length * length * length;
 	vaos = new GLuint[n];
 	vbos = new GLuint[n];
-	glGenVertexArrays(n, vaos);
-	glGenBuffers(n, vbos);
+	GL(GenVertexArrays(n, vaos));
+	GL(GenBuffers(n, vbos));
 	vaoChunks = new vec3i64[n];
 	vaoStatus = new uint8[n];
 	chunkFaces = new int[n];
@@ -131,30 +129,30 @@ void GL3ChunkRenderer::initRenderDistanceDependent() {
 	vsFringe = new vec3i64[vsFringeCapacity];
 	vsIndices = new int[vsFringeCapacity];
 	for (int i = 0; i < n; i++) {
-		glBindVertexArray(vaos[i]);
-		glBindBuffer(GL_ARRAY_BUFFER, vbos[i]);
-		glBufferData(GL_ARRAY_BUFFER, 0, 0, GL_STATIC_DRAW);
-		glVertexAttribIPointer(0, 1, GL_UNSIGNED_SHORT, 5, (void *) 0);
-		glVertexAttribIPointer(1, 1, GL_UNSIGNED_BYTE, 5, (void *) 2);
-		glVertexAttribIPointer(2, 1, GL_UNSIGNED_BYTE, 5, (void *) 3);
-		glVertexAttribIPointer(3, 1, GL_UNSIGNED_BYTE, 5, (void *) 4);
-		glEnableVertexAttribArray(0);
-		glEnableVertexAttribArray(1);
-		glEnableVertexAttribArray(2);
-		glEnableVertexAttribArray(3);
+		GL(BindVertexArray(vaos[i]));
+		GL(BindBuffer(GL_ARRAY_BUFFER, vbos[i]));
+		GL(BufferData(GL_ARRAY_BUFFER, 0, 0, GL_STATIC_DRAW));
+		GL(VertexAttribIPointer(0, 1, GL_UNSIGNED_SHORT, 5, (void *) 0));
+		GL(VertexAttribIPointer(1, 1, GL_UNSIGNED_BYTE, 5, (void *) 2));
+		GL(VertexAttribIPointer(2, 1, GL_UNSIGNED_BYTE, 5, (void *) 3));
+		GL(VertexAttribIPointer(3, 1, GL_UNSIGNED_BYTE, 5, (void *) 4));
+		GL(EnableVertexAttribArray(0));
+		GL(EnableVertexAttribArray(1));
+		GL(EnableVertexAttribArray(2));
+		GL(EnableVertexAttribArray(3));
 		vaoStatus[i] = NO_CHUNK;
 		chunkFaces[i] = 0;
 		chunkPassThroughs[i] = 0;
 		vsVisited[i] = false;
 	}
-	glBindVertexArray(0);
+	GL(BindVertexArray(0));
 	faces = 0;
 }
 
 void GL3ChunkRenderer::destroyRenderDistanceDependent() {
 	int length = conf.render_distance * 2 + 1;
-	glDeleteBuffers(length * length * length, vbos);
-	glDeleteVertexArrays(length * length * length, vaos);
+	GL(DeleteBuffers(length * length * length, vbos));
+	GL(DeleteVertexArrays(length * length * length, vaos));
 	delete vaos;
 	delete vbos;
 	delete vaoChunks;
@@ -187,7 +185,8 @@ void GL3ChunkRenderer::render() {
 	shader->setViewMatrix(viewMatrix);
 	shader->setLightEnabled(true);
 
-	glBindTexture(GL_TEXTURE_2D_ARRAY, blockTextures);
+	GL(ActiveTexture(GL_TEXTURE0));
+	GL(BindTexture(GL_TEXTURE_2D_ARRAY, blockTextures));
 
 	int length = conf.render_distance * 2 + 1;
 
@@ -236,12 +235,11 @@ void GL3ChunkRenderer::render() {
 		if (vaoStatus[index] != NO_CHUNK && vaoChunks[index] == cc) {
 			if (chunkFaces[index] > 0) {
 				visibleFaces += chunkFaces[index];
-				glBindVertexArray(vaos[index]);
+				GL(BindVertexArray(vaos[index]));
 				glm::mat4 modelMatrix = glm::translate(glm::mat4(1.0f), glm::vec3((float) (cd[0] * (int) Chunk::WIDTH), (float) (cd[1] * (int) Chunk::WIDTH), (float) (cd[2] * (int) Chunk::WIDTH)));
 				shader->setModelMatrix(modelMatrix);
 				shader->useProgram();
-				glDrawArrays(GL_TRIANGLES, 0, chunkFaces[index] * 3);
-				logOpenGLError();
+				GL(DrawArrays(GL_TRIANGLES, 0, chunkFaces[index] * 3));
 			}
 
 			for (int d = 0; d < 6; d++) {
@@ -286,8 +284,7 @@ void GL3ChunkRenderer::render() {
 			}
 		}
 	}
-	glBindVertexArray(0);
-	logOpenGLError();
+	GL(BindVertexArray(0));
 }
 
 void GL3ChunkRenderer::buildChunk(Chunk &c) {
@@ -306,12 +303,11 @@ void GL3ChunkRenderer::buildChunk(Chunk &c) {
 	vaoStatus[index] = OK;
 	chunkPassThroughs[index] = c.getPassThroughs();
 
-	glBindBuffer(GL_ARRAY_BUFFER, vbos[index]);
-	logOpenGLError();
+	GL(BindBuffer(GL_ARRAY_BUFFER, vbos[index]));
 
 	if (c.getAirBlocks() == Chunk::WIDTH * Chunk::WIDTH * Chunk::WIDTH) {
-		glBufferData(GL_ARRAY_BUFFER, 0, 0, GL_STATIC_DRAW);
-		glBindBuffer(GL_ARRAY_BUFFER, 0);
+		GL(BufferData(GL_ARRAY_BUFFER, 0, 0, GL_STATIC_DRAW));
+		GL(BindBuffer(GL_ARRAY_BUFFER, 0));
 		return;
 	}
 
@@ -416,14 +412,12 @@ void GL3ChunkRenderer::buildChunk(Chunk &c) {
 		}
 	}
 
-	glBufferData(GL_ARRAY_BUFFER, sizeof(BlockVertexData) * bufferSize, blockVertexBuffer, GL_STATIC_DRAW);
-	logOpenGLError();
+	GL(BufferData(GL_ARRAY_BUFFER, sizeof(BlockVertexData) * bufferSize, blockVertexBuffer, GL_STATIC_DRAW));
 
 	chunkFaces[index] = bufferSize / 3;
 	newFaces += chunkFaces[index];
 	faces += chunkFaces[index];
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-	logOpenGLError();
+	GL(BindBuffer(GL_ARRAY_BUFFER, 0));
 }
 
 bool GL3ChunkRenderer::inFrustum(vec3i64 cc, vec3i64 pos, vec3d lookDir) {

@@ -51,6 +51,10 @@ private:
 	BMFont fontTimes;
 	BMFont fontDejavu;
 
+	// fbos
+	GLuint skyFbo;
+	GLuint skyTex;
+
 	// chunk renderer
 	GL3ChunkRenderer chunkRenderer;
 	GL3SkyRenderer skyRenderer;
@@ -94,7 +98,6 @@ public:
 private:
 	void render();
 	void renderTarget();
-	void renderPlayers();
 };
 
 #endif // GL_3_RENDERER_HPP

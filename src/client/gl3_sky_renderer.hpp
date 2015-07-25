@@ -14,7 +14,6 @@ public:
 	~GL3SkyRenderer();
 
 	void render();
-	void renderSky();
 
 private:
 	Client *client = nullptr;
@@ -25,10 +24,8 @@ private:
 	vec3f skyColor{ 0.15f, 0.15f, 0.9f };
 	vec3f fogColor{ 0.6f, 0.6f, 0.8f };
 
-	GLuint skyVAO;
-	GLuint skyVBO;
-	GLuint skyFBO;
-	GLuint skyTexture;
+	GLuint vao;
+	GLuint vbo;
 
 	PACKED(
 	struct VertexData {

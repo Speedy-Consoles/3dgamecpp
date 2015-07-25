@@ -20,11 +20,6 @@
 #define DEBUG ::log4cxx::Level::getDebug()
 #define TRACE ::log4cxx::Level::getTrace()
 
-#define logOpenGLError() {\
-	GLenum e = glGetError();\
-	if (e != GL_NO_ERROR) LOG(ERROR, gluErrorString(e));\
-}
-
 #else
 
 #include <string>
@@ -53,12 +48,17 @@ namespace logging {
 #define DEBUG "DEBUG"
 #define TRACE "TRACE"
 
+#endif
+
 #define logOpenGLError() {\
 	GLenum e = glGetError();\
 	if (e != GL_NO_ERROR) LOG(ERROR, gluErrorString(e));\
 }
 
-#endif
+#define GL(x) {\
+	gl ## x;\
+	logOpenGLError();\
+}
 
 void initLogging();
 void initLogging(const char *file);

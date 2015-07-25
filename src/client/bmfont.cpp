@@ -116,8 +116,8 @@ BMFont::~BMFont()
 		it++;
 	}
 
-	glDeleteTextures(1, &tex);
-	glDeleteProgram(program);
+	GL(DeleteTextures(1, &tex));
+	GL(DeleteProgram(program));
 }
 
 int BMFont::load(const char *fontFile) {
@@ -139,11 +139,10 @@ int BMFont::load(const char *fontFile) {
 	delete loader;
 
 	// build vbo for all glyphs
-	glBindVertexArray(0);
-	glGenBuffers(1, &vbo);
-	glBindBuffer(GL_ARRAY_BUFFER, vbo);
-	glBufferData(GL_ARRAY_BUFFER, 0, 0, GL_STATIC_DRAW);
-	logOpenGLError();
+	GL(BindVertexArray(0));
+	GL(GenBuffers(1, &vbo));
+	GL(BindBuffer(GL_ARRAY_BUFFER, vbo));
+	GL(BufferData(GL_ARRAY_BUFFER, 0, 0, GL_STATIC_DRAW));
 
 	// build huge fucking array here
 	size_t bufferSize = (chars.size() + 1) * 6 * 4;
@@ -191,8 +190,7 @@ int BMFont::load(const char *fontFile) {
 		buildCharVBOLambda(desc);
 	}
 
-	glBufferData(GL_ARRAY_BUFFER, bufferSize * sizeof(float), vboBuffer, GL_STATIC_DRAW);
-	logOpenGLError();
+	GL(BufferData(GL_ARRAY_BUFFER, bufferSize * sizeof(float), vboBuffer, GL_STATIC_DRAW));
 
 	return r;
 }
@@ -246,16 +244,15 @@ float BMFont::getTopOffset()
 }
 
 void BMFont::beginRender() {
-	glBindVertexArray(0);
-	glBindBuffer(GL_ARRAY_BUFFER, vbo);
-	glEnableVertexAttribArray(0); // coord
-	glEnableVertexAttribArray(1); // texCoord
-	glBindTexture(GL_TEXTURE_2D_ARRAY, tex);
+	GL(BindVertexArray(0));
+	GL(BindBuffer(GL_ARRAY_BUFFER, vbo));
+	GL(EnableVertexAttribArray(0)); // coord
+	GL(EnableVertexAttribArray(1)); // texCoord
+	GL(BindTexture(GL_TEXTURE_2D_ARRAY, tex));
 	shader->setIsPacked(isPacked);
 	shader->setHasOutline(hasOutline);
 	shader->setTextColor(textColor);
 	shader->setOutlineColor(outlineColor);
-	logOpenGLError();
 }
 
 float BMFont::renderGlyph(float x, float y, float z, int glyph) {
@@ -272,8 +269,8 @@ float BMFont::renderGlyph(float x, float y, float z, int glyph) {
 
 	void *coordOffset = (void *)ch->vboOffset;
 	void *texCoordOffset = (void *)(ch->vboOffset + 2 * sizeof(float));
-	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), coordOffset);
-	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), texCoordOffset);
+	GL(VertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), coordOffset));
+	GL(VertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), texCoordOffset));
 
 	glm::mat4 ident(1.0f);
 	auto transl = glm::vec3(x + ox, y - (h + oy), 0.0f);
@@ -283,7 +280,7 @@ float BMFont::renderGlyph(float x, float y, float z, int glyph) {
 	shader->setChannel(ch->chnl);
 
 	shader->useProgram();
-	glDrawArrays(GL_TRIANGLES, 0, 6);
+	GL(DrawArrays(GL_TRIANGLES, 0, 6));
 
 	return a;
 }
@@ -360,9 +357,8 @@ void BMFontLoader::LoadPage(int id, const char *pageFile, const char *fontFile)
 		goto FAILURE;
 	}
 
-	glBindTexture(GL_TEXTURE_2D_ARRAY, font->tex);
-	glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, id, font->scaleW, font->scaleH, 1, GL_RGBA, GL_UNSIGNED_BYTE, tmp->pixels);
-	logOpenGLError();
+	GL(BindTexture(GL_TEXTURE_2D_ARRAY, font->tex));
+	GL(TexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, id, font->scaleW, font->scaleH, 1, GL_RGBA, GL_UNSIGNED_BYTE, tmp->pixels));
 	SDL_FreeSurface(img);
 	SDL_FreeSurface(tmp);
 	return;
@@ -394,19 +390,12 @@ void BMFontLoader::SetCommonInfo(int lineHeight, int base, int scaleW, int scale
 		font->outline = true;
 	}
 
-	logOpenGLError();
+	GL(GenTextures(1, &font->tex));
+	GL(BindTexture(GL_TEXTURE_2D_ARRAY, font->tex));
+	GL(TexStorage3D(GL_TEXTURE_2D_ARRAY, 1, GL_RGBA8, scaleW, scaleH, pages));
 
-	glGenTextures(1, &font->tex);
-	logOpenGLError();
-	glBindTexture(GL_TEXTURE_2D_ARRAY, font->tex);
-	logOpenGLError();
-	glTexStorage3D(GL_TEXTURE_2D_ARRAY, 1, GL_RGBA8, scaleW, scaleH, pages);
-	logOpenGLError();
-
-	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-
-	logOpenGLError();
+	GL(TexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
+	GL(TexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_LINEAR));
 }
 
 void BMFontLoader::AddChar(int id, int x, int y, int w, int h, int xoffset, int yoffset, int xadvance, int page, int chnl)

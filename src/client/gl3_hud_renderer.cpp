@@ -10,10 +10,10 @@ GL3HudRenderer::GL3HudRenderer(Client *client, GL3Renderer *renderer, ShaderMana
 	shaderManager(shaderManager),
 	graphics(graphics)
 {
-	glGenVertexArrays(1, &vao);
-	glGenBuffers(1, &vbo);
-	glBindVertexArray(vao);
-	glBindBuffer(GL_ARRAY_BUFFER, vbo);
+	GL(GenVertexArrays(1, &vao));
+	GL(GenBuffers(1, &vbo));
+	GL(BindVertexArray(vao));
+	GL(BindBuffer(GL_ARRAY_BUFFER, vbo));
 
 	PACKED(
 	struct VertexData {
@@ -37,17 +37,17 @@ GL3HudRenderer::GL3HudRenderer(Client *client, GL3Renderer *renderer, ShaderMana
 			{{ -2.0f, -20.0f}, {0.0f, 0.0f, 0.0f, 0.5f}},
 	};
 
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertexData), vertexData, GL_STATIC_DRAW);
-	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(VertexData), (void *) 0);
-	glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, sizeof(VertexData), (void *) 8);
-	glEnableVertexAttribArray(0);
-	glEnableVertexAttribArray(1);
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-	glBindVertexArray(0);
+	GL(BufferData(GL_ARRAY_BUFFER, sizeof(vertexData), vertexData, GL_STATIC_DRAW));
+	GL(VertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(VertexData), (void *) 0));
+	GL(VertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, sizeof(VertexData), (void *) 8));
+	GL(EnableVertexAttribArray(0));
+	GL(EnableVertexAttribArray(1));
+	GL(BindBuffer(GL_ARRAY_BUFFER, 0));
+	GL(BindVertexArray(0));
 }
 
 void GL3HudRenderer::render() {
 	shaderManager->getHudShader().useProgram();
-	glBindVertexArray(vao);
-	glDrawArrays(GL_TRIANGLES, 0, 12);
+	GL(BindVertexArray(vao));
+	GL(DrawArrays(GL_TRIANGLES, 0, 12));
 }
