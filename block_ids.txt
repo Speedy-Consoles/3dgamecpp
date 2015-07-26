@@ -1,4 +1,5 @@
 # basic blocks
+invalid -1
 air    0
 dirt   1
 grass  2

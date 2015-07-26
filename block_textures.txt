@@ -39,6 +39,8 @@ texture file="img/textures_1.png" width=16 height=16 {
 	block name=wool.black      row=1 col=15
 	
 	block name=test.orient row=2 col=0
+	
+	block name=invalid row=15 col=15
 }
 
 texture file="img/diff_earth.png" {

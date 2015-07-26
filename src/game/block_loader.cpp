@@ -172,6 +172,10 @@ void BlockLoader::getNextToken() {
 				state = State::TERM;
 			} else if (isdigit(ch)) {
 				state = State::NUMERAL;
+			} else if (ch == '-' || ch == '+') {
+				tok.str += ch;
+				getNextChar();
+				state = State::NUMERAL;
 			} else if (isalpha(ch) || ch == '_') {
 				state = State::STRING;
 			} else {

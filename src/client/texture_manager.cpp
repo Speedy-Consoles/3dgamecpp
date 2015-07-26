@@ -307,7 +307,7 @@ GLuint TextureManager::loadTexture(uint block, SDL_Surface *img, TextureType typ
 	}
 
 	Entry entry{tex, type, -1};
-	textures.insert({block, entry});
+	textures[(int) block] = entry;
 	loadedTextures.push_back(tex);
 
 	return tex;

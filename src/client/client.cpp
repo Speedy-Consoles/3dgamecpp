@@ -67,7 +67,7 @@ Client::Client(const char *worldId, const char *serverAdress) {
 	if (blockManager->load(block_ids_file)) {
 		LOG(ERROR, "Problem loading '" << block_ids_file << "'");
 	}
-	LOG(INFO, "" << blockManager->getBlockNumber() << " blocks were loaded from '" << block_ids_file << "'");
+	LOG(INFO, "" << blockManager->getNumberOfBlocks() << " blocks were loaded from '" << block_ids_file << "'");
 
 	world = std::unique_ptr<World>(new World(worldId));
 	menu = std::unique_ptr<Menu>(new Menu(this));
@@ -163,7 +163,7 @@ void Client::handleInput() {
 			if (state == State::PLAYING) {
 				auto block = player.getBlock();
 				block += event.wheel.y;
-				static const int NUMBER_OF_BLOCKS = blockManager->getBlockNumber() - 1;
+				static const int NUMBER_OF_BLOCKS = blockManager->getNumberOfBlocks();
 				while (block > NUMBER_OF_BLOCKS) {
 					block -= NUMBER_OF_BLOCKS;
 				}

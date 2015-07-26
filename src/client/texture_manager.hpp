@@ -53,12 +53,9 @@ protected:
 	void clear() override;
 
 private:
-	std::unordered_map<uint, Entry> textures;
-	Entry lastBound = Entry{0, TextureType::SINGLE_TEXTURE, -1};
-
+	std::unordered_map<int, Entry> textures;
 	std::list<GLuint> loadedTextures;
 
-	void bind(uint block, GLenum primitive, bool endPrimitive);
 	GLuint loadTexture(uint block, SDL_Surface *, TextureType type);
 };
 
