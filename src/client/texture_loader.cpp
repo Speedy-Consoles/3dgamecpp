@@ -1,4 +1,5 @@
 #include "texture_loader.hpp"
+#include "client/client.hpp"
 #include "game/block_manager.hpp"
 
 #include <SDL2/SDL_image.h>
@@ -406,7 +407,9 @@ void TextureLoader::getNextToken() {
 	}
 }
 
-int AbstractTextureManager::load(const char *path, const BlockManager *bm) {
+int AbstractTextureManager::load(const char *path) {
+	files.push_back(path);
+	auto *bm = _client->getBlockManager();
 	auto loader = std::unique_ptr<TextureLoader>(new TextureLoader(path, bm, this));
 	try {
 		loader->load();
@@ -415,4 +418,13 @@ int AbstractTextureManager::load(const char *path, const BlockManager *bm) {
 		return 1;
 	}
 	return 0;
+}
+
+int AbstractTextureManager::reloadAll() {
+	clear();
+	int result = 0;
+	for (std::string &file : files) {
+		result |= load(file.c_str());
+	}
+	return result;
 }

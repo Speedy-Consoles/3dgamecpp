@@ -15,16 +15,13 @@
 static const auto TEX2D = GL_TEXTURE_2D;
 
 TextureManager::TextureManager(Client *client) :
-	client(client)
+	AbstractTextureManager(client)
 {
 	// nothing
 }
 
 TextureManager::~TextureManager() {
-	for (auto iter : loadedTextures) {
-		GLuint tex = iter;
-		glDeleteTextures(1, &tex);
-	}
+	clear();
 }
 
 static void setLoadingOptions(const GraphicsConf &conf) {
@@ -55,9 +52,7 @@ static void setLoadingOptions(const GraphicsConf &conf) {
 }
 
 void TextureManager::setConfig(const GraphicsConf &conf, const GraphicsConf &old) {
-	if (conf.tex_mipmapping != old.tex_mipmapping ||
-			conf.tex_filtering != old.tex_filtering)
-	{
+	if (conf.tex_mipmapping != old.tex_mipmapping || conf.tex_filtering != old.tex_filtering) {
 		for (auto iter : loadedTextures) {
 			GLuint tex = iter;
 			glBindTexture(TEX2D, tex);
@@ -294,11 +289,20 @@ void TextureManager::add(SDL_Surface *img, const std::vector<TextureEntry> &entr
 		SDL_FreeSurface(tmp);
 }
 
+void TextureManager::clear() {
+	for (auto iter : loadedTextures) {
+		GLuint tex = iter;
+		glDeleteTextures(1, &tex);
+	}
+	textures.clear();
+	loadedTextures.clear();
+}
+
 GLuint TextureManager::loadTexture(uint block, SDL_Surface *img, TextureType type) {
 	GLuint tex;
 	glGenTextures(1, &tex);
 	glBindTexture(TEX2D, tex);
-	setLoadingOptions(client->getConf());
+	setLoadingOptions(_client->getConf());
 	glTexImage2D(TEX2D, 0, 4, img->w, img->h, 0,
 			GL_RGBA, GL_UNSIGNED_BYTE, img->pixels);
 

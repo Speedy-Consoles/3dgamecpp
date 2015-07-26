@@ -46,10 +46,9 @@ public:
 
 protected:
 	void add(SDL_Surface *img, const std::vector<TextureEntry> &entries) override;
+	void clear() override;
 
 private:
-	Client *client;
-
 	struct Entry {
 		uint block;
 		GLuint tex;
@@ -57,7 +56,7 @@ private:
 		float x, y, w, h;
 	};
 	std::unordered_map<uint, Entry> textures;
-	Entry lastBound = Entry{0, 0, TextureType::SINGLE_TEXTURE, 0, 0, 0};
+	Entry lastBound = Entry{0, 0, TextureType::SINGLE_TEXTURE, 0, 0, 1, 1};
 
 	std::list<GLuint> loadedTextures;
 
