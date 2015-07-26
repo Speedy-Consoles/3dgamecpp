@@ -70,12 +70,11 @@ TextureLoader::~TextureLoader() {
 }
 
 int TextureLoader::load() {
-	std::vector<TextureEntry> entries;
-	TextureEntry entry = {-1, TextureType::SINGLE_TEXTURE, 0, 0, 0, 0};
+	std::vector<TextureLoadEntry> entries;
+	TextureLoadEntry entry = {-1, TextureType::SINGLE_TEXTURE, 0, 0, 0, 0};
 	Token key;
 
-	struct SurfaceDeleter { void operator () (SDL_Surface *s) { SDL_FreeSurface(s); } };
-	std::unique_ptr<SDL_Surface, SurfaceDeleter> img;
+	std::unique_ptr<SDL_Surface> img;
 	int width = 1;
 	int height = 1;
 
@@ -153,7 +152,7 @@ int TextureLoader::load() {
 			}
 
 			if (key.str == "file") {
-				img = std::unique_ptr<SDL_Surface, SurfaceDeleter>(IMG_Load(tok.str.c_str()));
+				img = std::unique_ptr<SDL_Surface>(IMG_Load(tok.str.c_str()));
 				if (!img) {
 					LOG(ERROR, "File '" << tok.str << "' could not be loaded");
 					state = State::RECOVER_AT_NEXT_TEXTURE;

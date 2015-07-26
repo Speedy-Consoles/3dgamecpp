@@ -5,6 +5,7 @@
 
 #include <string>
 #include <vector>
+#include <memory>
 
 class TextureLoader;
 class Client;
@@ -15,11 +16,17 @@ enum class TextureType {
 	MULTI_x4,
 };
 
-struct TextureEntry {
+struct TextureLoadEntry {
 	int id;
 	TextureType type;
 	int x, y, w, h;
 };
+
+// this makes sure that smart pointers of SDL_Surfaces delete the object properly
+template<>
+void std::default_delete<SDL_Surface>::operator()(SDL_Surface* s) const {
+	SDL_FreeSurface(s);
+}
 
 class AbstractTextureManager {
 protected:
@@ -34,7 +41,7 @@ public:
 
 protected:
 	friend TextureLoader;
-	virtual void add(SDL_Surface *img, const std::vector<TextureEntry> &entries) = 0;
+	virtual void add(SDL_Surface *img, const std::vector<TextureLoadEntry> &entries) = 0;
 	virtual void clear() = 0;
 };
 

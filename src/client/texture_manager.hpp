@@ -26,6 +26,12 @@ class Client;
 
 class TextureManager : public AbstractTextureManager {
 public:
+	struct Entry {
+		GLuint tex;
+		TextureType type;
+		int index;
+	};
+
 	TextureManager(Client *);
 	~TextureManager();
 
@@ -36,27 +42,19 @@ public:
 	TextureManager &operator = (TextureManager &&) = delete;
 
 	void setConfig(const GraphicsConf &, const GraphicsConf &);
+	
+	Entry get(uint block, uint8 dir = 4) const;
+	Entry get(uint block, vec3i64 bc, uint8 dir) const;
 
-	bool isWangTileBound() const;
-
-	bool bind(uint block);
-	GLuint getTexture();
-	void getTextureVertices(vec2f out[4]) const;
-	void getTextureVertices(vec3i64 bc, uint8 dir, vec2f out[4]) const;
+	static void getVertices(const Entry &entry, vec2f out[4]);
 
 protected:
-	void add(SDL_Surface *img, const std::vector<TextureEntry> &entries) override;
+	void add(SDL_Surface *img, const std::vector<TextureLoadEntry> &entries) override;
 	void clear() override;
 
 private:
-	struct Entry {
-		uint block;
-		GLuint tex;
-		TextureType type;
-		float x, y, w, h;
-	};
 	std::unordered_map<uint, Entry> textures;
-	Entry lastBound = Entry{0, 0, TextureType::SINGLE_TEXTURE, 0, 0, 1, 1};
+	Entry lastBound = Entry{0, TextureType::SINGLE_TEXTURE, -1};
 
 	std::list<GLuint> loadedTextures;
 

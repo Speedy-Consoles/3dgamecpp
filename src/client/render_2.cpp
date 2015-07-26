@@ -37,7 +37,6 @@ void GL2Renderer::render() {
 	glMatrixMode(GL_MODELVIEW);
 	switchToPerspective();
 	glLoadIdentity();
-	texManager.bind(0);
 
 	Player &player = client->getWorld()->getPlayer(client->getLocalClientId());
 	if (player.isValid()) {
@@ -79,7 +78,6 @@ void GL2Renderer::render() {
 	// render overlay
 	switchToOrthogonal();
 	glLoadIdentity();
-	texManager.bind(0);
 
 	if (client->getState() == Client::State::PLAYING && player.isValid()) {
 		client->getStopwatch()->start(CLOCK_HUD);
@@ -391,8 +389,8 @@ void GL2Renderer::renderChunk(Chunk &c) {
 
 						vec2f texs[4];
 						vec3i64 bc = c.getCC() * c.WIDTH + faceBlock.cast<int64>();
-						texManager.bind(faceType);
-						texManager.getTextureVertices(bc, faceDir, texs);
+						TextureManager::Entry tex_entry = texManager.get(faceType, bc, faceDir);
+						TextureManager::getVertices(tex_entry, texs);
 
 						faceBufferIndices[faceType][typeFaces[faceType]++] = fbi;
 
@@ -426,14 +424,13 @@ void GL2Renderer::renderChunk(Chunk &c) {
 		}
 	}
 
-	texManager.bind(0);
 	glNewList(dlFirstAddress + index, GL_COMPILE);
 
 	for (int faceType = 0; faceType < 255; faceType++) {
 		if (typeFaces[faceType] == 0)
 			continue;
-		texManager.bind(faceType);
-		glBindTexture(GL_TEXTURE_2D, texManager.getTexture());
+		TextureManager::Entry tex_entry = texManager.get(faceType);
+		glBindTexture(GL_TEXTURE_2D, tex_entry.tex);
 		glBegin(GL_QUADS);
 		for (int i = 0; i < typeFaces[faceType]; i++) {
 			int fbi = faceBufferIndices[faceType][i];
@@ -510,9 +507,9 @@ void GL2Renderer::renderHud(const Player &player) {
 	glEnable(GL_TEXTURE_2D);
 
 	vec2f texs[4];
-	texManager.bind(player.getBlock());
-	glBindTexture(GL_TEXTURE_2D, texManager.getTexture());
-	texManager.getTextureVertices(texs);
+	TextureManager::Entry tex_entry = texManager.get(player.getBlock());
+	TextureManager::getVertices(tex_entry, texs);
+	glBindTexture(GL_TEXTURE_2D, tex_entry.tex);
 
 	glColor4f(1, 1, 1, 1);
 
