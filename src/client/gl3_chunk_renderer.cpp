@@ -171,14 +171,16 @@ void GL3ChunkRenderer::render() {
 	viewMatrix = glm::rotate(viewMatrix, (float) (-player.getYaw() / 360.0 * TAU), glm::vec3(0.0f, 1.0f, 0.0f));
 	viewMatrix = glm::rotate(viewMatrix, (float) (-TAU / 4.0), glm::vec3(1.0f, 0.0f, 0.0f));
 	viewMatrix = glm::rotate(viewMatrix, (float) (TAU / 4.0), glm::vec3(0.0f, 0.0f, 1.0f));
+	auto *shader = &shaderManager->getBlockShader();
+
 	vec3i64 playerPos = player.getPos();
 	int64 m = RESOLUTION * Chunk::WIDTH;
-	viewMatrix = glm::translate(viewMatrix, glm::vec3(
+	glm::mat4 translationMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(
 		(float) -((playerPos[0] % m + m) % m) / RESOLUTION,
 		(float) -((playerPos[1] % m + m) % m) / RESOLUTION,
 		(float) -((playerPos[2] % m + m) % m) / RESOLUTION)
 	);
-	auto *shader = &shaderManager->getBlockShader();
+
 	shader->setViewMatrix(viewMatrix);
 	shader->setLightEnabled(true);
 
@@ -231,7 +233,7 @@ void GL3ChunkRenderer::render() {
 			if (chunkFaces[index] > 0) {
 				visibleFaces += chunkFaces[index];
 				GL(BindVertexArray(vaos[index]));
-				glm::mat4 modelMatrix = glm::translate(glm::mat4(1.0f), glm::vec3((float) (cd[0] * (int) Chunk::WIDTH), (float) (cd[1] * (int) Chunk::WIDTH), (float) (cd[2] * (int) Chunk::WIDTH)));
+				glm::mat4 modelMatrix = translationMatrix * glm::translate(glm::mat4(1.0f), glm::vec3((float) (cd[0] * (int) Chunk::WIDTH), (float) (cd[1] * (int) Chunk::WIDTH), (float) (cd[2] * (int) Chunk::WIDTH)));
 				shader->setModelMatrix(modelMatrix);
 				shader->useProgram();
 				GL(DrawArrays(GL_TRIANGLES, 0, chunkFaces[index] * 3));
