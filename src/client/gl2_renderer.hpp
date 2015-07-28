@@ -2,7 +2,6 @@
 #define GL_2_RENDERER_HPP
 
 #include <GL/glew.h>
-#include <SDL2/SDL.h>
 #include <FTGL/ftgl.h>
 
 #include "renderer.hpp"
@@ -46,7 +45,6 @@ private:
 
 	Client *client;
 	Graphics *graphics;
-	SDL_Window *window;
 
 	// rendering helpers
 	TextureManager texManager;
@@ -109,7 +107,7 @@ private:
 //	bool fxaa = false;
 
 public:
-	GL2Renderer(Client *client, Graphics *graphics, SDL_Window *window);
+	GL2Renderer(Client *client, Graphics *graphics);
 	~GL2Renderer();
 
 	void tick();

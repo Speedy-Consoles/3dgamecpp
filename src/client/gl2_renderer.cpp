@@ -19,12 +19,10 @@ using namespace gui;
 
 GL2Renderer::GL2Renderer(
 	Client *client,
-	Graphics *graphics,
-	SDL_Window *window)
+	Graphics *graphics)
 	:
 	client(client),
 	graphics(graphics),
-	window(window),
 	texManager(client)
 {
 	makeMaxFOV();
@@ -408,7 +406,7 @@ void GL2Renderer::tick() {
 	client->getStopwatch()->stop(CLOCK_FSH);
 
 	client->getStopwatch()->start(CLOCK_FLP);
-	SDL_GL_SwapWindow(window);
+	client->getGraphics()->flip();
 	client->getStopwatch()->stop(CLOCK_FLP);
 
     if (getCurrentTime() - lastStopWatchSave > millis(200)) {

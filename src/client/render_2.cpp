@@ -528,7 +528,7 @@ void GL2Renderer::renderHud(const Player &player) {
 void GL2Renderer::renderDebugInfo(const Player &player) {
 	vec3i64 playerPos = player.getPos();
 	vec3d playerVel = player.getVel();
-	uint32 windowFlags = SDL_GetWindowFlags(window);
+	//uint32 windowFlags = SDL_GetWindowFlags(window);
 
 	glDisable(GL_TEXTURE_2D);
 	glPushMatrix();
@@ -555,6 +555,7 @@ void GL2Renderer::renderDebugInfo(const Player &player) {
 	RENDER_LINE("chunks visible: %d", visibleChunks);
 	RENDER_LINE("faces visible: %d", visibleFaces);
 	RENDER_LINE("block: %d", player.getBlock());
+	/*
 	if ((SDL_WINDOW_FULLSCREEN & windowFlags) > 0)
 		glColor3f(1.0f, 0.0f, 0.0f);
 	else
@@ -630,6 +631,7 @@ void GL2Renderer::renderDebugInfo(const Player &player) {
 //	else
 //		glColor3f(1.0f, 1.0f, 1.0f);
 //	RENDER_LINE("SDL_WINDOW_MOUSE_CAPTURE");
+	*/
 
 	glPopMatrix();
 

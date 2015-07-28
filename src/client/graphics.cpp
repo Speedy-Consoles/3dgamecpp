@@ -71,9 +71,9 @@ Graphics::Graphics(
 	if (!GLEW_VERSION_2_1)
 		LOG(FATAL, "OpenGL version 2.1 not available");
 	if (GLEW_VERSION_3_3 && conf.render_backend == RenderBackend::OGL_3) {
-		renderer = new GL3Renderer(client, this, window);
+		renderer = new GL3Renderer(client, this);
 	} else {
-		renderer = new GL2Renderer(client, this, window);
+		renderer = new GL2Renderer(client, this);
 	}
 }
 
@@ -156,4 +156,8 @@ void Graphics::tick() {
 		oldState = state;
 	}
 	renderer->tick();
+}
+
+void Graphics::flip() {
+	SDL_GL_SwapWindow(window);
 }

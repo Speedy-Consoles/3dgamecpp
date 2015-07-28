@@ -19,7 +19,6 @@
 #include "client.hpp"
 
 class Graphics;
-struct SDL_Window;
 class World;
 class Player;
 class Menu;
@@ -36,7 +35,6 @@ class GL3Renderer : public Renderer {
 private:
 	Client *client = nullptr;
 	Graphics *graphics = nullptr;
-	SDL_Window *window = nullptr;
 
 	// 3D values
 	float ZNEAR = 0.1f;
@@ -78,7 +76,7 @@ private:
 	vec3f skyColor{ 0.15f, 0.15f, 0.9f };
 
 public:
-	GL3Renderer(Client *client, Graphics *graphics, SDL_Window *window);
+	GL3Renderer(Client *client, Graphics *graphics);
 	~GL3Renderer();
 
 	void tick();

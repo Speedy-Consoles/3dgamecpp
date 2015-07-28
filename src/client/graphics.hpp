@@ -45,8 +45,6 @@ public:
 				const uint8 *localClientId, const GraphicsConf &conf, Stopwatch *stopwatch = nullptr);
 	~Graphics();
 
-	void tick();
-
 	void resize(int width, int height);
 	void setConf(const GraphicsConf &, const GraphicsConf &);
 
@@ -57,6 +55,9 @@ public:
 	int getDrawWidth() const;
 
 	float getScalingFactor() const;
+
+	void tick();
+	void flip();
 
 private:
 	void calcDrawArea();

@@ -1,6 +1,5 @@
 ﻿#include "gl3_renderer.hpp"
 
-#include <SDL2/SDL.h>
 #include <glm/gtc/matrix_transform.hpp>
 
 #include "engine/logging.hpp"
@@ -18,12 +17,10 @@ using namespace gui;
 
 GL3Renderer::GL3Renderer(
 	Client *client,
-	Graphics *graphics,
-	SDL_Window *window)
+	Graphics *graphics)
 	:
 	client(client),
 	graphics(graphics),
-	window(window),
 	shaderManager(),
 	fontTimes(&shaderManager.getFontShader()),
 	fontDejavu(&shaderManager.getFontShader()),
@@ -176,7 +173,7 @@ void GL3Renderer::setConf(const GraphicsConf &conf, const GraphicsConf &old) {
 void GL3Renderer::tick() {
 	render();
 
-	SDL_GL_SwapWindow(window);
+	client->getGraphics()->flip();
 
 	if (getCurrentTime() - lastStopWatchSave > millis(200)) {
 		lastStopWatchSave = getCurrentTime();
