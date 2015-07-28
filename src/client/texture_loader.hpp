@@ -23,9 +23,9 @@ struct TextureLoadEntry {
 };
 
 // this makes sure that smart pointers of SDL_Surfaces delete the object properly
-template<>
-void std::default_delete<SDL_Surface>::operator()(SDL_Surface* s) const {
-	SDL_FreeSurface(s);
+namespace std {
+	template<>
+	void default_delete<SDL_Surface>::operator()(SDL_Surface* s) const;
 }
 
 class AbstractTextureManager {

@@ -8,6 +8,13 @@
 
 #include "engine/logging.hpp"
 
+namespace std {
+	template<>
+	void default_delete<SDL_Surface>::operator()(SDL_Surface* s) const {
+		SDL_FreeSurface(s);
+	}
+}
+
 struct ParsingError {
 	int row, col;
 	std::string error;
