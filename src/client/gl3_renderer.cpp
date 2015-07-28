@@ -59,16 +59,7 @@ GL3Renderer::GL3Renderer(
 	blockShader.setStartFogDistance(startFog);
 
 	// sky
-	GL(GenTextures(1, &skyTex));
-	GL(BindTexture(GL_TEXTURE_2D, skyTex));
-	GL(TexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, graphics->getWidth(), graphics->getHeight(), 0, GL_RGBA, GL_FLOAT, 0));
-	GL(TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR));
-	GL(TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
-
-	GL(GenFramebuffers(1, &skyFbo));
-	GL(BindFramebuffer(GL_FRAMEBUFFER, skyFbo));
-	GL(FramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, skyTex, 0));
-	GL(BindFramebuffer(GL_FRAMEBUFFER, 0));
+	makeSkyFbo();
 
     // font
 	fontTimes.load("fonts/times32.fnt");
@@ -85,13 +76,14 @@ GL3Renderer::GL3Renderer(
 GL3Renderer::~GL3Renderer() {
 	LOG(DEBUG, "Destroying GL3 renderer");
 
-	GL(DeleteFramebuffers(1, &skyFbo));
-	GL(DeleteTextures(1, &skyTex));
+	if (skyFbo) GL(DeleteFramebuffers(1, &skyFbo));
+	if (skyTex) GL(DeleteTextures(1, &skyTex));
 }
 
 void GL3Renderer::resize() {
 	makePerspectiveMatrix();
 	makeOrthogonalMatrix();
+	makeSkyFbo();
 }
 
 void GL3Renderer::makePerspectiveMatrix() {
@@ -136,6 +128,22 @@ void GL3Renderer::makeMaxFOV() {
 		maxFOV = yfov;
 	else
 		maxFOV = atan(ratio * tan(yfov / 2)) * 2;
+}
+
+void GL3Renderer::makeSkyFbo() {
+	if (skyFbo) GL(DeleteFramebuffers(1, &skyFbo));
+	if (skyTex) GL(DeleteTextures(1, &skyTex));
+
+	GL(GenTextures(1, &skyTex));
+	GL(BindTexture(GL_TEXTURE_2D, skyTex));
+	GL(TexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, graphics->getWidth(), graphics->getHeight(), 0, GL_RGBA, GL_FLOAT, 0));
+	GL(TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR));
+	GL(TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
+
+	GL(GenFramebuffers(1, &skyFbo));
+	GL(BindFramebuffer(GL_FRAMEBUFFER, skyFbo));
+	GL(FramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, skyTex, 0));
+	GL(BindFramebuffer(GL_FRAMEBUFFER, 0));
 }
 
 void GL3Renderer::setConf(const GraphicsConf &conf, const GraphicsConf &old) {

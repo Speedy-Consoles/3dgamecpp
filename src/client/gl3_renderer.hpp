@@ -50,8 +50,8 @@ private:
 	BMFont fontDejavu;
 
 	// fbos
-	GLuint skyFbo;
-	GLuint skyTex;
+	GLuint skyFbo = 0;
+	GLuint skyTex = 0;
 
 	// chunk renderer
 	GL3ChunkRenderer chunkRenderer;
@@ -87,6 +87,7 @@ public:
 
 	void makePerspectiveMatrix();
 	void makeOrthogonalMatrix();
+	void makeSkyFbo();
 	void makeMaxFOV();
 
 	float getMaxFOV() { return maxFOV; }
