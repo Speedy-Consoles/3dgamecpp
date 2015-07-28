@@ -34,7 +34,6 @@ namespace gui {
 class GL3Renderer : public Renderer {
 private:
 	Client *client = nullptr;
-	Graphics *graphics = nullptr;
 
 	// 3D values
 	float ZNEAR = 0.1f;
@@ -76,7 +75,7 @@ private:
 	vec3f skyColor{ 0.15f, 0.15f, 0.9f };
 
 public:
-	GL3Renderer(Client *client, Graphics *graphics);
+	GL3Renderer(Client *client);
 	~GL3Renderer();
 
 	void tick();

@@ -4,11 +4,10 @@
 
 #include "engine/logging.hpp"
 
-GL3HudRenderer::GL3HudRenderer(Client *client, GL3Renderer *renderer, ShaderManager *shaderManager, Graphics *graphics) :
+GL3HudRenderer::GL3HudRenderer(Client *client, GL3Renderer *renderer, ShaderManager *shaderManager) :
 	client(client),
 	renderer(renderer),
-	shaderManager(shaderManager),
-	graphics(graphics)
+	shaderManager(shaderManager)
 {
 	GL(GenVertexArrays(1, &vao));
 	GL(GenBuffers(1, &vbo));

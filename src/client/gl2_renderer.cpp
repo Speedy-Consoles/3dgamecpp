@@ -17,10 +17,7 @@
 
 using namespace gui;
 
-GL2Renderer::GL2Renderer(
-	Client *client,
-	Graphics *graphics)
-	:
+GL2Renderer::GL2Renderer(Client *client) :
 	client(client),
 	graphics(graphics),
 	texManager(client)

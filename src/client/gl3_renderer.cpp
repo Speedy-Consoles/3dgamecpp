@@ -15,20 +15,16 @@
 
 using namespace gui;
 
-GL3Renderer::GL3Renderer(
-	Client *client,
-	Graphics *graphics)
-	:
+GL3Renderer::GL3Renderer(Client *client) :
 	client(client),
-	graphics(graphics),
 	shaderManager(),
 	fontTimes(&shaderManager.getFontShader()),
 	fontDejavu(&shaderManager.getFontShader()),
 	chunkRenderer(client, this, &shaderManager),
-	skyRenderer(client, this, &shaderManager, graphics),
-	hudRenderer(client, this, &shaderManager, graphics),
-	menuRenderer(client, this, &shaderManager, graphics),
-	debugRenderer(client, this, &shaderManager, graphics)
+	skyRenderer(client, this, &shaderManager),
+	hudRenderer(client, this, &shaderManager),
+	menuRenderer(client, this, &shaderManager),
+	debugRenderer(client, this, &shaderManager)
 {
 	makeMaxFOV();
 	makePerspectiveMatrix();
@@ -85,7 +81,7 @@ void GL3Renderer::resize() {
 
 void GL3Renderer::makePerspectiveMatrix() {
 	double normalRatio = DEFAULT_WINDOWED_RES[0] / (double) DEFAULT_WINDOWED_RES[1];
-	double currentRatio = graphics->getWidth() / (double) graphics->getHeight();
+	double currentRatio = client->getGraphics()->getWidth() / (double) client->getGraphics()->getHeight();
 	double angle;
 
 	float yfov = client->getConf().fov / normalRatio * TAU / 360.0;
@@ -105,7 +101,7 @@ void GL3Renderer::makePerspectiveMatrix() {
 
 void GL3Renderer::makeOrthogonalMatrix() {
 	float normalRatio = DEFAULT_WINDOWED_RES[0] / (double) DEFAULT_WINDOWED_RES[1];
-	float currentRatio = graphics->getWidth() / (double) graphics->getHeight();
+	float currentRatio = client->getGraphics()->getWidth() / (double) client->getGraphics()->getHeight();
 	glm::mat4 hudMatrix;
 	if (currentRatio > normalRatio)
 		hudMatrix = glm::ortho(-DEFAULT_WINDOWED_RES[0] / 2.0f, DEFAULT_WINDOWED_RES[0] / 2.0f, -DEFAULT_WINDOWED_RES[0]
@@ -133,7 +129,7 @@ void GL3Renderer::makeSkyFbo() {
 
 	GL(GenTextures(1, &skyTex));
 	GL(BindTexture(GL_TEXTURE_2D, skyTex));
-	GL(TexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, graphics->getWidth(), graphics->getHeight(), 0, GL_RGBA, GL_FLOAT, 0));
+	GL(TexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, client->getGraphics()->getWidth(), client->getGraphics()->getHeight(), 0, GL_RGBA, GL_FLOAT, 0));
 	GL(TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR));
 	GL(TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
 

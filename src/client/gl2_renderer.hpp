@@ -107,7 +107,7 @@ private:
 //	bool fxaa = false;
 
 public:
-	GL2Renderer(Client *client, Graphics *graphics);
+	GL2Renderer(Client *client);
 	~GL2Renderer();
 
 	void tick();

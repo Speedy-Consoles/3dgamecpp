@@ -1,9 +1,8 @@
 #include "gl3_debug_renderer.hpp"
 
-GL3DebugRenderer::GL3DebugRenderer(Client *client, GL3Renderer *renderer, ShaderManager *shaderManager, Graphics *graphics) :
+GL3DebugRenderer::GL3DebugRenderer(Client *client, GL3Renderer *renderer, ShaderManager *shaderManager) :
 	client(client),
 	renderer(renderer),
-	graphics(graphics),
 	font(&shaderManager->getFontShader())
 {
 	font.load("fonts/dejavusansmono20.fnt");
@@ -13,8 +12,8 @@ GL3DebugRenderer::GL3DebugRenderer(Client *client, GL3Renderer *renderer, Shader
 void GL3DebugRenderer::render() {
 	const Player &player = client->getWorld()->getPlayer(client->getLocalClientId());
 
-	float x = -graphics->getDrawWidth() / 2 + 5;
-	float y = graphics->getDrawHeight() / 2 - font.getTopOffset() - 5;
+	float x = -client->getGraphics()->getDrawWidth() / 2 + 5;
+	float y = client->getGraphics()->getDrawHeight() / 2 - font.getTopOffset() - 5;
 
 	char buffer[1024];
 #define RENDER_LINE(...) sprintf(buffer, __VA_ARGS__);\

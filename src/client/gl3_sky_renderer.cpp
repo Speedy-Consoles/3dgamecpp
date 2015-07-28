@@ -6,11 +6,10 @@
 
 #include <glm/gtc/matrix_transform.hpp>
 
-GL3SkyRenderer::GL3SkyRenderer(Client *client, GL3Renderer *renderer, ShaderManager *shaderManager, Graphics *graphics) :
+GL3SkyRenderer::GL3SkyRenderer(Client *client, GL3Renderer *renderer, ShaderManager *shaderManager) :
 	client(client),
 	renderer(renderer),
-	shaderManager(shaderManager),
-	graphics(graphics)
+	shaderManager(shaderManager)
 {
 	GL(GenVertexArrays(1, &vao));
 	GL(GenBuffers(1, &vbo));

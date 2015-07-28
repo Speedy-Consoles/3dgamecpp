@@ -1,6 +1,8 @@
 #ifndef GRAPHICS_HPP
 #define GRAPHICS_HPP
 
+#include <memory>
+
 #include <GL/glew.h>
 #include <SDL2/SDL.h>
 
@@ -24,8 +26,7 @@ private:
 
 	SDL_GLContext glContext;
 	SDL_Window *window;
-	Renderer *renderer;
-	GraphicsConf conf;
+	std::unique_ptr<Renderer> renderer;
 
 	const Client::State &state;
 	Client::State oldState;
@@ -44,6 +45,10 @@ public:
 	Graphics(Client *client, World *world, const Menu *menu, const Client::State *state,
 				const uint8 *localClientId, const GraphicsConf &conf, Stopwatch *stopwatch = nullptr);
 	~Graphics();
+
+	bool createContext();
+	bool createGL2Context();
+	bool createGL3Context();
 
 	void resize(int width, int height);
 	void setConf(const GraphicsConf &, const GraphicsConf &);
