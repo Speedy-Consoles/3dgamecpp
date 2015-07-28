@@ -190,7 +190,7 @@ void GL3Renderer::tick() {
 }
 
 void GL3Renderer::render() {
-	Player &player = client->getWorld()->getPlayer(client->getLocalClientId());
+	Player &player = client->getLocalPlayer();
 
 	// render sky
 	GL(Disable(GL_DEPTH_TEST));
@@ -224,7 +224,7 @@ void GL3Renderer::render() {
 }
 
 void GL3Renderer::renderTarget() {
-	Player &player = client->getWorld()->getPlayer(client->getLocalClientId());
+	Player &player = client->getLocalPlayer();
 	if (!player.isValid())
 		return;
 	// view matrix for scene

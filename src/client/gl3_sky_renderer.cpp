@@ -47,7 +47,7 @@ GL3SkyRenderer::~GL3SkyRenderer() {
 }
 
 void GL3SkyRenderer::render() {
-	Player &player = client->getWorld()->getPlayer(client->getLocalClientId());
+	Player &player = client->getLocalPlayer();
 	if (!player.isValid())
 		return;
 

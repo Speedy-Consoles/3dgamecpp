@@ -98,6 +98,10 @@ uint8 Client::getLocalClientId() const {
 	 return serverInterface->getLocalClientId();
 }
 
+Player &Client::getLocalPlayer() {
+	return world->getPlayer(getLocalClientId());
+}
+
 void Client::run() {
 	LOG(INFO, "Running client");
 	time = getCurrentTime();

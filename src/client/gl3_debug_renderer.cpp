@@ -10,7 +10,7 @@ GL3DebugRenderer::GL3DebugRenderer(Client *client, GL3Renderer *renderer, Shader
 }
 
 void GL3DebugRenderer::render() {
-	const Player &player = client->getWorld()->getPlayer(client->getLocalClientId());
+	const Player &player = client->getLocalPlayer();
 
 	float x = -client->getGraphics()->getDrawWidth() / 2 + 5;
 	float y = client->getGraphics()->getDrawHeight() / 2 - font.getTopOffset() - 5;
