@@ -271,14 +271,14 @@ int TextureLoader::load() {
 					const char * c = tok.str.c_str();
 					for (uint i = 0; i < tok.str.length(); ++i) {
 						switch (*c) {
-						case 'n': dir_mask |= DIR_NORTH; break;
-						case 'e': dir_mask |= DIR_EAST; break;
-						case 's': dir_mask |= DIR_SOUTH; break;
-						case 'w': dir_mask |= DIR_WEST; break;
+						case 'n': dir_mask |= MASK_NORTH; break;
+						case 'e': dir_mask |= MASK_EAST; break;
+						case 's': dir_mask |= MASK_SOUTH; break;
+						case 'w': dir_mask |= MASK_WEST; break;
 						case 't':
-						case 'u': dir_mask |= DIR_UP; break;
+						case 'u': dir_mask |= MASK_UP; break;
 						case 'b':
-						case 'd': dir_mask |= DIR_DOWN; break;
+						case 'd': dir_mask |= MASK_DOWN; break;
 						default:
 							throw ParsingError{tok.row, tok.col, "Expected [bednstuw]+"};
 						}

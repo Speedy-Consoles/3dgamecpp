@@ -50,4 +50,5 @@ test
 	orient 33
 	multi4 34
 	wang   35
+	sides  37
 }

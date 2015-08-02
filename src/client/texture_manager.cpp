@@ -65,8 +65,7 @@ void TextureManager::setConfig(const GraphicsConf &conf, const GraphicsConf &old
 auto TextureManager::get(uint block, uint8 dir) const -> Entry {
 	int key = (int) block;
 	key <<= 3;
-	// TODO
-	//key |= dir;
+	key |= dir;
 	auto iter = textures.find(key);
 	if (iter == textures.end()) {
 		iter = textures.find(-1);
