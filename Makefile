@@ -4,6 +4,7 @@ CLIENT_OBJECT_FILES = \
 	client/client.cpp.o\
 	client/config.cpp.o\
 	client/graphics.cpp.o\
+	client/chunk_manager.cpp.o\
 	client/gl2_renderer.cpp.o\
 	client/render_2.cpp.o\
 	client/render_menu_2.cpp.o\
