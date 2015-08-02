@@ -16,6 +16,11 @@ ChunkManager::~ChunkManager() {
 	}
 }
 
+void ChunkManager::dispatch() {
+	shouldHalt = false;
+	fut = async(launch::async, [this]() { run(); });
+}
+
 void ChunkManager::subscribe(vec3i64 chunkCoords, int listenerId) {
 	inQueue.push(Subscription{chunkCoords, true, listenerId});
 }
@@ -69,4 +74,10 @@ void ChunkManager::run() {
 
 void ChunkManager::requestTermination() {
 	 shouldHalt.store(true, memory_order_relaxed);
+}
+
+void ChunkManager::wait() {
+	requestTermination();
+	if (fut.valid())
+		fut.get();
 }

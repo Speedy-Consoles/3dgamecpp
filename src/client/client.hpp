@@ -7,6 +7,7 @@
 #include <memory>
 
 class ServerInterface;
+class ChunkManager;
 class World;
 class Player;
 class Menu;
@@ -33,6 +34,7 @@ public:
 	
 	const GraphicsConf &getConf() const { return *_conf.get(); }
 	BlockManager *getBlockManager() { return blockManager.get(); }
+	ChunkManager *getChunkManager() { return chunkManager.get(); }
 	World *getWorld() { return world.get(); }
 	Menu *getMenu() { return menu.get(); }
 	Graphics *getGraphics() { return graphics.get(); }
@@ -49,6 +51,7 @@ public:
 private:
 	std::unique_ptr<GraphicsConf> _conf;
 	std::unique_ptr<BlockManager> blockManager;
+	std::unique_ptr<ChunkManager> chunkManager;
 	std::unique_ptr<World> world;
 	std::unique_ptr<Menu> menu;
 	std::unique_ptr<Graphics> graphics;

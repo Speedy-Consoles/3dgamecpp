@@ -3,6 +3,8 @@
 
 #include <unordered_map>
 #include <memory>
+#include <atomic>
+#include <future>
 
 #include "util.hpp"
 #include "engine/vmath.hpp"
@@ -23,19 +25,25 @@ class ChunkManager {
 	ProducerQueue<std::shared_ptr<const Chunk>> *outQueues[MAX_LISTENERS];
 	ProducerQueue<Subscription> inQueue;
 	ChunkArchive archive;
+
 	std::atomic<bool> shouldHalt;
+	std::future<void> fut;
 
 public:
 	ChunkManager();
 	~ChunkManager();
 
+	void dispatch();
+
 	void subscribe(vec3i64 chunkCoords, int listenerId);
 	void unsubscribe(vec3i64 chunkCoords, int listenerId);
 
 	std::shared_ptr<const Chunk> getNextChunk(int listenerId);
-
-	void run();
 	void requestTermination();
+	void wait();
+
+private:
+	void run();
 };
 
 #endif /* CHUNK_MANAGER_HPP */

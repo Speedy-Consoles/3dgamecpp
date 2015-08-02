@@ -16,6 +16,7 @@
 #include "engine/time.hpp"
 #include "game/world.hpp"
 #include "game/block_manager.hpp"
+#include "chunk_manager.hpp"
 #include "menu.hpp"
 #include "gui/frame.hpp"
 #include "engine/logging.hpp"
@@ -69,6 +70,7 @@ Client::Client(const char *worldId, const char *serverAdress) {
 	}
 	LOG(INFO, "" << blockManager->getNumberOfBlocks() << " blocks were loaded from '" << block_ids_file << "'");
 
+	chunkManager = std::unique_ptr<ChunkManager>(new ChunkManager());
 	world = std::unique_ptr<World>(new World(worldId));
 	menu = std::unique_ptr<Menu>(new Menu(this));
 	graphics = std::unique_ptr<Graphics>(new Graphics(this, world.get(), menu.get(), &state, &localClientId, *_conf, stopwatch.get()));
@@ -104,6 +106,7 @@ Player &Client::getLocalPlayer() {
 
 void Client::run() {
 	LOG(INFO, "Running client");
+	chunkManager->dispatch();
 	time = getCurrentTime();
 	int tick = 0;
 	while (!closeRequested) {
@@ -145,6 +148,7 @@ void Client::run() {
 		tick++;
 	}
 	serverInterface->stop();
+	chunkManager->wait();
 }
 
 void Client::setConf(const GraphicsConf &conf) {
