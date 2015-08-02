@@ -1,15 +1,15 @@
 # main atlas with all the good stuff
 texture file="img/textures_1.png" width=16 height=16 {
 	# basic blocks
-#	block name=dirt   row=0 col=0
+	block name=dirt   row=0 col=0
 	block name=grass  row=0 col=1
 	block name=stone  row=0 col=2
 	block name=sand   row=0 col=3
 	block name=gravel row=0 col=4
-	block name=wood   row=0 col=5
-	block name=planks row=0 col=6
+	block name=wood.oak   row=0 col=5
+	block name=planks.oak row=0 col=6
 	block name=cobble row=0 col=7
-	block name=mossy  row=0 col=8
+	block name=cobble.mossy row=0 col=8
 	block name=bricks row=0 col=9
 	
 	# ores
@@ -38,19 +38,43 @@ texture file="img/textures_1.png" width=16 height=16 {
 	block name=wool.red        row=1 col=14
 	block name=wool.black      row=1 col=15
 	
-	block name=test.orient row=2 col=0
-	block name=test.sides  row=2 col=1 faces=e
-	block name=test.sides  row=2 col=2 faces=w
-	block name=test.sides  row=2 col=3 faces=n
-	block name=test.sides  row=2 col=4 faces=s
-	block name=test.sides  row=2 col=5 faces=t
-	block name=test.sides  row=2 col=6 faces=b
+	block name=test.orient   row=2 col=0
+	block name=test.sides    row=2 col=1 faces=e
+	block name=test.sides    row=2 col=2 faces=w
+	block name=test.sides    row=2 col=3 faces=n
+	block name=test.sides    row=2 col=4 faces=s
+	block name=test.sides    row=2 col=5 faces=t
+	block name=test.sides    row=2 col=6 faces=b
+	block name=grass         row=2 col=7 faces=sides
+	block name=wood          row=2 col=8 faces=vert
+	block name=stone.bricks       row=2 col=9
+	block name=stone.bricks.mossy row=2 col=10
+	block name=block.iron    row=2 col=11
+	block name=block.gold    row=2 col=12
+	block name=block.diamond row=2 col=13
+	block name=block.lapis   row=2 col=14
+	block name=block.emerald row=2 col=15
+	
+	block name=tnt           row=3 col=0 faces=sides
+	block name=tnt           row=3 col=1 faces=b
+	block name=tnt           row=3 col=2 faces=t
+	block name=melon         row=3 col=3
+	block name=melon         row=3 col=4 faces=vert
+	block name=wood.birch    row=3 col=5
+	block name=wood.birch    row=2 col=8 faces=vert
+	block name=planks.birch  row=3 col=6
+	block name=wood.jungle   row=3 col=7
+	block name=wood.jungle   row=2 col=8 faces=vert
+	block name=planks.jungle row=3 col=8
+	block name=wood.spruce   row=3 col=9
+	block name=wood.spruce   row=2 col=8 faces=vert
+	block name=planks.spruce row=3 col=10
 	
 	block name=invalid row=15 col=15
 }
 
 texture file="img/diff_earth.png" {
-	block name=dirt type=wang
+	block name=dirt.wang type=wang
 }
 
 texture file="img/multi4_test.png" {
