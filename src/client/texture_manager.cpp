@@ -9,6 +9,7 @@
 
 #include "client/client.hpp"
 #include "engine/logging.hpp"
+#include "util.hpp"
 
 #include <SDL2/SDL_image.h>
 
@@ -63,6 +64,9 @@ void TextureManager::setConfig(const GraphicsConf &conf, const GraphicsConf &old
 
 auto TextureManager::get(uint block, uint8 dir) const -> Entry {
 	int key = (int) block;
+	key <<= 3;
+	// TODO
+	//key |= dir;
 	auto iter = textures.find(key);
 	if (iter == textures.end()) {
 		iter = textures.find(-1);
@@ -124,39 +128,38 @@ static uint8 scrambleBlockCoordinate(vec3i64 bc) {
 static void getShiftedBlockCoordinate(vec3i64 bc, uint8 dir,
 	vec3i64 &vl, vec3i64 &vr, vec3i64 &vb, vec3i64 &vt)
 {
-	enum { RIGHT, BACK, TOP, LEFT, FRONT, BOTTOM };
 	switch (dir) {
-	case RIGHT:
+	case DIR_EAST:
 		vl = bc + vec3i64(1, 0, 0);
 		vr = bc + vec3i64(1, 1, 0);
 		vb = bc + vec3i64(0, 0, 0);
 		vt = bc + vec3i64(0, 0, 1);
 		break;
-	case LEFT:
+	case DIR_WEST:
 		vl = bc + vec3i64(0, 1, 0);
 		vr = bc + vec3i64(0, 0, 0);
 		vb = bc + vec3i64(0, 0, 0);
 		vt = bc + vec3i64(0, 0, 1);
 		break;
-	case BACK:
+	case DIR_NORTH:
 		vl = bc + vec3i64(1, 1, 0);
 		vr = bc + vec3i64(0, 1, 0);
 		vb = bc + vec3i64(0, 0, 0);
 		vt = bc + vec3i64(0, 0, 1);
 		break;
-	case FRONT:
+	case DIR_SOUTH:
 		vl = bc + vec3i64(0, 0, 0);
 		vr = bc + vec3i64(1, 0, 0);
 		vb = bc + vec3i64(0, 0, 0);
 		vt = bc + vec3i64(0, 0, 1);
 		break;
-	case TOP:
+	case DIR_UP:
 		vl = bc + vec3i64(0, 0, 0);
 		vr = bc + vec3i64(1, 0, 0);
 		vb = bc + vec3i64(0, 0, 0);
 		vt = bc + vec3i64(0, 1, 0);
 		break;
-	case BOTTOM:
+	case DIR_DOWN:
 		vl = bc + vec3i64(1, 0, 0);
 		vr = bc + vec3i64(0, 0, 0);
 		vb = bc + vec3i64(0, 0, 0);
@@ -175,18 +178,17 @@ auto TextureManager::get(uint block, vec3i64 bc, uint8 dir) const -> Entry {
 	Entry entry = get(block, dir);
 
 	if (entry.type == TextureType::WANG_TILES) {
-		enum { RIGHT, BACK, TOP, LEFT, FRONT, BOTTOM };
 		vec3i64 vl, vr, vb, vt;
 		getShiftedBlockCoordinate(bc, dir, vl, vr, vb, vt);
 		uint8 left, right, top, bot;
 		switch (dir) {
-		case BOTTOM:
+		case DIR_DOWN:
 			left  = scrambleBlockCoordinate(vl) & 0x10;
 			right = scrambleBlockCoordinate(vr) & 0x10;
 			bot   = scrambleBlockCoordinate(vb) & 0x20;
 			top   = scrambleBlockCoordinate(vt) & 0x20;
 			break;
-		case TOP:
+		case DIR_UP:
 			left  = scrambleBlockCoordinate(vl) & 0x04;
 			right = scrambleBlockCoordinate(vr) & 0x04;
 			bot   = scrambleBlockCoordinate(vb) & 0x08;
@@ -279,7 +281,7 @@ void TextureManager::add(SDL_Surface *img, const std::vector<TextureLoadEntry> &
 		if (ret_code)
 			LOG(ERROR, "Blit unsuccessful: " << SDL_GetError());
 
-		loadTexture(entry.id, tmp.get(), entry.type);
+		loadTexture(entry.id, entry.dir_mask, tmp.get(), entry.type);
 	}
 }
 
@@ -292,7 +294,7 @@ void TextureManager::clear() {
 	loadedTextures.clear();
 }
 
-GLuint TextureManager::loadTexture(uint block, SDL_Surface *img, TextureType type) {
+GLuint TextureManager::loadTexture(int block, uint8 dir_mask, SDL_Surface *img, TextureType type) {
 	GLuint tex;
 	GL(GenTextures(1, &tex));
 	GL(BindTexture(TEX2D, tex));
@@ -300,14 +302,17 @@ GLuint TextureManager::loadTexture(uint block, SDL_Surface *img, TextureType typ
 	GL(TexImage2D(TEX2D, 0, 4, img->w, img->h, 0,
 			GL_RGBA, GL_UNSIGNED_BYTE, img->pixels));
 
-	GLenum e = glGetError();
-	if (e != GL_NO_ERROR) {
-		LOG(ERROR, "Could not load texture: " << gluErrorString(e));
-		return 0;
+	Entry entry = Entry{tex, type, -1};
+	if (block < 0) {
+		textures[(int) block] = entry;
+	} else {
+		for (uint dir = 0; dir < 6; ++dir) {
+			if (dir_mask & (1 << dir)) {
+				int key = (int) ((block << 3) | (int) dir);
+				textures[key] = entry;
+			}
+		}
 	}
-
-	Entry entry{tex, type, -1};
-	textures[(int) block] = entry;
 	loadedTextures.push_back(tex);
 
 	return tex;

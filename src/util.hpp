@@ -38,4 +38,27 @@ size_t vec3i64HashFunc(vec3i64 v);
 
 void initUtil();
 
+enum FaceDir {
+	DIR_EAST,
+	DIR_NORTH,
+	DIR_UP,
+	DIR_WEST,
+	DIR_SOUTH,
+	DIR_DOWN,
+};
+
+enum FaceDirMask {
+	MASK_EAST  = 1 << DIR_EAST,
+	MASK_NORTH = 1 << DIR_NORTH,
+	MASK_UP    = 1 << DIR_UP,
+	MASK_WEST  = 1 << DIR_WEST,
+	MASK_SOUTH = 1 << DIR_SOUTH,
+	MASK_DOWN  = 1 << DIR_DOWN,
+	
+	MASK_NONE  = 0,
+	MASK_SIDES = MASK_NORTH | MASK_EAST | MASK_SOUTH | MASK_WEST,
+	MASK_VERT  = MASK_UP | MASK_DOWN,
+	MASK_ALL   = MASK_SIDES | MASK_VERT,
+};
+
 #endif // UTIL_HPP
