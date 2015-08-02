@@ -6,8 +6,11 @@ CLIENT_OBJECT_FILES = \
 	client/graphics.cpp.o\
 	client/chunk_manager.cpp.o\
 	client/gl2_renderer.cpp.o\
-	client/render_2.cpp.o\
-	client/render_menu_2.cpp.o\
+	client/gl2_chunk_renderer.cpp.o\
+	client/gl2_sky_renderer.cpp.o\
+	client/gl2_hud_renderer.cpp.o\
+	client/gl2_debug_renderer.cpp.o\
+	client/gl2_menu_renderer.cpp.o\
 	client/gl3_renderer.cpp.o\
 	client/gl3_chunk_renderer.cpp.o\
 	client/gl3_sky_renderer.cpp.o\

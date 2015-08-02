@@ -1,0 +1,168 @@
+#include "gl2_debug_renderer.hpp"
+
+#include "gl2_renderer.hpp"
+
+#include "engine/logging.hpp"
+#include "engine/math.hpp"
+
+GL2DebugRenderer::GL2DebugRenderer(Client *client, GL2Renderer *renderer) :
+	client(client), renderer(renderer)
+{
+	LOG(DEBUG, "Loading font");
+	font = new FTGLTextureFont("res/DejaVuSansMono.ttf");
+	if (font) {
+		font->FaceSize(16);
+		font->CharMap(ft_encoding_unicode);
+	} else {
+		LOG(ERROR, "Could not open 'res/DejaVuSansMono.ttf'");
+	}
+}
+
+GL2DebugRenderer::~GL2DebugRenderer() {
+	delete font;
+}
+
+void GL2DebugRenderer::setConf(const GraphicsConf &, const GraphicsConf &) {
+
+}
+
+void GL2DebugRenderer::render() {
+	renderDebug();
+
+	if (client->getStopwatch())
+		renderPerformance();
+}
+
+void GL2DebugRenderer::renderDebug() {
+	const Player &player = client->getLocalPlayer();
+
+	vec3i64 playerPos = player.getPos();
+	vec3d playerVel = player.getVel();
+	//uint32 windowFlags = SDL_GetWindowFlags(window);
+
+	glDisable(GL_TEXTURE_2D);
+	glPushMatrix();
+	glColor3f(1.0f, 1.0f, 1.0f);
+	glTranslatef(-client->getGraphics()->getDrawWidth() / 2 + 3, client->getGraphics()->getDrawHeight() / 2, 0);
+	char buffer[1024];
+	#define RENDER_LINE(...) sprintf(buffer, __VA_ARGS__);\
+			glTranslatef(0, -16, 0);\
+			font->Render(buffer)
+
+	//RENDER_LINE("fps: %d", fpsSum);
+	//RENDER_LINE("new faces: %d", newFaces);
+	//RENDER_LINE("faces: %d", faces);
+	RENDER_LINE("x: %" PRId64 "(%" PRId64 ")", playerPos[0], (int64) floor(playerPos[0] / (double) RESOLUTION));
+	RENDER_LINE("y: %" PRId64 " (%" PRId64 ")", playerPos[1], (int64) floor(playerPos[1] / (double) RESOLUTION));
+	RENDER_LINE("z: %" PRId64 " (%" PRId64 ")", playerPos[2],
+			(int64) floor((playerPos[2] - Player::EYE_HEIGHT - 1) / (double) RESOLUTION));
+	RENDER_LINE("yaw:   %6.1f", player.getYaw());
+	RENDER_LINE("pitch: %6.1f", player.getPitch());
+	RENDER_LINE("xvel: %8.1f", playerVel[0]);
+	RENDER_LINE("yvel: %8.1f", playerVel[1]);
+	RENDER_LINE("zvel: %8.1f", playerVel[2]);
+	//RENDER_LINE("chunks loaded: %" PRIuPTR "", client->getWorld()->getNumChunks());
+	//RENDER_LINE("chunks visible: %d", visibleChunks);
+	//RENDER_LINE("faces visible: %d", visibleFaces);
+	//RENDER_LINE("block: %d", player.getBlock());*/
+
+	glPopMatrix();
+}
+
+void GL2DebugRenderer::renderPerformance() {
+	const char *rel_names[] = {
+		"CLR",
+		"NDL",
+		"DLC",
+		"CHL",
+		"CHR",
+		"PLA",
+		"HUD",
+		"FLP",
+		"TIC",
+		"NET",
+		"SYN",
+		"FSH",
+		"ALL"
+	};
+
+	vec3f rel_colors[] {
+		{0.6f, 0.6f, 1.0f},
+		{0.0f, 0.0f, 0.8f},
+		{0.6f, 0.0f, 0.8f},
+		{0.0f, 0.6f, 0.8f},
+		{0.4f, 0.4f, 0.8f},
+		{0.7f, 0.7f, 0.0f},
+		{0.8f, 0.8f, 0.3f},
+		{0.0f, 0.8f, 0.0f},
+		{0.0f, 0.4f, 0.0f},
+		{0.7f, 0.1f, 0.7f},
+		{0.7f, 0.7f, 0.4f},
+		{0.2f, 0.6f, 0.6f},
+		{0.8f, 0.0f, 0.0f},
+	};
+
+	float rel = 0.0;
+	float cum_rels[CLOCK_ID_NUM + 1];
+	cum_rels[0] = 0;
+	float center_positions[CLOCK_ID_NUM];
+
+	glPushMatrix();
+	glTranslatef(+client->getGraphics()->getDrawWidth() / 2.0, -client->getGraphics()->getDrawHeight() / 2, 0);
+	glScalef(10.0, client->getGraphics()->getDrawHeight(), 1.0);
+	glTranslatef(-1, 0, 0);
+	glBegin(GL_QUADS);
+	for (uint i = 0; i < CLOCK_ID_NUM; ++i) {
+		glColor3f(rel_colors[i][0], rel_colors[i][1], rel_colors[i][2]);
+		glVertex2f(0, rel);
+		glVertex2f(1, rel);
+		rel += client->getStopwatch()->getRel(i);
+		cum_rels[i + 1] = rel;
+		center_positions[i] = (cum_rels[i] + cum_rels[i + 1]) / 2.0;
+		glVertex2f(1, rel);
+		glVertex2f(0, rel);
+	}
+	glEnd();
+	glPopMatrix();
+
+	static const float REL_THRESHOLD = 0.001f;
+	uint labeled_ids[CLOCK_ID_NUM];
+	int num_displayed_labels = 0;
+	for (int i = 0; i < CLOCK_ID_NUM; ++i) {
+		if (client->getStopwatch()->getRel(i) > REL_THRESHOLD)
+			labeled_ids[num_displayed_labels++] = i;
+	}
+
+	float used_positions[CLOCK_ID_NUM + 2];
+	used_positions[0] = 0.0;
+	for (int i = 0; i < num_displayed_labels; ++i) {
+		int id = labeled_ids[i];
+		used_positions[i + 1] = center_positions[id];
+	}
+	used_positions[num_displayed_labels + 1] = 1.0;
+
+	for (int iteration = 0; iteration < 3; ++iteration)
+	for (int i = 1; i < num_displayed_labels + 1; ++i) {
+		float d1 = used_positions[i] - used_positions[i - 1];
+		float d2 = used_positions[i + 1] - used_positions[i];
+		float diff = 2e-4 * (1.0 / d1 - 1.0 / d2);
+		used_positions[i] += clamp((double) diff, -0.02, 0.02);
+	}
+
+	glPushMatrix();
+	glTranslatef(+client->getGraphics()->getDrawWidth() / 2.0, -client->getGraphics()->getDrawHeight() / 2, 0);
+	glTranslatef(-15, 0, 0);
+	glRotatef(90.0, 0.0, 0.0, 1.0);
+	for (int i = 0; i < num_displayed_labels; ++i) {
+		int id = labeled_ids[i];
+		glPushMatrix();
+		glTranslatef(used_positions[i + 1] * client->getGraphics()->getDrawHeight() - 14, 0, 0);
+		char buffer[1024];
+		sprintf(buffer, "%s", rel_names[id]);
+		auto color = rel_colors[id];
+		glColor3f(color[0], color[1], color[2]);
+		font->Render(buffer);
+		glPopMatrix();
+	}
+	glPopMatrix();
+}

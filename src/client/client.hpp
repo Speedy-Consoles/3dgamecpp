@@ -8,6 +8,7 @@
 
 class ServerInterface;
 class World;
+class Player;
 class Menu;
 class Graphics;
 struct GraphicsConf;
@@ -37,6 +38,9 @@ public:
 	Graphics *getGraphics() { return graphics.get(); }
 	ServerInterface *getServerInterface() { return serverInterface.get(); }
 	Stopwatch *getStopwatch() { return stopwatch.get(); }
+
+	// convenience functions
+	Player &getLocalPlayer();
 
 	void setConf(const GraphicsConf &);
 

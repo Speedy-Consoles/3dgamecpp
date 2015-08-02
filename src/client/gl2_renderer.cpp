@@ -17,15 +17,14 @@
 
 using namespace gui;
 
-GL2Renderer::GL2Renderer(
-	Client *client,
-	Graphics *graphics,
-	SDL_Window *window)
-	:
+GL2Renderer::GL2Renderer(Client *client) :
 	client(client),
-	graphics(graphics),
-	window(window),
-	texManager(client)
+	texManager(client),
+	chunkRenderer(client, this),
+	skyRenderer(client, this),
+	hudRenderer(client, this),
+	menuRenderer(client, this),
+	debugRenderer(client, this)
 {
 	makeMaxFOV();
 	makePerspective();
@@ -42,144 +41,36 @@ GL2Renderer::GL2Renderer(
 }
 
 GL2Renderer::~GL2Renderer() {
-	LOG(DEBUG, "Destroying Graphics");
-	destroyRenderDistanceDependent();
-
-	delete font;
+	LOG(TRACE, "Destroying Renderer");
 }
 
-void GL2Renderer::destroyRenderDistanceDependent() {
-	glDeleteLists(dlFirstAddress, renderDistance * renderDistance * renderDistance);
-	delete dlChunks;
-	delete dlStatus;
-	delete chunkFaces;
-	delete chunkPassThroughs;
-	delete vsExits;
-	delete vsVisited;
-	delete vsFringe;
-	delete vsIndices;
-}
+void GL2Renderer::tick() {
+	render();
 
-void GL2Renderer::initGL() {
-	glClearDepth(1);
-	glDepthFunc(GL_LEQUAL);
-	glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
-	glMatrixMode(GL_MODELVIEW);
+	client->getStopwatch()->start(CLOCK_FSH);
+	//glFinish();
+	client->getStopwatch()->stop(CLOCK_FSH);
 
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	client->getStopwatch()->start(CLOCK_FLP);
+	client->getGraphics()->flip();
+	client->getStopwatch()->stop(CLOCK_FLP);
 
-	glEnable(GL_CULL_FACE);
-
-	glEnable(GL_LINE_SMOOTH);
-
-	// light
-	LOG(DEBUG, "Initializing light");
-	//float playerLight[4] = {4.0f, 4.0f, 2.4f, 1.0f};
-	float lModelAmbient[4] = {0.0f, 0.0f, 0.0f, 1.0f};
-
-	//float playerLightPos[4] = {0.0f, 0.0f, -0.4f, 1.0f};
-
-	glEnable(GL_LIGHTING);
-	glShadeModel(GL_SMOOTH);
-	float matAmbient[4] = {1.0f, 1.0f, 1.0f, 1.0f};
-	float matDiffuse[4] = {1.0f, 1.0f, 1.0f, 1.0f};
-	float matSpecular[4] = {1.0f, 1.0f, 1.0f, 1.0f};
-	glMaterialfv(GL_FRONT, GL_SPECULAR, matSpecular);
-	glMaterialfv(GL_FRONT, GL_DIFFUSE, matDiffuse);
-	glMaterialfv(GL_FRONT, GL_AMBIENT, matAmbient);
-	//glMaterialf(GL_FRONT, GL_SHININESS, 1.0f);
-
-	glLightModelfv(GL_LIGHT_MODEL_AMBIENT, lModelAmbient);
-
-	// sun light
-	glEnable(GL_LIGHT0);
-	float sunAmbient[4] = {0.5f, 0.5f, 0.47f, 1.0f};
-	float sunDiffuse[4] = {0.4f, 0.4f, 0.38f, 1.0f};
-	float sunSpecular[4] = {0.0f, 0.0f, 0.0f, 1.0f};
-	glLightfv(GL_LIGHT0, GL_AMBIENT, sunAmbient);
-	glLightfv(GL_LIGHT0, GL_DIFFUSE, sunDiffuse);
-	glLightfv(GL_LIGHT0, GL_SPECULAR, sunSpecular);
-
-	/*glLightfv(GL_LIGHT1, GL_DIFFUSE, playerLight);
-	glLightfv(GL_LIGHT1, GL_POSITION, playerLightPos);
-	glLightf(GL_LIGHT1, GL_CONSTANT_ATTENUATION, 0.0f);
-	glLightf(GL_LIGHT1, GL_LINEAR_ATTENUATION, 0.0f);
-	glLightf(GL_LIGHT1, GL_QUADRATIC_ATTENUATION, 1.f);*/
-	//glEnable(GL_LIGHT1);
-
-	glEnable(GL_COLOR_MATERIAL); // enables opengl to use glColor3f to define material color
-	glColorMaterial(GL_FRONT, GL_AMBIENT_AND_DIFFUSE); // tell opengl glColor3f effects the ambient and diffuse properties of material
-
-	// font
-	LOG(DEBUG, "Loading font");
-	font = new FTGLTextureFont("res/DejaVuSansMono.ttf");
-	if (font) {
-		font->FaceSize(16);
-		font->CharMap(ft_encoding_unicode);
-	} else {
-		LOG(ERROR, "Could not open 'res/DejaVuSansMono.ttf'");
+    if (getCurrentTime() - lastStopWatchSave > millis(200)) {
+		lastStopWatchSave = getCurrentTime();
+		client->getStopwatch()->stop(CLOCK_ALL);
+		client->getStopwatch()->save();
+		client->getStopwatch()->start(CLOCK_ALL);
 	}
 
-	// textures
-	LOG(DEBUG, "Loading textures");
-	const char *block_textures_file = "block_textures.txt";
-	if (texManager.load(block_textures_file)) {
-		LOG(WARNING, "There was a problem loading '" << block_textures_file << "'");
+    while (getCurrentTime() - lastFPSUpdate > millis(50)) {
+		lastFPSUpdate += millis(50);
+		fpsSum -= prevFPS[fpsIndex];
+		fpsSum += fpsCounter;
+		prevFPS[fpsIndex] = fpsCounter;
+		fpsCounter = 0;
+		fpsIndex = (fpsIndex + 1) % 20;
 	}
-
-	// fog
-	glEnable(GL_FOG);
-	if (GLEW_NV_fog_distance)
-		glFogi(GL_FOG_DISTANCE_MODE_NV, GL_EYE_RADIAL_NV);
-	else
-		LOG(INFO, "GL_NV_fog_distance not available, falling back to z fog");
-
-	glFogfv(GL_FOG_COLOR, fogColor.ptr());
-	glFogi(GL_FOG_MODE, GL_LINEAR);
-	makeFog();
-
-	// fxaa
-//	glUseProgram(program_postproc);
-//
-//	GLuint fxaa_span_max_loc = glGetUniformLocation(program_postproc, "fxaa_span_max");
-//	logOpenGLError();
-//	glUniform1f(fxaa_span_max_loc, 8.0);
-//	logOpenGLError();
-//
-//	GLuint fxaa_reduce_mul_loc = glGetUniformLocation(program_postproc, "fxaa_reduce_mul");
-//	logOpenGLError();
-//	glUniform1f(fxaa_reduce_mul_loc, 1.0/8.0);
-//	logOpenGLError();
-//
-//	GLuint fxaa_reduce_min_loc = glGetUniformLocation(program_postproc, "fxaa_reduce_min");
-//	logOpenGLError();
-//	glUniform1f(fxaa_reduce_min_loc, 1.0/128.0);
-//	logOpenGLError();
-
-	initRenderDistanceDependent();
-}
-
-void GL2Renderer::initRenderDistanceDependent() {
-	renderDistance = client->getConf().render_distance * 2 + 3;
-	int n = renderDistance * renderDistance * renderDistance;
-	dlFirstAddress = glGenLists(n);
-	dlChunks = new vec3i64[n];
-	dlStatus = new uint8[n];
-	chunkFaces = new int[n];
-	chunkPassThroughs = new uint16[n];
-	vsExits = new uint8[n];
-	vsVisited = new bool[n];
-	vsFringeCapacity = renderDistance * renderDistance * 6;
-	vsFringe = new vec3i64[vsFringeCapacity];
-	vsIndices = new int[vsFringeCapacity];
-	for (int i = 0; i < n; i++) {
-		dlStatus[i] = NO_CHUNK;
-		chunkFaces[i] = 0;
-		chunkPassThroughs[i] = 0;
-		vsVisited[i] = false;
-	}
-	faces = 0;
+	fpsCounter++;
 }
 
 void GL2Renderer::resize() {
@@ -193,80 +84,7 @@ void GL2Renderer::resize() {
 		createFBO();
 }
 
-void GL2Renderer::makePerspective() {
-	double normalRatio = DEFAULT_WINDOWED_RES[0] / (double) DEFAULT_WINDOWED_RES[1];
-	double currentRatio = graphics->getWidth() / (double) graphics->getHeight();
-	double angle;
-
-	float yfov = client->getConf().fov / normalRatio * TAU / 360.0;
-	if (currentRatio > normalRatio)
-		angle = atan(tan(yfov / 2) * normalRatio / currentRatio) * 2;
-	else
-		angle = yfov;
-
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
-	double zFar = Chunk::WIDTH * sqrt(3 * (client->getConf().render_distance + 1) * (client->getConf().render_distance + 1));
-	gluPerspective((float) (angle * 360.0 / TAU),
-			(float) currentRatio, ZNEAR, zFar);
-	glGetDoublev(GL_PROJECTION_MATRIX, perspectiveMatrix);
-	glMatrixMode(GL_MODELVIEW);
-}
-
-void GL2Renderer::makeOrthogonal() {
-	double normalRatio = DEFAULT_WINDOWED_RES[0] / (double) DEFAULT_WINDOWED_RES[1];
-	double currentRatio = graphics->getWidth() / (double) graphics->getHeight();
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
-	if (currentRatio > normalRatio)
-		glOrtho(-DEFAULT_WINDOWED_RES[0] / 2.0, DEFAULT_WINDOWED_RES[0] / 2.0, -DEFAULT_WINDOWED_RES[0]
-				/ currentRatio / 2.0, DEFAULT_WINDOWED_RES[0] / currentRatio / 2.0, 1,
-				-1);
-	else
-		glOrtho(-DEFAULT_WINDOWED_RES[1] * currentRatio / 2.0, DEFAULT_WINDOWED_RES[1]
-				* currentRatio / 2.0, -DEFAULT_WINDOWED_RES[1] / 2.0,
-				DEFAULT_WINDOWED_RES[1] / 2.0, 1, -1);
-	glGetDoublev(GL_PROJECTION_MATRIX, orthogonalMatrix);
-	glMatrixMode(GL_MODELVIEW);
-}
-
-void GL2Renderer::makeFog() {
-	double fogEnd = std::max(0.0, Chunk::WIDTH * (client->getConf().render_distance - 1.0));
-	glFogf(GL_FOG_START, fogEnd - ZNEAR - fogEnd / 3.0);
-	glFogf(GL_FOG_END, fogEnd - ZNEAR);
-}
-
-void GL2Renderer::makeMaxFOV() {
-	float ratio = (float) DEFAULT_WINDOWED_RES[0] / DEFAULT_WINDOWED_RES[1];
-	float yfov = client->getConf().fov / ratio * TAU / 360.0;
-	if (ratio < 1.0)
-		maxFOV = yfov;
-	else
-		maxFOV = atan(ratio * tan(yfov / 2)) * 2;
-}
-
-static uint getMSLevelFromAA(AntiAliasing aa) {
-	switch (aa) {
-		case AntiAliasing::NONE:    return 0;
-		case AntiAliasing::MSAA_2:  return 2;
-		case AntiAliasing::MSAA_4:  return 4;
-		case AntiAliasing::MSAA_8:  return 8;
-		case AntiAliasing::MSAA_16: return 16;
-		default:                    return 0;
-	}
-}
-
 void GL2Renderer::setConf(const GraphicsConf &conf, const GraphicsConf &old) {
-	if (conf.render_distance != old.render_distance) {
-		destroyRenderDistanceDependent();
-	}
-
-	renderDistance = conf.render_distance;
-
-	if (conf.render_distance != old.render_distance) {
-		initRenderDistanceDependent();
-	}
-
 	if (conf.fov != old.fov || conf.render_distance != old.render_distance) {
 		makeMaxFOV();
 		makePerspective();
@@ -296,75 +114,124 @@ void GL2Renderer::setConf(const GraphicsConf &conf, const GraphicsConf &old) {
 	texManager.setConfig(conf, old);
 }
 
+TextureManager *GL2Renderer::getTextureManager() {
+	return &texManager;
+}
+
+bool GL2Renderer::inFrustum(vec3i64 cc, vec3i64 pos, vec3d lookDir) {
+	double chunkDia = sqrt(3) * Chunk::WIDTH * RESOLUTION;
+	vec3d cp = (cc * Chunk::WIDTH * RESOLUTION - pos).cast<double>();
+	double chunkLookDist = lookDir * cp + chunkDia;
+	if (chunkLookDist < 0)
+		return false;
+	vec3d orthoChunkPos = cp - lookDir * chunkLookDist;
+	double orthoChunkDist = std::max(0.0, orthoChunkPos.norm() - chunkDia);
+	return atan(orthoChunkDist / chunkLookDist) <= maxFOV / 2;
+}
+
+void GL2Renderer::initGL() {
+	glClearDepth(1);
+	glDepthFunc(GL_LEQUAL);
+	glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
+	glMatrixMode(GL_MODELVIEW);
+
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+	glEnable(GL_CULL_FACE);
+
+	glEnable(GL_LINE_SMOOTH);
+
+	// light
+	LOG(DEBUG, "Initializing light");
+	float lModelAmbient[4] = {0.0f, 0.0f, 0.0f, 1.0f};
+
+	glEnable(GL_LIGHTING);
+	glShadeModel(GL_SMOOTH);
+	float matAmbient[4] = {1.0f, 1.0f, 1.0f, 1.0f};
+	float matDiffuse[4] = {1.0f, 1.0f, 1.0f, 1.0f};
+	float matSpecular[4] = {1.0f, 1.0f, 1.0f, 1.0f};
+	glMaterialfv(GL_FRONT, GL_SPECULAR, matSpecular);
+	glMaterialfv(GL_FRONT, GL_DIFFUSE, matDiffuse);
+	glMaterialfv(GL_FRONT, GL_AMBIENT, matAmbient);
+	//glMaterialf(GL_FRONT, GL_SHININESS, 1.0f);
+
+	glLightModelfv(GL_LIGHT_MODEL_AMBIENT, lModelAmbient);
+
+	// sun light
+	glEnable(GL_LIGHT0);
+	float sunAmbient[4] = {0.5f, 0.5f, 0.47f, 1.0f};
+	float sunDiffuse[4] = {0.4f, 0.4f, 0.38f, 1.0f};
+	float sunSpecular[4] = {0.0f, 0.0f, 0.0f, 1.0f};
+	glLightfv(GL_LIGHT0, GL_AMBIENT, sunAmbient);
+	glLightfv(GL_LIGHT0, GL_DIFFUSE, sunDiffuse);
+	glLightfv(GL_LIGHT0, GL_SPECULAR, sunSpecular);
+
+	glEnable(GL_COLOR_MATERIAL);
+	glColorMaterial(GL_FRONT, GL_AMBIENT_AND_DIFFUSE);
+
+	// textures
+	LOG(DEBUG, "Loading textures");
+	const char *block_textures_file = "block_textures.txt";
+	if (texManager.load(block_textures_file)) {
+		LOG(WARNING, "There was a problem loading '" << block_textures_file << "'");
+	}
+
+	// fog
+	glEnable(GL_FOG);
+	if (GLEW_NV_fog_distance)
+		glFogi(GL_FOG_DISTANCE_MODE_NV, GL_EYE_RADIAL_NV);
+	else
+		LOG(INFO, "GL_NV_fog_distance not available, falling back to z fog");
+
+	glFogfv(GL_FOG_COLOR, fogColor.ptr());
+	glFogi(GL_FOG_MODE, GL_LINEAR);
+	makeFog();
+}
+
+static uint getMSLevelFromAA(AntiAliasing aa) {
+	switch (aa) {
+		case AntiAliasing::NONE:    return 0;
+		case AntiAliasing::MSAA_2:  return 2;
+		case AntiAliasing::MSAA_4:  return 4;
+		case AntiAliasing::MSAA_8:  return 8;
+		case AntiAliasing::MSAA_16: return 16;
+		default:                    return 0;
+	}
+}
+
 void GL2Renderer::createFBO() {
 	uint msLevel = getMSLevelFromAA(client->getConf().aa);
-//	LOG(INFO) << "Creating framebuffer with MSAA=" << msaa
-//			<< " and fxaa " << (fxaa ? "enabled" : "disabled");
-//	bool needs_render_to_texture = false;
-//	if (fxaa)
-//		needs_render_to_texture = true;
-//
-//	if (needs_render_to_texture) {
-//		glActiveTexture(GL_TEXTURE0);
-//		logOpenGLError();
-//		glGenTextures(1, &fbo_texture);
-//		glBindTexture(GL_TEXTURE_2D, fbo_texture);
-//		logOpenGLError();
-//		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-//		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-//		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-//		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-//		logOpenGLError();
-//		glTexImage2D(GL_TEXTURE_2D, 0, 4, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
-//		logOpenGLError();
-//		glBindTexture(GL_TEXTURE_2D, 0);
-//		logOpenGLError();
-//	} else {
-	glGenRenderbuffers(1, &fbo_color_buffer);
-	glBindRenderbuffer(GL_RENDERBUFFER, fbo_color_buffer);
-	logOpenGLError();
-	glRenderbufferStorageMultisample(
-			GL_RENDERBUFFER, msLevel, GL_RGB, graphics->getWidth(), graphics->getHeight()
-	);
-	logOpenGLError();
-//	}
+	GL(GenRenderbuffers(1, &fbo_color_buffer));
+	GL(BindRenderbuffer(GL_RENDERBUFFER, fbo_color_buffer));
+	GL(RenderbufferStorageMultisample(
+			GL_RENDERBUFFER, msLevel, GL_RGB, client->getGraphics()->getWidth(), client->getGraphics()->getHeight()
+	));
 
 	// Depth buffer
-	glGenRenderbuffers(1, &fbo_depth_buffer);
-	glBindRenderbuffer(GL_RENDERBUFFER, fbo_depth_buffer);
-	logOpenGLError();
+	GL(GenRenderbuffers(1, &fbo_depth_buffer));
+	GL(BindRenderbuffer(GL_RENDERBUFFER, fbo_depth_buffer));
 	if (client->getConf().aa != AntiAliasing::NONE) {
-		glRenderbufferStorageMultisample(
-				GL_RENDERBUFFER, msLevel, GL_DEPTH_COMPONENT24, graphics->getWidth(), graphics->getHeight()
-		);
+		GL(RenderbufferStorageMultisample(
+				GL_RENDERBUFFER, msLevel, GL_DEPTH_COMPONENT24, client->getGraphics()->getWidth(), client->getGraphics()->getHeight()
+		));
 	} else {
-		glRenderbufferStorage(
+		GL(RenderbufferStorage(
 				GL_RENDERBUFFER, GL_DEPTH_COMPONENT24,
-				graphics->getWidth(), graphics->getHeight()
-		);
+				client->getGraphics()->getWidth(), client->getGraphics()->getHeight()
+		));
 	}
-	logOpenGLError();
 
-	glGenFramebuffers(1, &fbo);
-	glBindFramebuffer(GL_FRAMEBUFFER, fbo);
-	logOpenGLError();
-//	if (needs_render_to_texture) {
-//		glFramebufferTexture2D(
-//				GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
-//				GL_TEXTURE_2D, fbo_texture, 0
-//		);
-//	} else {
-	glFramebufferRenderbuffer(
+	GL(GenFramebuffers(1, &fbo));
+	GL(BindFramebuffer(GL_FRAMEBUFFER, fbo));
+	GL(FramebufferRenderbuffer(
 			GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
 			GL_RENDERBUFFER, fbo_color_buffer
-	);
-//	}
-	logOpenGLError();
-	glFramebufferRenderbuffer(
+	));
+	GL(FramebufferRenderbuffer(
 			GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,
 			GL_RENDERBUFFER, fbo_depth_buffer
-	);
-	logOpenGLError();
+	));
 
 	GLuint status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
 	if (status != GL_FRAMEBUFFER_COMPLETE) {
@@ -389,42 +256,163 @@ void GL2Renderer::createFBO() {
 		}
 		LOG(ERROR, "Framebuffer creation failed: " << msg);
 	}
-	logOpenGLError();
 }
 
 void GL2Renderer::destroyFBO() {
-//	glDeleteTextures(1, &fbo_texture);
 	glDeleteRenderbuffers(1, &fbo_color_buffer);
 	glDeleteRenderbuffers(1, &fbo_depth_buffer);
 	glDeleteFramebuffers(1, &fbo);
-	fbo = fbo_color_buffer = fbo_depth_buffer = /*fbo_texture = */0;
+	fbo = fbo_color_buffer = fbo_depth_buffer = 0;
 }
 
-void GL2Renderer::tick() {
-	render();
+void GL2Renderer::makePerspective() {
+	double normalRatio = DEFAULT_WINDOWED_RES[0] / (double) DEFAULT_WINDOWED_RES[1];
+	double currentRatio = client->getGraphics()->getWidth() / (double) client->getGraphics()->getHeight();
+	double angle;
 
-	client->getStopwatch()->start(CLOCK_FSH);
-	//glFinish();
-	client->getStopwatch()->stop(CLOCK_FSH);
+	float yfov = client->getConf().fov / normalRatio * TAU / 360.0;
+	if (currentRatio > normalRatio)
+		angle = atan(tan(yfov / 2) * normalRatio / currentRatio) * 2;
+	else
+		angle = yfov;
 
-	client->getStopwatch()->start(CLOCK_FLP);
-	SDL_GL_SwapWindow(window);
-	client->getStopwatch()->stop(CLOCK_FLP);
+	GL(MatrixMode(GL_PROJECTION));
+	GL(LoadIdentity());
+	double zFar = Chunk::WIDTH * sqrt(3 * (client->getConf().render_distance + 1) * (client->getConf().render_distance + 1));
+	GL(uPerspective((float) (angle * 360.0 / TAU),
+			(float) currentRatio, ZNEAR, zFar));
+	GL(GetDoublev(GL_PROJECTION_MATRIX, perspectiveMatrix));
+	GL(MatrixMode(GL_MODELVIEW));
+}
 
-    if (getCurrentTime() - lastStopWatchSave > millis(200)) {
-		lastStopWatchSave = getCurrentTime();
-		client->getStopwatch()->stop(CLOCK_ALL);
-		client->getStopwatch()->save();
-		client->getStopwatch()->start(CLOCK_ALL);
+void GL2Renderer::makeOrthogonal() {
+	double normalRatio = DEFAULT_WINDOWED_RES[0] / (double) DEFAULT_WINDOWED_RES[1];
+	double currentRatio = client->getGraphics()->getWidth() / (double) client->getGraphics()->getHeight();
+	GL(MatrixMode(GL_PROJECTION));
+	GL(LoadIdentity());
+	if (currentRatio > normalRatio) {
+		GL(Ortho(-DEFAULT_WINDOWED_RES[0] / 2.0, DEFAULT_WINDOWED_RES[0] / 2.0, -DEFAULT_WINDOWED_RES[0]
+				/ currentRatio / 2.0, DEFAULT_WINDOWED_RES[0] / currentRatio / 2.0, 1,
+				-1));
+	} else {
+		GL(Ortho(-DEFAULT_WINDOWED_RES[1] * currentRatio / 2.0, DEFAULT_WINDOWED_RES[1]
+				* currentRatio / 2.0, -DEFAULT_WINDOWED_RES[1] / 2.0,
+				DEFAULT_WINDOWED_RES[1] / 2.0, 1, -1));
+	}
+	GL(GetDoublev(GL_PROJECTION_MATRIX, orthogonalMatrix));
+	GL(MatrixMode(GL_MODELVIEW));
+}
+
+void GL2Renderer::makeFog() {
+	double fogEnd = std::max(0.0, Chunk::WIDTH * (client->getConf().render_distance - 1.0));
+	GL(Fogf(GL_FOG_START, fogEnd - ZNEAR - fogEnd / 3.0));
+	GL(Fogf(GL_FOG_END, fogEnd - ZNEAR));
+}
+
+void GL2Renderer::makeMaxFOV() {
+	float ratio = (float) DEFAULT_WINDOWED_RES[0] / DEFAULT_WINDOWED_RES[1];
+	float yfov = client->getConf().fov / ratio * TAU / 360.0;
+	if (ratio < 1.0)
+		maxFOV = yfov;
+	else
+		maxFOV = atan(ratio * tan(yfov / 2)) * 2;
+}
+
+void GL2Renderer::switchToPerspective() {
+	GL(MatrixMode(GL_PROJECTION));
+	GL(LoadMatrixd(perspectiveMatrix));
+	GL(MatrixMode(GL_MODELVIEW));
+}
+
+void GL2Renderer::switchToOrthogonal() {
+	GL(MatrixMode(GL_PROJECTION));
+	GL(LoadMatrixd(orthogonalMatrix));
+	GL(MatrixMode(GL_MODELVIEW));
+}
+
+void GL2Renderer::render() {
+	if (fbo) {
+		GL(BindFramebuffer(GL_FRAMEBUFFER, fbo));
+	} else {
+		GL(BindFramebuffer(GL_FRAMEBUFFER, 0));
+		GL(DrawBuffer(GL_BACK));
 	}
 
-    while (getCurrentTime() - lastFPSUpdate > millis(50)) {
-		lastFPSUpdate += millis(50);
-		fpsSum -= prevFPS[fpsIndex];
-		fpsSum += fpsCounter;
-		prevFPS[fpsIndex] = fpsCounter;
-		fpsCounter = 0;
-		fpsIndex = (fpsIndex + 1) % 20;
+	client->getStopwatch()->start(CLOCK_CLR);
+	GL(Disable(GL_DEPTH_TEST));
+	GL(DepthMask(true));
+	GL(Clear(GL_DEPTH_BUFFER_BIT));
+	client->getStopwatch()->stop(CLOCK_CLR);
+
+	GL(MatrixMode(GL_MODELVIEW));
+	switchToPerspective();
+	glLoadIdentity();
+
+	Player &player = client->getLocalPlayer();
+	if (player.isValid()) {
+		GL(Disable(GL_DEPTH_TEST));
+		GL(Disable(GL_TEXTURE_2D));
+		GL(Disable(GL_LIGHTING));
+		GL(Disable(GL_FOG));
+		GL(DepthMask(false));
+
+		GL(Rotated(-player.getPitch(), 1, 0, 0));
+		skyRenderer.render();
+
+		GL(Enable(GL_DEPTH_TEST));
+		GL(Enable(GL_TEXTURE_2D));
+		GL(Enable(GL_LIGHTING));
+		if (client->getConf().fog != Fog::NONE)
+			glEnable(GL_FOG);
+		GL(DepthMask(true));
+
+		GL(Rotatef(-player.getYaw(), 0, 1, 0));
+		GL(Rotatef(-90, 1, 0, 0));
+		GL(Rotatef(90, 0, 0, 1));
+		vec3i64 playerPos = player.getPos();
+		int64 m = RESOLUTION * Chunk::WIDTH;
+		GL(Translatef(
+			(float) -((playerPos[0] % m + m) % m) / RESOLUTION,
+			(float) -((playerPos[1] % m + m) % m) / RESOLUTION,
+			(float) -((playerPos[2] % m + m) % m) / RESOLUTION
+		));
+		glLightfv(GL_LIGHT0, GL_POSITION, sunLightPosition.ptr());
+		chunkRenderer.render();
+
+		// copy framebuffer to screen
+		if (fbo) {
+			GL(BindFramebuffer(GL_DRAW_FRAMEBUFFER, 0));
+			GL(BindFramebuffer(GL_READ_FRAMEBUFFER, fbo));
+			GL(DrawBuffer(GL_BACK));
+			GL(BlitFramebuffer(
+					0, 0, client->getGraphics()->getWidth(), client->getGraphics()->getHeight(),
+					0, 0, client->getGraphics()->getWidth(), client->getGraphics()->getHeight(),
+					GL_COLOR_BUFFER_BIT,
+					GL_NEAREST
+			));
+
+			GL(BindFramebuffer(GL_FRAMEBUFFER, 0));
+			GL(DrawBuffer(GL_BACK));
+		}
 	}
-	fpsCounter++;
+
+	// render overlay
+	switchToOrthogonal();
+	GL(LoadIdentity());
+
+	GL(Disable(GL_DEPTH_TEST));
+	GL(Disable(GL_TEXTURE_2D));
+	GL(Disable(GL_LIGHTING));
+	GL(Disable(GL_FOG));
+	GL(DepthMask(false));
+
+	if (client->getState() == Client::State::PLAYING && player.isValid()) {
+		client->getStopwatch()->start(CLOCK_HUD);
+		hudRenderer.render();
+		if (client->isDebugOn())
+			debugRenderer.render();
+		client->getStopwatch()->stop(CLOCK_HUD);
+	} else if (client->getState() == Client::State::IN_MENU){
+		menuRenderer.render();
+	}
 }

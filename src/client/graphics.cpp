@@ -36,7 +36,17 @@ Graphics::Graphics(
 	if (!(img_init_flags & img_init_result & IMG_INIT_TIF)) {
 		LOG(ERROR, "SDL_Image TIFF Plugin could not be initialized")
 	}
+}
 
+Graphics::~Graphics() {
+	renderer.reset();
+
+	SDL_DestroyWindow(window);
+	SDL_GL_DeleteContext(glContext);
+	SDL_Quit();
+}
+
+bool Graphics::createContext() {
 	LOG(DEBUG, "Creating window");
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
@@ -47,13 +57,14 @@ Graphics::Graphics(
 	window = SDL_CreateWindow(
 		"3dgame",
 		SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
-		conf.windowed_res[0], conf.windowed_res[1],
+		client->getConf().windowed_res[0], client->getConf().windowed_res[1],
 		SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE
 	);
-	if (!window) LOG(FATAL, SDL_GetError());
+	if (!window)
+		LOG(FATAL, SDL_GetError());
 
-	width = conf.windowed_res[0];
-	height = conf.windowed_res[1];
+	width = client->getConf().windowed_res[0];
+	height = client->getConf().windowed_res[1];
 	calcDrawArea();
 	glViewport(0, 0, width, height);
 
@@ -66,22 +77,20 @@ Graphics::Graphics(
 
 	LOG(DEBUG, "Initializing GLEW");
 	GLenum glew_error = glewInit();
-	if (glew_error != GLEW_OK)
+	if (glew_error != GLEW_OK) {
 		LOG(FATAL, glewGetErrorString(glew_error));
-	if (!GLEW_VERSION_2_1)
-		LOG(FATAL, "OpenGL version 2.1 not available");
-	if (GLEW_VERSION_3_3 && conf.render_backend == RenderBackend::OGL_3) {
-		renderer = new GL3Renderer(client, this, window);
-	} else {
-		renderer = new GL2Renderer(client, this, window);
+		return false;
 	}
-}
-
-Graphics::~Graphics() {
-	delete renderer;
-
-	SDL_GL_DeleteContext(glContext);
-	SDL_Quit();
+	if (!GLEW_VERSION_2_1) {
+		LOG(FATAL, "OpenGL version 2.1 not available");
+		return false;
+	}
+	if (GLEW_VERSION_3_3 && client->getConf().render_backend == RenderBackend::OGL_3) {
+		renderer = std::unique_ptr<GL3Renderer>(new GL3Renderer(client));
+	} else {
+		renderer = std::unique_ptr<GL2Renderer>(new GL2Renderer(client));
+	}
+	return true;
 }
 
 void Graphics::resize(int width, int height) {
@@ -156,4 +165,8 @@ void Graphics::tick() {
 		oldState = state;
 	}
 	renderer->tick();
+}
+
+void Graphics::flip() {
+	SDL_GL_SwapWindow(window);
 }

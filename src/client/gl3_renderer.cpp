@@ -1,6 +1,5 @@
 ﻿#include "gl3_renderer.hpp"
 
-#include <SDL2/SDL.h>
 #include <glm/gtc/matrix_transform.hpp>
 
 #include "engine/logging.hpp"
@@ -16,22 +15,16 @@
 
 using namespace gui;
 
-GL3Renderer::GL3Renderer(
-	Client *client,
-	Graphics *graphics,
-	SDL_Window *window)
-	:
+GL3Renderer::GL3Renderer(Client *client) :
 	client(client),
-	graphics(graphics),
-	window(window),
 	shaderManager(),
 	fontTimes(&shaderManager.getFontShader()),
 	fontDejavu(&shaderManager.getFontShader()),
 	chunkRenderer(client, this, &shaderManager),
-	skyRenderer(client, this, &shaderManager, graphics),
-	hudRenderer(client, this, &shaderManager, graphics),
-	menuRenderer(client, this, &shaderManager, graphics),
-	debugRenderer(client, this, &shaderManager, graphics)
+	skyRenderer(client, this, &shaderManager),
+	hudRenderer(client, this, &shaderManager),
+	menuRenderer(client, this, &shaderManager),
+	debugRenderer(client, this, &shaderManager)
 {
 	makeMaxFOV();
 	makePerspectiveMatrix();
@@ -59,16 +52,7 @@ GL3Renderer::GL3Renderer(
 	blockShader.setStartFogDistance(startFog);
 
 	// sky
-	GL(GenTextures(1, &skyTex));
-	GL(BindTexture(GL_TEXTURE_2D, skyTex));
-	GL(TexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, graphics->getWidth(), graphics->getHeight(), 0, GL_RGBA, GL_FLOAT, 0));
-	GL(TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR));
-	GL(TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
-
-	GL(GenFramebuffers(1, &skyFbo));
-	GL(BindFramebuffer(GL_FRAMEBUFFER, skyFbo));
-	GL(FramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, skyTex, 0));
-	GL(BindFramebuffer(GL_FRAMEBUFFER, 0));
+	makeSkyFbo();
 
     // font
 	fontTimes.load("fonts/times32.fnt");
@@ -85,18 +69,19 @@ GL3Renderer::GL3Renderer(
 GL3Renderer::~GL3Renderer() {
 	LOG(DEBUG, "Destroying GL3 renderer");
 
-	GL(DeleteFramebuffers(1, &skyFbo));
-	GL(DeleteTextures(1, &skyTex));
+	if (skyFbo) GL(DeleteFramebuffers(1, &skyFbo));
+	if (skyTex) GL(DeleteTextures(1, &skyTex));
 }
 
 void GL3Renderer::resize() {
 	makePerspectiveMatrix();
 	makeOrthogonalMatrix();
+	makeSkyFbo();
 }
 
 void GL3Renderer::makePerspectiveMatrix() {
 	double normalRatio = DEFAULT_WINDOWED_RES[0] / (double) DEFAULT_WINDOWED_RES[1];
-	double currentRatio = graphics->getWidth() / (double) graphics->getHeight();
+	double currentRatio = client->getGraphics()->getWidth() / (double) client->getGraphics()->getHeight();
 	double angle;
 
 	float yfov = client->getConf().fov / normalRatio * TAU / 360.0;
@@ -116,7 +101,7 @@ void GL3Renderer::makePerspectiveMatrix() {
 
 void GL3Renderer::makeOrthogonalMatrix() {
 	float normalRatio = DEFAULT_WINDOWED_RES[0] / (double) DEFAULT_WINDOWED_RES[1];
-	float currentRatio = graphics->getWidth() / (double) graphics->getHeight();
+	float currentRatio = client->getGraphics()->getWidth() / (double) client->getGraphics()->getHeight();
 	glm::mat4 hudMatrix;
 	if (currentRatio > normalRatio)
 		hudMatrix = glm::ortho(-DEFAULT_WINDOWED_RES[0] / 2.0f, DEFAULT_WINDOWED_RES[0] / 2.0f, -DEFAULT_WINDOWED_RES[0]
@@ -136,6 +121,22 @@ void GL3Renderer::makeMaxFOV() {
 		maxFOV = yfov;
 	else
 		maxFOV = atan(ratio * tan(yfov / 2)) * 2;
+}
+
+void GL3Renderer::makeSkyFbo() {
+	if (skyFbo) GL(DeleteFramebuffers(1, &skyFbo));
+	if (skyTex) GL(DeleteTextures(1, &skyTex));
+
+	GL(GenTextures(1, &skyTex));
+	GL(BindTexture(GL_TEXTURE_2D, skyTex));
+	GL(TexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, client->getGraphics()->getWidth(), client->getGraphics()->getHeight(), 0, GL_RGBA, GL_FLOAT, 0));
+	GL(TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR));
+	GL(TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
+
+	GL(GenFramebuffers(1, &skyFbo));
+	GL(BindFramebuffer(GL_FRAMEBUFFER, skyFbo));
+	GL(FramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, skyTex, 0));
+	GL(BindFramebuffer(GL_FRAMEBUFFER, 0));
 }
 
 void GL3Renderer::setConf(const GraphicsConf &conf, const GraphicsConf &old) {
@@ -168,7 +169,7 @@ void GL3Renderer::setConf(const GraphicsConf &conf, const GraphicsConf &old) {
 void GL3Renderer::tick() {
 	render();
 
-	SDL_GL_SwapWindow(window);
+	client->getGraphics()->flip();
 
 	if (getCurrentTime() - lastStopWatchSave > millis(200)) {
 		lastStopWatchSave = getCurrentTime();
@@ -189,7 +190,7 @@ void GL3Renderer::tick() {
 }
 
 void GL3Renderer::render() {
-	Player &player = client->getWorld()->getPlayer(client->getLocalClientId());
+	Player &player = client->getLocalPlayer();
 
 	// render sky
 	GL(Disable(GL_DEPTH_TEST));
@@ -223,7 +224,7 @@ void GL3Renderer::render() {
 }
 
 void GL3Renderer::renderTarget() {
-	Player &player = client->getWorld()->getPlayer(client->getLocalClientId());
+	Player &player = client->getLocalPlayer();
 	if (!player.isValid())
 		return;
 	// view matrix for scene

@@ -67,12 +67,6 @@
     <ClCompile Include="..\..\src\client\gl2_renderer.cpp">
       <Filter>Source Files\gfx</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\client\render_2.cpp">
-      <Filter>Source Files\gfx</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\client\render_menu_2.cpp">
-      <Filter>Source Files\gfx</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\client\texture_manager.cpp">
       <Filter>Source Files\gfx</Filter>
     </ClCompile>
@@ -104,6 +98,21 @@
       <Filter>Source Files\gfx</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\client\gl3_chunk_renderer.cpp">
+      <Filter>Source Files\gfx</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\client\gl2_chunk_renderer.cpp">
+      <Filter>Source Files\gfx</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\client\gl2_debug_renderer.cpp">
+      <Filter>Source Files\gfx</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\client\gl2_hud_renderer.cpp">
+      <Filter>Source Files\gfx</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\client\gl2_menu_renderer.cpp">
+      <Filter>Source Files\gfx</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\client\gl2_sky_renderer.cpp">
       <Filter>Source Files\gfx</Filter>
     </ClCompile>
   </ItemGroup>
@@ -178,6 +187,21 @@
       <Filter>Header Files\gfx</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\client\gl3_chunk_renderer.hpp">
+      <Filter>Header Files\gfx</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\client\gl2_chunk_renderer.hpp">
+      <Filter>Header Files\gfx</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\client\gl2_debug_renderer.hpp">
+      <Filter>Header Files\gfx</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\client\gl2_hud_renderer.hpp">
+      <Filter>Header Files\gfx</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\client\gl2_menu_renderer.hpp">
+      <Filter>Header Files\gfx</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\client\gl2_sky_renderer.hpp">
       <Filter>Header Files\gfx</Filter>
     </ClInclude>
   </ItemGroup>

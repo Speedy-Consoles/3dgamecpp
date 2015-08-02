@@ -12,6 +12,11 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\client\bmfont.cpp" />
+    <ClCompile Include="..\..\src\client\gl2_chunk_renderer.cpp" />
+    <ClCompile Include="..\..\src\client\gl2_debug_renderer.cpp" />
+    <ClCompile Include="..\..\src\client\gl2_hud_renderer.cpp" />
+    <ClCompile Include="..\..\src\client\gl2_menu_renderer.cpp" />
+    <ClCompile Include="..\..\src\client\gl2_sky_renderer.cpp" />
     <ClCompile Include="..\..\src\client\gl3_chunk_renderer.cpp" />
     <ClCompile Include="..\..\src\client\client.cpp" />
     <ClCompile Include="..\..\src\client\config.cpp" />
@@ -29,14 +34,17 @@
     <ClCompile Include="..\..\src\client\local_server_interface.cpp" />
     <ClCompile Include="..\..\src\client\menu.cpp" />
     <ClCompile Include="..\..\src\client\remote_server_interface.cpp" />
-    <ClCompile Include="..\..\src\client\render_2.cpp" />
-    <ClCompile Include="..\..\src\client\render_menu_2.cpp" />
     <ClCompile Include="..\..\src\client\shaders.cpp" />
     <ClCompile Include="..\..\src\client\texture_loader.cpp" />
     <ClCompile Include="..\..\src\client\texture_manager.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\client\bmfont.hpp" />
+    <ClInclude Include="..\..\src\client\gl2_chunk_renderer.hpp" />
+    <ClInclude Include="..\..\src\client\gl2_debug_renderer.hpp" />
+    <ClInclude Include="..\..\src\client\gl2_hud_renderer.hpp" />
+    <ClInclude Include="..\..\src\client\gl2_menu_renderer.hpp" />
+    <ClInclude Include="..\..\src\client\gl2_sky_renderer.hpp" />
     <ClInclude Include="..\..\src\client\gl3_chunk_renderer.hpp" />
     <ClInclude Include="..\..\src\client\client.hpp" />
     <ClInclude Include="..\..\src\client\config.hpp" />

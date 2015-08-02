@@ -12,13 +12,12 @@ using namespace gui;
 
 class GL3MenuRendererImpl {
 public:
-	GL3MenuRendererImpl(Client *client, GL3Renderer *renderer, ShaderManager *shaderManager, Graphics *graphics);
+	GL3MenuRendererImpl(Client *client, GL3Renderer *renderer, ShaderManager *shaderManager);
 	void render();
 
 private:
 	Client *client = nullptr;
 	GL3Renderer *renderer = nullptr;
-	Graphics *graphics = nullptr;
 
 	BMFont font;
 
@@ -31,8 +30,8 @@ private:
 
 GL3MenuRenderer::~GL3MenuRenderer() = default;
 
-GL3MenuRenderer::GL3MenuRenderer(Client *client, GL3Renderer *renderer, ShaderManager *shaderManager, Graphics *graphics) :
-	impl(new GL3MenuRendererImpl(client, renderer, shaderManager, graphics))
+GL3MenuRenderer::GL3MenuRenderer(Client *client, GL3Renderer *renderer, ShaderManager *shaderManager) :
+	impl(new GL3MenuRendererImpl(client, renderer, shaderManager))
 {
 	// nothing
 }
@@ -43,10 +42,9 @@ void GL3MenuRenderer::render() {
 
 // PIMPL
 
-GL3MenuRendererImpl::GL3MenuRendererImpl(Client *client, GL3Renderer *renderer, ShaderManager *shaderManager, Graphics *graphics) :
+GL3MenuRendererImpl::GL3MenuRendererImpl(Client *client, GL3Renderer *renderer, ShaderManager *shaderManager) :
 	client(client),
 	renderer(renderer),
-	graphics(graphics),
 	font(&shaderManager->getFontShader())
 {
 	font.load("fonts/dejavusansmono20.fnt");
@@ -98,8 +96,8 @@ void GL3MenuRendererImpl::renderButton(const Button *button) {
 }
 
 void GL3MenuRendererImpl::renderText(const char *text, float x, float y) {
-	float x0 = -graphics->getDrawWidth() / 2 + 5;
-	float y0 = -graphics->getDrawHeight() / 2 - font.getBottomOffset() + 5;
+	float x0 = -client->getGraphics()->getDrawWidth() / 2 + 5;
+	float y0 = -client->getGraphics()->getDrawHeight() / 2 - font.getBottomOffset() + 5;
 
 	font.write(x0 + x, y0 + y, 0.0f, text, 0);
 }

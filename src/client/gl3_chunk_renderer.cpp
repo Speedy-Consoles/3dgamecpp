@@ -163,7 +163,7 @@ void GL3ChunkRenderer::destroyRenderDistanceDependent() {
 }
 
 void GL3ChunkRenderer::render() {
-	Player &player = client->getWorld()->getPlayer(client->getLocalClientId());
+	Player &player = client->getLocalPlayer();
 	if (!player.isValid())
 		return;
 
