@@ -172,7 +172,7 @@ void GL2Renderer::initGL() {
 
 	// textures
 	LOG(DEBUG, "Loading textures");
-	const char *block_textures_file = "block_textures.txt";
+	const char *block_textures_file = client->getConf().textures_file.c_str();
 	if (texManager.load(block_textures_file)) {
 		LOG(WARNING, "There was a problem loading '" << block_textures_file << "'");
 	}

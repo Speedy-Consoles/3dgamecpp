@@ -21,6 +21,7 @@ float         DEFAULT_FOV             = 120;
 uint          DEFAULT_TEX_MIPMAPPING  = 1000;
 TexFiltering  DEFAULT_TEX_FILTERING   = TexFiltering::LINEAR;
 bool          DEFAULT_TEX_ATLAS       = false;
+string        DEFAULT_TEXTURES_FILE   = "block_textures.txt";
 
 namespace boost {
 namespace property_tree {
@@ -159,6 +160,7 @@ void store(const char *filename, const GraphicsConf &conf) {
 	pt.put("graphics.textures.mipmapping", conf.tex_mipmapping);
 	pt.put("graphics.textures.filtering", conf.tex_filtering);
 	pt.put("graphics.textures.use_atlas", conf.tex_atlas);
+	pt.put("graphics.textures_file", conf.textures_file);
 
 	write_info(filename, pt);
 }
@@ -197,4 +199,6 @@ void load(const char *filename, GraphicsConf &conf) {
 			DEFAULT_TEX_FILTERING);
 	conf.tex_atlas = pt.get("graphics.textures.use_atlas",
 			DEFAULT_TEX_ATLAS);
+	conf.textures_file = pt.get("graphics.textures_file",
+			DEFAULT_TEXTURES_FILE);
 }
