@@ -69,6 +69,11 @@ texture file="img/textures_1.png" width=16 height=16 {
 	block name=wood.spruce   row=3 col=9
 	block name=wood.spruce   row=2 col=8 faces=vert
 	block name=planks.spruce row=3 col=10
+	block name=sponge        row=3 col=11
+	block name=pumpkin       row=3 col=12
+	block name=pumpkin       row=3 col=13 faces=vert
+	block name=bedrock       row=3 col=14
+	block name=sandstone     row=3 col=15
 	
 	block name=invalid row=15 col=15
 }

@@ -75,5 +75,9 @@ test
 	sides  37
 }
 
-tnt   47
-melon 48
+tnt       47
+melon     48
+pumpkin   49
+bedrock   50
+sponge    51
+sandstone 52
