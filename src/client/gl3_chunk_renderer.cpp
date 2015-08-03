@@ -11,7 +11,7 @@
 #include "game/world.hpp"
 #include "game/player.hpp"
 #include "util.hpp"
-#include "chunk_manager.hpp"
+#include "shared/chunk_manager.hpp"
 
 using namespace std;
 
@@ -209,7 +209,7 @@ void GL3ChunkRenderer::render() {
 					+ (((cc[1] % visibleDiameter) + visibleDiameter) % visibleDiameter)) * visibleDiameter
 					+ (((cc[0] % visibleDiameter) + visibleDiameter) % visibleDiameter);
 			if (vaoStatus[index] != OK || vaoChunks[index] != cc) {
-				if (!client->getChunkManager()->request(cc, 0)) // TODO replace 0 with constant
+				if (!client->getChunkManager()->request(cc, GRAPHICS_LISTENER_ID))
 					break;
 			}
 			checkedChunks++;
@@ -223,7 +223,7 @@ void GL3ChunkRenderer::render() {
 	newChunks = 0;
 	shared_ptr<const Chunk> sp;
 	while (newChunks < MAX_NEW_CHUNKS && newFaces < MAX_NEW_QUADS
-			&& (sp = client->getChunkManager()->getNextChunk(0)).get()) { // TODO replace 0 and 500 with constants
+			&& (sp = client->getChunkManager()->getNextChunk(GRAPHICS_LISTENER_ID)).get()) {
 		const Chunk *chunk = sp.get();
 		buildChunk(*chunk);
 	}

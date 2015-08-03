@@ -3,12 +3,17 @@
 
 #include <queue>
 #include <unordered_map>
+#include <unordered_set>
 #include <string>
+#include <memory>
 
 #include "constants.hpp"
 #include "player.hpp"
+#include "shared/chunk_manager.hpp"
 
 class Chunk;
+
+using namespace std;
 
 struct WorldSnapshot {
 	PlayerSnapshot playerSnapshots[MAX_CLIENTS];
@@ -40,21 +45,29 @@ struct WorldSnapshot {
 class World {
 public:
 	static const double GRAVITY;
+	static const int LOADING_RANGE = 2;
+	static const int LOADING_DIAMETER = LOADING_RANGE * 2 + 1;
 
-	using ChunkMap = std::unordered_map<vec3i64, Chunk *, size_t(*)(vec3i64)>;
+	using ChunkMap = unordered_map<vec3i64, shared_ptr<const Chunk>, size_t(*)(vec3i64)>;
+	using ChunkRequestedSet = unordered_set<vec3i64, size_t(*)(vec3i64)>;
 
 private:
-	std::string id;
+	string id;
+	ChunkManager *chunkManager;
 	ChunkMap chunks;
-	std::deque<vec3i64> changedChunks;
+	ChunkRequestedSet requested;
+	deque<vec3i64> changedChunks;
 
 	Player players[MAX_CLIENTS];
 
+	vec3i64 oldPlayerChunks[MAX_CLIENTS];
+	int playerCheckChunkIndex[MAX_CLIENTS];
+	int playerCheckedChunks[MAX_CLIENTS];
 public:
-	World(std::string id);
+	World(string id, ChunkManager *chunkManager);
 	~World();
 
-	std::string getId() const { return id; }
+	string getId() const { return id; }
 
 	void tick(int tick, uint localPlayerID);
 
@@ -64,7 +77,7 @@ public:
 
 	bool hasCollision(vec3i64 wc) const;
 
-	bool setBlock(vec3i64 bc, uint8 type, bool updateFaces);
+	//bool setBlock(vec3i64 bc, uint8 type, bool updateFaces);
 	uint8 getBlock(vec3i64 bc) const;
 
 	void addPlayer(int playerID);
@@ -73,16 +86,22 @@ public:
 	Player &getPlayer(int playerID);
 	const Player &getPlayer(int playerID) const;
 
-	Chunk *getChunk(vec3i64 cc);
-	void insertChunk(Chunk *chunk);
-	Chunk *removeChunk(vec3i64 cc);
+//	Chunk *getChunk(vec3i64 cc);
+//	void insertChunk(Chunk *chunk);
+//	Chunk *removeChunk(vec3i64 cc);
 
-	bool popChangedChunk(vec3i64 *ccc);
-	void clearChunks();
+//	bool popChangedChunk(vec3i64 *ccc);
+//	void clearChunks();
+	bool chunkLoaded(vec3i64 cc);
 
 	size_t getNumChunks();
 
 	WorldSnapshot makeSnapshot(int tick) const;
+
+private:
+	void requestChunks();
+	void insertChunks();
+	void removeChunks();
 };
 
 

@@ -12,9 +12,13 @@
 #include "io/archive.hpp"
 #include "game/chunk.hpp"
 
-class ChunkManager {
-	static const int MAX_LISTENERS = 2;
+enum {
+	GRAPHICS_LISTENER_ID = 0,
+	WORLD_LISTENER_ID,
+	MAX_LISTENERS
+};
 
+class ChunkManager {
 	struct Request {
 		vec3i64 chunkCoords;
 		int listenerId;

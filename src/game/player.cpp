@@ -39,7 +39,7 @@ void Player::tick(int tick, bool isLocalPlayer) {
 
 	// TODO don't let player enter unloaded chunk
 	vec3i64 cp = getChunkPos();
-	if (world->getChunk(cp) || isFlying) {
+	if (world->chunkLoaded(cp) || isFlying) {
 		calcVel();
 		if(isFlying)
 			ghost();
@@ -185,7 +185,7 @@ bool Player::getTargetedFace(vec3i64 *outBlock, int *outFaceDir) const {
 	vec3d dir = getVectorFromAngles(yaw, pitch);
 	vec3i64 hitBlock[3];
 	int faceDir[3];
-	int hit = world->shootRay(pos, dir, 100 * RESOLUTION,
+	int hit = world->shootRay(pos, dir, TARGET_RANGE * RESOLUTION,
 			vec3i(0, 0, 0), nullptr, hitBlock, faceDir);
 	if (hit > 0) {
 		if (outBlock != nullptr && outFaceDir != nullptr) {

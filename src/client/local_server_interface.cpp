@@ -40,24 +40,25 @@ void LocalServerInterface::setBlock(uint8 block) {
 }
 
 void LocalServerInterface::edit(vec3i64 bc, uint8 type) {
-	world->setBlock(bc, type, true);
+	//world->setBlock(bc, type, true);
+	//TODO
 }
 
 void LocalServerInterface::receive(uint64 timeLimit) {
-	Chunk *chunk = nullptr;
-	while ((chunk = chunkLoader->getNextLoadedChunk()) != nullptr) {
-		world->insertChunk(chunk);
-	}
-
-	auto unloadQueries = chunkLoader->getUnloadQueries();
-	while (unloadQueries)
-	{
-		Chunk *chunk = world->removeChunk(unloadQueries->data);
-		chunk->free();
-		auto tmp = unloadQueries->next;
-		delete unloadQueries;
-		unloadQueries = tmp;
-	}
+//	Chunk *chunk = nullptr;
+//	while ((chunk = chunkLoader->getNextLoadedChunk()) != nullptr) {
+//		world->insertChunk(chunk);
+//	}
+//
+//	auto unloadQueries = chunkLoader->getUnloadQueries();
+//	while (unloadQueries)
+//	{
+//		Chunk *chunk = world->removeChunk(unloadQueries->data);
+//		chunk->free();
+//		auto tmp = unloadQueries->next;
+//		delete unloadQueries;
+//		unloadQueries = tmp;
+//	}
 }
 
 void LocalServerInterface::sendInput() {
@@ -67,7 +68,7 @@ void LocalServerInterface::sendInput() {
 void LocalServerInterface::setConf(const GraphicsConf &conf, const GraphicsConf &old) {
 	if (conf.render_distance != old.render_distance) {
 		chunkLoader->setRenderDistance(conf.render_distance);
-		world->clearChunks();
+//		world->clearChunks();
 		while (chunkLoader->getRenderDistance() != conf.render_distance)
 			std::this_thread::yield();
 		LOG(INFO, "render distance was set by chunk loader");

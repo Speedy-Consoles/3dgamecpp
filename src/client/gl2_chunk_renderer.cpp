@@ -83,7 +83,7 @@ void GL2ChunkRenderer::renderChunks() {
 	int length = client->getConf().render_distance * 2 + 3;
 
 	vec3i64 ccc;
-	while (client->getWorld()->popChangedChunk(&ccc)) {
+	while (false/*client->getWorld()->popChangedChunk(&ccc)*/) {
 		int index = ((((ccc[2] % length) + length) % length) * length
 				+ (((ccc[1] % length) + length) % length)) * length
 				+ (((ccc[0] % length) + length) % length);
@@ -120,7 +120,7 @@ void GL2ChunkRenderer::renderChunks() {
 		fringeSize--;
 
 		if ((dlStatus[index] != OK || dlChunks[index] != cc) && (newChunks < MAX_NEW_CHUNKS && newFaces < MAX_NEW_QUADS)) {
-			Chunk *c = client->getWorld()->getChunk(cc);
+			Chunk *c = 0;//client->getWorld()->getChunk(cc);
 			if (c)
 				renderChunk(*c);
 		}

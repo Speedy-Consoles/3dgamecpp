@@ -4,7 +4,6 @@ CLIENT_OBJECT_FILES = \
 	client/client.cpp.o\
 	client/config.cpp.o\
 	client/graphics.cpp.o\
-	client/chunk_manager.cpp.o\
 	client/gl2_renderer.cpp.o\
 	client/gl2_chunk_renderer.cpp.o\
 	client/gl2_sky_renderer.cpp.o\
@@ -54,6 +53,7 @@ SHARED_OBJECT_FILES = \
 	io/archive.cpp.o\
 	io/chunk_loader.cpp.o\
 	io/chunk_loader_internals.cpp.o\
+	shared/chunk_manager.cpp.o\
 	stopwatch.cpp.o\
 	util.cpp.o
 
