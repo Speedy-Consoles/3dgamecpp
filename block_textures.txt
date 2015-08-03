@@ -6,7 +6,8 @@ texture file="img/textures_1.png" width=16 height=16 {
 	block name=stone  row=0 col=2
 	block name=sand   row=0 col=3
 	block name=gravel row=0 col=4
-	block name=wood.oak   row=0 col=5
+	block name=wood.oak row=0 col=5
+	block name=wood.oak row=2 col=8 faces=vert
 	block name=planks.oak row=0 col=6
 	block name=cobble row=0 col=7
 	block name=cobble.mossy row=0 col=8
@@ -17,7 +18,7 @@ texture file="img/textures_1.png" width=16 height=16 {
 	block name=ore.iron    row=0 col=11
 	block name=ore.gold    row=0 col=12
 	block name=ore.diamond row=0 col=13
-	block name=ore.lapiz   row=0 col=14
+	block name=ore.lapis   row=0 col=14
 	block name=ore.emerald row=0 col=15
 	
 	# wool

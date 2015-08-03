@@ -43,7 +43,7 @@ ore
 	iron    12
 	gold    13
 	diamond 14
-	lapiz   15
+	lapis   15
 	emerald 16
 }
 
@@ -81,3 +81,12 @@ pumpkin   49
 bedrock   50
 sponge    51
 sandstone 52
+
+block
+{
+	iron    53
+	gold    54
+	diamond 55
+	lapis   56
+	emerald 57
+}
