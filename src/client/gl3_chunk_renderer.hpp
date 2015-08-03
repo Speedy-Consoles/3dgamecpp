@@ -16,7 +16,6 @@ class GL3ChunkRenderer {
 private:
 	enum VAOStatus {
 		NO_CHUNK = 0,
-		OUTDATED,
 		OK,
 	};
 
@@ -27,6 +26,7 @@ private:
 	// performance limits
 	static const int MAX_NEW_QUADS = 6000;
 	static const int MAX_NEW_CHUNKS = 500;
+	static const int MAX_CHUNK_CHECKS = 10000;
 
 	// cache
 	int visibleDiameter;
@@ -53,12 +53,18 @@ private:
 	vec3i64 *vsFringe;
 	int *vsIndices;
 
+	// chunk requesting
+	vec3i64 oldPlayerChunk;
+	int checkChunkIndex = 0;
+	int checkedChunks = 0;
+
 	// performance info
 	int newFaces = 0;
 	int newChunks = 0;
 	int faces = 0;
 	int visibleChunks = 0;
 	int visibleFaces = 0;
+	int newlyCheckedChunks = 0;
 
 #pragma pack(push)
 #pragma pack(1)
@@ -82,7 +88,7 @@ public:
 
 private:
 	void loadTextures();
-	void buildChunk(Chunk &c);
+	void buildChunk(const Chunk &c);
 
 	bool inFrustum(vec3i64 cc, vec3i64 pos, vec3d lookDir);
 

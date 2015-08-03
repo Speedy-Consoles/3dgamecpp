@@ -10,7 +10,7 @@ LocalServerInterface::LocalServerInterface(World *world, uint64 seed, const Grap
 	player = &world->getPlayer(0);
 	chunkLoader = new ChunkLoader(world, seed, getLocalClientId());
 	chunkLoader->setRenderDistance(conf.render_distance);
-	chunkLoader->dispatch();
+	//chunkLoader->dispatch();
 }
 
 

@@ -21,12 +21,8 @@ void ChunkManager::dispatch() {
 	fut = async(launch::async, [this]() { run(); });
 }
 
-void ChunkManager::subscribe(vec3i64 chunkCoords, int listenerId) {
-	inQueue.push(Subscription{chunkCoords, true, listenerId});
-}
-
-void ChunkManager::unsubscribe(vec3i64 chunkCoords, int listenerId) {
-	inQueue.push(Subscription{chunkCoords, false, listenerId});
+bool ChunkManager::request(vec3i64 chunkCoords, int listenerId) {
+	return inQueue.push(Request{chunkCoords, listenerId});
 }
 
 shared_ptr<const Chunk> ChunkManager::getNextChunk(int listenerId) {
@@ -55,13 +51,14 @@ void ChunkManager::run() {
 				// send chunk request to server
 
 		//FOR NOW:
-		Subscription s;
-		if(inQueue.pop(s)) {
-			if (s.subscribe) {
-				Chunk *chunk = new Chunk(s.chunkCoords);
-				if (archive.loadChunk(*chunk)) {
-					shared_ptr<const Chunk> sp(chunk);
-					outQueues[s.listenerId]->push(sp);
+		Request r;
+		if(inQueue.pop(r)) {
+			Chunk *chunk = new Chunk(r.chunkCoords);
+			if (archive.loadChunk(*chunk)) {
+				chunk->makePassThroughs();
+				shared_ptr<const Chunk> sp(chunk);
+				while(!outQueues[r.listenerId]->push(sp)) {
+					sleepFor(millis(50));
 				}
 			}
 		} else {

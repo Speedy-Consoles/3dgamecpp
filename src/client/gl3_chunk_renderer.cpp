@@ -4,12 +4,16 @@
 #include <glm/vec3.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <SDL2/SDL_image.h>
+#include <memory>
 
 #include "gl3_renderer.hpp"
 #include "engine/logging.hpp"
 #include "game/world.hpp"
 #include "game/player.hpp"
 #include "util.hpp"
+#include "chunk_manager.hpp"
+
+using namespace std;
 
 GL3ChunkRenderer::GL3ChunkRenderer(Client *client, GL3Renderer *renderer, ShaderManager *shaderManager)
 		: client(client), renderer(renderer), shaderManager(shaderManager) {
@@ -106,6 +110,8 @@ void GL3ChunkRenderer::setConf(const GraphicsConf &conf, const GraphicsConf &old
 	if (conf.render_distance != old.render_distance) {
 		destroyRenderDistanceDependent();
 		initRenderDistanceDependent();
+		checkedChunks = 0;
+		checkChunkIndex = 0;
 	}
 }
 
@@ -187,21 +193,44 @@ void GL3ChunkRenderer::render() {
 	GL(ActiveTexture(GL_TEXTURE0));
 	GL(BindTexture(GL_TEXTURE_2D_ARRAY, blockTextures));
 
-	vec3i64 ccc;
-	while (client->getWorld()->popChangedChunk(&ccc)) {
-		int index = ((((ccc[2] % visibleDiameter) + visibleDiameter) % visibleDiameter) * visibleDiameter
-				+ (((ccc[1] % visibleDiameter) + visibleDiameter) % visibleDiameter)) * visibleDiameter
-				+ (((ccc[0] % visibleDiameter) + visibleDiameter) % visibleDiameter);
-		if (vaoStatus[index] != NO_CHUNK)
-			vaoStatus[index] = OUTDATED;
+	// request unrequested, unbuilt chunks
+	vec3i64 pc = player.getChunkPos();
+	if (pc != oldPlayerChunk) {
+		oldPlayerChunk = pc;
+		checkedChunks = 0;
+		checkChunkIndex = 0;
+	}
+	newlyCheckedChunks = 0;
+	while(newlyCheckedChunks < MAX_CHUNK_CHECKS && checkedChunks < visibleDiameter * visibleDiameter * visibleDiameter) {
+		vec3i64 cd = LOADING_ORDER[checkChunkIndex].cast<int64>();
+		if (cd.maxAbs() <= client->getConf().render_distance) {
+			vec3i64 cc = pc + cd;
+			int index = ((((cc[2] % visibleDiameter) + visibleDiameter) % visibleDiameter) * visibleDiameter
+					+ (((cc[1] % visibleDiameter) + visibleDiameter) % visibleDiameter)) * visibleDiameter
+					+ (((cc[0] % visibleDiameter) + visibleDiameter) % visibleDiameter);
+			if (vaoStatus[index] != OK || vaoChunks[index] != cc) {
+				if (!client->getChunkManager()->request(cc, 0)) // TODO replace 0 with constant
+					break;
+			}
+			checkedChunks++;
+			newlyCheckedChunks++;
+		}
+		checkChunkIndex++;
 	}
 
-	vec3i64 pc = player.getChunkPos();
-	vec3d lookDir = getVectorFromAngles(player.getYaw(), player.getPitch());
-
+	// build new chunks
 	newFaces = 0;
 	newChunks = 0;
+	shared_ptr<const Chunk> sp;
+	while (newChunks < MAX_NEW_CHUNKS && newFaces < MAX_NEW_QUADS
+			&& (sp = client->getChunkManager()->getNextChunk(0)).get()) { // TODO replace 0 and 500 with constants
+		const Chunk *chunk = sp.get();
+		buildChunk(*chunk);
+	}
+	printf("newChunks %d\n", newChunks);
 
+	// render chunks
+	vec3d lookDir = getVectorFromAngles(player.getYaw(), player.getPitch());
 	vsFringe[0] = pc;
 	vsIndices[0] = ((((pc[2] % visibleDiameter) + visibleDiameter) % visibleDiameter) * visibleDiameter
 			+ (((pc[1] % visibleDiameter) + visibleDiameter) % visibleDiameter)) * visibleDiameter
@@ -222,12 +251,6 @@ void GL3ChunkRenderer::render() {
 		vsVisited[index] = false;
 		fringeStart = (fringeStart + 1) % vsFringeCapacity;
 		fringeSize--;
-
-		if ((vaoStatus[index] != OK || vaoChunks[index] != cc) && (newChunks < MAX_NEW_CHUNKS && newFaces < MAX_NEW_QUADS)) {
-			Chunk *c = client->getWorld()->getChunk(cc);
-			if (c)
-				buildChunk(*c);
-		}
 
 		if (vaoStatus[index] != NO_CHUNK && vaoChunks[index] == cc) {
 			if (chunkFaces[index] > 0) {
@@ -284,7 +307,7 @@ void GL3ChunkRenderer::render() {
 	GL(BindVertexArray(0));
 }
 
-void GL3ChunkRenderer::buildChunk(Chunk &c) {
+void GL3ChunkRenderer::buildChunk(const Chunk &c) {
 	vec3i64 cc = c.getCC();
 
 	uint index = ((((cc[2] % visibleDiameter) + visibleDiameter) % visibleDiameter) * visibleDiameter
@@ -329,18 +352,18 @@ void GL3ChunkRenderer::buildChunk(Chunk &c) {
 					if ((x == Chunk::WIDTH - 1 && d==0)
 							|| (y == Chunk::WIDTH - 1 && d==1)
 							|| (z == Chunk::WIDTH - 1 && d==2)) {
-						thatType = client->getWorld()->getBlock(cc * Chunk::WIDTH + vec3i64(x, y, z) + dir);
-						if (thatType != 0) {
+						thatType = 0;//client->getWorld()->getBlock(cc * Chunk::WIDTH + vec3i64(x, y, z) + dir);
+						//if (thatType != 0) {
 							if (x != -1 && y != -1 && z != -1)
 								i++;
 							continue;
-						}
+						//}
 					} else
 						thatType = blocks[ni++];
 
 					if (x == -1 || y == -1 || z == -1) {
-						thisType = client->getWorld()->getBlock(cc * Chunk::WIDTH + vec3i64(x, y, z));
-						if (thisType != 0)
+						thisType = 0;//client->getWorld()->getBlock(cc * Chunk::WIDTH + vec3i64(x, y, z));
+						//if (thisType != 0)
 							continue;
 					} else {
 						thisType = blocks[i++];
@@ -368,7 +391,7 @@ void GL3ChunkRenderer::buildChunk(Chunk &c) {
 							if (		dIcc[0] < 0 || dIcc[0] >= (int) Chunk::WIDTH
 									||	dIcc[1] < 0 || dIcc[1] >= (int) Chunk::WIDTH
 									||	dIcc[2] < 0 || dIcc[2] >= (int) Chunk::WIDTH)
-								cornerBlock = client->getWorld()->getBlock(cc * Chunk::WIDTH + dIcc);
+								cornerBlock = 0;//client->getWorld()->getBlock(cc * Chunk::WIDTH + dIcc);
 							else
 								cornerBlock = c.getBlock(dIcc.cast<uint8>());
 							if (cornerBlock) {
@@ -423,6 +446,6 @@ bool GL3ChunkRenderer::inFrustum(vec3i64 cc, vec3i64 pos, vec3d lookDir) {
 	if (chunkLookDist < 0)
 		return false;
 	vec3d orthoChunkPos = cp - lookDir * chunkLookDist;
-	double orthoChunkDist = std::max(0.0, orthoChunkPos.norm() - chunkDia);
+	double orthoChunkDist = max(0.0, orthoChunkPos.norm() - chunkDia);
 	return atan(orthoChunkDist / chunkLookDist) <= renderer->getMaxFOV() / 2;
 }

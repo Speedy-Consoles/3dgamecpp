@@ -15,15 +15,14 @@
 class ChunkManager {
 	static const int MAX_LISTENERS = 2;
 
-	struct Subscription {
+	struct Request {
 		vec3i64 chunkCoords;
-		bool subscribe;
 		int listenerId;
 	};
 
 	std::unordered_map<vec3i64, int, size_t(*)(vec3i64)> chunkListeners;
 	ProducerQueue<std::shared_ptr<const Chunk>> *outQueues[MAX_LISTENERS];
-	ProducerQueue<Subscription> inQueue;
+	ProducerQueue<Request> inQueue;
 	ChunkArchive archive;
 
 	std::atomic<bool> shouldHalt;
@@ -35,8 +34,7 @@ public:
 
 	void dispatch();
 
-	void subscribe(vec3i64 chunkCoords, int listenerId);
-	void unsubscribe(vec3i64 chunkCoords, int listenerId);
+	bool request(vec3i64 chunkCoords, int listenerId);
 
 	std::shared_ptr<const Chunk> getNextChunk(int listenerId);
 	void requestTermination();
