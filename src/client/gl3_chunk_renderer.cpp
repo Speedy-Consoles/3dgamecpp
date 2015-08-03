@@ -254,9 +254,7 @@ void GL3ChunkRenderer::render() {
 				vec3i64 ncc = cc + DIRS[d].cast<int64>();
 				vec3i64 ncd = ncc - pc;
 
-				if ((uint) abs(ncd[0]) > client->getConf().render_distance
-						|| (uint) abs(ncd[1]) > client->getConf().render_distance
-						|| (uint) abs(ncd[2]) > client->getConf().render_distance
+				if ((uint) ncd.maxAbs() > client->getConf().render_distance
 						|| !inFrustum(ncc, player.getPos(), lookDir))
 					continue;
 

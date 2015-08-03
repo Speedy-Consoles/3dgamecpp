@@ -35,6 +35,7 @@ void World::tick(int tick, uint localPlayerID) {
 		if (players[i].isValid())
 			players[i].tick(tick, i == localPlayerID);
 	}
+	removeChunks();
 }
 
 void World::requestChunks() {
@@ -50,14 +51,11 @@ void World::requestChunks() {
 			vec3i64 cd = LOADING_ORDER[playerCheckChunkIndex[p]].cast<int64>();
 			if (cd.maxAbs() <= LOADING_RANGE) {
 				vec3i64 cc = pc + cd;
-				auto it1 = chunks.find(cc);
-				if (it1 == chunks.end()) {
-					auto it2 = requested.find(cc);
-					if (it2 == requested.end()) {
-						if (!chunkManager->request(cc, WORLD_LISTENER_ID))
-							break;
-						requested.insert(cc);
-					}
+				auto it2 = requested.find(cc);
+				if (it2 == requested.end()) {
+					if (!chunkManager->request(cc, WORLD_LISTENER_ID))
+						break;
+					requested.insert(cc);
 				}
 				playerCheckedChunks[p]++;
 			}
@@ -89,6 +87,8 @@ void World::removeChunks() {
 
 		if (!inRange) {
 			iter = chunks.erase(iter);
+			auto iter2 = requested.find(cc);
+			requested.erase(iter2);
 		} else
 			iter++;
 	}
@@ -285,7 +285,7 @@ bool World::chunkLoaded(vec3i64 cc) {
 //	chunks.clear();
 //}
 
-size_t World::getNumChunks() {
+size_t World::getNumChunks() const {
 	return chunks.size();
 }
 

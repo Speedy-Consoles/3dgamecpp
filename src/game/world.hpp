@@ -94,7 +94,7 @@ public:
 //	void clearChunks();
 	bool chunkLoaded(vec3i64 cc);
 
-	size_t getNumChunks();
+	size_t getNumChunks() const;
 
 	WorldSnapshot makeSnapshot(int tick) const;
 

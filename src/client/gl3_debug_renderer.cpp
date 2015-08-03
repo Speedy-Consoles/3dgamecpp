@@ -10,7 +10,6 @@ GL3DebugRenderer::GL3DebugRenderer(Client *client, GL3Renderer *renderer, Shader
 }
 
 void GL3DebugRenderer::render() {
-	const Player &player = client->getLocalPlayer();
 
 	float x = -client->getGraphics()->getDrawWidth() / 2 + 5;
 	float y = client->getGraphics()->getDrawHeight() / 2 - font.getTopOffset() - 5;
@@ -20,6 +19,8 @@ void GL3DebugRenderer::render() {
 			font.write(x, y, 0.0f, buffer, 0);\
 			y -= font.getLineHeight()
 
+	const Player &player = client->getLocalPlayer();
+	RENDER_LINE("PLAYER INFO:");
 	RENDER_LINE("x: %" PRId64 " (%" PRId64 ")", player.getPos()[0],
 		(int64)floor(player.getPos()[0] / (double)RESOLUTION));
 	RENDER_LINE("y: %" PRId64 " (%" PRId64 ")", player.getPos()[1],
@@ -31,4 +32,8 @@ void GL3DebugRenderer::render() {
 	RENDER_LINE("xvel: %8.1f", player.getVel()[0]);
 	RENDER_LINE("yvel: %8.1f", player.getVel()[1]);
 	RENDER_LINE("zvel: %8.1f", player.getVel()[2]);
+
+	const World *world = client->getWorld();
+	RENDER_LINE("WORLD INFO:");
+	RENDER_LINE("loaded chunks: %d", world->getNumChunks());
 }
