@@ -18,6 +18,7 @@
 
 #include "engine/std_types.hpp"
 #include "config.hpp"
+#include "util.hpp"
 
 struct SDL_Surface;
 
@@ -43,7 +44,7 @@ public:
 
 	void setConfig(const GraphicsConf &, const GraphicsConf &);
 	
-	Entry get(uint block, uint8 dir = 4) const;
+	Entry get(uint block, uint8 dir = DIR_EAST) const;
 	Entry get(uint block, vec3i64 bc, uint8 dir) const;
 
 	static void getVertices(const Entry &entry, vec2f out[4]);
@@ -56,7 +57,7 @@ private:
 	std::unordered_map<int, Entry> textures;
 	std::list<GLuint> loadedTextures;
 
-	GLuint loadTexture(uint block, SDL_Surface *, TextureType type);
+	GLuint loadTexture(int block, uint8 dir, SDL_Surface *, TextureType type);
 };
 
 #endif // TEXTURE_MANAGER_HPP_

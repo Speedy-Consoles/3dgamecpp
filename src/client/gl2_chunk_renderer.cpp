@@ -195,10 +195,6 @@ void GL2ChunkRenderer::renderChunk(Chunk &c) {
 	dlChunks[index] = cc;
 	dlStatus[index] = OK;
 	chunkPassThroughs[index] = c.getPassThroughs();
-	int typeFaces[255];
-	for (int i = 0; i < 255; i++) {
-		typeFaces[i] = 0;
-	}
 
 	if (c.getAirBlocks() == Chunk::WIDTH * Chunk::WIDTH * Chunk::WIDTH) {
 		GL(NewList(dlFirstAddress + index, GL_COMPILE));
@@ -215,7 +211,7 @@ void GL2ChunkRenderer::renderChunk(Chunk &c) {
 	}
 
 	const uint8 *blocks = c.getBlocks();
-	int fbi = 0;
+	int n = 0;
 	for (uint8 d = 0; d < 3; d++) {
 		vec3i64 dir = uDirs[d].cast<int64>();
 		uint i = 0;
@@ -280,14 +276,15 @@ void GL2ChunkRenderer::renderChunk(Chunk &c) {
 						TextureManager::Entry tex_entry = renderer->getTextureManager()->get(faceType, bc, faceDir);
 						TextureManager::getVertices(tex_entry, texs);
 
-						faceBufferIndices[faceType][typeFaces[faceType]++] = fbi;
+						faceIndexBuffer[n] = FaceIndexData{tex_entry.tex, n};
+						
+						vb[n].normal[0] = DIRS[faceDir][0];
+						vb[n].normal[1] = DIRS[faceDir][1];
+						vb[n].normal[2] = DIRS[faceDir][2];
 
-						faceBuffer[fbi++] = DIRS[faceDir][0];
-						faceBuffer[fbi++] = DIRS[faceDir][1];
-						faceBuffer[fbi++] = DIRS[faceDir][2];
 						for (int j = 0; j < 4; j++) {
-							faceBuffer[fbi++] = texs[j][0];
-							faceBuffer[fbi++] = texs[j][1];
+							vb[n].tex[j][0] = texs[j][0];
+							vb[n].tex[j][1] = texs[j][1];
 							double light = 1.0;
 							bool s1 = (corners & FACE_CORNER_MASK[j][0]) > 0;
 							bool s2 = (corners & FACE_CORNER_MASK[j][2]) > 0;
@@ -298,42 +295,51 @@ void GL2ChunkRenderer::renderChunk(Chunk &c) {
 								light -= 0.2;
 							if (m || (s1 && s2))
 								light -= 0.2;
-							faceBuffer[fbi++] = light;
-							faceBuffer[fbi++] = light;
-							faceBuffer[fbi++] = light;
+							vb[n].color[j][0] = light;
+							vb[n].color[j][1] = light;
+							vb[n].color[j][2] = light;
 							vec3f vertex = (faceBlock.cast<int>() + QUAD_CYCLES_3D[faceDir][j]).cast<float>();
-							faceBuffer[fbi++] = vertex[0];
-							faceBuffer[fbi++] = vertex[1];
-							faceBuffer[fbi++] = vertex[2];
+							vb[n].vertex[j][0] = vertex[0];
+							vb[n].vertex[j][1] = vertex[1];
+							vb[n].vertex[j][2] = vertex[2];
 						}
+						++n;
 					}
 				}
 			}
 		}
 	}
 
+	if (n == 0) {
+		GL(NewList(dlFirstAddress + index, GL_COMPILE));
+		GL(EndList());
+		client->getStopwatch()->stop(CLOCK_NDL);
+		return;
+	}
+
+	std::sort(&faceIndexBuffer[0], &faceIndexBuffer[n], [](const FaceIndexData &l, const FaceIndexData &r)
+	{
+		return l.tex < r.tex;
+	});
+
 	glNewList(dlFirstAddress + index, GL_COMPILE);
 
-	for (int faceType = 0; faceType < 255; faceType++) {
-		if (typeFaces[faceType] == 0)
-			continue;
-		TextureManager::Entry tex_entry = renderer->getTextureManager()->get(faceType);
-		glBindTexture(GL_TEXTURE_2D, tex_entry.tex);
-		glBegin(GL_QUADS);
-		for (int i = 0; i < typeFaces[faceType]; i++) {
-			int fbi = faceBufferIndices[faceType][i];
-			glNormal3f(faceBuffer[fbi], faceBuffer[fbi + 1], faceBuffer[fbi + 2]);
-			fbi += 3;
-			for (int j = 0; j < 4; j++) {
-				glTexCoord2f(faceBuffer[fbi], faceBuffer[fbi + 1]);
-				fbi += 2;
-				glColor3f(faceBuffer[fbi], faceBuffer[fbi + 1], faceBuffer[fbi + 2]);
-				fbi += 3;
-				glVertex3f(faceBuffer[fbi], faceBuffer[fbi + 1], faceBuffer[fbi + 2]);
-				fbi += 3;
-			}
-			chunkFaces[index]++;
+	GLuint lastTex = 0;
+	for (int facei = 0; facei < n; ++facei) {
+		const FaceIndexData *fid = &faceIndexBuffer[facei];
+		const FaceVertexData *fvd = &vb[fid->index];
+		if (fid->tex != lastTex) {
+			glBindTexture(GL_TEXTURE_2D, fid->tex);
+			lastTex = fid->tex;
 		}
+		glBegin(GL_QUADS);
+		glNormal3f(fvd->normal[0], fvd->normal[1], fvd->normal[2]);
+		for (int j = 0; j < 4; j++) {
+			glTexCoord2f(fvd->tex[j][0], fvd->tex[j][1]);
+			glColor3f(fvd->color[j][0], fvd->color[j][1], fvd->color[j][2]);
+			glVertex3f(fvd->vertex[j][0], fvd->vertex[j][1], fvd->vertex[j][2]);
+		}
+		chunkFaces[index]++;
 		glEnd();
 	}
 

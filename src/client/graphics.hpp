@@ -42,8 +42,7 @@ private:
 	double oldRelMouseY = 0.5;
 
 public:
-	Graphics(Client *client, World *world, const Menu *menu, const Client::State *state,
-				const uint8 *localClientId, const GraphicsConf &conf, Stopwatch *stopwatch = nullptr);
+	Graphics(Client *client, const Client::State *state);
 	~Graphics();
 
 	bool createContext();

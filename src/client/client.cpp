@@ -73,7 +73,7 @@ Client::Client(const char *worldId, const char *serverAdress) {
 	chunkManager = std::unique_ptr<ChunkManager>(new ChunkManager());
 	world = std::unique_ptr<World>(new World(worldId));
 	menu = std::unique_ptr<Menu>(new Menu(this));
-	graphics = std::unique_ptr<Graphics>(new Graphics(this, world.get(), menu.get(), &state, &localClientId, *_conf, stopwatch.get()));
+	graphics = std::unique_ptr<Graphics>(new Graphics(this, &state));
 	graphics->createContext();
 
 	if (serverAdress) {

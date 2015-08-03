@@ -1,6 +1,8 @@
 #ifndef CONFIG_HPP_
 #define CONFIG_HPP_
 
+#include <string>
+
 #include "engine/vmath.hpp"
 
 enum class RenderBackend {
@@ -39,6 +41,7 @@ extern float         DEFAULT_FOV;
 extern uint          DEFAULT_TEX_MIPMAPPING;
 extern TexFiltering  DEFAULT_TEX_FILTERING;
 extern bool          DEFAULT_TEX_ATLAS;
+extern std::string   DEFAUKT_TEXTURES_FILE;
 
 struct GraphicsConf {
 	RenderBackend render_backend;
@@ -53,6 +56,8 @@ struct GraphicsConf {
 	uint tex_mipmapping;
 	TexFiltering tex_filtering;
 	bool tex_atlas;
+
+	std::string textures_file;
 };
 
 void store(const char *filename, const GraphicsConf &conf);

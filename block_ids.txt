@@ -2,17 +2,39 @@
 invalid -1
 air    0
 dirt   1
+{
+	wang 38
+}
 grass  2
 stone  3
 {
-	multi 36
+	multi  36
+	bricks 45
+	{
+		mossy 46
+	}
 }
 sand   4
 gravel 5
-wood   6
-planks 7
+wood
+{
+	oak     6
+	birch  39
+	jungle 40
+	spruce 41
+}
+planks
+{
+	oak     7
+	birch  42
+	jungle 43
+	spruce 44
+}
 cobble 8
-mossy  9
+{
+	mossy  9
+}
+
 bricks 10
 
 ore
@@ -50,4 +72,12 @@ test
 	orient 33
 	multi4 34
 	wang   35
+	sides  37
 }
+
+tnt       47
+melon     48
+pumpkin   49
+bedrock   50
+sponge    51
+sandstone 52

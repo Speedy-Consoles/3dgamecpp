@@ -7,6 +7,8 @@
 #include <vector>
 #include <memory>
 
+#include "engine/std_types.hpp"
+
 class TextureLoader;
 class Client;
 
@@ -19,6 +21,7 @@ enum class TextureType {
 struct TextureLoadEntry {
 	int id;
 	TextureType type;
+	uint8 dir_mask;
 	int x, y, w, h;
 };
 

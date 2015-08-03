@@ -8,18 +8,7 @@
 
 using namespace gui;
 
-Graphics::Graphics(
-		Client *client,
-		World *world,
-		const Menu *menu,
-		const Client::State *state,
-		const uint8 *localClientID,
-		const GraphicsConf &conf,
-		Stopwatch *stopwatch)
-		:
-		client(client),
-		state(*state)
-{
+Graphics::Graphics(Client *client, const Client::State *state) : client(client), state(*state) {
 	LOG(DEBUG, "Constructing Graphics");
 
 	LOG(DEBUG, "Initializing SDL");

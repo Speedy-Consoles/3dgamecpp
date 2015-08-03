@@ -1,6 +1,7 @@
 #include "texture_loader.hpp"
 #include "client/client.hpp"
 #include "game/block_manager.hpp"
+#include "util.hpp"
 
 #include <SDL2/SDL_image.h>
 #include <memory>
@@ -78,7 +79,10 @@ TextureLoader::~TextureLoader() {
 
 int TextureLoader::load() {
 	std::vector<TextureLoadEntry> entries;
-	TextureLoadEntry entry = {-1, TextureType::SINGLE_TEXTURE, 0, 0, 0, 0};
+	static const TextureLoadEntry zero_entry = {
+		-1, TextureType::SINGLE_TEXTURE, MASK_ALL, 0, 0, 0, 0
+	};
+	TextureLoadEntry entry = zero_entry;
 	Token key;
 
 	std::unique_ptr<SDL_Surface> img;
@@ -88,8 +92,7 @@ int TextureLoader::load() {
 	auto finishTexture = [&]() {
 		this->tm->add(img.get(), entries);
 		entries.clear();
-		entry.w = 0;
-		entry.h = 0;
+		entry = zero_entry;
 		img.reset();
 		width = 1;
 		height = 1;
@@ -97,10 +100,9 @@ int TextureLoader::load() {
 
 	auto finishBlock = [&]() {
 		entries.push_back(entry);
-		entry.id = -1;
-		entry.type = TextureType::SINGLE_TEXTURE;
-		entry.x = 0;
-		entry.y = 0;
+		entry = zero_entry;
+		entry.w = img->w / width;
+		entry.h = img->h / height;
 	};
 
 	enum class State {
@@ -257,6 +259,33 @@ int TextureLoader::load() {
 				} else {
 					throw ParsingError{tok.row, tok.col, "Expected numeral"};
 				}
+			} else if (key.str == "faces") {
+				uint8 dir_mask = MASK_NONE;
+				if (tok.str == "sides") {
+					dir_mask = MASK_SIDES;
+				} else if (tok.str == "all") {
+					dir_mask = MASK_ALL;
+				} else if (tok.str == "vert") {
+					dir_mask = MASK_VERT;
+				} else {
+					const char * c = tok.str.c_str();
+					for (uint i = 0; i < tok.str.length(); ++i) {
+						switch (*c) {
+						case 'n': dir_mask |= MASK_NORTH; break;
+						case 'e': dir_mask |= MASK_EAST; break;
+						case 's': dir_mask |= MASK_SOUTH; break;
+						case 'w': dir_mask |= MASK_WEST; break;
+						case 't':
+						case 'u': dir_mask |= MASK_UP; break;
+						case 'b':
+						case 'd': dir_mask |= MASK_DOWN; break;
+						default:
+							throw ParsingError{tok.row, tok.col, "Expected [bednstuw]+"};
+						}
+						++c;
+					}
+				}
+				entry.dir_mask = dir_mask;
 			} else {
 				throw ParsingError{key.row, key.col, "Unknown attribute"};
 			}

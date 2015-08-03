@@ -4,6 +4,8 @@
 #include <GL/glew.h>
 
 #include "game/chunk.hpp"
+#include "engine/macros.hpp"
+#include "engine/std_types.hpp"
 
 class Client;
 class GL2Renderer;
@@ -41,8 +43,23 @@ class GL2ChunkRenderer {
 	int *vsIndices;
 
 	// face buffer for chunk rendering
-	int faceBufferIndices[255][(Chunk::WIDTH + 1) * Chunk::WIDTH * Chunk::WIDTH * 3];
-	float faceBuffer[(Chunk::WIDTH + 1) * Chunk::WIDTH * Chunk::WIDTH * 3 * (3 + 4 * (2 + 3 + 3))];
+	PACKED(
+	struct FaceVertexData {
+		vec3f vertex[4];
+		vec3f color[4];
+		vec2f tex[4];
+		vec3f normal;
+	});
+	FaceVertexData vb[(Chunk::WIDTH + 1) * Chunk::WIDTH * Chunk::WIDTH * 3];
+
+	struct FaceIndexData {
+		GLuint tex;
+		int index;
+	};
+	FaceIndexData faceIndexBuffer[(Chunk::WIDTH + 1) * Chunk::WIDTH * Chunk::WIDTH * 3];
+
+	//int faceBufferIndices[255][(Chunk::WIDTH + 1) * Chunk::WIDTH * Chunk::WIDTH * 3];
+	//float faceBuffer[(Chunk::WIDTH + 1) * Chunk::WIDTH * Chunk::WIDTH * 3 * (3 + 4 * (2 + 3 + 3))];
 
 	// performance stuff
 	int newFaces = 0;
