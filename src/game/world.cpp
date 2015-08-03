@@ -39,6 +39,8 @@ void World::tick(int tick, uint localPlayerID) {
 
 void World::requestChunks() {
 	for (int p = 0; p < MAX_CLIENTS; p++) { // TODO better order
+		if (!players[p].isValid())
+			continue;
 		vec3i64 pc = players[p].getChunkPos();
 		if (pc != oldPlayerChunks[p]) {
 			playerCheckChunkIndex[p] = 0;
@@ -72,7 +74,24 @@ void World::insertChunks() {
 }
 
 void World::removeChunks() {
-	// TODO
+	for (auto iter = chunks.begin(); iter != chunks.end();) {
+		vec3i64 cc = iter->first;
+		bool inRange = false;
+
+		for (int p = 0; p < MAX_CLIENTS; p++) { // TODO better order
+			if (!players[p].isValid())
+				continue;
+			if ((cc - players[p].getChunkPos()).maxAbs() <= (int) LOADING_RANGE + 1) {
+				inRange = true;
+				break;
+			}
+		}
+
+		if (!inRange) {
+			iter = chunks.erase(iter);
+		} else
+			iter++;
+	}
 }
 
 // TODO make precision position-independent

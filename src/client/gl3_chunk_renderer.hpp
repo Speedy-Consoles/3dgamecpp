@@ -14,9 +14,21 @@ class GL3Renderer;
 
 class GL3ChunkRenderer {
 private:
-	enum VAOStatus {
+	enum ChunkStatus {
 		NO_CHUNK = 0,
 		OK,
+	};
+
+	struct ChunkInfo {
+		// render info
+		ChunkStatus status; // TODO maybe make compact?
+		vec3i64 content;
+		int numFaces;
+		uint16 passThroughs;
+
+		// visibility search
+		bool vsVisited;
+		uint8 vsExits;
 	};
 
 	Client *client;
@@ -24,31 +36,24 @@ private:
 	ShaderManager *shaderManager;
 
 	// performance limits
-	static const int MAX_NEW_QUADS = 6000;
+	static const int MAX_NEW_Faces = 6000;
 	static const int MAX_NEW_CHUNKS = 500;
 	static const int MAX_CHUNK_CHECKS = 10000;
 
-	// cache
-	int visibleDiameter;
+	// the grid
+	ChunkInfo * chunkGrid;
 
 	// vao, vbo locations
 	GLuint *vaos;
 	GLuint *vbos;
 
-	// vao meta data
-	vec3i64 *vaoChunks;
-	uint8 *vaoStatus;
+	// cache
+	int visibleDiameter;
 
 	// texture location
 	GLuint blockTextures;
 
-	// chunk data
-	int *chunkFaces;
-	uint16 *chunkPassThroughs;
-
-	// visibility search for rendering
-	uint8 *vsExits;
-	bool *vsVisited;
+	// visibility search
 	int vsFringeCapacity;
 	vec3i64 *vsFringe;
 	int *vsIndices;

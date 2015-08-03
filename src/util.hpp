@@ -34,6 +34,8 @@ vec3i64 wc2bc(vec3i64 wc);
 vec3i64 bc2cc(vec3i64 bc);
 vec3ui8 bc2icc(vec3i64 bc);
 
+int gridCycleIndex(vec3i64 v, int64 gridSize);
+
 size_t vec3i64HashFunc(vec3i64 v);
 
 void initUtil();

@@ -118,16 +118,11 @@ void GL3ChunkRenderer::setConf(const GraphicsConf &conf, const GraphicsConf &old
 void GL3ChunkRenderer::initRenderDistanceDependent() {
 	visibleDiameter = client->getConf().render_distance * 2 + 1;
 	int n = visibleDiameter * visibleDiameter * visibleDiameter;
+	chunkGrid = new ChunkInfo[n];
 	vaos = new GLuint[n];
 	vbos = new GLuint[n];
 	GL(GenVertexArrays(n, vaos));
 	GL(GenBuffers(n, vbos));
-	vaoChunks = new vec3i64[n];
-	vaoStatus = new uint8[n];
-	chunkFaces = new int[n];
-	chunkPassThroughs = new uint16[n];
-	vsExits = new uint8[n];
-	vsVisited = new bool[n];
 	vsFringeCapacity = visibleDiameter * visibleDiameter * 6;
 	vsFringe = new vec3i64[vsFringeCapacity];
 	vsIndices = new int[vsFringeCapacity];
@@ -143,10 +138,10 @@ void GL3ChunkRenderer::initRenderDistanceDependent() {
 		GL(EnableVertexAttribArray(1));
 		GL(EnableVertexAttribArray(2));
 		GL(EnableVertexAttribArray(3));
-		vaoStatus[i] = NO_CHUNK;
-		chunkFaces[i] = 0;
-		chunkPassThroughs[i] = 0;
-		vsVisited[i] = false;
+		chunkGrid[i].status = NO_CHUNK;
+		chunkGrid[i].numFaces = 0;
+		chunkGrid[i].passThroughs = 0;
+		chunkGrid[i].vsVisited = false;
 	}
 	GL(BindVertexArray(0));
 	faces = 0;
@@ -158,12 +153,6 @@ void GL3ChunkRenderer::destroyRenderDistanceDependent() {
 	GL(DeleteVertexArrays(n, vaos));
 	delete vaos;
 	delete vbos;
-	delete vaoChunks;
-	delete vaoStatus;
-	delete chunkFaces;
-	delete chunkPassThroughs;
-	delete vsExits;
-	delete vsVisited;
 	delete vsFringe;
 	delete vsIndices;
 }
@@ -205,10 +194,8 @@ void GL3ChunkRenderer::render() {
 		vec3i64 cd = LOADING_ORDER[checkChunkIndex].cast<int64>();
 		if (cd.maxAbs() <= client->getConf().render_distance) {
 			vec3i64 cc = pc + cd;
-			int index = ((((cc[2] % visibleDiameter) + visibleDiameter) % visibleDiameter) * visibleDiameter
-					+ (((cc[1] % visibleDiameter) + visibleDiameter) % visibleDiameter)) * visibleDiameter
-					+ (((cc[0] % visibleDiameter) + visibleDiameter) % visibleDiameter);
-			if (vaoStatus[index] != OK || vaoChunks[index] != cc) {
+			int index = gridCycleIndex(cc, visibleDiameter);
+			if (chunkGrid[index].status != OK || chunkGrid[index].content != cc) {
 				if (!client->getChunkManager()->request(cc, GRAPHICS_LISTENER_ID))
 					break;
 			}
@@ -222,7 +209,7 @@ void GL3ChunkRenderer::render() {
 	newFaces = 0;
 	newChunks = 0;
 	shared_ptr<const Chunk> sp;
-	while (newChunks < MAX_NEW_CHUNKS && newFaces < MAX_NEW_QUADS
+	while (newChunks < MAX_NEW_CHUNKS && newFaces < MAX_NEW_Faces
 			&& (sp = client->getChunkManager()->getNextChunk(GRAPHICS_LISTENER_ID)).get()) {
 		const Chunk *chunk = sp.get();
 		buildChunk(*chunk);
@@ -232,11 +219,9 @@ void GL3ChunkRenderer::render() {
 	// render chunks
 	vec3d lookDir = getVectorFromAngles(player.getYaw(), player.getPitch());
 	vsFringe[0] = pc;
-	vsIndices[0] = ((((pc[2] % visibleDiameter) + visibleDiameter) % visibleDiameter) * visibleDiameter
-			+ (((pc[1] % visibleDiameter) + visibleDiameter) % visibleDiameter)) * visibleDiameter
-			+ (((pc[0] % visibleDiameter) + visibleDiameter) % visibleDiameter);
-	vsExits[vsIndices[0]] = 0x3F;
-	vsVisited[vsIndices[0]] = true;
+	vsIndices[0] = gridCycleIndex(pc, visibleDiameter);
+	chunkGrid[vsIndices[0]].vsExits = 0x3F;
+	chunkGrid[vsIndices[0]].vsVisited = true;
 	int fringeSize = 1;
 	size_t fringeStart = 0;
 	size_t fringeEnd = 1;
@@ -248,22 +233,22 @@ void GL3ChunkRenderer::render() {
 		vec3i64 cc = vsFringe[fringeStart];
 		vec3i64 cd = cc - pc;
 		int index = vsIndices[fringeStart];
-		vsVisited[index] = false;
+		chunkGrid[index].vsVisited = false;
 		fringeStart = (fringeStart + 1) % vsFringeCapacity;
 		fringeSize--;
 
-		if (vaoStatus[index] != NO_CHUNK && vaoChunks[index] == cc) {
-			if (chunkFaces[index] > 0) {
-				visibleFaces += chunkFaces[index];
+		if (chunkGrid[index].status != NO_CHUNK && chunkGrid[index].content == cc) {
+			if (chunkGrid[index].numFaces > 0) {
+				visibleFaces += chunkGrid[index].numFaces;
 				GL(BindVertexArray(vaos[index]));
 				glm::mat4 modelMatrix = translationMatrix * glm::translate(glm::mat4(1.0f), glm::vec3((float) (cd[0] * (int) Chunk::WIDTH), (float) (cd[1] * (int) Chunk::WIDTH), (float) (cd[2] * (int) Chunk::WIDTH)));
 				shader->setModelMatrix(modelMatrix);
 				shader->useProgram();
-				GL(DrawArrays(GL_TRIANGLES, 0, chunkFaces[index] * 3));
+				GL(DrawArrays(GL_TRIANGLES, 0, chunkGrid[index].numFaces * 3));
 			}
 
 			for (int d = 0; d < 6; d++) {
-				if ((vsExits[index] & (1 << d)) == 0)
+				if ((chunkGrid[index].vsExits & (1 << d)) == 0)
 					continue;
 
 				vec3i64 ncc = cc + DIRS[d].cast<int64>();
@@ -275,30 +260,28 @@ void GL3ChunkRenderer::render() {
 						|| !inFrustum(ncc, player.getPos(), lookDir))
 					continue;
 
-				int nIndex = ((((ncc[2] % visibleDiameter) + visibleDiameter) % visibleDiameter) * visibleDiameter
-						+ (((ncc[1] % visibleDiameter) + visibleDiameter) % visibleDiameter)) * visibleDiameter
-						+ (((ncc[0] % visibleDiameter) + visibleDiameter) % visibleDiameter);
+				int nIndex = gridCycleIndex(ncc, visibleDiameter);
 
-				if (!vsVisited[nIndex]) {
-					vsVisited[nIndex] = true;
-					vsExits[nIndex] = 0;
+				if (!chunkGrid[nIndex].vsVisited) {
+					chunkGrid[nIndex].vsVisited = true;
+					chunkGrid[nIndex].vsExits = 0;
 					vsFringe[fringeEnd] = ncc;
 					vsIndices[fringeEnd] = nIndex;
 					fringeEnd = (fringeEnd + 1) % vsFringeCapacity;
 					fringeSize++;
 				}
 
-				if (vaoStatus[nIndex] != NO_CHUNK && vaoChunks[nIndex] == ncc) {
+				if (chunkGrid[nIndex].status != NO_CHUNK && chunkGrid[nIndex].content == ncc) {
 					int shift = 0;
 					int invD = (d + 3) % 6;
 					for (int d1 = 0; d1 < invD; d1++) {
 						if (ncd[d1 % 3] * (d1 * (-2) + 5) >= 0)
-							vsExits[nIndex] |= ((chunkPassThroughs[nIndex] & (1 << (shift + invD - d1 - 1))) > 0) << d1;
+							chunkGrid[nIndex].vsExits |= ((chunkGrid[nIndex].passThroughs & (1 << (shift + invD - d1 - 1))) > 0) << d1;
 						shift += 5 - d1;
 					}
 					for (int d2 = invD + 1; d2 < 6; d2++) {
 						if (ncd[d2 % 3] * (d2 * (-2) + 5) >= 0)
-							vsExits[nIndex] |= ((chunkPassThroughs[nIndex] & (1 << (shift + d2 - invD - 1))) > 0) << d2;
+							chunkGrid[nIndex].vsExits |= ((chunkGrid[nIndex].passThroughs & (1 << (shift + d2 - invD - 1))) > 0) << d2;
 					}
 				}
 			}
@@ -310,17 +293,15 @@ void GL3ChunkRenderer::render() {
 void GL3ChunkRenderer::buildChunk(const Chunk &c) {
 	vec3i64 cc = c.getCC();
 
-	uint index = ((((cc[2] % visibleDiameter) + visibleDiameter) % visibleDiameter) * visibleDiameter
-			+ (((cc[1] % visibleDiameter) + visibleDiameter) % visibleDiameter)) * visibleDiameter
-			+ (((cc[0] % visibleDiameter) + visibleDiameter) % visibleDiameter);
+	uint index = gridCycleIndex(cc, visibleDiameter);
 
-	if (vaoStatus[index] != NO_CHUNK)
-		faces -= chunkFaces[index];
+	if (chunkGrid[index].status != NO_CHUNK)
+		faces -= chunkGrid[index].numFaces;
 
-	chunkFaces[index] = 0;
-	vaoChunks[index] = cc;
-	vaoStatus[index] = OK;
-	chunkPassThroughs[index] = c.getPassThroughs();
+	chunkGrid[index].numFaces = 0;
+	chunkGrid[index].content = cc;
+	chunkGrid[index].status = OK;
+	chunkGrid[index].passThroughs = c.getPassThroughs();
 
 	GL(BindBuffer(GL_ARRAY_BUFFER, vbos[index]));
 
@@ -433,9 +414,9 @@ void GL3ChunkRenderer::buildChunk(const Chunk &c) {
 
 	GL(BufferData(GL_ARRAY_BUFFER, sizeof(BlockVertexData) * bufferSize, blockVertexBuffer, GL_STATIC_DRAW));
 
-	chunkFaces[index] = bufferSize / 3;
-	newFaces += chunkFaces[index];
-	faces += chunkFaces[index];
+	chunkGrid[index].numFaces = bufferSize / 3;
+	newFaces += bufferSize / 3;
+	faces += bufferSize / 3;
 	GL(BindBuffer(GL_ARRAY_BUFFER, 0));
 }
 
