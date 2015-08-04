@@ -149,6 +149,7 @@ void GL3ChunkRenderer::initRenderDistanceDependent() {
 
 void GL3ChunkRenderer::destroyRenderDistanceDependent() {
 	int n = visibleDiameter * visibleDiameter * visibleDiameter;
+	delete chunkGrid;
 	GL(DeleteBuffers(n, vbos));
 	GL(DeleteVertexArrays(n, vaos));
 	delete vaos;

@@ -60,6 +60,8 @@ void ChunkManager::run() {
 				while(!outQueues[r.listenerId]->push(sp)) {
 					sleepFor(millis(50));
 				}
+			} else {
+				delete chunk;
 			}
 		} else {
 			sleepFor(millis(100));

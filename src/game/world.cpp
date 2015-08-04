@@ -15,9 +15,7 @@ World::World(std::string id, ChunkManager *chunkManager) :
 		id(id),
 		chunkManager(chunkManager),
 		chunks(0, vec3i64HashFunc),
-		requested(0, vec3i64HashFunc),
-		playerCheckChunkIndex{0},
-		playerCheckedChunks{0} {
+		requested(0, vec3i64HashFunc){
 	LOG(INFO, "Opening world '" << id << "'");
 }
 

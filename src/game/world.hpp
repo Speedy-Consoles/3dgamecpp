@@ -61,8 +61,8 @@ private:
 	Player players[MAX_CLIENTS];
 
 	vec3i64 oldPlayerChunks[MAX_CLIENTS];
-	int playerCheckChunkIndex[MAX_CLIENTS];
-	int playerCheckedChunks[MAX_CLIENTS];
+	int playerCheckChunkIndex[MAX_CLIENTS] = {0};
+	int playerCheckedChunks[MAX_CLIENTS] = {0};
 public:
 	World(string id, ChunkManager *chunkManager);
 	~World();
