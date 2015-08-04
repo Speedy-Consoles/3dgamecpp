@@ -45,8 +45,8 @@ struct WorldSnapshot {
 class World {
 public:
 	static const double GRAVITY;
-	static const int LOADING_RANGE = 2;
-	static const int LOADING_DIAMETER = LOADING_RANGE * 2 + 1;
+	static const int LOADING_DISTANCE = 3;
+	static const int LOADING_DIAMETER = LOADING_DISTANCE * 2 + 1;
 
 	using ChunkMap = unordered_map<vec3i64, shared_ptr<const Chunk>, size_t(*)(vec3i64)>;
 	using ChunkRequestedSet = unordered_set<vec3i64, size_t(*)(vec3i64)>;
@@ -61,8 +61,7 @@ private:
 	Player players[MAX_CLIENTS];
 
 	vec3i64 oldPlayerChunks[MAX_CLIENTS];
-	int playerCheckChunkIndex[MAX_CLIENTS] = {0};
-	int playerCheckedChunks[MAX_CLIENTS] = {0};
+	int playerCheckChunkIndices[MAX_CLIENTS] = {0};
 public:
 	World(string id, ChunkManager *chunkManager);
 	~World();

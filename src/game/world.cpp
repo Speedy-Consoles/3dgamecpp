@@ -42,22 +42,23 @@ void World::requestChunks() {
 			continue;
 		vec3i64 pc = players[p].getChunkPos();
 		if (pc != oldPlayerChunks[p]) {
-			playerCheckChunkIndex[p] = 0;
-			playerCheckedChunks[p] = 0;
+			double pcDist = (pc - oldPlayerChunks[p]).norm();
+			double newRadius = LOADING_ORDER[playerCheckChunkIndices[p]].norm() - pcDist;
+			if (newRadius < 0)
+				playerCheckChunkIndices[p] = 0;
+			else
+				playerCheckChunkIndices[p] = LOADING_ORDER_DISTANCE_INDICES[(int) newRadius];
+			oldPlayerChunks[p] = pc;
 		}
-		while(playerCheckedChunks[p] < LOADING_DIAMETER * LOADING_DIAMETER * LOADING_DIAMETER) {
-			vec3i64 cd = LOADING_ORDER[playerCheckChunkIndex[p]].cast<int64>();
-			if (cd.maxAbs() <= LOADING_RANGE) {
-				vec3i64 cc = pc + cd;
-				auto it2 = requested.find(cc);
-				if (it2 == requested.end()) {
-					if (!chunkManager->request(cc, WORLD_LISTENER_ID))
-						break;
-					requested.insert(cc);
-				}
-				playerCheckedChunks[p]++;
+		while(LOADING_ORDER[playerCheckChunkIndices[p]].norm() <= LOADING_DISTANCE) {
+			vec3i64 cc = pc + LOADING_ORDER[playerCheckChunkIndices[p]].cast<int64>();
+			auto it = requested.find(cc);
+			if (it == requested.end()) {
+				if (!chunkManager->request(cc, WORLD_LISTENER_ID))
+					break;
+				requested.insert(cc);
 			}
-			playerCheckChunkIndex[p]++;
+			playerCheckChunkIndices[p]++;
 		}
 	}
 }
@@ -77,7 +78,7 @@ void World::removeChunks() {
 		for (int p = 0; p < MAX_CLIENTS; p++) { // TODO better order
 			if (!players[p].isValid())
 				continue;
-			if ((cc - players[p].getChunkPos()).maxAbs() <= (int) LOADING_RANGE + 1) {
+			if ((cc - players[p].getChunkPos()).maxAbs() <= (int) LOADING_DISTANCE + 1) {
 				inRange = true;
 				break;
 			}

@@ -10,6 +10,8 @@ template <typename T> struct dotp_t_selector { typedef T dotp_t; };
 template <> struct dotp_t_selector<uint8> { typedef uint dotp_t; };
 template <> struct dotp_t_selector<int8> { typedef int dotp_t; };
 
+// TODO forbid operations with scalar
+
 template <typename T, size_t N, template <typename> class Derived>
 class vec {
 public:
