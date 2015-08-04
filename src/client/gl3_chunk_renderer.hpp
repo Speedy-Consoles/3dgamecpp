@@ -61,7 +61,6 @@ private:
 	// chunk requesting
 	vec3i64 oldPlayerChunk;
 	int checkChunkIndex = 0;
-	int checkedChunks = 0;
 
 	// performance info
 	int newFaces = 0;

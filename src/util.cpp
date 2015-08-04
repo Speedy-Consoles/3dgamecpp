@@ -67,6 +67,7 @@ const size_t DIR_2_CUBE_CYCLE[6] = { 14, 16, 22, 12, 10, 4 };
 const size_t BASE_NINE_CUBE_CYCLE = 13;
 
 std::vector<vec3i8> LOADING_ORDER;
+std::vector<int> LOADING_ORDER_DISTANCE_INDICES;
 
 int getDir(int dim, int sign) {
 	return dim - 3 * ((sign - 1) / 2);
@@ -140,4 +141,13 @@ void initUtil() {
 
 	auto comp = [](vec3i8 v1, vec3i8 v2){return v1.norm2() < v2.norm2();};
 	std::sort(LOADING_ORDER.begin(), LOADING_ORDER.end(), comp);
+
+	LOADING_ORDER_DISTANCE_INDICES.resize(range + 1);
+	int distance = 0;
+	for (int i = 0; i < length * length * length && distance <= range; ++i) {
+	    vec3i8 coords = LOADING_ORDER[i];
+	    if (coords.norm() >= distance) {
+	    	LOADING_ORDER_DISTANCE_INDICES[distance++] = i;
+	    }
+	}
 }

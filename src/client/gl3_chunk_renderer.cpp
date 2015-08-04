@@ -110,7 +110,6 @@ void GL3ChunkRenderer::setConf(const GraphicsConf &conf, const GraphicsConf &old
 	if (conf.render_distance != old.render_distance) {
 		destroyRenderDistanceDependent();
 		initRenderDistanceDependent();
-		checkedChunks = 0;
 		checkChunkIndex = 0;
 	}
 }
@@ -186,23 +185,23 @@ void GL3ChunkRenderer::render() {
 	// request unrequested, unbuilt chunks
 	vec3i64 pc = player.getChunkPos();
 	if (pc != oldPlayerChunk) {
+		double pcDist = (pc - oldPlayerChunk).norm();
+		double newRadius = LOADING_ORDER[checkChunkIndex].norm() - pcDist;
+		if (newRadius < 0)
+			checkChunkIndex = 0;
+		else
+			checkChunkIndex = LOADING_ORDER_DISTANCE_INDICES[(int) newRadius];
 		oldPlayerChunk = pc;
-		checkedChunks = 0;
-		checkChunkIndex = 0;
 	}
 	newlyCheckedChunks = 0;
-	while(newlyCheckedChunks < MAX_CHUNK_CHECKS && checkedChunks < visibleDiameter * visibleDiameter * visibleDiameter) {
-		vec3i64 cd = LOADING_ORDER[checkChunkIndex].cast<int64>();
-		if (cd.maxAbs() <= client->getConf().render_distance) {
-			vec3i64 cc = pc + cd;
-			int index = gridCycleIndex(cc, visibleDiameter);
-			if (chunkGrid[index].status != OK || chunkGrid[index].content != cc) {
-				if (!client->getChunkManager()->request(cc, GRAPHICS_LISTENER_ID))
-					break;
-			}
-			checkedChunks++;
-			newlyCheckedChunks++;
+	while(newlyCheckedChunks < MAX_CHUNK_CHECKS && LOADING_ORDER[checkChunkIndex].norm() <= client->getConf().render_distance) {
+		vec3i64 cc = pc + LOADING_ORDER[checkChunkIndex].cast<int64>();
+		int index = gridCycleIndex(cc, visibleDiameter);
+		if (chunkGrid[index].status != OK || chunkGrid[index].content != cc) {
+			if (!client->getChunkManager()->request(cc, GRAPHICS_LISTENER_ID))
+				break;
 		}
+		newlyCheckedChunks++;
 		checkChunkIndex++;
 	}
 

@@ -21,6 +21,7 @@ extern const size_t BASE_NINE_CUBE_CYCLE;
 const uint8 TEST_CORNERS[6] { 0x07, 0xC1, 0x00, 0xC1, 0x07, 0x00 };
 
 extern std::vector<vec3i8> LOADING_ORDER;
+extern std::vector<int> LOADING_ORDER_DISTANCE_INDICES;
 
 template <typename T> int sgn(T val) {return (T(0) < val) - (val < T(0));}
 
