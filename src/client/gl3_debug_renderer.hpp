@@ -6,16 +6,18 @@
 #include "game/world.hpp"
 
 class GL3Renderer;
+class GL3ChunkRenderer;
 
 class GL3DebugRenderer {
 public:
-	GL3DebugRenderer(Client *client, GL3Renderer *renderer, ShaderManager *shaderManager);
+	GL3DebugRenderer(Client *client, GL3Renderer *renderer, GL3ChunkRenderer *chunkRenderer, ShaderManager *shaderManager);
 
 	void render();
 
 private:
 	Client *client = nullptr;
 	GL3Renderer *renderer = nullptr;
+	GL3ChunkRenderer *chunkRenderer = nullptr;
 
 	BMFont font;
 };

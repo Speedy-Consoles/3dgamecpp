@@ -24,7 +24,7 @@ GL3Renderer::GL3Renderer(Client *client) :
 	skyRenderer(client, this, &shaderManager),
 	hudRenderer(client, this, &shaderManager),
 	menuRenderer(client, this, &shaderManager),
-	debugRenderer(client, this, &shaderManager)
+	debugRenderer(client, this, &chunkRenderer, &shaderManager)
 {
 	makeMaxFOV();
 	makePerspectiveMatrix();

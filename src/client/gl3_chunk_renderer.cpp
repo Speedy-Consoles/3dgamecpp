@@ -15,8 +15,11 @@
 
 using namespace std;
 
-GL3ChunkRenderer::GL3ChunkRenderer(Client *client, GL3Renderer *renderer, ShaderManager *shaderManager)
-		: client(client), renderer(renderer), shaderManager(shaderManager) {
+GL3ChunkRenderer::GL3ChunkRenderer(Client *client, GL3Renderer *renderer, ShaderManager *shaderManager) :
+		client(client),
+		renderer(renderer),
+		shaderManager(shaderManager),
+		chunkMap(0, vec3i64HashFunc) {
 	initRenderDistanceDependent();
 	loadTextures();
 }
@@ -117,7 +120,7 @@ void GL3ChunkRenderer::setConf(const GraphicsConf &conf, const GraphicsConf &old
 void GL3ChunkRenderer::initRenderDistanceDependent() {
 	visibleDiameter = client->getConf().render_distance * 2 + 1;
 	int n = visibleDiameter * visibleDiameter * visibleDiameter;
-	chunkGrid = new ChunkInfo[n];
+	chunkGrid = new GridInfo[n];
 	vaos = new GLuint[n];
 	vbos = new GLuint[n];
 	GL(GenVertexArrays(n, vaos));
@@ -182,7 +185,7 @@ void GL3ChunkRenderer::render() {
 	GL(ActiveTexture(GL_TEXTURE0));
 	GL(BindTexture(GL_TEXTURE_2D_ARRAY, blockTextures));
 
-	// request unrequested, unbuilt chunks
+	// put chunks into render queue
 	vec3i64 pc = player.getChunkPos();
 	if (pc != oldPlayerChunk) {
 		double pcDist = (pc - oldPlayerChunk).norm();
@@ -193,28 +196,85 @@ void GL3ChunkRenderer::render() {
 			checkChunkIndex = LOADING_ORDER_DISTANCE_INDICES[(int) newRadius];
 		oldPlayerChunk = pc;
 	}
-	newlyCheckedChunks = 0;
-	while(newlyCheckedChunks < MAX_CHUNK_CHECKS && LOADING_ORDER[checkChunkIndex].norm() <= client->getConf().render_distance) {
+	while(LOADING_ORDER[checkChunkIndex].norm() <= client->getConf().render_distance
+			&& chunkMap.size() <= MAX_CHUNK_MAP_SIZE - 27) {
 		vec3i64 cc = pc + LOADING_ORDER[checkChunkIndex].cast<int64>();
 		int index = gridCycleIndex(cc, visibleDiameter);
 		if (chunkGrid[index].status != OK || chunkGrid[index].content != cc) {
-			if (!client->getChunkManager()->request(cc, GRAPHICS_LISTENER_ID))
-				break;
+			auto it = chunkMap.find(cc);
+			if (it == chunkMap.end() || !it->second.inRenderQueue) {
+				if (it == chunkMap.end()) {
+					chunkMap.insert({cc, ChunkInfo(true)});
+					toRequest.push_back(cc);
+				} else {
+					it->second.inRenderQueue = true;
+					it->second.needCounter++;
+				}
+				renderQueue.push_back(cc);
+				for (size_t i = 0; i < 27; ++i) {
+					if (i == BIG_CUBE_CYCLE_BASE_INDEX)
+						continue;
+					vec3i64 ncc = cc + BIG_CUBE_CYCLE[i].cast<int64>();
+					auto it2 = chunkMap.find(ncc);
+					if (it2 == chunkMap.end()) {
+						chunkMap.insert({ncc, ChunkInfo(false)});
+						toRequest.push_back(ncc);
+					} else {
+						it2->second.needCounter++;
+					}
+				}
+			}
 		}
-		newlyCheckedChunks++;
 		checkChunkIndex++;
 	}
 
-	// build new chunks
+	// request required chunks
+	while (!toRequest.empty()) {
+		vec3i64 cc = toRequest.front();
+		if (!client->getChunkManager()->request(cc, GRAPHICS_LISTENER_ID))
+			break;
+		toRequest.pop_front();
+	}
+
+	// save chunks received from chunk manager
+	shared_ptr<const Chunk> sp;
+	while ((sp = client->getChunkManager()->getNextChunk(GRAPHICS_LISTENER_ID)).get()) {
+		vec3i64 cc = sp.get()->getCC();
+		auto it = chunkMap.find(cc);
+		it->second.chunkPointer = sp;
+		holdChunks++;
+	}
+
+	// build chunks in render queue
 	newFaces = 0;
 	newChunks = 0;
-	shared_ptr<const Chunk> sp;
-	while (newChunks < MAX_NEW_CHUNKS && newFaces < MAX_NEW_Faces
-			&& (sp = client->getChunkManager()->getNextChunk(GRAPHICS_LISTENER_ID)).get()) {
-		const Chunk *chunk = sp.get();
-		buildChunk(*chunk);
+	while (!renderQueue.empty() && newChunks < MAX_NEW_CHUNKS && newFaces < MAX_NEW_Faces) {
+		vec3i64 cc = renderQueue.front();
+		Chunk const *chunks[27];
+		ChunkMap::iterator iterators[27];
+		bool cantRender = false;
+		for (int i = 0; i < 27; ++i) {
+			vec3i64 ncc = cc + BIG_CUBE_CYCLE[i].cast<int64>();
+			auto it = chunkMap.find(ncc);
+			if (!it->second.chunkPointer.get()) {
+				cantRender = true;
+				break;
+			}
+			iterators[i] = it;
+			chunks[i] = it->second.chunkPointer.get();
+		}
+		if (cantRender)
+			break;
+		buildChunk(chunks);
+		for (int i = 0; i < 27; ++i) {
+			iterators[i]->second.needCounter--;
+			if (iterators[i]->second.needCounter == 0) {
+				chunkMap.erase(iterators[i]);
+				holdChunks--;
+			}
+		}
+		renderQueue.pop_front();
 	}
-	printf("newChunks %d\n", newChunks);
 
 	// render chunks
 	vec3d lookDir = getVectorFromAngles(player.getYaw(), player.getPitch());
@@ -288,8 +348,9 @@ void GL3ChunkRenderer::render() {
 	GL(BindVertexArray(0));
 }
 
-void GL3ChunkRenderer::buildChunk(const Chunk &c) {
-	vec3i64 cc = c.getCC();
+void GL3ChunkRenderer::buildChunk(Chunk const *chunks[27]) {
+	const Chunk &chunk = *(chunks[BIG_CUBE_CYCLE_BASE_INDEX]);
+	vec3i64 cc = chunk.getCC();
 
 	uint index = gridCycleIndex(cc, visibleDiameter);
 
@@ -299,11 +360,11 @@ void GL3ChunkRenderer::buildChunk(const Chunk &c) {
 	chunkGrid[index].numFaces = 0;
 	chunkGrid[index].content = cc;
 	chunkGrid[index].status = OK;
-	chunkGrid[index].passThroughs = c.getPassThroughs();
+	chunkGrid[index].passThroughs = chunk.getPassThroughs();
 
 	GL(BindBuffer(GL_ARRAY_BUFFER, vbos[index]));
 
-	if (c.getAirBlocks() == Chunk::WIDTH * Chunk::WIDTH * Chunk::WIDTH) {
+	if (chunk.getAirBlocks() == Chunk::WIDTH * Chunk::WIDTH * Chunk::WIDTH) {
 		GL(BufferData(GL_ARRAY_BUFFER, 0, 0, GL_STATIC_DRAW));
 		GL(BindBuffer(GL_ARRAY_BUFFER, 0));
 		return;
@@ -318,9 +379,10 @@ void GL3ChunkRenderer::buildChunk(const Chunk &c) {
 
 	size_t bufferSize = 0;
 
-	const uint8 *blocks = c.getBlocks();
+	const uint8 *blocks = chunk.getBlocks();
 	for (uint8 d = 0; d < 3; d++) {
 		vec3i64 dir = uDirs[d].cast<int64>();
+		uint dimFlipIndexDiff = ((dir[2] * Chunk::WIDTH + dir[1]) * Chunk::WIDTH + dir[0]) * (Chunk::WIDTH - 1);
 		uint i = 0;
 		uint ni = 0;
 		for (int z = (d == 2) ? -1 : 0; z < (int) Chunk::WIDTH; z++) {
@@ -328,21 +390,26 @@ void GL3ChunkRenderer::buildChunk(const Chunk &c) {
 				for (int x = (d == 0) ? -1 : 0; x < (int) Chunk::WIDTH; x++) {
 					uint8 thatType;
 					uint8 thisType;
-					if ((x == Chunk::WIDTH - 1 && d==0)
+					bool thisOutside = x == -1 || y == -1 || z == -1;
+					bool thatOutside = !thisOutside
+							&& ((x == Chunk::WIDTH - 1 && d==0)
 							|| (y == Chunk::WIDTH - 1 && d==1)
-							|| (z == Chunk::WIDTH - 1 && d==2)) {
-						thatType = 0;//client->getWorld()->getBlock(cc * Chunk::WIDTH + vec3i64(x, y, z) + dir);
-						//if (thatType != 0) {
-							if (x != -1 && y != -1 && z != -1)
+							|| (z == Chunk::WIDTH - 1 && d==2));
+					if (thatOutside) {
+						const Chunk &otherChunk = *chunks[DIR_TO_BIG_CUBE_CYCLE_INDEX[d]];
+						thatType = otherChunk.getBlocks()[i - dimFlipIndexDiff];
+						if (thatType != 0) {
+							if (!thisOutside)
 								i++;
 							continue;
-						//}
+						}
 					} else
 						thatType = blocks[ni++];
 
-					if (x == -1 || y == -1 || z == -1) {
-						thisType = 0;//client->getWorld()->getBlock(cc * Chunk::WIDTH + vec3i64(x, y, z));
-						//if (thisType != 0)
+					if (thisOutside) {
+						const Chunk &otherChunk = *chunks[DIR_TO_BIG_CUBE_CYCLE_INDEX[d + 3]];
+						thisType = otherChunk.getBlocks()[ni - 1 + dimFlipIndexDiff];
+						if (thisType != 0)
 							continue;
 					} else {
 						thisType = blocks[i++];
@@ -364,28 +431,33 @@ void GL3ChunkRenderer::buildChunk(const Chunk &c) {
 
 						uint8 corners = 0;
 						for (int j = 0; j < 8; ++j) {
-							vec3i64 v = EIGHT_CYCLES_3D[faceDir][j].cast<int64>();
+							vec3i64 v = DIR_QUAD_EIGHT_NEIGHBOR_CYCLES[faceDir][j].cast<int64>();
 							vec3i64 dIcc = faceBlock + v;
-							uint8 cornerBlock;
-							if (		dIcc[0] < 0 || dIcc[0] >= (int) Chunk::WIDTH
-									||	dIcc[1] < 0 || dIcc[1] >= (int) Chunk::WIDTH
-									||	dIcc[2] < 0 || dIcc[2] >= (int) Chunk::WIDTH)
-								cornerBlock = 0;//client->getWorld()->getBlock(cc * Chunk::WIDTH + dIcc);
-							else
-								cornerBlock = c.getBlock(dIcc.cast<uint8>());
-							if (cornerBlock) {
+							vec3i8 ncc(0, 0, 0);
+							for (int i = 0; i < 3; i++) {
+								if (dIcc[i] < 0) {
+									ncc[i] = -1;
+									dIcc[i] += Chunk::WIDTH;
+								} else if (dIcc[i] >= (int) Chunk::WIDTH) {
+									ncc[i] = 1;
+									dIcc[i] -= Chunk::WIDTH;
+								}
+							}
+							const Chunk &otherChunk = *chunks[vec2BigCubeCycleIndex(ncc)];
+							uint8 cornerBlock = otherChunk.getBlock(dIcc.cast<uint8>());
+							if (cornerBlock != 0) {
 								corners |= 1 << j;
 							}
 						}
-						vec3i64 bc = c.getCC() * c.WIDTH + faceBlock.cast<int64>();
+						vec3i64 bc = chunk.getCC() * chunk.WIDTH + faceBlock.cast<int64>();
 
 						ushort posIndices[4];
 						uchar shadowCombination = 0;
 						for (int j = 0; j < 4; j++) {
 							int shadowLevel = 0;
-							bool s1 = (corners & FACE_CORNER_MASK[j][0]) > 0;
-							bool s2 = (corners & FACE_CORNER_MASK[j][2]) > 0;
-							bool m = (corners & FACE_CORNER_MASK[j][1]) > 0;
+							bool s1 = (corners & QUAD_CORNER_MASK[j][0]) > 0;
+							bool s2 = (corners & QUAD_CORNER_MASK[j][2]) > 0;
+							bool m = (corners & QUAD_CORNER_MASK[j][1]) > 0;
 							if (s1)
 								shadowLevel++;
 							if (s2)
@@ -393,7 +465,7 @@ void GL3ChunkRenderer::buildChunk(const Chunk &c) {
 							if (m || (s1 && s2))
 								shadowLevel++;
 							shadowCombination |= shadowLevel << 2 * j;
-							vec3ui8 vertex = faceBlock.cast<uint8>() + QUAD_CYCLES_3D[faceDir][j].cast<uint8>();
+							vec3ui8 vertex = faceBlock.cast<uint8>() + DIR_QUAD_CORNER_CYCLES_3D[faceDir][j].cast<uint8>();
 							posIndices[j] = (vertex[2] * (Chunk::WIDTH + 1) + vertex[1]) * (Chunk::WIDTH + 1) + vertex[0];
 						}
 						int indices[6] = {0, 1, 2, 2, 3, 0};
@@ -427,4 +499,19 @@ bool GL3ChunkRenderer::inFrustum(vec3i64 cc, vec3i64 pos, vec3d lookDir) {
 	vec3d orthoChunkPos = cp - lookDir * chunkLookDist;
 	double orthoChunkDist = max(0.0, orthoChunkPos.norm() - chunkDia);
 	return atan(orthoChunkDist / chunkLookDist) <= renderer->getMaxFOV() / 2;
+}
+
+ChunkRendererDebugInfo GL3ChunkRenderer::getDebugInfo() {
+	ChunkRendererDebugInfo info;
+	info.newFaces = newFaces;
+	info.newChunks = newChunks;
+	info.totalFaces = faces;
+	info.visibleChunks = visibleChunks;
+	info.visibleFaces = visibleFaces;
+	info.chunkMapSize = chunkMap.size();
+	info.holdChunks = holdChunks;
+	info.renderQueueSize = renderQueue.size();
+	info.requestQueueSize = toRequest.size();
+
+	return info;
 }

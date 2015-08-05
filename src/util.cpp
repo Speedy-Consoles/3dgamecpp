@@ -18,7 +18,7 @@ const int OTHER_DIR_DIMS[6][2] = {
 	{ 1, 2 }, { 2, 0 }, { 0, 1 }
 };
 
-const vec3i QUAD_CYCLES_3D[6][4] = {
+const vec3i DIR_QUAD_CORNER_CYCLES_3D[6][4] = {
 	{{ 1, 0, 0 }, { 1, 1, 0 }, { 1, 1, 1 }, { 1, 0, 1 }}, // right
 	{{ 1, 1, 0 }, { 0, 1, 0 }, { 0, 1, 1 }, { 1, 1, 1 }}, // back
 	{{ 0, 0, 1 }, { 1, 0, 1 }, { 1, 1, 1 }, { 0, 1, 1 }}, // top
@@ -27,9 +27,9 @@ const vec3i QUAD_CYCLES_3D[6][4] = {
 	{{ 1, 0, 0 }, { 0, 0, 0 }, { 0, 1, 0 }, { 1, 1, 0 }}, // bottom
 };
 
-const vec2i QUAD_CYCLE_2D[4] = {{ 0, 0 }, { 1, 0 }, { 1, 1 }, { 0, 1 }};
+const vec2i QUAD_CORNER_CYCLE[4] = {{ 0, 0 }, { 1, 0 }, { 1, 1 }, { 0, 1 }};
 
-const vec3i EIGHT_CYCLES_3D[6][8] = {
+const vec3i DIR_QUAD_EIGHT_NEIGHBOR_CYCLES[6][8] = {
 	{{ 1,-1,-1 }, { 1, 0,-1 }, { 1, 1,-1 }, { 1, 1, 0 }, { 1, 1, 1 }, { 1, 0, 1 }, { 1,-1, 1 }, { 1,-1, 0 }},
 	{{ 1, 1,-1 }, { 0, 1,-1 }, {-1, 1,-1 }, {-1, 1, 0 }, {-1, 1, 1 }, { 0, 1, 1 }, { 1, 1, 1 }, { 1, 1, 0 }},
 	{{-1,-1, 1 }, { 0,-1, 1 }, { 1,-1, 1 }, { 1, 0, 1 }, { 1, 1, 1 }, { 0, 1, 1 }, {-1, 1, 1 }, {-1, 0, 1 }},
@@ -38,14 +38,14 @@ const vec3i EIGHT_CYCLES_3D[6][8] = {
 	{{ 1,-1,-1 }, { 0,-1,-1 }, {-1,-1,-1 }, {-1, 0,-1 }, {-1, 1,-1 }, { 0, 1,-1 }, { 1, 1,-1 }, { 1, 0,-1 }}
 };
 
-const uint8 FACE_CORNER_MASK[4][3] = {
+const uint8 QUAD_CORNER_MASK[4][3] = {
 	{0x80, 0x01, 0x02},
 	{0x02, 0x04, 0x08},
 	{0x08, 0x10, 0x20},
 	{0x20, 0x40, 0x80},
 };
 
-const vec3i8 NINE_CUBE_CYCLE[27] = {
+const vec3i8 BIG_CUBE_CYCLE[27] = {
 	{-1,-1,-1 }, { 0,-1,-1 }, { 1,-1,-1 },
 	{-1, 0,-1 }, { 0, 0,-1 }, { 1, 0,-1 },
 	{-1, 1,-1 }, { 0, 1,-1 }, { 1, 1,-1 },
@@ -57,14 +57,14 @@ const vec3i8 NINE_CUBE_CYCLE[27] = {
 	{-1, 1, 1 }, { 0, 1, 1 }, { 1, 1, 1 }
 };
 
-const vec3i8 CUBE_CYCLE[8] = {
+const vec3i8 CUBE_CORNER_CYCLE[8] = {
 	{ 0, 0, 0 }, { 1, 0, 0 }, { 1, 1, 0 }, { 0, 1, 0 },
 	{ 0, 1, 1 }, { 1, 1, 1 }, { 1, 0, 1 }, { 0, 0, 1 }
 };
 
-const size_t DIR_2_CUBE_CYCLE[6] = { 14, 16, 22, 12, 10, 4 };
+const size_t DIR_TO_BIG_CUBE_CYCLE_INDEX[6] = { 14, 16, 22, 12, 10, 4 };
 
-const size_t BASE_NINE_CUBE_CYCLE = 13;
+const size_t BIG_CUBE_CYCLE_BASE_INDEX = 13;
 
 std::vector<vec3i8> LOADING_ORDER;
 std::vector<int> LOADING_ORDER_DISTANCE_INDICES;
@@ -73,7 +73,7 @@ int getDir(int dim, int sign) {
 	return dim - 3 * ((sign - 1) / 2);
 }
 
-size_t vec2CubeCycle(vec3i8 v) {
+size_t vec2BigCubeCycleIndex(vec3i8 v) {
 	return (v[2] + 1) * 9 + (v[1] + 1) * 3 + v[0] + 1;
 }
 

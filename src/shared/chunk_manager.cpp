@@ -55,13 +55,11 @@ void ChunkManager::run() {
 		if(inQueue.pop(r)) {
 			Chunk *chunk = new Chunk(r.chunkCoords);
 			if (archive.loadChunk(*chunk)) {
-				chunk->makePassThroughs();
-				shared_ptr<const Chunk> sp(chunk);
-				while(!outQueues[r.listenerId]->push(sp)) {
-					sleepFor(millis(50));
-				}
-			} else {
-				delete chunk;
+			}
+			chunk->makePassThroughs();
+			shared_ptr<const Chunk> sp(chunk);
+			while(!outQueues[r.listenerId]->push(sp)) {
+				sleepFor(millis(50));
 			}
 		} else {
 			sleepFor(millis(100));

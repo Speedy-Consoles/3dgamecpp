@@ -257,7 +257,7 @@ void GL2ChunkRenderer::renderChunk(Chunk &c) {
 
 						uint8 corners = 0;
 						for (int j = 0; j < 8; ++j) {
-							vec3i64 v = EIGHT_CYCLES_3D[faceDir][j].cast<int64>();
+							vec3i64 v = DIR_QUAD_EIGHT_NEIGHBOR_CYCLES[faceDir][j].cast<int64>();
 							vec3i64 dIcc = faceBlock + v;
 							uint8 cornerBlock;
 							if (		dIcc[0] < 0 || dIcc[0] >= (int) Chunk::WIDTH
@@ -286,9 +286,9 @@ void GL2ChunkRenderer::renderChunk(Chunk &c) {
 							vb[n].tex[j][0] = texs[j][0];
 							vb[n].tex[j][1] = texs[j][1];
 							double light = 1.0;
-							bool s1 = (corners & FACE_CORNER_MASK[j][0]) > 0;
-							bool s2 = (corners & FACE_CORNER_MASK[j][2]) > 0;
-							bool m = (corners & FACE_CORNER_MASK[j][1]) > 0;
+							bool s1 = (corners & QUAD_CORNER_MASK[j][0]) > 0;
+							bool s2 = (corners & QUAD_CORNER_MASK[j][2]) > 0;
+							bool m = (corners & QUAD_CORNER_MASK[j][1]) > 0;
 							if (s1)
 								light -= 0.2;
 							if (s2)
@@ -298,7 +298,7 @@ void GL2ChunkRenderer::renderChunk(Chunk &c) {
 							vb[n].color[j][0] = light;
 							vb[n].color[j][1] = light;
 							vb[n].color[j][2] = light;
-							vec3f vertex = (faceBlock.cast<int>() + QUAD_CYCLES_3D[faceDir][j]).cast<float>();
+							vec3f vertex = (faceBlock.cast<int>() + DIR_QUAD_CORNER_CYCLES_3D[faceDir][j]).cast<float>();
 							vb[n].vertex[j][0] = vertex[0];
 							vb[n].vertex[j][1] = vertex[1];
 							vb[n].vertex[j][2] = vertex[2];
@@ -375,16 +375,16 @@ void GL2ChunkRenderer::renderTarget() {
 			for (int j = 0; j < 4; j++) {
 				vec3d dirOff = DIRS[d].cast<double>() * 0.0005;
 				vec3d vOff[4];
-				vOff[0] = QUAD_CYCLES_3D[d][j].cast<double>() - pointFive;
+				vOff[0] = DIR_QUAD_CORNER_CYCLES_3D[d][j].cast<double>() - pointFive;
 				vOff[0][OTHER_DIR_DIMS[d][0]] *= 1.001;
 				vOff[0][OTHER_DIR_DIMS[d][1]] *= 1.001;
-				vOff[1] = QUAD_CYCLES_3D[d][j].cast<double>() - pointFive;
+				vOff[1] = DIR_QUAD_CORNER_CYCLES_3D[d][j].cast<double>() - pointFive;
 				vOff[1][OTHER_DIR_DIMS[d][0]] *= 0.97;
 				vOff[1][OTHER_DIR_DIMS[d][1]] *= 0.97;
-				vOff[2] = QUAD_CYCLES_3D[d][(j + 3) % 4].cast<double>() - pointFive;
+				vOff[2] = DIR_QUAD_CORNER_CYCLES_3D[d][(j + 3) % 4].cast<double>() - pointFive;
 				vOff[2][OTHER_DIR_DIMS[d][0]] *= 0.97;
 				vOff[2][OTHER_DIR_DIMS[d][1]] *= 0.97;
-				vOff[3] = QUAD_CYCLES_3D[d][(j + 3) % 4].cast<double>() - pointFive;
+				vOff[3] = DIR_QUAD_CORNER_CYCLES_3D[d][(j + 3) % 4].cast<double>() - pointFive;
 				vOff[3][OTHER_DIR_DIMS[d][0]] *= 1.001;
 				vOff[3][OTHER_DIR_DIMS[d][1]] *= 1.001;
 
@@ -418,11 +418,11 @@ void GL2ChunkRenderer::renderPlayers() {
 			glNormal3d(dir[0], dir[1], dir[2]);
 			for (int j = 0; j < 4; j++) {
 				vec3i off(
-					(QUAD_CYCLES_3D[d][j][0] * 2 - 1) * Player::RADIUS,
-					(QUAD_CYCLES_3D[d][j][1] * 2 - 1) * Player::RADIUS,
-					QUAD_CYCLES_3D[d][j][2] * Player::HEIGHT - Player::EYE_HEIGHT
+					(DIR_QUAD_CORNER_CYCLES_3D[d][j][0] * 2 - 1) * Player::RADIUS,
+					(DIR_QUAD_CORNER_CYCLES_3D[d][j][1] * 2 - 1) * Player::RADIUS,
+					DIR_QUAD_CORNER_CYCLES_3D[d][j][2] * Player::HEIGHT - Player::EYE_HEIGHT
 				);
-				glTexCoord2d(QUAD_CYCLE_2D[j][0], QUAD_CYCLE_2D[j][1]);
+				glTexCoord2d(QUAD_CORNER_CYCLE[j][0], QUAD_CORNER_CYCLE[j][1]);
 				vec3d vertex = (pos + off.cast<int64>()).cast<double>() * (1.0 / RESOLUTION);
 				glVertex3d(vertex[0], vertex[1], vertex[2]);
 			}

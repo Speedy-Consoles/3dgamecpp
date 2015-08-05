@@ -59,8 +59,8 @@ void Player::collide() {
 		double lowestDist = std::numeric_limits<double>::infinity();
 		for (int i = 0; i < 12; i++) {
 			vec3i corner(
-				QUAD_CYCLE_2D[i % 4][0],
-				QUAD_CYCLE_2D[i % 4][1],
+				QUAD_CORNER_CYCLE[i % 4][0],
+				QUAD_CORNER_CYCLE[i % 4][1],
 				min(1, i / 4)
 			);
 			vec3i off(
@@ -283,8 +283,8 @@ bool Player::isGrounded() const {
 		return false;
 	for (int i = 0; i < 4; i++) {
 		vec3i off = vec3i(
-			(QUAD_CYCLE_2D[i % 4][0] * 2 - 1) * RADIUS,
-			(QUAD_CYCLE_2D[i % 4][1] * 2 - 1) * RADIUS,
+			(QUAD_CORNER_CYCLE[i % 4][0] * 2 - 1) * RADIUS,
+			(QUAD_CORNER_CYCLE[i % 4][1] * 2 - 1) * RADIUS,
 			-EYE_HEIGHT - 1
 		);
 		vec3i64 corner = pos + off.cast<int64>();

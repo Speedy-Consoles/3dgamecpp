@@ -9,14 +9,15 @@ extern const vec3i8 DIRS[6];
 extern const int DIR_DIMS[6];
 extern const int OTHER_DIR_DIMS[6][2];
 
-extern const vec3i QUAD_CYCLES_3D[6][4];
-extern const vec2i QUAD_CYCLE_2D[4];
-extern const vec3i EIGHT_CYCLES_3D[6][8];
-extern const uint8 FACE_CORNER_MASK[4][3];
-extern const vec3i8 NINE_CUBE_CYCLE[27];
-extern const vec3i8 CUBE_CYCLE[8];
-extern const size_t DIR_2_CUBE_CYCLE[6];
-extern const size_t BASE_NINE_CUBE_CYCLE;
+extern const vec3i DIR_QUAD_CORNER_CYCLES_3D[6][4];
+extern const vec2i QUAD_CORNER_CYCLE[4];
+extern const vec3i DIR_QUAD_EIGHT_NEIGHBOR_CYCLES[6][8];
+extern const vec3i8 CUBE_CORNER_CYCLE[8];
+extern const vec3i8 BIG_CUBE_CYCLE[27];
+extern const size_t DIR_TO_BIG_CUBE_CYCLE_INDEX[6];
+extern const size_t BIG_CUBE_CYCLE_BASE_INDEX;
+
+extern const uint8 QUAD_CORNER_MASK[4][3];
 
 const uint8 TEST_CORNERS[6] { 0x07, 0xC1, 0x00, 0xC1, 0x07, 0x00 };
 
@@ -27,7 +28,7 @@ template <typename T> int sgn(T val) {return (T(0) < val) - (val < T(0));}
 
 int getDir(int dim, int sign);
 
-size_t vec2CubeCycle(vec3i8 v);
+size_t vec2BigCubeCycleIndex(vec3i8 v);
 
 vec3d getVectorFromAngles(double yaw, double pitch);
 
