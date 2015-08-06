@@ -167,6 +167,8 @@ void GL3Renderer::setConf(const GraphicsConf &conf, const GraphicsConf &old) {
 	bool fog = conf.fog == Fog::FANCY || conf.fog == Fog::FAST;
 	defaultShader.setFogEnabled(fog);
 	blockShader.setFogEnabled(fog);
+
+	chunkRenderer.setConf(conf, old);
 }
 
 void GL3Renderer::tick() {

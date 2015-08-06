@@ -87,7 +87,7 @@ private:
 	bool inFrustum(vec3i64 cc, vec3i64 pos, vec3d lookDir);
 
 	void destroyRenderDistanceDependent();
-	void initRenderDistanceDependent();
+	void initRenderDistanceDependent(int renderDistance);
 };
 
 #endif // GL3_CHUNK_RENDERER_HPP_
