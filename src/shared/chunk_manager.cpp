@@ -1,10 +1,15 @@
 #include "chunk_manager.hpp"
 #include "engine/logging.hpp"
 #include "engine/time.hpp"
+#include "client/client.hpp"
+#include "client/server_interface.hpp"
 
 using namespace std;
 
-ChunkManager::ChunkManager() : chunkListeners(0, vec3i64HashFunc), inQueue(1024), archive("./region/") {
+ChunkManager::ChunkManager(Client *client) :
+	inQueue(1024),
+	client(client)
+{
 	for (int i = 0; i < MAX_LISTENERS; i++) {
 		outQueues[i] = new ProducerQueue<shared_ptr<const Chunk>>(1024);
 	}
@@ -52,13 +57,13 @@ void ChunkManager::run() {
 
 		//FOR NOW:
 		Request r;
-		if(inQueue.pop(r)) {
-			Chunk *chunk = new Chunk(r.chunkCoords);
-			if (archive.loadChunk(*chunk)) {
-			}
+		if (inQueue.pop(r)) {
+			// TODO this part is, like, totally hacky
+			client->getServerInterface()->requestChunk(r.chunkCoords);
+			Chunk *chunk = client->getServerInterface()->getNextChunk();
 			chunk->makePassThroughs();
 			shared_ptr<const Chunk> sp(chunk);
-			while(!outQueues[r.listenerId]->push(sp)) {
+			while (!outQueues[r.listenerId]->push(sp)) {
 				sleepFor(millis(50));
 			}
 		} else {

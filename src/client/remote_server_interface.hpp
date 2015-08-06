@@ -14,7 +14,7 @@
 class RemoteServerInterface : public ServerInterface {
 private:
 	uint8 localPlayerId;
-	World *world;
+	Client *client;
 
 	Time timeout = seconds(10); // 10 seconds
 
@@ -32,7 +32,7 @@ private:
 	int moveInput = 0;
 
 public:
-	RemoteServerInterface(World *world, const char *address, const GraphicsConf &conf);
+	RemoteServerInterface(Client *client, const char *address);
 
 	~RemoteServerInterface();
 
@@ -43,19 +43,20 @@ public:
 	void setPlayerMoveInput(int moveInput) override;
 
 	void setPlayerOrientation(double yaw, double pitch) override;
-	void setBlock(uint8 block) override;
+	void setSelectedBlock(uint8 block) override;
 
-	void edit(vec3i64 bc, uint8 type) override;
+	void placeBlock(vec3i64 bc, uint8 type) override;
 
-	void receive(uint64 timeLimit) override;
+	void receive() override;
 
-	void sendInput() override;
+	void send() override;
 
 	void setConf(const GraphicsConf &, const GraphicsConf &) override;
 
 	int getLocalClientId() override;
 
-	void stop() override;
+	void requestChunk(vec3i64 cc) override {}
+	Chunk *getNextChunk() override { return nullptr; }
 
 private:
 	void asyncConnect(std::string address);

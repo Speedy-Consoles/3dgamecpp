@@ -16,7 +16,6 @@
 #include "engine/time.hpp"
 #include "game/world.hpp"
 #include "game/block_manager.hpp"
-#include "shared/chunk_manager.hpp"
 #include "menu.hpp"
 #include "gui/frame.hpp"
 #include "engine/logging.hpp"
@@ -70,7 +69,7 @@ Client::Client(const char *worldId, const char *serverAdress) {
 	}
 	LOG(INFO, "" << blockManager->getNumberOfBlocks() << " blocks were loaded from '" << block_ids_file << "'");
 
-	chunkManager = std::unique_ptr<ChunkManager>(new ChunkManager());
+	chunkManager = std::unique_ptr<ChunkManager>(new ChunkManager(this));
 	world = std::unique_ptr<World>(new World(worldId, chunkManager.get()));
 	menu = std::unique_ptr<Menu>(new Menu(this));
 	graphics = std::unique_ptr<Graphics>(new Graphics(this, &state));
@@ -78,20 +77,16 @@ Client::Client(const char *worldId, const char *serverAdress) {
 
 	if (serverAdress) {
 		LOG(INFO, "Connecting to remote server '" << serverAdress << "'");
-		serverInterface = std::unique_ptr<RemoteServerInterface>(new RemoteServerInterface(world.get(), serverAdress, *_conf));
+		serverInterface = std::unique_ptr<RemoteServerInterface>(new RemoteServerInterface(this, serverAdress));
 	} else {
 		LOG(INFO, "Connecting to local server");
-		serverInterface = std::unique_ptr<LocalServerInterface>(new LocalServerInterface(world.get(), 42, *_conf));
+		serverInterface = std::unique_ptr<LocalServerInterface>(new LocalServerInterface(this, 42));
 	}
 }
 
 Client::~Client() {
 	// delete graphics so the window closes quickly
 	graphics.reset();
-
-	// world must be deleted before server interface
-	world.reset();
-	serverInterface.reset();
 
 	store("graphics-default.profile", *_conf);
 }
@@ -119,12 +114,12 @@ void Client::run() {
 
 		if (state == State::PLAYING) {
 			stopwatch->start(CLOCK_NET);
-			serverInterface->sendInput();
+			serverInterface->send();
 			stopwatch->stop(CLOCK_NET);
 		}
 		if (state == State::PLAYING || state == State::IN_MENU) {
 			stopwatch->start(CLOCK_NET);
-			serverInterface->receive(time + 200000);
+			serverInterface->receive();
 			stopwatch->stop(CLOCK_NET);
 
 			stopwatch->start(CLOCK_TIC);
@@ -147,7 +142,6 @@ void Client::run() {
 		stopwatch->stop(CLOCK_SYN);
 		tick++;
 	}
-	serverInterface->stop();
 	chunkManager->wait();
 }
 
@@ -179,7 +173,7 @@ void Client::handleInput() {
 				while (block < 1) {
 					block += NUMBER_OF_BLOCKS;
 				}
-				serverInterface->setBlock(block);
+				serverInterface->setSelectedBlock(block);
 			}
 			break;
 		}
@@ -330,9 +324,9 @@ void Client::handleInput() {
 				if (target) {
 					if (event.button.button == SDL_BUTTON_LEFT) {
 						vec3i64 rbc = bc + DIRS[d].cast<int64>();
-						serverInterface->edit(rbc, player.getBlock());
+						serverInterface->placeBlock(rbc, player.getBlock());
 					} else if (event.button.button == SDL_BUTTON_RIGHT) {
-						serverInterface->edit(bc, 0);
+						serverInterface->placeBlock(bc, 0);
 					}
 				}
 			} else if (state == State::IN_MENU){

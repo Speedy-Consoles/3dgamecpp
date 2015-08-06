@@ -12,6 +12,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\client\bmfont.cpp" />
+    <ClCompile Include="..\..\src\client\chunk_renderer.cpp" />
     <ClCompile Include="..\..\src\client\gl2_chunk_renderer.cpp" />
     <ClCompile Include="..\..\src\client\gl2_debug_renderer.cpp" />
     <ClCompile Include="..\..\src\client\gl2_hud_renderer.cpp" />
@@ -40,6 +41,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\client\bmfont.hpp" />
+    <ClInclude Include="..\..\src\client\chunk_renderer.hpp" />
     <ClInclude Include="..\..\src\client\gl2_chunk_renderer.hpp" />
     <ClInclude Include="..\..\src\client\gl2_debug_renderer.hpp" />
     <ClInclude Include="..\..\src\client\gl2_hud_renderer.hpp" />

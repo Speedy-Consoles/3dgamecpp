@@ -3,6 +3,7 @@
 #include <thread>
 
 #include "engine/logging.hpp"
+#include "client.hpp"
 
 #undef DEFAULT_LOGGER
 #define DEFAULT_LOGGER NAMED_LOGGER("remote")
@@ -11,8 +12,8 @@ using namespace std;
 using namespace boost;
 using namespace boost::asio::ip;
 
-RemoteServerInterface::RemoteServerInterface(World *world, const char *address, const GraphicsConf &conf) :
-		world(world),
+RemoteServerInterface::RemoteServerInterface(Client *client, const char *address) :
+		client(client),
 		ios(),
 		w(new boost::asio::io_service::work(ios)),
 		socket(ios),
@@ -84,8 +85,8 @@ void RemoteServerInterface::asyncConnect(std::string address) {
 			switch (smsg.type) {
 			case CONNECTION_ACCEPTED:
 				localPlayerId = smsg.conAccepted.id;
-				this->world->addPlayer(localPlayerId);
-				this->world->getPlayer(localPlayerId).setFly(true);
+				client->getWorld()->addPlayer(localPlayerId);
+				client->getWorld()->getPlayer(localPlayerId).setFly(true);
 				status = CONNECTED;
 				LOG(INFO, "Connected to " << ep.address().to_string());
 				break;
@@ -148,15 +149,15 @@ void RemoteServerInterface::setPlayerOrientation(double yaw, double pitch) {
 
 }
 
-void RemoteServerInterface::setBlock(uint8 block) {
+void RemoteServerInterface::setSelectedBlock(uint8 block) {
 
 }
 
-void RemoteServerInterface::edit(vec3i64 bc, uint8 type) {
+void RemoteServerInterface::placeBlock(vec3i64 bc, uint8 type) {
 
 }
 
-void RemoteServerInterface::receive(uint64 timeLimit) {
+void RemoteServerInterface::receive() {
 	if (status != CONNECTED)
 		return;
 	Socket::ErrorCode error;
@@ -171,7 +172,7 @@ void RemoteServerInterface::receive(uint64 timeLimit) {
 		case PLAYER_SNAPSHOT:
 			// TODO also update other values
 			printf("snapshot: %d\n", smsg.playerSnapshot.snapshot.moveInput);
-			world->getPlayer(smsg.playerSnapshot.id).setMoveInput(smsg.playerSnapshot.snapshot.moveInput);
+			client->getWorld()->getPlayer(smsg.playerSnapshot.id).setMoveInput(smsg.playerSnapshot.snapshot.moveInput);
 			break;
 		default:
 			printf("eh?\n");
@@ -184,7 +185,7 @@ void RemoteServerInterface::receive(uint64 timeLimit) {
 	}
 }
 
-void RemoteServerInterface::sendInput() {
+void RemoteServerInterface::send() {
 	if (status != CONNECTED)
 		return;
 	{
@@ -212,9 +213,5 @@ void RemoteServerInterface::setConf(const GraphicsConf &conf, const GraphicsConf
 
 int RemoteServerInterface::getLocalClientId() {
 	return localPlayerId;
-}
-
-void RemoteServerInterface::stop() {
-
 }
 

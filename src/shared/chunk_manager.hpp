@@ -12,6 +12,8 @@
 #include "io/archive.hpp"
 #include "game/chunk.hpp"
 
+class Client;
+
 enum {
 	GRAPHICS_LISTENER_ID = 0,
 	WORLD_LISTENER_ID,
@@ -24,16 +26,16 @@ class ChunkManager {
 		int listenerId;
 	};
 
-	std::unordered_map<vec3i64, int, size_t(*)(vec3i64)> chunkListeners;
 	ProducerQueue<std::shared_ptr<const Chunk>> *outQueues[MAX_LISTENERS];
 	ProducerQueue<Request> inQueue;
-	ChunkArchive archive;
 
 	std::atomic<bool> shouldHalt;
 	std::future<void> fut;
 
+	Client *client = nullptr;
+
 public:
-	ChunkManager();
+	ChunkManager(Client *client);
 	~ChunkManager();
 
 	void dispatch();

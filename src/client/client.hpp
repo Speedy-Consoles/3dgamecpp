@@ -15,6 +15,7 @@ class Graphics;
 struct GraphicsConf;
 class Stopwatch;
 class BlockManager;
+class ChunkManager;
 
 class Client {
 public:

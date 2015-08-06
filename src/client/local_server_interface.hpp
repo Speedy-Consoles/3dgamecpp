@@ -3,39 +3,42 @@
 
 #include "server_interface.hpp"
 #include "game/world.hpp"
+#include "game/world_generator.hpp"
 #include "io/chunk_loader.hpp"
-
+#include "client.hpp"
 class LocalServerInterface : public ServerInterface {
-private:
-	World *world;
+	Client *client;
 	Player *player;
-	ChunkLoader *chunkLoader;
+
+	WorldGenerator worldGenerator;
+	ChunkArchive archive;
+	std::queue<Chunk *> chunkQueue;
 
 public:
-	LocalServerInterface(World *world, uint64 seed, const GraphicsConf &conf);
-
+	LocalServerInterface(Client * client, uint64 seed);
 	~LocalServerInterface();
 
+	// query
 	Status getStatus() override;
-
-	void toggleFly() override;
-
-	void setPlayerMoveInput(int moveInput) override;
-
-	void setPlayerOrientation(double yaw, double pitch) override;
-	void setBlock(uint8 block) override;
-
-	void edit(vec3i64 bc, uint8 type) override;
-
-	void receive(uint64 timeLimit) override;
-
-	void sendInput() override;
+	int getLocalClientId() override;
 
 	void setConf(const GraphicsConf &, const GraphicsConf &) override;
 
-	int getLocalClientId() override;
+	// networking
+	void send() override;
+	void receive() override;
 
-	void stop() override;
+	// player actions
+	void setPlayerMoveInput(int moveInput) override;
+	void setPlayerOrientation(double yaw, double pitch) override;
+
+	void setSelectedBlock(uint8 block) override;
+	void placeBlock(vec3i64 bc, uint8 type) override;
+	void toggleFly() override;
+	
+	// chunks
+	void requestChunk(vec3i64 cc) override;
+	Chunk *getNextChunk() override;
 };
 
 #endif // LOCAL_SERVER_INTERFACE_HPP

@@ -4,26 +4,37 @@
 
 #include "engine/logging.hpp"
 
-LocalServerInterface::LocalServerInterface(World *world, uint64 seed, const GraphicsConf &conf) {
-	this->world = world;
-	this->world->addPlayer(0);
-	player = &world->getPlayer(0);
-	chunkLoader = new ChunkLoader(world, seed, getLocalClientId());
-	chunkLoader->setRenderDistance(conf.render_distance);
-	//chunkLoader->dispatch();
+LocalServerInterface::LocalServerInterface(Client *client, uint64 seed) :
+	client(client),
+	archive((std::string("./") + client->getWorld()->getId() + "/").c_str()),
+	worldGenerator(seed)
+{
+	client->getWorld()->addPlayer(0);
+	player = &client->getWorld()->getPlayer(0);
 }
 
-
 LocalServerInterface::~LocalServerInterface() {
-	delete chunkLoader;
+	client->getWorld()->deletePlayer(0);
 }
 
 ServerInterface::Status LocalServerInterface::getStatus() {
 	return CONNECTED;
 }
 
-void LocalServerInterface::toggleFly() {
-	player->setFly(!player->getFly());
+int LocalServerInterface::getLocalClientId() {
+	return 0;
+}
+
+void LocalServerInterface::setConf(const GraphicsConf &conf, const GraphicsConf &old) {
+	// nothing
+}
+
+void LocalServerInterface::receive() {
+	// nothing
+}
+
+void LocalServerInterface::send() {
+	// nothing
 }
 
 void LocalServerInterface::setPlayerMoveInput(int moveInput) {
@@ -35,52 +46,32 @@ void LocalServerInterface::setPlayerOrientation(double yaw, double pitch) {
 	player->setOrientation(yaw, pitch);
 }
 
-void LocalServerInterface::setBlock(uint8 block) {
+void LocalServerInterface::setSelectedBlock(uint8 block) {
 	player->setBlock(block);
 }
 
-void LocalServerInterface::edit(vec3i64 bc, uint8 type) {
-	//world->setBlock(bc, type, true);
+void LocalServerInterface::placeBlock(vec3i64 bc, uint8 type) {
 	//TODO
-}
-
-void LocalServerInterface::receive(uint64 timeLimit) {
-//	Chunk *chunk = nullptr;
-//	while ((chunk = chunkLoader->getNextLoadedChunk()) != nullptr) {
-//		world->insertChunk(chunk);
-//	}
-//
-//	auto unloadQueries = chunkLoader->getUnloadQueries();
-//	while (unloadQueries)
-//	{
-//		Chunk *chunk = world->removeChunk(unloadQueries->data);
-//		chunk->free();
-//		auto tmp = unloadQueries->next;
-//		delete unloadQueries;
-//		unloadQueries = tmp;
-//	}
-}
-
-void LocalServerInterface::sendInput() {
 
 }
 
-void LocalServerInterface::setConf(const GraphicsConf &conf, const GraphicsConf &old) {
-//	if (conf.render_distance != old.render_distance) {
-//		chunkLoader->setRenderDistance(conf.render_distance);
-//		world->clearChunks();
-//		while (chunkLoader->getRenderDistance() != conf.render_distance)
-//			std::this_thread::yield();
-//		LOG(INFO, "render distance was set by chunk loader");
-//	}
+void LocalServerInterface::toggleFly() {
+	player->setFly(!player->getFly());
 }
 
-int LocalServerInterface::getLocalClientId() {
-	return 0;
+void LocalServerInterface::requestChunk(vec3i64 cc) {
+	Chunk *chunk = new Chunk(cc);
+	if (!chunk) {
+		LOG(ERROR, "Chunk allocation failed");
+	}
+	if (!archive.loadChunk(*chunk)) {
+		worldGenerator.generateChunk(*chunk);
+	}
+	chunkQueue.push(chunk);
 }
 
-void LocalServerInterface::stop() {
-//	chunkLoader->wait();
-	world->deletePlayer(0);
+Chunk *LocalServerInterface::getNextChunk() {
+	Chunk *chunk = chunkQueue.front();
+	chunkQueue.pop();
+	return chunk;
 }
-
