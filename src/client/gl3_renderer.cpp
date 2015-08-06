@@ -44,12 +44,15 @@ GL3Renderer::GL3Renderer(Client *client) :
 	// fog
 	auto endFog = (client->getConf().render_distance - 1) * Chunk::WIDTH;
 	auto startFog = (client->getConf().render_distance - 1) * Chunk::WIDTH * 1 / 2.0;
+	bool fog = client->getConf().fog == Fog::FANCY || client->getConf().fog == Fog::FAST;
 
 	defaultShader.setEndFogDistance(endFog);
 	defaultShader.setStartFogDistance(startFog);
+	defaultShader.setFogEnabled(fog);
 
 	blockShader.setEndFogDistance(endFog);
 	blockShader.setStartFogDistance(startFog);
+	blockShader.setFogEnabled(fog);
 
 	// sky
 	makeSkyFbo();
