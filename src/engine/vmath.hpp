@@ -17,7 +17,7 @@ class vec {
 public:
 	// constructor
 	vec() = default;
-	vec(T t);
+	explicit vec(T t);
 
 	// manipulation
 	void applyPW(T (*)(T));
@@ -71,7 +71,7 @@ template <typename T>
 class vec2 : public vec<T, 2, vec2> {
 public:
 	vec2() = default;
-	vec2(T t) : vec<T, 2, ::vec2>::vec(t) {}
+	explicit vec2(T t) : vec<T, 2, ::vec2>::vec(t) {}
 	vec2(T t1, T t2);
 };
 
@@ -79,7 +79,7 @@ template <typename T>
 class vec3 : public vec<T, 3, vec3> {
 public:
 	vec3() = default;
-	vec3(T t) : vec<T, 3, ::vec3>::vec(t) {};
+	explicit vec3(T t) : vec<T, 3, ::vec3>::vec(t) {};
 	vec3(T t1, T t2, T t3);
 };
 
@@ -87,7 +87,7 @@ template <typename T>
 class vec4 : public vec<T, 4, vec4> {
 public:
 	vec4() = default;
-	vec4(T t) : vec<T, 4, ::vec4>::vec(t) {};
+	explicit vec4(T t) : vec<T, 4, ::vec4>::vec(t) {};
 	vec4(T t1, T t2, T t3, T t4);
 };
 

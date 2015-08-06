@@ -18,7 +18,7 @@ texture file="img/lbpr-128.png" width=16 height=16 {
 	block name=ore.iron           row=0 col=11
 	block name=ore.gold           row=0 col=12
 	block name=ore.diamond        row=0 col=13
-	block name=ore.lapiz          row=0 col=14
+	block name=ore.lapis          row=0 col=14
 	block name=ore.emerald        row=0 col=15
 	
 	# wool

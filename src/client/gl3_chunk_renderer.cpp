@@ -20,7 +20,7 @@ GL3ChunkRenderer::GL3ChunkRenderer(Client *client, GL3Renderer *renderer, Shader
 		renderer(renderer),
 		shaderManager(shaderManager),
 		chunkMap(0, vec3i64HashFunc) {
-	initRenderDistanceDependent();
+	initRenderDistanceDependent(client->getConf().render_distance);
 	loadTextures();
 }
 
@@ -112,13 +112,13 @@ void GL3ChunkRenderer::loadTextures() {
 void GL3ChunkRenderer::setConf(const GraphicsConf &conf, const GraphicsConf &old) {
 	if (conf.render_distance != old.render_distance) {
 		destroyRenderDistanceDependent();
-		initRenderDistanceDependent();
+		initRenderDistanceDependent(conf.render_distance);
 		checkChunkIndex = 0;
 	}
 }
 
-void GL3ChunkRenderer::initRenderDistanceDependent() {
-	visibleDiameter = client->getConf().render_distance * 2 + 1;
+void GL3ChunkRenderer::initRenderDistanceDependent(int renderDistance) {
+	visibleDiameter = renderDistance * 2 + 1;
 	int n = visibleDiameter * visibleDiameter * visibleDiameter;
 	chunkGrid = new GridInfo[n];
 	vaos = new GLuint[n];
