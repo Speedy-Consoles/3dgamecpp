@@ -66,6 +66,7 @@ void LocalServerInterface::requestChunk(vec3i64 cc) {
 	}
 	if (!archive.loadChunk(*chunk)) {
 		worldGenerator.generateChunk(*chunk);
+		archive.storeChunk(*chunk);
 	}
 	chunkQueue.push(chunk);
 }
