@@ -35,6 +35,7 @@
     <ClInclude Include="..\..\src\game\world_generator.hpp" />
     <ClInclude Include="..\..\src\io\archive.hpp" />
     <ClInclude Include="..\..\src\io\chunk_loader.hpp" />
+    <ClInclude Include="..\..\src\shared\chunk_manager.hpp" />
     <ClInclude Include="..\..\src\stopwatch.hpp" />
     <ClInclude Include="..\..\src\util.hpp" />
   </ItemGroup>
@@ -56,6 +57,7 @@
     <ClCompile Include="..\..\src\io\archive.cpp" />
     <ClCompile Include="..\..\src\io\chunk_loader.cpp" />
     <ClCompile Include="..\..\src\io\chunk_loader_internals.cpp" />
+    <ClCompile Include="..\..\src\shared\chunk_manager.cpp" />
     <ClCompile Include="..\..\src\stopwatch.cpp" />
     <ClCompile Include="..\..\src\util.cpp" />
   </ItemGroup>

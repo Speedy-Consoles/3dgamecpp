@@ -101,6 +101,9 @@
     <ClInclude Include="..\..\src\game\block_loader.hpp">
       <Filter>Header Files\game</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\shared\chunk_manager.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\stopwatch.cpp">
@@ -159,6 +162,9 @@
     </ClCompile>
     <ClCompile Include="..\..\src\game\block_loader.cpp">
       <Filter>Source Files\game</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\shared\chunk_manager.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
