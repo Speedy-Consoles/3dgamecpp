@@ -298,51 +298,53 @@ void GL3ChunkRenderer::render() {
 		fringeStart = (fringeStart + 1) % vsFringeCapacity;
 		fringeSize--;
 
-		if (chunkGrid[index].status != NO_CHUNK && chunkGrid[index].content == cc) {
-			if (chunkGrid[index].numFaces > 0) {
-				visibleFaces += chunkGrid[index].numFaces;
-				GL(BindVertexArray(vaos[index]));
-				glm::mat4 modelMatrix = translationMatrix * glm::translate(glm::mat4(1.0f), glm::vec3((float) (cd[0] * (int) Chunk::WIDTH), (float) (cd[1] * (int) Chunk::WIDTH), (float) (cd[2] * (int) Chunk::WIDTH)));
-				shader->setModelMatrix(modelMatrix);
-				shader->useProgram();
-				GL(DrawArrays(GL_TRIANGLES, 0, chunkGrid[index].numFaces * 3));
+		if (chunkGrid[index].status != NO_CHUNK && chunkGrid[index].content == cc && chunkGrid[index].numFaces > 0) {
+			visibleFaces += chunkGrid[index].numFaces;
+			GL(BindVertexArray(vaos[index]));
+			glm::mat4 modelMatrix = translationMatrix * glm::translate(glm::mat4(1.0f), glm::vec3((float) (cd[0] * (int) Chunk::WIDTH), (float) (cd[1] * (int) Chunk::WIDTH), (float) (cd[2] * (int) Chunk::WIDTH)));
+			shader->setModelMatrix(modelMatrix);
+			shader->useProgram();
+			GL(DrawArrays(GL_TRIANGLES, 0, chunkGrid[index].numFaces * 3));
+		}
+
+		for (int d = 0; d < 6; d++) {
+			if ((chunkGrid[index].vsExits & (1 << d)) == 0)
+				continue;
+
+			vec3i64 ncc = cc + DIRS[d].cast<int64>();
+			vec3i64 ncd = ncc - pc;
+
+			if ((uint) ncd.norm() > client->getConf().render_distance
+					|| !inFrustum(ncc, player.getPos(), lookDir))
+				continue;
+
+			int nIndex = gridCycleIndex(ncc, visibleDiameter);
+
+			if (!chunkGrid[nIndex].vsVisited) {
+				chunkGrid[nIndex].vsVisited = true;
+				chunkGrid[nIndex].vsExits = 0;
+				vsFringe[fringeEnd] = ncc;
+				vsIndices[fringeEnd] = nIndex;
+				fringeEnd = (fringeEnd + 1) % vsFringeCapacity;
+				fringeSize++;
 			}
 
-			for (int d = 0; d < 6; d++) {
-				if ((chunkGrid[index].vsExits & (1 << d)) == 0)
-					continue;
+			int passThroughs;
+			if (chunkGrid[nIndex].status != NO_CHUNK && chunkGrid[nIndex].content == ncc)
+				passThroughs = chunkGrid[nIndex].passThroughs;
+			else
+				passThroughs = 0x3FFF;
 
-				vec3i64 ncc = cc + DIRS[d].cast<int64>();
-				vec3i64 ncd = ncc - pc;
-
-				if ((uint) ncd.norm() > client->getConf().render_distance
-						|| !inFrustum(ncc, player.getPos(), lookDir))
-					continue;
-
-				int nIndex = gridCycleIndex(ncc, visibleDiameter);
-
-				if (!chunkGrid[nIndex].vsVisited) {
-					chunkGrid[nIndex].vsVisited = true;
-					chunkGrid[nIndex].vsExits = 0;
-					vsFringe[fringeEnd] = ncc;
-					vsIndices[fringeEnd] = nIndex;
-					fringeEnd = (fringeEnd + 1) % vsFringeCapacity;
-					fringeSize++;
-				}
-
-				if (chunkGrid[nIndex].status != NO_CHUNK && chunkGrid[nIndex].content == ncc) {
-					int shift = 0;
-					int invD = (d + 3) % 6;
-					for (int d1 = 0; d1 < invD; d1++) {
-						if (ncd[d1 % 3] * (d1 * (-2) + 5) >= 0)
-							chunkGrid[nIndex].vsExits |= ((chunkGrid[nIndex].passThroughs & (1 << (shift + invD - d1 - 1))) > 0) << d1;
-						shift += 5 - d1;
-					}
-					for (int d2 = invD + 1; d2 < 6; d2++) {
-						if (ncd[d2 % 3] * (d2 * (-2) + 5) >= 0)
-							chunkGrid[nIndex].vsExits |= ((chunkGrid[nIndex].passThroughs & (1 << (shift + d2 - invD - 1))) > 0) << d2;
-					}
-				}
+			int shift = 0;
+			int invD = (d + 3) % 6;
+			for (int d1 = 0; d1 < invD; d1++) {
+				if (ncd[d1 % 3] * (d1 * (-2) + 5) >= 0)
+					chunkGrid[nIndex].vsExits |= ((passThroughs & (1 << (shift + invD - d1 - 1))) > 0) << d1;
+				shift += 5 - d1;
+			}
+			for (int d2 = invD + 1; d2 < 6; d2++) {
+				if (ncd[d2 % 3] * (d2 * (-2) + 5) >= 0)
+					chunkGrid[nIndex].vsExits |= ((passThroughs & (1 << (shift + d2 - invD - 1))) > 0) << d2;
 			}
 		}
 	}
