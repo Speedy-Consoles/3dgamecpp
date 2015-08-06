@@ -66,13 +66,13 @@ void LocalServerInterface::sendInput() {
 }
 
 void LocalServerInterface::setConf(const GraphicsConf &conf, const GraphicsConf &old) {
-	if (conf.render_distance != old.render_distance) {
-		chunkLoader->setRenderDistance(conf.render_distance);
+//	if (conf.render_distance != old.render_distance) {
+//		chunkLoader->setRenderDistance(conf.render_distance);
 //		world->clearChunks();
-		while (chunkLoader->getRenderDistance() != conf.render_distance)
-			std::this_thread::yield();
-		LOG(INFO, "render distance was set by chunk loader");
-	}
+//		while (chunkLoader->getRenderDistance() != conf.render_distance)
+//			std::this_thread::yield();
+//		LOG(INFO, "render distance was set by chunk loader");
+//	}
 }
 
 int LocalServerInterface::getLocalClientId() {
@@ -80,7 +80,7 @@ int LocalServerInterface::getLocalClientId() {
 }
 
 void LocalServerInterface::stop() {
-	chunkLoader->wait();
+//	chunkLoader->wait();
 	world->deletePlayer(0);
 }
 
