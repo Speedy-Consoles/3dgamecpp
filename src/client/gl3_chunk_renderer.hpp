@@ -61,9 +61,10 @@ private:
 	ShaderManager *shaderManager;
 
 	// performance limits
-	static const int MAX_NEW_Faces = 6000;
-	static const int MAX_NEW_CHUNKS = 500;
-	static const int MAX_CHUNK_MAP_SIZE= 5000;
+	static const int MAX_NEW_FACES = 3000;
+	static const int MAX_NEW_CHUNKS = 100;
+	static const int MAX_RENDER_QUEUE_SIZE= 2000;
+	static const int MAX_CHUNK_MAP_SIZE= 10000;
 
 	// the grid
 	GridInfo *chunkGrid;

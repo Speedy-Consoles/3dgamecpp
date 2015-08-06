@@ -197,7 +197,8 @@ void GL3ChunkRenderer::render() {
 		oldPlayerChunk = pc;
 	}
 	while(LOADING_ORDER[checkChunkIndex].norm() <= client->getConf().render_distance
-			&& chunkMap.size() <= MAX_CHUNK_MAP_SIZE - 27) {
+			&& chunkMap.size() <= MAX_CHUNK_MAP_SIZE - 27
+			&& renderQueue.size() < MAX_RENDER_QUEUE_SIZE) {
 		vec3i64 cc = pc + LOADING_ORDER[checkChunkIndex].cast<int64>();
 		int index = gridCycleIndex(cc, visibleDiameter);
 		if (chunkGrid[index].status != OK || chunkGrid[index].content != cc) {
@@ -248,7 +249,7 @@ void GL3ChunkRenderer::render() {
 	// build chunks in render queue
 	newFaces = 0;
 	newChunks = 0;
-	while (!renderQueue.empty() && newChunks < MAX_NEW_CHUNKS && newFaces < MAX_NEW_Faces) {
+	while (!renderQueue.empty() && newChunks < MAX_NEW_CHUNKS && newFaces < MAX_NEW_FACES) {
 		vec3i64 cc = renderQueue.front();
 		Chunk const *chunks[27];
 		ChunkMap::iterator iterators[27];
