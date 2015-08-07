@@ -19,7 +19,7 @@ GL3ChunkRenderer::GL3ChunkRenderer(Client *client, GL3Renderer *renderer, Shader
 		client(client),
 		renderer(renderer),
 		shaderManager(shaderManager),
-		chunkMap(0, vec3i64HashFunc) {
+		inRenderQueue(0, vec3i64HashFunc) {
 	initRenderDistanceDependent(client->getConf().render_distance);
 	loadTextures();
 }
@@ -197,53 +197,21 @@ void GL3ChunkRenderer::render() {
 		oldPlayerChunk = pc;
 	}
 	while(LOADING_ORDER[checkChunkIndex].norm() <= client->getConf().render_distance
-			&& chunkMap.size() <= MAX_CHUNK_MAP_SIZE - 27
 			&& renderQueue.size() < MAX_RENDER_QUEUE_SIZE) {
 		vec3i64 cc = pc + LOADING_ORDER[checkChunkIndex].cast<int64>();
 		int index = gridCycleIndex(cc, visibleDiameter);
 		if (chunkGrid[index].status != OK || chunkGrid[index].content != cc) {
-			auto it = chunkMap.find(cc);
-			if (it == chunkMap.end() || !it->second.inRenderQueue) {
-				if (it == chunkMap.end()) {
-					chunkMap.insert({cc, ChunkInfo(true)});
-					toRequest.push_back(cc);
-				} else {
-					it->second.inRenderQueue = true;
-					it->second.needCounter++;
-				}
+			auto it = inRenderQueue.find(cc);
+			if (it == inRenderQueue.end()) {
+				inRenderQueue.insert(cc);
 				renderQueue.push_back(cc);
 				for (size_t i = 0; i < 27; ++i) {
-					if (i == BIG_CUBE_CYCLE_BASE_INDEX)
-						continue;
 					vec3i64 ncc = cc + BIG_CUBE_CYCLE[i].cast<int64>();
-					auto it2 = chunkMap.find(ncc);
-					if (it2 == chunkMap.end()) {
-						chunkMap.insert({ncc, ChunkInfo(false)});
-						toRequest.push_back(ncc);
-					} else {
-						it2->second.needCounter++;
-					}
+					client->getChunkManager()->requestChunk(ncc);
 				}
 			}
 		}
 		checkChunkIndex++;
-	}
-
-	// request required chunks
-	while (!toRequest.empty()) {
-		vec3i64 cc = toRequest.front();
-		if (!client->getChunkManager()->request(cc, GRAPHICS_LISTENER_ID))
-			break;
-		toRequest.pop_front();
-	}
-
-	// save chunks received from chunk manager
-	shared_ptr<const Chunk> sp;
-	while ((sp = client->getChunkManager()->getNextChunk(GRAPHICS_LISTENER_ID)).get()) {
-		vec3i64 cc = sp.get()->getCC();
-		auto it = chunkMap.find(cc);
-		it->second.chunkPointer = sp;
-		holdChunks++;
 	}
 
 	// build chunks in render queue
@@ -252,27 +220,19 @@ void GL3ChunkRenderer::render() {
 	while (!renderQueue.empty() && newChunks < MAX_NEW_CHUNKS && newFaces < MAX_NEW_FACES) {
 		vec3i64 cc = renderQueue.front();
 		Chunk const *chunks[27];
-		ChunkMap::iterator iterators[27];
 		bool cantRender = false;
 		for (int i = 0; i < 27; ++i) {
-			vec3i64 ncc = cc + BIG_CUBE_CYCLE[i].cast<int64>();
-			auto it = chunkMap.find(ncc);
-			if (!it->second.chunkPointer.get()) {
+			chunks[i] = client->getChunkManager()->getChunk(cc + BIG_CUBE_CYCLE[i].cast<int64>());
+			if (!chunks[i]) {
 				cantRender = true;
 				break;
 			}
-			iterators[i] = it;
-			chunks[i] = it->second.chunkPointer.get();
 		}
 		if (cantRender)
 			break;
 		buildChunk(chunks);
 		for (int i = 0; i < 27; ++i) {
-			iterators[i]->second.needCounter--;
-			if (iterators[i]->second.needCounter == 0) {
-				chunkMap.erase(iterators[i]);
-				holdChunks--;
-			}
+			client->getChunkManager()->releaseChunk(chunks[i]->getCC());
 		}
 		renderQueue.pop_front();
 	}
@@ -506,15 +466,13 @@ bool GL3ChunkRenderer::inFrustum(vec3i64 cc, vec3i64 pos, vec3d lookDir) {
 
 ChunkRendererDebugInfo GL3ChunkRenderer::getDebugInfo() {
 	ChunkRendererDebugInfo info;
+	info.checkedDistance = (int) LOADING_ORDER[checkChunkIndex].norm();
 	info.newFaces = newFaces;
 	info.newChunks = newChunks;
 	info.totalFaces = faces;
 	info.visibleChunks = visibleChunks;
 	info.visibleFaces = visibleFaces;
-	info.chunkMapSize = chunkMap.size();
-	info.holdChunks = holdChunks;
 	info.renderQueueSize = renderQueue.size();
-	info.requestQueueSize = toRequest.size();
 
 	return info;
 }

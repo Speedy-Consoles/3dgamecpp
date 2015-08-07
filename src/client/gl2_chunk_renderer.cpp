@@ -224,7 +224,7 @@ void GL2ChunkRenderer::renderChunk(Chunk &c) {
 					if ((x == Chunk::WIDTH - 1 && d==0)
 							|| (y == Chunk::WIDTH - 1 && d==1)
 							|| (z == Chunk::WIDTH - 1 && d==2)) {
-						thatType = client->getWorld()->getBlock(cc * Chunk::WIDTH + vec3i64(x, y, z) + dir);
+						thatType = 0;//client->getWorld()->getBlock(cc * Chunk::WIDTH + vec3i64(x, y, z) + dir);
 						if (thatType != 0) {
 							if (x != -1 && y != -1 && z != -1)
 								i++;
@@ -234,7 +234,7 @@ void GL2ChunkRenderer::renderChunk(Chunk &c) {
 						thatType = blocks[ni++];
 
 					if (x == -1 || y == -1 || z == -1) {
-						thisType = client->getWorld()->getBlock(cc * Chunk::WIDTH + vec3i64(x, y, z));
+						thisType = 0;//client->getWorld()->getBlock(cc * Chunk::WIDTH + vec3i64(x, y, z));
 						if (thisType != 0)
 							continue;
 					} else {
@@ -263,7 +263,7 @@ void GL2ChunkRenderer::renderChunk(Chunk &c) {
 							if (		dIcc[0] < 0 || dIcc[0] >= (int) Chunk::WIDTH
 									||	dIcc[1] < 0 || dIcc[1] >= (int) Chunk::WIDTH
 									||	dIcc[2] < 0 || dIcc[2] >= (int) Chunk::WIDTH)
-								cornerBlock = client->getWorld()->getBlock(cc * Chunk::WIDTH + dIcc);
+								cornerBlock = 0;//client->getWorld()->getBlock(cc * Chunk::WIDTH + dIcc);
 							else
 								cornerBlock = c.getBlock(dIcc.cast<uint8>());
 							if (cornerBlock) {

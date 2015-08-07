@@ -7,17 +7,18 @@
 using namespace std;
 
 ChunkManager::ChunkManager(Client *client) :
-	inQueue(1024),
+	chunks(0, vec3i64HashFunc),
+	needCounter(0, vec3i64HashFunc),
+	loadedQueue(1024),
+	toLoadQueue(1024),
 	client(client)
 {
-	for (int i = 0; i < MAX_LISTENERS; i++) {
-		outQueues[i] = new ProducerQueue<shared_ptr<const Chunk>>(1024);
-	}
+	// nothing
 }
 
 ChunkManager::~ChunkManager() {
-	for (int i = 0; i < MAX_LISTENERS; i++) {
-		delete outQueues[i];
+	for (auto it = chunks.begin(); it != chunks.end(); ++it) {
+		delete it->second;
 	}
 }
 
@@ -26,14 +27,72 @@ void ChunkManager::dispatch() {
 	fut = async(launch::async, [this]() { run(); });
 }
 
-bool ChunkManager::request(vec3i64 chunkCoords, int listenerId) {
-	return inQueue.push(Request{chunkCoords, listenerId});
+void ChunkManager::tick() {
+	Chunk *chunk;
+	while (chunks.size() < MAX_LOADED_CHUNKS && loadedQueue.pop(chunk)) {
+		auto it = needCounter.find(chunk->getCC());
+		if (it != needCounter.end())
+			chunks.insert({chunk->getCC(), chunk});
+		else
+			delete chunk;
+	}
+
+	while (!preToLoadQueue.empty()) {
+		vec3i64 cc = preToLoadQueue.front();
+		if (!toLoadQueue.push(cc))
+			break;
+		preToLoadQueue.pop();
+	}
 }
 
-shared_ptr<const Chunk> ChunkManager::getNextChunk(int listenerId) {
-	shared_ptr<const Chunk> sp;
-	outQueues[listenerId]->pop(sp);
-	return sp;
+const Chunk *ChunkManager::getChunk(vec3i64 chunkCoords) const {
+	auto it = chunks.find(chunkCoords);
+	if (it != chunks.end())
+		return it->second;
+	return nullptr;
+}
+
+void ChunkManager::requestChunk(vec3i64 chunkCoords) {
+	auto it = needCounter.find(chunkCoords);
+	if (it == needCounter.end()) {
+		needCounter.insert({chunkCoords, 1});
+		preToLoadQueue.push(chunkCoords);
+	} else {
+		it->second++;
+	}
+}
+
+void ChunkManager::releaseChunk(vec3i64 chunkCoords) {
+	auto it1 = needCounter.find(chunkCoords);
+	if (it1 != needCounter.end()) {
+		it1->second--;
+		if (it1->second == 0) {
+			needCounter.erase(it1);
+			auto it2 = chunks.find(chunkCoords);
+			if (it2 != chunks.end()) {
+				delete it2->second;
+				chunks.erase(it2);
+			}
+		}
+	}
+}
+
+int ChunkManager::getNumNeededChunks() const {
+	return needCounter.size();
+}
+
+int ChunkManager::getNumLoadedChunks() const {
+	return chunks.size();
+}
+
+void ChunkManager::requestTermination() {
+	 shouldHalt.store(true, memory_order_relaxed);
+}
+
+void ChunkManager::wait() {
+	requestTermination();
+	if (fut.valid())
+		fut.get();
 }
 
 void ChunkManager::run() {
@@ -56,14 +115,13 @@ void ChunkManager::run() {
 				// send chunk request to server
 
 		//FOR NOW:
-		Request r;
-		if (inQueue.pop(r)) {
+		vec3i64 cc;
+		if (toLoadQueue.pop(cc)) {
 			// TODO this part is, like, totally hacky
-			client->getServerInterface()->requestChunk(r.chunkCoords);
+			client->getServerInterface()->requestChunk(cc);
 			Chunk *chunk = client->getServerInterface()->getNextChunk();
 			chunk->makePassThroughs();
-			shared_ptr<const Chunk> sp(chunk);
-			while (!outQueues[r.listenerId]->push(sp)) {
+			while (!loadedQueue.push(chunk) && !shouldHalt.load(memory_order_seq_cst)) {
 				sleepFor(millis(50));
 			}
 		} else {
@@ -72,14 +130,4 @@ void ChunkManager::run() {
 	} // while not thread interrupted
 
 	LOG(INFO,"ChunkManager thread terminating");
-}
-
-void ChunkManager::requestTermination() {
-	 shouldHalt.store(true, memory_order_relaxed);
-}
-
-void ChunkManager::wait() {
-	requestTermination();
-	if (fut.valid())
-		fut.get();
 }

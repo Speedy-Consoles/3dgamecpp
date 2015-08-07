@@ -3,15 +3,12 @@
 
 #include "engine/vmath.hpp"
 
-class ChunkLoader;
-
 class Chunk {
 public:
 	static const uint WIDTH = 32;
 
 private:
 	vec3i64 cc;
-	ChunkLoader *chunkLoader;
 	bool changed = true;
 	uint airBlocks = 0;
 
@@ -20,7 +17,7 @@ private:
 	uint16 passThroughs = 0;
 
 public:
-	Chunk(vec3i64 cc, ChunkLoader *chunkLoader = nullptr);
+	Chunk(vec3i64 cc);
 
 	void makePassThroughs();
 	vec3i64 getCC() const { return cc; }
@@ -35,9 +32,6 @@ public:
 
 	bool pollChanged();
 	void setChanged();
-
-	void setChunkLoader(ChunkLoader *cl) { chunkLoader = cl; }
-	void free();
 
 /*
 	void write(ByteBuffer buffer) const;

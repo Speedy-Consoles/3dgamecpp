@@ -51,8 +51,6 @@ SHARED_OBJECT_FILES = \
 	engine/font.cpp.o\
 	engine/unicode_int.cpp.o\
 	io/archive.cpp.o\
-	io/chunk_loader.cpp.o\
-	io/chunk_loader_internals.cpp.o\
 	shared/chunk_manager.cpp.o\
 	stopwatch.cpp.o\
 	util.cpp.o

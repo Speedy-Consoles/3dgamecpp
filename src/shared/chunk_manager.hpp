@@ -2,6 +2,7 @@
 #define CHUNK_MANAGER_HPP
 
 #include <unordered_map>
+#include <queue>
 #include <memory>
 #include <atomic>
 #include <future>
@@ -14,20 +15,14 @@
 
 class Client;
 
-enum {
-	GRAPHICS_LISTENER_ID = 0,
-	WORLD_LISTENER_ID,
-	MAX_LISTENERS
-};
-
 class ChunkManager {
-	struct Request {
-		vec3i64 chunkCoords;
-		int listenerId;
-	};
+	static const int MAX_LOADED_CHUNKS = 10000;
 
-	ProducerQueue<std::shared_ptr<const Chunk>> *outQueues[MAX_LISTENERS];
-	ProducerQueue<Request> inQueue;
+	std::unordered_map<vec3i64, Chunk *, size_t(*)(vec3i64)> chunks;
+	std::unordered_map<vec3i64, int, size_t(*)(vec3i64)> needCounter;
+	std::queue<vec3i64> preToLoadQueue;
+	ProducerQueue<Chunk *> loadedQueue;
+	ProducerQueue<vec3i64> toLoadQueue;
 
 	std::atomic<bool> shouldHalt;
 	std::future<void> fut;
@@ -40,9 +35,15 @@ public:
 
 	void dispatch();
 
-	bool request(vec3i64 chunkCoords, int listenerId);
+	void tick();
 
-	std::shared_ptr<const Chunk> getNextChunk(int listenerId);
+	const Chunk *getChunk(vec3i64 chunkCoords) const;
+	void requestChunk(vec3i64 chunkCoords);
+	void releaseChunk(vec3i64 chunkCoords);
+
+	int getNumNeededChunks() const;
+	int getNumLoadedChunks() const;
+
 	void requestTermination();
 	void wait();
 

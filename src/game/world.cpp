@@ -14,72 +14,57 @@ const double World::GRAVITY = -9.81 * RESOLUTION / 60.0 / 60.0 * 4;
 World::World(std::string id, ChunkManager *chunkManager) :
 		id(id),
 		chunkManager(chunkManager),
-		chunks(0, vec3i64HashFunc),
-		requested(0, vec3i64HashFunc)
+		neededChunks(0, vec3i64HashFunc)
 {
 	LOG(INFO, "Opening world '" << id << "'");
 	for (int i = 0; i < MAX_CLIENTS; ++i) {
-		playerCheckChunkIndices[i] = 0;
+		oldPlayerValids[i] = false;
 	}
 }
 
 World::~World() {
 	LOG(DEBUG, "Deleting world '" << id << "'");
-//	for (auto iter : chunks) {
-//		iter.second->free();
-//	}
 }
 
 void World::tick(int tick, uint localPlayerID) {
 	requestChunks();
-	insertChunks();
 	for (uint i = 0; i < MAX_CLIENTS; i++) {
 		if (players[i].isValid())
 			players[i].tick(tick, i == localPlayerID);
 	}
-	removeChunks();
+	releaseChunks();
 }
 
 void World::requestChunks() {
 	for (int p = 0; p < MAX_CLIENTS; p++) { // TODO better order
-		if (!players[p].isValid())
+		if (!players[p].isValid()) {
+			oldPlayerValids[p] = false;
 			continue;
+		}
 		vec3i64 pc = players[p].getChunkPos();
-		if (pc != oldPlayerChunks[p]) {
-			double pcDist = (pc - oldPlayerChunks[p]).norm();
-			double newRadius = LOADING_ORDER[playerCheckChunkIndices[p]].norm() - pcDist;
-			if (newRadius < 0)
-				playerCheckChunkIndices[p] = 0;
-			else
-				playerCheckChunkIndices[p] = LOADING_ORDER_DISTANCE_INDICES[(int) newRadius];
+		if (pc != oldPlayerChunks[p] || !oldPlayerValids[p]) {
+			oldPlayerValids[p] = true;
 			oldPlayerChunks[p] = pc;
-		}
-		while(LOADING_ORDER[playerCheckChunkIndices[p]].norm() <= LOADING_DISTANCE) {
-			vec3i64 cc = pc + LOADING_ORDER[playerCheckChunkIndices[p]].cast<int64>();
-			auto it = requested.find(cc);
-			if (it == requested.end()) {
-				if (!chunkManager->request(cc, WORLD_LISTENER_ID))
-					break;
-				requested.insert(cc);
+			int checkChunkIndex = 0;
+			while(LOADING_ORDER[checkChunkIndex].norm() <= LOADING_DISTANCE) {
+				vec3i64 cc = pc + LOADING_ORDER[checkChunkIndex].cast<int64>();
+				auto it = neededChunks.find(cc);
+				if (it == neededChunks.end()) {
+					chunkManager->requestChunk(cc);
+					neededChunks.insert(cc);
+				}
+				checkChunkIndex++;
 			}
-			playerCheckChunkIndices[p]++;
 		}
 	}
 }
 
-void World::insertChunks() {
-	shared_ptr<const Chunk> sp;
-	while ((sp = chunkManager->getNextChunk(WORLD_LISTENER_ID)).get()) {
-		chunks.insert({sp->getCC(), sp});
-	}
-}
-
-void World::removeChunks() {
-	for (auto iter = chunks.begin(); iter != chunks.end();) {
-		vec3i64 cc = iter->first;
+void World::releaseChunks() {
+	for (auto iter = neededChunks.begin(); iter != neededChunks.end();) {
+		vec3i64 cc = *iter;
 		bool inRange = false;
 
-		for (int p = 0; p < MAX_CLIENTS; p++) { // TODO better order
+		for (int p = 0; p < MAX_CLIENTS; p++) {
 			if (!players[p].isValid())
 				continue;
 			if ((cc - players[p].getChunkPos()).maxAbs() <= (int) LOADING_DISTANCE + 1) {
@@ -89,9 +74,8 @@ void World::removeChunks() {
 		}
 
 		if (!inRange) {
-			iter = chunks.erase(iter);
-			auto iter2 = requested.find(cc);
-			requested.erase(iter2);
+			chunkManager->releaseChunk(cc);
+			iter = neededChunks.erase(iter);
 		} else
 			iter++;
 	}
@@ -189,107 +173,19 @@ bool World::hasCollision(vec3i64 wc) const {
 	return true;
 }
 
+bool World::isChunkLoaded(vec3i64 cc) const {
+	return chunkManager->getChunk(cc) != 0;
+}
+
 uint8 World::getBlock(vec3i64 bc) const {
-	auto it = chunks.find(bc2cc(bc));
-	if (it == chunks.end())
+	const Chunk *chunk = chunkManager->getChunk(bc2cc(bc));
+	if (!chunk)
 		return 0;
-	return it->second->getBlock(bc2icc(bc));
+	return chunk->getBlock(bc2icc(bc));
 }
 
-bool World::chunkLoaded(vec3i64 cc) {
-	return chunks.find(cc) != chunks.end();
-}
-
-//bool World::setBlock(vec3i64 bc, uint8 type, bool visual) {
-//	vec3i64 cc = bc2cc(bc);
-//	auto it = chunks.find(bc2cc(bc));
-//	if (it == chunks.end())
-//		return false;
-//	Chunk *c = it->second;
-//	vec3ui8 icc = bc2icc(bc);
-//	if (c->setBlock(icc, type)) {
-//		if (visual)
-//			c->makePassThroughs();
-//
-//		for (size_t i = 0; i < 27; i++) {
-//			if (i == BASE_NINE_CUBE_CYCLE){
-//				changedChunks.push_back(cc);
-//				continue;
-//			}
-//
-//			vec3i64 diff = NINE_CUBE_CYCLE[i].cast<int64>();
-//			bool leave = false;
-//			for (int dim = 0; dim < 3; dim++) {
-//				if (diff[dim] != 0 && (diff[dim] + 1) / 2 * (Chunk::WIDTH - 1) != icc[dim]) {
-//					leave = true;
-//					break;
-//				}
-//			}
-//			if (leave)
-//				continue;
-//
-//			Chunk *c = getChunk(cc + diff);
-//			if (c)
-//				c->setChanged();
-//			changedChunks.push_back(cc + diff);
-//		}
-//
-//		return true;
-//	}
-//	return false;
-//}
-
-//Chunk *World::getChunk(vec3i64 cc) {
-//	auto iter = chunks.find(cc);
-//	if (iter == chunks.end())
-//		return nullptr;
-//	return iter->second;
-//}
-
-//void World::insertChunk(Chunk *chunk) {
-//	chunks.insert({chunk->getCC(), chunk});
-//	for (size_t i = 0; i < 27; i++) {
-//		if (i == BASE_NINE_CUBE_CYCLE){
-//			changedChunks.push_back(chunk->getCC());
-//			continue;
-//		}
-//		vec3i64 cc = chunk->getCC() + NINE_CUBE_CYCLE[i].cast<int64>();
-//		Chunk *c = getChunk(cc);
-//		if (c) {
-//			c->setChanged();
-//			changedChunks.push_back(cc);
-//		}
-//	}
-//}
-
-//Chunk *World::removeChunk(vec3i64 cc) {
-//	auto iter = chunks.find(cc);
-//	if (iter == chunks.end())
-//		return nullptr;
-//	Chunk *c = iter->second;
-//	chunks.erase(iter);
-//	return c;
-//}
-
-//bool World::popChangedChunk(vec3i64 *ccc) {
-//	if (changedChunks.empty())
-//		return false;
-//	*ccc = changedChunks.front();
-//	changedChunks.pop_front();
-//	return true;
-//}
-
-//void World::clearChunks() {
-//	changedChunks.clear();
-//	for (auto iter : chunks) {
-//		Chunk *c = iter.second;
-//		c->free();
-//	}
-//	chunks.clear();
-//}
-
-size_t World::getNumChunks() const {
-	return chunks.size();
+size_t World::getNumNeededChunks() const {
+	return neededChunks.size();
 }
 
 Player &World::getPlayer(int playerID) {

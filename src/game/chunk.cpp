@@ -4,9 +4,7 @@
 
 #include "util.hpp"
 
-Chunk::Chunk(vec3i64 cc, ChunkLoader *chunkLoader) :
-		cc(cc),
-		chunkLoader(chunkLoader) {
+Chunk::Chunk(vec3i64 cc) : cc(cc) {
 	// nothing
 }
 
@@ -145,11 +143,4 @@ bool Chunk::pollChanged() {
 
 void Chunk::setChanged() {
 	changed = true;
-}
-
-void Chunk::free() {
-	 if (chunkLoader)
-		 chunkLoader->free(this);
-	 else
-		 delete this;
 }

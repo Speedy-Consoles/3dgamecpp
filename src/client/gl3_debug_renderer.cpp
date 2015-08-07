@@ -39,18 +39,22 @@ void GL3DebugRenderer::render() {
 	const World *world = client->getWorld();
 	RENDER_LINE("");
 	RENDER_LINE("WORLD INFO:");
-	RENDER_LINE("loaded chunks: %d", world->getNumChunks());
+	RENDER_LINE("needed chunks: %d", world->getNumNeededChunks());
 
 	ChunkRendererDebugInfo crdi = chunkRenderer->getDebugInfo();
 	RENDER_LINE("");
 	RENDER_LINE("CHUNK RENDERER INFO:");
+	RENDER_LINE("checked distance: %d", crdi.checkedDistance);
 	RENDER_LINE("new faces: %d", crdi.newFaces);
 	RENDER_LINE("new chunks: %d", crdi.newChunks);
 	RENDER_LINE("total faces: %d", crdi.totalFaces);
 	RENDER_LINE("visible chunks: %d", crdi.visibleChunks);
 	RENDER_LINE("visible faces: %d", crdi.visibleFaces);
-	RENDER_LINE("chunk map size: %d", crdi.chunkMapSize);
-	RENDER_LINE("hold chunks: %d", crdi.holdChunks);
 	RENDER_LINE("render queue size: %d", crdi.renderQueueSize);
-	RENDER_LINE("request queue size: %d", crdi.requestQueueSize);
+
+	const ChunkManager *chunkManager = client->getChunkManager();
+	RENDER_LINE("");
+	RENDER_LINE("CHUNK MANAGER INFO:");
+	RENDER_LINE("needed chunks: %d", chunkManager->getNumNeededChunks());
+	RENDER_LINE("loaded chunks: %d", chunkManager->getNumLoadedChunks());
 }

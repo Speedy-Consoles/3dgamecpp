@@ -13,8 +13,6 @@
 
 class Chunk;
 
-using namespace std;
-
 struct WorldSnapshot {
 	PlayerSnapshot playerSnapshots[MAX_CLIENTS];
 
@@ -48,25 +46,20 @@ public:
 	static const int LOADING_DISTANCE = 3;
 	static const int LOADING_DIAMETER = LOADING_DISTANCE * 2 + 1;
 
-	using ChunkMap = unordered_map<vec3i64, shared_ptr<const Chunk>, size_t(*)(vec3i64)>;
-	using ChunkRequestedSet = unordered_set<vec3i64, size_t(*)(vec3i64)>;
-
 private:
-	string id;
+	std::string id;
 	ChunkManager *chunkManager;
-	ChunkMap chunks;
-	ChunkRequestedSet requested;
-	deque<vec3i64> changedChunks;
+	std::unordered_set<vec3i64, size_t(*)(vec3i64)> neededChunks;
 
 	Player players[MAX_CLIENTS];
-
 	vec3i64 oldPlayerChunks[MAX_CLIENTS];
-	int playerCheckChunkIndices[MAX_CLIENTS];
+	bool oldPlayerValids[MAX_CLIENTS];
+
 public:
-	World(string id, ChunkManager *chunkManager);
+	World(std::string id, ChunkManager *chunkManager);
 	~World();
 
-	string getId() const { return id; }
+	std::string getId() const { return id; }
 
 	void tick(int tick, uint localPlayerID);
 
@@ -76,31 +69,22 @@ public:
 
 	bool hasCollision(vec3i64 wc) const;
 
-	//bool setBlock(vec3i64 bc, uint8 type, bool updateFaces);
-	uint8 getBlock(vec3i64 bc) const;
-
 	void addPlayer(int playerID);
 	void deletePlayer(int playerID);
 
 	Player &getPlayer(int playerID);
 	const Player &getPlayer(int playerID) const;
 
-//	Chunk *getChunk(vec3i64 cc);
-//	void insertChunk(Chunk *chunk);
-//	Chunk *removeChunk(vec3i64 cc);
+	bool isChunkLoaded(vec3i64 cc) const;
+	uint8 getBlock(vec3i64 bc) const;
 
-//	bool popChangedChunk(vec3i64 *ccc);
-//	void clearChunks();
-	bool chunkLoaded(vec3i64 cc);
-
-	size_t getNumChunks() const;
+	size_t getNumNeededChunks() const;
 
 	WorldSnapshot makeSnapshot(int tick) const;
 
 private:
 	void requestChunks();
-	void insertChunks();
-	void removeChunks();
+	void releaseChunks();
 };
 
 

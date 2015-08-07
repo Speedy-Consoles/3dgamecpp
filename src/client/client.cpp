@@ -106,6 +106,7 @@ void Client::run() {
 	int tick = 0;
 	while (!closeRequested) {
 		handleInput();
+		chunkManager->tick();
 
 		if (state == State::CONNECTING && serverInterface->getStatus() == ServerInterface::CONNECTED) {
 			state = State::PLAYING;

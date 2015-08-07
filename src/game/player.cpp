@@ -39,7 +39,7 @@ void Player::tick(int tick, bool isLocalPlayer) {
 
 	// TODO don't let player enter unloaded chunk
 	vec3i64 cp = getChunkPos();
-	if (world->chunkLoaded(cp) || isFlying) {
+	if (world->isChunkLoaded(cp) || isFlying) {
 		calcVel();
 		if(isFlying)
 			ghost();
