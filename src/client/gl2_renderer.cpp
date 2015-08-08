@@ -15,6 +15,9 @@
 
 #include <SDL2/SDL_image.h>
 
+#include "engine/logging.hpp"
+static logging::Logger logger("render");
+
 using namespace gui;
 
 GL2Renderer::GL2Renderer(Client *client) :
@@ -41,7 +44,7 @@ GL2Renderer::GL2Renderer(Client *client) :
 }
 
 GL2Renderer::~GL2Renderer() {
-	LOG(TRACE, "Destroying Renderer");
+	LOG_TRACE(logger) << "Destroying Renderer";
 }
 
 void GL2Renderer::tick() {
@@ -143,7 +146,7 @@ void GL2Renderer::initGL() {
 	glEnable(GL_LINE_SMOOTH);
 
 	// light
-	LOG(DEBUG, "Initializing light");
+	LOG_DEBUG(logger) << "Initializing light";
 	float lModelAmbient[4] = {0.0f, 0.0f, 0.0f, 1.0f};
 
 	glEnable(GL_LIGHTING);
@@ -171,10 +174,10 @@ void GL2Renderer::initGL() {
 	glColorMaterial(GL_FRONT, GL_AMBIENT_AND_DIFFUSE);
 
 	// textures
-	LOG(DEBUG, "Loading textures");
+	LOG_DEBUG(logger) << "Loading textures";
 	const char *block_textures_file = client->getConf().textures_file.c_str();
 	if (texManager.load(block_textures_file)) {
-		LOG(WARNING, "There was a problem loading '" << block_textures_file << "'");
+		LOG_WARNING(logger) << "There was a problem loading '" << block_textures_file << "'";
 	}
 
 	// fog
@@ -182,7 +185,7 @@ void GL2Renderer::initGL() {
 	if (GLEW_NV_fog_distance)
 		glFogi(GL_FOG_DISTANCE_MODE_NV, GL_EYE_RADIAL_NV);
 	else
-		LOG(INFO, "GL_NV_fog_distance not available, falling back to z fog");
+		LOG_INFO(logger) << "GL_NV_fog_distance not available, falling back to z fog";
 
 	glFogfv(GL_FOG_COLOR, fogColor.ptr());
 	glFogi(GL_FOG_MODE, GL_LINEAR);
@@ -254,7 +257,7 @@ void GL2Renderer::createFBO() {
 		case GL_FRAMEBUFFER_INCOMPLETE_LAYER_TARGETS:
 			msg = "incomplete layer targets"; break;
 		}
-		LOG(ERROR, "Framebuffer creation failed: " << msg);
+		LOG_ERROR(logger) << "Framebuffer creation failed: " << msg;
 	}
 }
 

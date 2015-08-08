@@ -13,6 +13,9 @@
 
 #include "game/world.hpp"
 
+#include "engine/logging.hpp"
+static logging::Logger logger("render");
+
 using namespace gui;
 
 GL3Renderer::GL3Renderer(Client *client) :
@@ -70,7 +73,7 @@ GL3Renderer::GL3Renderer(Client *client) :
 }
 
 GL3Renderer::~GL3Renderer() {
-	LOG(DEBUG, "Destroying GL3 renderer");
+	LOG_DEBUG(logger) << "Destroying GL3 renderer";
 
 	if (skyFbo) GL(DeleteFramebuffers(1, &skyFbo));
 	if (skyTex) GL(DeleteTextures(1, &skyTex));

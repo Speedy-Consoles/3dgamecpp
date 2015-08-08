@@ -8,8 +8,7 @@
 #include "chunk_loader.hpp"
 
 #include "engine/logging.hpp"
-#undef DEFAULT_LOGGER
-#define DEFAULT_LOGGER NAMED_LOGGER("chunk")
+static logging::Logger logger("chunk");
 
 #include "engine/time.hpp"
 
@@ -21,7 +20,7 @@
 using namespace std;
 
 void ChunkLoader::run() {
-	LOG(INFO, "ChunkLoader thread dispatched");
+	LOG_INFO(logger) << "ChunkLoader thread dispatched";
 
 	playerChunkIndex = 0;
 	playerChunksLoaded = 0;
@@ -36,7 +35,7 @@ void ChunkLoader::run() {
 		storeChunksOnDisk();
 	} // while not thread interrupted
 
-	LOG(INFO,"ChunkLoader thread terminating");
+	LOG_INFO(logger) << "ChunkLoader thread terminating";
 }
 
 void ChunkLoader::updateRenderDistance() {
@@ -45,7 +44,7 @@ void ChunkLoader::updateRenderDistance() {
 	if (newRenderDistance == renderDistance)
 		return;
 
-	LOG(INFO, "ChunkLoader thread render distance " << newRenderDistance);
+	LOG_INFO(logger) << "ChunkLoader thread render distance " << newRenderDistance;
 
 	Chunk *chunk = nullptr;
 	while ((chunk = getNextLoadedChunk()) != nullptr)
@@ -103,7 +102,7 @@ void ChunkLoader::tryToLoadChunk(vec3i64 cc) {
 		if (visual)
 			chunk->makePassThroughs();
 		while (!queue.push(chunk) && !shouldHalt.load(memory_order_seq_cst)) {
-			LOG(WARNING, "Output queue is full");
+			LOG_WARNING(logger) << "Output queue is full";
 			sleepFor(millis(100));
 		}
 	}

@@ -7,26 +7,29 @@
 #include "engine/logging.hpp"
 #include "engine/math.hpp"
 
+#include "engine/logging.hpp"
+static logging::Logger logger("gfx");
+
 Shader::Shader(ShaderManager *manager, const char *vert_src, const char *frag_src) :
 	_manager(manager)
 {
 	GLuint VertexShaderLoc = glCreateShader(GL_VERTEX_SHADER);
 	GLuint FragmentShaderLoc = glCreateShader(GL_FRAGMENT_SHADER);
-	LOG(TRACE, "Building '" << vert_src << "'");
+	LOG_TRACE(logger) << "Building '" << vert_src << "'";
 	buildShader(VertexShaderLoc, vert_src);
-	LOG(TRACE, "Building '" << frag_src << "'");
+	LOG_TRACE(logger) << "Building '" << frag_src << "'";
 	buildShader(FragmentShaderLoc, frag_src);
 
 	_programLocation = glCreateProgram();
 	GLuint ProgramShaderLocs[2] = {VertexShaderLoc, FragmentShaderLoc};
 
-	LOG(TRACE, "Building program");
+	LOG_TRACE(logger) << "Building program";
 	buildProgram(_programLocation, ProgramShaderLocs, 2);
 
 	glDeleteShader(VertexShaderLoc);
 	glDeleteShader(FragmentShaderLoc);
 	
-	logOpenGLError();
+	LOG_OPENGL_ERROR;
 }
 
 Shader::~Shader() {
@@ -51,7 +54,7 @@ void Shader::buildShader(GLuint shaderLoc, const char* fileName) {
 			shaderCode += "\n" + Line;
 		shaderStream.close();
 	} else {
-		LOG(FATAL, "Could not open file!");
+		LOG_FATAL(logger) << "Could not open file!";
 	}
 
 	// Compile Shader
@@ -67,7 +70,7 @@ void Shader::buildShader(GLuint shaderLoc, const char* fileName) {
 	std::vector<char> shaderErrorMessage(InfoLogLength);
 	glGetShaderInfoLog(shaderLoc, InfoLogLength, NULL, &shaderErrorMessage[0]);
 	if (!Result)
-		LOG(ERROR, &shaderErrorMessage[0]);
+		LOG_ERROR(logger) << &shaderErrorMessage[0];
 }
 
 void Shader::buildProgram(GLuint programLoc, GLuint *shaders, int numShaders) {
@@ -85,7 +88,7 @@ void Shader::buildProgram(GLuint programLoc, GLuint *shaders, int numShaders) {
 	std::vector<char> programErrorMessage(std::max(InfoLogLength, int(1)));
 	glGetProgramInfoLog(programLoc, InfoLogLength, NULL, &programErrorMessage[0]);
 	if (!Result)
-		LOG(ERROR, &programErrorMessage[0]);
+		LOG_ERROR(logger) << &programErrorMessage[0];
 }
 
 DefaultShader::DefaultShader(ShaderManager *manager) :

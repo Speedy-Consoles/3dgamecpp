@@ -3,8 +3,6 @@
 #include <vector>
 #include <string>
 
-#include "engine/logging.hpp"
-
 int BlockManager::getBlockId(std::string name) const {
 	return entries.count(name) > 0 ? entries.at(name).id : -1;
 }

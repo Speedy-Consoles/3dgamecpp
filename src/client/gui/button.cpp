@@ -6,10 +6,6 @@
  */
 
 #include "button.hpp"
-#include "engine/logging.hpp"
-
-#undef DEFAULT_LOGGER
-#define DEFAULT_LOGGER NAMED_LOGGER("gui")
 
 using namespace gui;
 

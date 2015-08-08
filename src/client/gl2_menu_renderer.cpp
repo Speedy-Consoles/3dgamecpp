@@ -8,6 +8,8 @@
 #include "gui/cycle_button.hpp"
 
 #include "engine/logging.hpp"
+static logging::Logger logger("render");
+
 
 using namespace gui;
 
@@ -19,7 +21,7 @@ GL2MenuRenderer::GL2MenuRenderer(Client *client, GL2Renderer *renderer) :
 		font->FaceSize(16);
 		font->CharMap(ft_encoding_unicode);
 	} else {
-		LOG(ERROR, "Could not open 'res/DejaVuSansMono.ttf'");
+		LOG_ERROR(logger) << "Could not open 'res/DejaVuSansMono.ttf'";
 	}
 }
 

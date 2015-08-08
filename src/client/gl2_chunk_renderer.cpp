@@ -344,7 +344,7 @@ void GL2ChunkRenderer::renderChunk(Chunk &c) {
 	}
 
 	glEndList();
-	logOpenGLError();
+	LOG_OPENGL_ERROR;
 
 	newFaces += chunkFaces[index];
 	faces += chunkFaces[index];
@@ -395,7 +395,7 @@ void GL2ChunkRenderer::renderTarget() {
 			}
 		}
 		glEnd();
-		logOpenGLError();
+		LOG_OPENGL_ERROR;
 
 		GL(Enable(GL_TEXTURE_2D));
 	}
@@ -429,5 +429,5 @@ void GL2ChunkRenderer::renderPlayers() {
 		}
 	}
 	glEnd();
-	logOpenGLError();
+	LOG_OPENGL_ERROR;
 }

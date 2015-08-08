@@ -3,6 +3,7 @@
 #include <thread>
 
 #include "engine/logging.hpp"
+static logging::Logger logger("local");
 
 LocalServerInterface::LocalServerInterface(World *world, uint64 seed, const GraphicsConf &conf) {
 	this->world = world;
@@ -70,7 +71,7 @@ void LocalServerInterface::setConf(const GraphicsConf &conf, const GraphicsConf 
 		world->clearChunks();
 		while (chunkLoader->getRenderDistance() != conf.render_distance)
 			std::this_thread::yield();
-		LOG(INFO, "render distance was set by chunk loader");
+		LOG_INFO(logger) << "render distance was set by chunk loader";
 	}
 }
 
