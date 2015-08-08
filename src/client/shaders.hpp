@@ -58,18 +58,18 @@ class DefaultShader : public Shader {
 	bool _fogStartDistanceDirty = true;
 	bool _fogEndDistanceDirty = true;
 
-	GLboolean _lightEnabled;
-	glm::vec3 _ambientColor;
-	glm::vec3 _diffuseColor;
-	glm::vec3 _diffuseDirection;
+	GLboolean _lightEnabled = GL_FALSE;
+	glm::vec3 _ambientColor = {1.0, 1.0, 1.0};
+	glm::vec3 _diffuseColor = {1.0, 1.0, 1.0};
+	glm::vec3 _diffuseDirection = {0.0, 0.0, -1.0};
 
-	glm::mat4 _modelMatrix;
-	glm::mat4 _viewMatrix;
-	glm::mat4 _projectionMatrix;
+	glm::mat4 _modelMatrix = glm::mat4();
+	glm::mat4 _viewMatrix = glm::mat4();
+	glm::mat4 _projectionMatrix = glm::mat4();
 
-	GLboolean _fogEnabled;
-	GLfloat _fogStartDistance;
-	GLfloat _fogEndDistance;
+	GLboolean _fogEnabled = GL_FALSE;
+	GLfloat _fogStartDistance = 0;
+	GLfloat _fogEndDistance = 0;
 
 public:
 	DefaultShader(ShaderManager *);
@@ -114,18 +114,18 @@ class BlockShader : public Shader {
 	bool _fogStartDistanceDirty = true;
 	bool _fogEndDistanceDirty = true;
 
-	GLboolean _lightEnabled;
-	glm::vec3 _ambientColor;
-	glm::vec3 _diffuseColor;
-	glm::vec3 _diffuseDirection;
+	GLboolean _lightEnabled = GL_FALSE;
+	glm::vec3 _ambientColor = {1.0, 1.0, 1.0};
+	glm::vec3 _diffuseColor = {1.0, 1.0, 1.0};
+	glm::vec3 _diffuseDirection = {0.0, 0.0, -1.0};
 
-	glm::mat4 _modelMatrix;
-	glm::mat4 _viewMatrix;
-	glm::mat4 _projectionMatrix;
+	glm::mat4 _modelMatrix = glm::mat4();
+	glm::mat4 _viewMatrix = glm::mat4();
+	glm::mat4 _projectionMatrix = glm::mat4();
 
-	GLboolean _fogEnabled;
-	GLfloat _fogStartDistance;
-	GLfloat _fogEndDistance;
+	GLboolean _fogEnabled = GL_FALSE;
+	GLfloat _fogStartDistance = 0;
+	GLfloat _fogEndDistance = 0;
 
 public:
 	BlockShader(ShaderManager *);
@@ -152,7 +152,7 @@ class HudShader : public Shader {
 	
 	bool _projectionMatrixDirty = true;
 	
-	glm::mat4 _projectionMatrix;
+	glm::mat4 _projectionMatrix = glm::mat4();
 
 public:
 	HudShader(ShaderManager *);
@@ -174,12 +174,12 @@ class FontShader : public Shader {
 	GLint _outlineColorLoc;
 	GLint _modeLoc;
 
-    glm::mat4 _projectionMatrix;
-	glm::mat4 _modelMatrix;
-	GLboolean _isPacked;
-	GLboolean _hasOutline;
-    GLshort _page;
-	GLshort _channel;
+    glm::mat4 _projectionMatrix = glm::mat4();
+	glm::mat4 _modelMatrix = glm::mat4();
+	GLboolean _isPacked = GL_FALSE;
+	GLboolean _hasOutline = GL_FALSE;
+    GLshort _page = 0;
+	GLshort _channel = 0;
 	glm::vec4 _textColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);;
 	glm::vec4 _outlineColor = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
 	GLshort _mode = 0;
