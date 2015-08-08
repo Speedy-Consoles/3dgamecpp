@@ -115,8 +115,8 @@
     <ClCompile Include="..\..\src\client\gl2_sky_renderer.cpp">
       <Filter>Source Files\gfx</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\client\chunk_renderer.cpp">
-      <Filter>Source Files\gfx</Filter>
+    <ClCompile Include="..\..\src\client\server_interface.cpp">
+      <Filter>Source Files\net</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -205,9 +205,6 @@
       <Filter>Header Files\gfx</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\client\gl2_sky_renderer.hpp">
-      <Filter>Header Files\gfx</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\client\chunk_renderer.hpp">
       <Filter>Header Files\gfx</Filter>
     </ClInclude>
   </ItemGroup>
