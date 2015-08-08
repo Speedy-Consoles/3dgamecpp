@@ -45,6 +45,8 @@ public:
 	Graphics(Client *client, const Client::State *state);
 	~Graphics();
 
+	Renderer *getRenderer() const { return renderer.get(); }
+
 	bool createContext();
 	bool createGL2Context();
 	bool createGL3Context();

@@ -206,8 +206,7 @@ void GL3ChunkRenderer::render() {
 				inRenderQueue.insert(cc);
 				renderQueue.push_back(cc);
 				for (size_t i = 0; i < 27; ++i) {
-					vec3i64 ncc = cc + BIG_CUBE_CYCLE[i].cast<int64>();
-					client->getChunkManager()->requestChunk(ncc);
+					client->getChunkManager()->requestChunk(cc + BIG_CUBE_CYCLE[i].cast<int64>());
 				}
 			}
 		}
@@ -310,6 +309,18 @@ void GL3ChunkRenderer::render() {
 		}
 	}
 	GL(BindVertexArray(0));
+}
+
+void GL3ChunkRenderer::rerenderChunk(vec3i64 chunkCoords) {
+	int index = gridCycleIndex(chunkCoords, visibleDiameter);
+	if (chunkGrid[index].status != OK || chunkGrid[index].content != chunkCoords)
+		return;
+	chunkGrid[index].status = OUTDATED;
+	inRenderQueue.insert(chunkCoords);
+	renderQueue.push_front(chunkCoords);
+	for (size_t i = 0; i < 27; ++i) {
+		client->getChunkManager()->requestChunk(chunkCoords + BIG_CUBE_CYCLE[i].cast<int64>());
+	}
 }
 
 void GL3ChunkRenderer::buildChunk(Chunk const *chunks[27]) {

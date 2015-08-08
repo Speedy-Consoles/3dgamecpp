@@ -4,6 +4,7 @@
 #include <atomic>
 
 #include "engine/logging.hpp"
+#include "graphics.hpp"
 
 using namespace std;
 
@@ -91,8 +92,10 @@ void LocalServerInterface::setSelectedBlock(uint8 block) {
 	player->setBlock(block);
 }
 
-void LocalServerInterface::placeBlock(vec3i64 bc, uint8 type) {
-	//TODO
+void LocalServerInterface::placeBlock(vec3i64 blockCoords, uint8 blockType) {
+	client->getChunkManager()->placeBlock(blockCoords, blockType);
+	// TODO tell world
+	client->getGraphics()->getRenderer()->rerenderChunk(bc2cc(blockCoords));
 }
 
 void LocalServerInterface::toggleFly() {

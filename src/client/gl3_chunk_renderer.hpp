@@ -29,6 +29,7 @@ class GL3ChunkRenderer {
 private:
 	enum ChunkStatus {
 		NO_CHUNK = 0,
+		OUTDATED,
 		OK,
 	};
 
@@ -103,6 +104,8 @@ public:
 
 	void setConf(const GraphicsConf &, const GraphicsConf &);
 	void render();
+
+	void rerenderChunk(vec3i64 chunkCoords);
 
 	ChunkRendererDebugInfo getDebugInfo();
 

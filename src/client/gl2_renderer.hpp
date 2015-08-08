@@ -94,9 +94,11 @@ public:
 	GL2Renderer(Client *client);
 	~GL2Renderer();
 
-	void tick();
-	void resize();
-	void setConf(const GraphicsConf &, const GraphicsConf &);
+	void tick() override;
+	void resize() override;
+	void setConf(const GraphicsConf &, const GraphicsConf &) override;
+
+	void rerenderChunk(vec3i64 chunkCoords) override;
 
 	TextureManager *getTextureManager();
 	bool inFrustum(vec3i64 cc, vec3i64 pos, vec3d lookDir);

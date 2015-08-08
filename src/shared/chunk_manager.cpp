@@ -36,6 +36,14 @@ void ChunkManager::tick() {
 	}
 }
 
+void ChunkManager::placeBlock(vec3i64 blockCoords, uint8 blockType) {
+	vec3i64 cc = bc2cc(blockCoords);
+	auto it = chunks.find(cc);
+	if (it != chunks.end())
+		it->second->setBlock(bc2icc(blockCoords), blockType);
+	// TODO also operate on cache
+}
+
 const Chunk *ChunkManager::getChunk(vec3i64 chunkCoords) const {
 	auto it = chunks.find(chunkCoords);
 	if (it != chunks.end())

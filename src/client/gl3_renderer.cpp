@@ -82,6 +82,39 @@ void GL3Renderer::resize() {
 	makeSkyFbo();
 }
 
+void GL3Renderer::setConf(const GraphicsConf &conf, const GraphicsConf &old) {
+	auto &defaultShader = shaderManager.getDefaultShader();
+	auto &blockShader = shaderManager.getBlockShader();
+
+	if (conf.render_distance != old.render_distance) {
+		makePerspectiveMatrix();
+
+		auto endFog = (conf.render_distance - 1) * Chunk::WIDTH;
+		auto startFog = (conf.render_distance - 1) * Chunk::WIDTH * 1 / 2.0;
+
+		defaultShader.setEndFogDistance(endFog);
+		defaultShader.setStartFogDistance(startFog);
+
+		blockShader.setEndFogDistance(endFog);
+		blockShader.setStartFogDistance(startFog);
+	}
+
+	if (conf.fov != old.fov) {
+		makePerspectiveMatrix();
+		makeMaxFOV();
+	}
+
+	bool fog = conf.fog == Fog::FANCY || conf.fog == Fog::FAST;
+	defaultShader.setFogEnabled(fog);
+	blockShader.setFogEnabled(fog);
+
+	chunkRenderer.setConf(conf, old);
+}
+
+void GL3Renderer::rerenderChunk(vec3i64 chunkCoords) {
+	chunkRenderer.rerenderChunk(chunkCoords);
+}
+
 void GL3Renderer::makePerspectiveMatrix() {
 	double normalRatio = DEFAULT_WINDOWED_RES[0] / (double) DEFAULT_WINDOWED_RES[1];
 	double currentRatio = client->getGraphics()->getWidth() / (double) client->getGraphics()->getHeight();
@@ -140,35 +173,6 @@ void GL3Renderer::makeSkyFbo() {
 	GL(BindFramebuffer(GL_FRAMEBUFFER, skyFbo));
 	GL(FramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, skyTex, 0));
 	GL(BindFramebuffer(GL_FRAMEBUFFER, 0));
-}
-
-void GL3Renderer::setConf(const GraphicsConf &conf, const GraphicsConf &old) {
-	auto &defaultShader = shaderManager.getDefaultShader();
-	auto &blockShader = shaderManager.getBlockShader();
-
-	if (conf.render_distance != old.render_distance) {
-		makePerspectiveMatrix();
-
-		auto endFog = (conf.render_distance - 1) * Chunk::WIDTH;
-		auto startFog = (conf.render_distance - 1) * Chunk::WIDTH * 1 / 2.0;
-
-		defaultShader.setEndFogDistance(endFog);
-		defaultShader.setStartFogDistance(startFog);
-
-		blockShader.setEndFogDistance(endFog);
-		blockShader.setStartFogDistance(startFog);
-	}
-
-	if (conf.fov != old.fov) {
-		makePerspectiveMatrix();
-		makeMaxFOV();
-	}
-
-	bool fog = conf.fog == Fog::FANCY || conf.fog == Fog::FAST;
-	defaultShader.setFogEnabled(fog);
-	blockShader.setFogEnabled(fog);
-
-	chunkRenderer.setConf(conf, old);
 }
 
 void GL3Renderer::tick() {

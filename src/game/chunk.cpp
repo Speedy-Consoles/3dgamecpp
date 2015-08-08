@@ -80,67 +80,22 @@ void Chunk::initBlock(size_t index, uint8 type) {
 		airBlocks++;
 }
 
-bool Chunk::setBlock(vec3ui8 icc, uint8 type) {
-	if (getBlock(icc) == type)
-		return true;
-	blocks[getBlockIndex(icc)] = type;
-	changed = true;
+void Chunk::setBlock(vec3ui8 icc, uint8 type) {
+	int blockIndex = getBlockIndex(icc);
+	if (blocks[blockIndex] == type)
+		return;
+
+	blocks[blockIndex] = type;
 	if (type == 0)
 		airBlocks++;
 	else
 		airBlocks--;
-	return true;
 }
 
 uint8 Chunk::getBlock(vec3ui8 icc) const {
 	return blocks[getBlockIndex(icc)];
 }
 
-/*
-void Chunk::write(ByteBuffer buffer) const {
-	buffer.putLong(cx);
-	buffer.putLong(cy);
-	buffer.putLong(cz);
-	Deflater deflater = new Deflater();
-	deflater.setInput(blocks);
-	deflater.finish();
-	byte cBytes[(int) ((WIDTH * WIDTH * WIDTH) * 1.1)];
-	int written = deflater.deflate(cBytes, 0, cBytes.length,
-			Deflater.SYNC_FLUSH);
-	buffer.putShort((short) written);
-	buffer.put(cBytes, 0, written);
-}
-
-static Chunk Chunk::readChunk(ByteBuffer buffer) {
-	vec3i64 cc(
-		buffer.getLong(),
-		buffer.getLong(),
-		buffer.getLong()
-	);
-	short written = buffer.getShort();
-	byte cBytes[written];
-	buffer.get(cBytes);
-	Inflater inflater = new Inflater();
-	inflater.setInput(cBytes);
-	byte blocks[WIDTH * WIDTH * WIDTH];
-	try {
-		inflater.inflate(blocks);
-	} catch (DataFormatException e) {
-		e.printStackTrace();
-	}
-	return Chunk(cc, blocks);
-}
-*/
 size_t Chunk::getBlockIndex(vec3ui8 icc) {
 	return (icc[2] * WIDTH + icc[1]) * WIDTH + icc[0];
-}
-
-bool Chunk::pollChanged() {
-	bool tmp = changed;
-	changed = false;
-	return tmp;
-}
-
-void Chunk::setChanged() {
-	changed = true;
 }

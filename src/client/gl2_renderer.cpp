@@ -114,6 +114,10 @@ void GL2Renderer::setConf(const GraphicsConf &conf, const GraphicsConf &old) {
 	texManager.setConfig(conf, old);
 }
 
+void GL2Renderer::rerenderChunk(vec3i64 chunkCoords) {
+	// TODO
+}
+
 TextureManager *GL2Renderer::getTextureManager() {
 	return &texManager;
 }

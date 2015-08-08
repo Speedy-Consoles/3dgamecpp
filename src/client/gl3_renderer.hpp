@@ -78,9 +78,11 @@ public:
 	GL3Renderer(Client *client);
 	~GL3Renderer();
 
-	void tick();
-	void resize();
-	void setConf(const GraphicsConf &, const GraphicsConf &);
+	void tick() override;
+	void resize() override;
+	void setConf(const GraphicsConf &, const GraphicsConf &) override;
+
+	void rerenderChunk(vec3i64 chunkCoords) override;
 
 	void makePerspectiveMatrix();
 	void makeOrthogonalMatrix();

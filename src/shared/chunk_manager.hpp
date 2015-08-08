@@ -32,6 +32,8 @@ public:
 
 	void tick();
 
+	void placeBlock(vec3i64 blockCoords, uint8 blockType);
+
 	const Chunk *getChunk(vec3i64 chunkCoords) const;
 	void requestChunk(vec3i64 chunkCoords);
 	void releaseChunk(vec3i64 chunkCoords);
