@@ -235,6 +235,7 @@ void GL3ChunkRenderer::render() {
 			client->getChunkManager()->releaseChunk(chunks[i]->getCC());
 		}
 		renderQueue.pop_front();
+		inRenderQueue.erase(inRenderQueue.find(cc));
 	}
 
 	// render chunks
