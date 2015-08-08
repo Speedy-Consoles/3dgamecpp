@@ -139,15 +139,15 @@ void Menu::setFullscreen(bool b) {
 }
 
 void Menu::setAntiAliasing(AntiAliasing aa) {
-	bufferConf.aa = aa;
-	_dirty = true;
-	apply();
+	GraphicsConf conf = _client->getConf();
+	conf.aa = bufferConf.aa = aa;
+	_client->setConf(conf);
 }
 
 void Menu::setFog(Fog fog) {
-	bufferConf.fog = fog;
-	_dirty = true;
-	apply();
+	GraphicsConf conf = _client->getConf();
+	conf.fog = bufferConf.fog = fog;
+	_client->setConf(conf);
 }
 
 void Menu::setRenderDistance(int d) {
@@ -156,13 +156,13 @@ void Menu::setRenderDistance(int d) {
 }
 
 void Menu::setMipmapping(uint level) {
-	bufferConf.tex_mipmapping = level;
-	_dirty = true;
-	apply();
+	GraphicsConf conf = _client->getConf();
+	conf.tex_mipmapping = bufferConf.tex_mipmapping = level;
+	_client->setConf(conf);
 }
 
 void Menu::setTextureFiltering(TexFiltering filt) {
-	bufferConf.tex_filtering = filt;
-	_dirty = true;
-	apply();
+	GraphicsConf conf = _client->getConf();
+	conf.tex_filtering = bufferConf.tex_filtering = filt;
+	_client->setConf(conf);
 }
