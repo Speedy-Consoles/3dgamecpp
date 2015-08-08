@@ -247,7 +247,7 @@ void ArchiveFile::storeChunk(const Chunk &chunk) {
 	}
 	_file.write((char *) buffer, store_size);
 	_file.flush();
-	delete buffer;
+	delete[] buffer;
 
 	if (!_file.good()) {
 		LOG(ERROR, "Safe operation failed for chunk "
