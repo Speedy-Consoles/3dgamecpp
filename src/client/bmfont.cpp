@@ -192,6 +192,8 @@ int BMFont::load(const char *fontFile) {
 
 	GL(BufferData(GL_ARRAY_BUFFER, bufferSize * sizeof(float), vboBuffer, GL_STATIC_DRAW));
 
+	delete[] vboBuffer;
+
 	return r;
 }
 
