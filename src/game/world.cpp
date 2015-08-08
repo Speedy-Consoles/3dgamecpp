@@ -2,12 +2,13 @@
 
 #include <cstdio>
 
-#include "engine/logging.hpp"
-
 #include "chunk.hpp"
 
 #include "constants.hpp"
 #include "util.hpp"
+
+#include "engine/logging.hpp"
+static logging::Logger logger("default");
 
 const double World::GRAVITY = -9.81 * RESOLUTION / 60.0 / 60.0 * 4;
 
@@ -16,14 +17,14 @@ World::World(std::string id, ChunkManager *chunkManager) :
 		chunkManager(chunkManager),
 		neededChunks(0, vec3i64HashFunc)
 {
-	LOG(INFO, "Opening world '" << id << "'");
+	LOG_INFO(logger) << "Opening world '" << id << "'";
 	for (int i = 0; i < MAX_CLIENTS; ++i) {
 		oldPlayerValids[i] = false;
 	}
 }
 
 World::~World() {
-	LOG(DEBUG, "Deleting world '" << id << "'");
+	LOG_DEBUG(logger) << "Deleting world '" << id << "'";
 }
 
 void World::tick(int tick, uint localPlayerID) {

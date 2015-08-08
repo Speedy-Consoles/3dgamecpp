@@ -1,5 +1,7 @@
 #include "stopwatch.hpp"
+
 #include "engine/logging.hpp"
+static logging::Logger logger("default");
 
 Stopwatch::Stopwatch(size_t size) : _clocks(size) {
 	auto now = getCurrentTime();
@@ -25,15 +27,15 @@ void Stopwatch::start(uint id) {
 
 void Stopwatch::stop(uint id) {
 	if (_stack.empty()) {
-		LOG(DEBUG, "No clock to stop");
+		LOG_DEBUG(logger) << "No clock to stop";
 		return;
 	}
 	if (id == (uint) -1) {
-		LOG(DEBUG, "Stopped clock " << _stack.top()
-				<< " without explicit id given");
+		LOG_DEBUG(logger) << "Stopped clock " << _stack.top()
+				<< " without explicit id given";
 	} else if (id != _stack.top()) {
-		LOG(DEBUG, "Stopped clock " << _stack.top()
-				<< " but " << id << " given");
+		LOG_DEBUG(logger) << "Stopped clock " << _stack.top()
+				<< " but " << id << " given";
 	}
 	auto now = getCurrentTime();
 	EntryType &entry = _clocks[_stack.top()];
@@ -60,7 +62,7 @@ float Stopwatch::getRel(uint id) {
 
 void Stopwatch::save() {
 	while (!_stack.empty()) {
-		LOG(DEBUG, "stopped clock " << _stack.top() << " unnessessarily");
+		LOG_DEBUG(logger) << "stopped clock " << _stack.top() << " unnessessarily";
 		stop();
 	}
 

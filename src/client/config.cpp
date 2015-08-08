@@ -4,6 +4,7 @@
 #include <boost/property_tree/info_parser.hpp>
 
 #include "engine/logging.hpp"
+static logging::Logger logger("conf");
 
 using namespace std;
 using namespace boost;
@@ -170,7 +171,7 @@ void load(const char *filename, GraphicsConf &conf) {
 	try {
 		read_info(filename, pt);
 	} catch (...) {
-		LOG(WARNING, "'" << filename << "' could not be opened");
+		LOG_WARNING(logger) << "'" << filename << "' could not be opened";
 	}
 
 	conf.render_backend = pt.get("graphics.render_backend",

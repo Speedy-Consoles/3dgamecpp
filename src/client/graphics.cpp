@@ -6,24 +6,27 @@
 #include "gl2_renderer.hpp"
 #include "gl3_renderer.hpp"
 
+#include "engine/logging.hpp"
+static logging::Logger logger("gfx");
+
 using namespace gui;
 
 Graphics::Graphics(Client *client, const Client::State *state) : client(client), state(*state) {
-	LOG(DEBUG, "Constructing Graphics");
+	LOG_DEBUG(logger) << "Constructing Graphics";
 
-	LOG(DEBUG, "Initializing SDL");
+	LOG_DEBUG(logger) << "Initializing SDL";
 	if (SDL_Init(SDL_INIT_VIDEO))
-		LOG(FATAL, SDL_GetError());
+		LOG_FATAL(logger) << SDL_GetError();
 	int img_init_flags = IMG_INIT_JPG | IMG_INIT_PNG | IMG_INIT_TIF;
 	int img_init_result = IMG_Init(img_init_flags);
 	if (!(img_init_flags & img_init_result & IMG_INIT_JPG)) {
-		LOG(ERROR, "SDL_Image JPEG Plugin could not be initialized")
+		LOG_ERROR(logger) << "SDL_Image JPEG Plugin could not be initialized";
 	}
 	if (!(img_init_flags & img_init_result & IMG_INIT_PNG)) {
-		LOG(ERROR, "SDL_Image PNG Plugin could not be initialized")
+		LOG_ERROR(logger) << "SDL_Image PNG Plugin could not be initialized";
 	}
 	if (!(img_init_flags & img_init_result & IMG_INIT_TIF)) {
-		LOG(ERROR, "SDL_Image TIFF Plugin could not be initialized")
+		LOG_ERROR(logger) << "SDL_Image TIFF Plugin could not be initialized";
 	}
 }
 
@@ -36,7 +39,7 @@ Graphics::~Graphics() {
 }
 
 bool Graphics::createContext() {
-	LOG(DEBUG, "Creating window");
+	LOG_DEBUG(logger) << "Creating window";
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_COMPATIBILITY);
@@ -50,28 +53,28 @@ bool Graphics::createContext() {
 		SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE
 	);
 	if (!window)
-		LOG(FATAL, SDL_GetError());
+		LOG_FATAL(logger) << SDL_GetError();
 
 	width = client->getConf().windowed_res[0];
 	height = client->getConf().windowed_res[1];
 	calcDrawArea();
 	glViewport(0, 0, width, height);
 
-	LOG(DEBUG, "Creating Open GL Context");
+	LOG_DEBUG(logger) << "Creating Open GL Context";
 	glContext = SDL_GL_CreateContext(window);
-	if (!glContext) LOG(FATAL, SDL_GetError());
+	if (!glContext) LOG_FATAL(logger) << SDL_GetError();
 
-	LOG(INFO, "OpenGL Version: " << glGetString(GL_VERSION));
-	LOG(INFO, "GLSL Version: " << glGetString(GL_SHADING_LANGUAGE_VERSION));
+	LOG_INFO(logger) << "OpenGL Version: " << glGetString(GL_VERSION);
+	LOG_INFO(logger) << "GLSL Version: " << glGetString(GL_SHADING_LANGUAGE_VERSION);
 
-	LOG(DEBUG, "Initializing GLEW");
+	LOG_DEBUG(logger) << "Initializing GLEW";
 	GLenum glew_error = glewInit();
 	if (glew_error != GLEW_OK) {
-		LOG(FATAL, glewGetErrorString(glew_error));
+		LOG_FATAL(logger) << glewGetErrorString(glew_error);
 		return false;
 	}
 	if (!GLEW_VERSION_2_1) {
-		LOG(FATAL, "OpenGL version 2.1 not available");
+		LOG_FATAL(logger) << "OpenGL version 2.1 not available";
 		return false;
 	}
 	if (GLEW_VERSION_3_3 && client->getConf().render_backend == RenderBackend::OGL_3) {
@@ -83,7 +86,7 @@ bool Graphics::createContext() {
 }
 
 void Graphics::resize(int width, int height) {
-	LOG(INFO, "Resize to " << width << "x" << height);
+	LOG_INFO(logger) << "Resize to " << width << "x" << height;
 	this->width = width;
 	this->height = height;
 	calcDrawArea();

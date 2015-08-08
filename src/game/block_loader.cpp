@@ -1,10 +1,11 @@
 #include "block_loader.hpp"
 
-#include "engine/logging.hpp"
-
 #include <cctype>
 #include <memory>
 #include <vector>
+
+#include "engine/logging.hpp"
+static logging::Logger logger("default");
 
 struct ParsingError {
 	int row, col;
@@ -221,7 +222,7 @@ int AbstractBlockManager::load(const char *path) {
 	try {
 		loader->load();
 	} catch (ParsingError &e) {
-		LOG(ERROR, path << ":" << (e.row + 1) << ":" << (e.col + 1) << ": " << e.error);
+		LOG_ERROR(logger) << path << ":" << (e.row + 1) << ":" << (e.col + 1) << ": " << e.error;
 		return 1;
 	}
 	return 0;

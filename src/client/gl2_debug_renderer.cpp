@@ -5,16 +5,18 @@
 #include "engine/logging.hpp"
 #include "engine/math.hpp"
 
+static logging::Logger logger("render");
+
 GL2DebugRenderer::GL2DebugRenderer(Client *client, GL2Renderer *renderer) :
 	client(client), renderer(renderer)
 {
-	LOG(DEBUG, "Loading font");
+	LOG_DEBUG(logger) << "Loading font";
 	font = new FTGLTextureFont("res/DejaVuSansMono.ttf");
 	if (font) {
 		font->FaceSize(16);
 		font->CharMap(ft_encoding_unicode);
 	} else {
-		LOG(ERROR, "Could not open 'res/DejaVuSansMono.ttf'");
+		LOG_ERROR(logger) << "Could not open 'res/DejaVuSansMono.ttf'";
 	}
 }
 

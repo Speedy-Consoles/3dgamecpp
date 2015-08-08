@@ -13,6 +13,9 @@
 #include "util.hpp"
 #include "shared/chunk_manager.hpp"
 
+#include "engine/logging.hpp"
+static logging::Logger logger("render");
+
 using namespace std;
 
 GL3ChunkRenderer::GL3ChunkRenderer(Client *client, GL3Renderer *renderer, ShaderManager *shaderManager) :
@@ -25,7 +28,7 @@ GL3ChunkRenderer::GL3ChunkRenderer(Client *client, GL3Renderer *renderer, Shader
 }
 
 GL3ChunkRenderer::~GL3ChunkRenderer() {
-	LOG(DEBUG, "Destroying chunk renderer");
+	LOG_DEBUG(logger) << "Destroying chunk renderer";
 	destroyRenderDistanceDependent();
 	GL(DeleteTextures(1, &blockTextures));
 }
@@ -39,13 +42,13 @@ void GL3ChunkRenderer::loadTextures() {
 	GLint maxLayerCount;
 	GL(GetIntegerv(GL_MAX_ARRAY_TEXTURE_LAYERS, &maxLayerCount));
 	if (maxLayerCount < layerCount) {
-		LOG(ERROR, "Not enough levels available for texture");
+		LOG_ERROR(logger) << "Not enough levels available for texture";
 		return;
 	}
 
 	SDL_Surface *img = IMG_Load("img/textures_1.png");
 	if (!img) {
-		LOG(ERROR, "Textures could not be loaded");
+		LOG_ERROR(logger) << "Textures could not be loaded";
 		return;
 	}
 	int tileW = img->w / xTiles;
@@ -54,7 +57,7 @@ void GL3ChunkRenderer::loadTextures() {
 			0, tileW, tileH, 32,
 			0x000000FF, 0x0000FF00, 0x00FF0000, 0xFF000000);
 	if (!tmp) {
-		LOG(ERROR, "Temporary SDL_Surface could not be created");
+		LOG_ERROR(logger) << "Temporary SDL_Surface could not be created";
 		return;
 	}
 
@@ -90,7 +93,7 @@ void GL3ChunkRenderer::loadTextures() {
 			SDL_Rect rect{i * tileW, j * tileH, tileW, tileH};
 			int ret_code = SDL_BlitSurface(img, &rect, tmp, nullptr);
 			if (ret_code)
-				LOG(ERROR, "Blit unsuccessful: " << SDL_GetError());
+				LOG_ERROR(logger) << "Blit unsuccessful: " << SDL_GetError();
 			GL(TexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, block, tileW, tileH, 1, GL_RGBA, GL_UNSIGNED_BYTE, tmp->pixels));
 		}
 	}

@@ -17,8 +17,8 @@ using namespace std;
 using namespace boost;
 using namespace boost::asio::ip;
 
-#undef DEFAULT_LOGGER
-#define DEFAULT_LOGGER NAMED_LOGGER("server")
+#include "engine/logging.hpp"
+static logging::Logger logger("server");
 
 struct Client {
 	bool connected;
@@ -68,9 +68,9 @@ private:
 };
 
 int main(int argc, char *argv[]) {
-	initLogging("logging_srv.conf");
+	logging::init("logging_srv.conf");
 
-	LOG(TRACE, "Trace enabled");
+	LOG_TRACE(logger) << "Trace enabled";
 
 	initUtil();
 	Server server(8547);
@@ -78,7 +78,7 @@ int main(int argc, char *argv[]) {
 	try {
 		server.run();
 	} catch (std::exception &e) {
-		LOG(FATAL, "Exception: " << e.what());
+		LOG_FATAL(logger) << "Exception: " << e.what();
 		return -1;
 	}
 
@@ -93,7 +93,7 @@ Server::Server(uint16 port, const char *worldId) :
 	w(new boost::asio::io_service::work(ios)),
 	socket(ios)
 {
-	LOG(INFO, "Creating Server");
+	LOG_INFO(logger) << "Creating Server";
 	world = new World(worldId, nullptr); // TODO give chunk manager
 	for (uint8 i = 0; i < MAX_CLIENTS; i++) {
 		clients[i].connected = false;
@@ -106,7 +106,7 @@ Server::Server(uint16 port, const char *worldId) :
 	// this will make sure our async_recv calls get handled
 	f = async(launch::async, [this]{
 		this->ios.run();
-		LOG(INFO, "ASIO Thread returned");
+		LOG_INFO(logger) << "ASIO Thread returned";
 	});
 }
 
@@ -120,14 +120,14 @@ Server::~Server() {
 }
 
 void Server::run() {
-	LOG(INFO, "Starting server");
+	LOG_INFO(logger) << "Starting server";
 
 	auto err = socket.getSystemError();
 	if (err == asio::error::address_in_use) {
-		LOG(FATAL, "Port already in use");
+		LOG_FATAL(logger) << "Port already in use";
 		return;
 	} else if (err) {
-		LOG(FATAL, "Unknown socket error!");
+		LOG_FATAL(logger) << "Unknown socket error!";
 		return;
 	}
 
@@ -154,11 +154,11 @@ void Server::run() {
 			case Socket::TIMEOUT:
 				break;
 			case Socket::SYSTEM_ERROR:
-				LOG(ERROR, "Could not receive on socket: "
-						<< getBoostErrorString(socket.getSystemError()));
+				LOG_ERROR(logger) << "Could not receive on socket: "
+						<< getBoostErrorString(socket.getSystemError());
 				break;
 			default:
-				LOG(ERROR, "Unknown error while receiving packets");
+				LOG_ERROR(logger) << "Unknown error while receiving packets";
 			}
 		}
 
@@ -169,12 +169,12 @@ void Server::run() {
 		tick++;
 	}
 	socket.releaseReadBuffer(inBuf);
-	LOG(INFO, "Server is shutting down");
+	LOG_INFO(logger) << "Server is shutting down";
 }
 
 void Server::handleMessage(const Endpoint &endpoint) {
 	size_t size = inBuf.rSize();
-	LOG(TRACE, "Received message of length " << size);
+	LOG_TRACE(logger) << "Received message of length " << size;
 
 	ClientMessage cmsg;
 	inBuf >> cmsg;
@@ -182,13 +182,13 @@ void Server::handleMessage(const Endpoint &endpoint) {
 	case MALFORMED_CLIENT_MESSAGE:
 		switch (cmsg.malformed.error) {
 		case MESSAGE_TOO_SHORT:
-			LOG(WARNING, "Message too short (" << size << ")");
+			LOG_WARNING(logger) << "Message too short (" << size << ")";
 			break;
 		case WRONG_MAGIC:
-			LOG(WARNING, "Incorrect magic");
+			LOG_WARNING(logger) << "Incorrect magic";
 			break;
 		default:
-			LOG(WARNING, "Unknown error reading message");
+			LOG_WARNING(logger) << "Unknown error reading message";
 			break;
 		}
 		{
@@ -199,7 +199,7 @@ void Server::handleMessage(const Endpoint &endpoint) {
 				head += 3;
 			}
 			head = '\0';
-			LOG(DEBUG, formatter);
+			LOG_DEBUG(logger) << formatter;
 		}
 		break;
 	case CONNECTION_REQUEST:
@@ -218,7 +218,7 @@ void Server::handleMessage(const Endpoint &endpoint) {
 			clients[id].timeOfLastPacket = getCurrentTime();
 			handleClientMessage(cmsg, id);
 		} else {
-			LOG(DEBUG, "Unknown remote address");
+			LOG_DEBUG(logger) << "Unknown remote address";
 
 			ServerMessage smsg;
 			smsg.type = CONNECTION_RESET;
@@ -228,11 +228,11 @@ void Server::handleMessage(const Endpoint &endpoint) {
 			case Socket::OK:
 				break;
 			case Socket::SYSTEM_ERROR:
-				LOG(ERROR, "Could not send on socket: "
-						<< getBoostErrorString(socket.getSystemError()));
+				LOG_ERROR(logger) << "Could not send on socket: "
+						<< getBoostErrorString(socket.getSystemError());
 				break;
 			default:
-				LOG(ERROR, "Unknown error while sending packet");
+				LOG_ERROR(logger) << "Unknown error while sending packet";
 				break;
 			}
 		}
@@ -241,7 +241,7 @@ void Server::handleMessage(const Endpoint &endpoint) {
 }
 
 void Server::handleConnectionRequest(const Endpoint &endpoint) {
-	LOG(INFO, "New connection from " << endpoint.address().to_string() << ":" << endpoint.port());
+	LOG_INFO(logger) << "New connection from " << endpoint.address().to_string() << ":" << endpoint.port();
 
 	// find a free spot for the new player
 	int newPlayer = -1;
@@ -259,11 +259,11 @@ void Server::handleConnectionRequest(const Endpoint &endpoint) {
 	// check for problems
 	ServerMessage smsg;
 	if (duplicate != -1) {
-		LOG(INFO, "Duplicate remote endpoint with player " << duplicate);
+		LOG_INFO(logger) << "Duplicate remote endpoint with player " << duplicate;
 		smsg.type = CONNECTION_REJECTED;
 		smsg.conRejected.reason = DUPLICATE_ENDPOINT;
 	} else if (newPlayer == -1) {
-		LOG(INFO, "Server is full");
+		LOG_INFO(logger) << "Server is full";
 		smsg.type = CONNECTION_REJECTED;
 		smsg.conRejected.reason = FULL;
 	} else {
@@ -277,7 +277,7 @@ void Server::handleConnectionRequest(const Endpoint &endpoint) {
 
 		smsg.type = CONNECTION_ACCEPTED;
 		smsg.conAccepted.id = id;
-		LOG(INFO, "New Player " << (int) id);
+		LOG_INFO(logger) << "New Player " << (int) id;
 	}
 
 	// send response
@@ -287,7 +287,7 @@ void Server::handleConnectionRequest(const Endpoint &endpoint) {
 }
 
 void Server::handleClientMessage(const ClientMessage &cmsg, uint8 id) {
-	LOG(TRACE, "Message " << (int) cmsg.type << " for Player " << (int) id << " accepted");
+	LOG_TRACE(logger) << "Message " << (int) cmsg.type << " for Player " << (int) id << " accepted";
 	switch (cmsg.type) {
 	case ECHO_REQUEST:
 	{
@@ -340,7 +340,7 @@ void Server::checkInactive() {
 			continue;
 
 		if (getCurrentTime() - clients[id].timeOfLastPacket > timeout) {
-			LOG(INFO, "Player " << (int) id << " timed out");
+			LOG_INFO(logger) << "Player " << (int) id << " timed out";
 
 			ServerMessage smsg;
 			smsg.type = CONNECTION_TIMEOUT;
@@ -356,6 +356,6 @@ void Server::checkInactive() {
 void Server::disconnect(uint8 id) {
 	world->deletePlayer(id);
 
-	LOG(INFO, "Player " << (int) id << " disconnected");
+	LOG_INFO(logger) << "Player " << (int) id << " disconnected";
 	clients[id].connected = false;
 }

@@ -3,6 +3,9 @@
 #include <cstring>
 #include "logging.hpp"
 
+#include "engine/logging.hpp"
+static logging::Logger logger("net");
+
 Buffer &operator << (Buffer &lhs, const ServerMessage &rhs) {
 	switch (rhs.type) {
 	case CONNECTION_ACCEPTED:
@@ -18,7 +21,7 @@ Buffer &operator << (Buffer &lhs, const ServerMessage &rhs) {
 	case PLAYER_SNAPSHOT:
 		return lhs << MAGIC << rhs.playerSnapshot;
 	default:
-		LOG(ERROR, "Tried to send server message of unknown type");
+		LOG_ERROR(logger) << "Tried to send server message of unknown type";
 		return lhs;
 	}
 }
@@ -54,7 +57,7 @@ const Buffer &operator >> (const Buffer &lhs, ServerMessage &rhs) {
 			lhs >> rhs.playerSnapshot;
 			break;
 		default:
-			LOG(ERROR, "Received server message of unknown type");
+			LOG_ERROR(logger) << "Received server message of unknown type";
 			break;
 		}
 		if (lhs.rBegin() == oldBegin) {
@@ -74,7 +77,7 @@ Buffer &operator << (Buffer &lhs, const ClientMessage &rhs) {
 	case PLAYER_INPUT:
 		return lhs << MAGIC << rhs.playerInput;
 	default:
-		LOG(ERROR, "Tried to send client message of unknown type");
+		LOG_ERROR(logger) << "Tried to send client message of unknown type";
 		return lhs;
 	}
 }
@@ -101,7 +104,7 @@ const Buffer &operator >> (const Buffer &lhs, ClientMessage &rhs) {
 			lhs >> rhs.playerInput;
 			break;
 		default:
-			LOG(ERROR, "Received client message of unknown type");
+			LOG_ERROR(logger) << "Received client message of unknown type";
 			break;
 		}
 		if (lhs.rBegin() == oldBegin) {

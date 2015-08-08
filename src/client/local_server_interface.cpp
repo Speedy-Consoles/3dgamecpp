@@ -3,9 +3,10 @@
 #include <thread>
 #include <atomic>
 
-#include "engine/logging.hpp"
 #include "graphics.hpp"
 
+#include "engine/logging.hpp"
+static logging::Logger logger("local");
 using namespace std;
 
 LocalServerInterface::LocalServerInterface(Client *client, uint64 seed) :
@@ -50,14 +51,14 @@ void LocalServerInterface::tick() {
 }
 
 void LocalServerInterface::run() {
-	LOG(INFO, "ChunkManager thread dispatched");
+	LOG_INFO(logger) << "ChunkManager thread dispatched";
 
 	while (!shouldHalt.load(memory_order_seq_cst)) {
 		vec3i64 cc;
 		if (toLoadQueue.pop(cc)) {
 			Chunk *chunk = new Chunk(cc);
 			if (!chunk) {
-				LOG(ERROR, "Chunk allocation failed");
+				LOG_ERROR(logger) << "Chunk allocation failed";
 			}
 			if (!archive.loadChunk(*chunk)) {
 				worldGenerator.generateChunk(*chunk);
@@ -76,7 +77,7 @@ void LocalServerInterface::run() {
 		}
 	} // while not thread interrupted
 
-	LOG(INFO,"ChunkManager thread terminating");
+	LOG_INFO(logger) << "ChunkManager thread terminating";
 }
 
 void LocalServerInterface::setPlayerMoveInput(int moveInput) {

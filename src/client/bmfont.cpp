@@ -42,7 +42,6 @@
 #include "bmfont.hpp"
 #include "engine/unicode_int.hpp"
 
-#include "engine/logging.hpp"
 #include "engine/macros.hpp"
 
 #include <SDL2/SDL_image.h>
@@ -51,6 +50,9 @@
 #include <glm/mat4x4.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+
+#include "engine/logging.hpp"
+static logging::Logger logger("gfx");
 
 class BMFontLoader {
 public:
@@ -340,7 +342,7 @@ void BMFontLoader::LoadPage(int id, const char *pageFile, const char *fontFile)
 	// Load the font textures
 	img = IMG_Load(str.c_str());
 	if (!img) {
-		LOG(ERROR, "Textures could not be loaded");
+		LOG_ERROR(logger) << "Textures could not be loaded";
 		goto FAILURE;
 	}
 
@@ -355,7 +357,7 @@ void BMFontLoader::LoadPage(int id, const char *pageFile, const char *fontFile)
 	pixelFormat.Amask = 0xFF000000;
 	tmp = SDL_ConvertSurface(img, &pixelFormat, 0);
 	if (!tmp) {
-		LOG(ERROR, "Temporary SDL_Surface could not be created");
+		LOG_ERROR(logger) << "Temporary SDL_Surface could not be created";
 		goto FAILURE;
 	}
 
@@ -367,7 +369,7 @@ void BMFontLoader::LoadPage(int id, const char *pageFile, const char *fontFile)
 
 FAILURE:
 	{
-		LOG(ERROR, "Failed to load font page '" << str.c_str() << "'");
+		LOG_ERROR(logger) << "Failed to load font page '" << str.c_str() << "'";
 		if (img) SDL_FreeSurface(img);
 		if (tmp) SDL_FreeSurface(tmp);
 		return;

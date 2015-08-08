@@ -38,7 +38,7 @@ void GL2HudRenderer::renderCrosshair() {
 		glVertex2d(2, 20);
 		glVertex2d(-2, 20);
 	glEnd();
-	logOpenGLError();
+	LOG_OPENGL_ERROR;
 }
 
 void GL2HudRenderer::renderSelectedBlock() {
@@ -59,7 +59,7 @@ void GL2HudRenderer::renderSelectedBlock() {
 		glTexCoord2f(texs[2][0], texs[2][1]); glVertex2f(d, d);
 		glTexCoord2f(texs[3][0], texs[3][1]); glVertex2f(0, d);
 	glEnd();
-	logOpenGLError();
+	LOG_OPENGL_ERROR;
 
 	GL(PopMatrix());
 }

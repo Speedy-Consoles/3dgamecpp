@@ -21,14 +21,13 @@
 #include "engine/logging.hpp"
 #include "engine/socket.hpp"
 
-#undef DEFAULT_LOGGER
-#define DEFAULT_LOGGER NAMED_LOGGER("client")
+logging::Logger logger("client");
 
 int main(int argc, char *argv[]) {
-	initLogging("logging.conf");
-
-	LOG(INFO, "Starting client");
-	LOG(TRACE, "Trace enabled");
+	logging::init("logging.conf");
+	
+	LOG_INFO(logger) << "Starting client";
+	LOG_TRACE(logger) << "Trace enabled";
 
 	const char *worldId = "region";
 	const char *serverAdress = nullptr;
@@ -65,9 +64,9 @@ Client::Client(const char *worldId, const char *serverAdress) {
 	blockManager = std::unique_ptr<BlockManager>(new BlockManager());
 	const char *block_ids_file = "block_ids.txt";
 	if (blockManager->load(block_ids_file)) {
-		LOG(ERROR, "Problem loading '" << block_ids_file << "'");
+		LOG_ERROR(logger) << "Problem loading '" << block_ids_file << "'";
 	}
-	LOG(INFO, "" << blockManager->getNumberOfBlocks() << " blocks were loaded from '" << block_ids_file << "'");
+	LOG_INFO(logger) << blockManager->getNumberOfBlocks() << " blocks were loaded from '" << block_ids_file << "'";
 
 	chunkManager = std::unique_ptr<ChunkManager>(new ChunkManager(this));
 	world = std::unique_ptr<World>(new World(worldId, chunkManager.get()));
@@ -76,10 +75,10 @@ Client::Client(const char *worldId, const char *serverAdress) {
 	graphics->createContext();
 
 	if (serverAdress) {
-		LOG(INFO, "Connecting to remote server '" << serverAdress << "'");
+		LOG_INFO(logger) << "Connecting to remote server '" << serverAdress << "'";
 		serverInterface = std::unique_ptr<RemoteServerInterface>(new RemoteServerInterface(this, serverAdress));
 	} else {
-		LOG(INFO, "Connecting to local server");
+		LOG_INFO(logger) << "Connecting to local server";
 		serverInterface = std::unique_ptr<LocalServerInterface>(new LocalServerInterface(this, 42));
 	}
 }
@@ -100,7 +99,7 @@ Player &Client::getLocalPlayer() {
 }
 
 void Client::run() {
-	LOG(INFO, "Running client");
+	LOG_INFO(logger) << "Running client";
 	chunkManager->dispatch();
 	serverInterface->dispatch();
 	time = getCurrentTime();
@@ -194,11 +193,11 @@ void Client::handleInput() {
 			if (event.key.keysym.scancode == SDL_SCANCODE_O) {
 				char buf[128];
 				sprintf(buf, "timeShift: %ld\n", timeShift = (timeShift + 100000) % 1000000);
-				LOG(INFO, "" << buf);
+				LOG_INFO(logger) << buf;
 			} else if (event.key.keysym.scancode == SDL_SCANCODE_P) {
 				char buf[128];
 				sprintf(buf, "timeShift: %ld\n", timeShift = (timeShift + 900000) % 1000000);
-				LOG(INFO, "" << buf);
+				LOG_INFO(logger) << buf;
 			}
 			if (state == State::PLAYING) {
 				switch (event.key.keysym.scancode) {

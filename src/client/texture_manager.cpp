@@ -8,10 +8,12 @@
 #include "texture_manager.hpp"
 
 #include "client/client.hpp"
-#include "engine/logging.hpp"
 #include "util.hpp"
 
 #include <SDL2/SDL_image.h>
+
+#include "engine/logging.hpp"
+static logging::Logger logger("gfx");
 
 static const auto TEX2D = GL_TEXTURE_2D;
 
@@ -39,7 +41,7 @@ static void setLoadingOptions(const GraphicsConf &conf) {
 		min_filter = mipmapping ? GL_LINEAR_MIPMAP_NEAREST : GL_NEAREST;
 		break;
 	default:
-		LOG(ERROR, "Reached unreachable code");
+		LOG_ERROR(logger) << "Reached unreachable code";
 		mag_filter = 0;
 		min_filter = 0;
 		break;
@@ -270,7 +272,7 @@ void TextureManager::add(SDL_Surface *img, const std::vector<TextureLoadEntry> &
 					0, width, height, 32,
 					0x000000FF, 0x0000FF00, 0x00FF0000, 0xFF000000));
 			if (!tmp) {
-				LOG(ERROR, "Temporary SDL_Surface could not be created");
+				LOG_ERROR(logger) << "Temporary SDL_Surface could not be created";
 				return;
 			}
 		}
@@ -278,7 +280,7 @@ void TextureManager::add(SDL_Surface *img, const std::vector<TextureLoadEntry> &
 		SDL_Rect rect{entry.x, entry.y, width, height};
 		int ret_code = SDL_BlitSurface(img, &rect, tmp.get(), nullptr);
 		if (ret_code)
-			LOG(ERROR, "Blit unsuccessful: " << SDL_GetError());
+			LOG_ERROR(logger) << "Blit unsuccessful: " << SDL_GetError();
 
 		loadTexture(entry.id, entry.dir_mask, tmp.get(), entry.type);
 	}

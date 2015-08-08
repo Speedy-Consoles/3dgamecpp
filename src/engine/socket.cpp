@@ -7,9 +7,10 @@
 
 #include "socket.hpp"
 
-#include "logging.hpp"
-
 #include <utility>
+
+#include "engine/logging.hpp"
+static logging::Logger logger("net");
 
 using namespace boost;
 using namespace boost::asio::ip;
@@ -134,7 +135,7 @@ Socket::ErrorCode Socket::receiveFor(uint64 dur, Endpoint *e) {
 	case std::future_status::timeout:
 		return TIMEOUT;
 	default:
-		LOG(ERROR, "Deferred future");
+		LOG_ERROR(logger) << "Deferred future";
 		return UNKNOWN_ERROR;
 	}
 }
@@ -146,7 +147,7 @@ Socket::ErrorCode Socket::receiveUntil(uint64 time, Endpoint *e) {
 
 void Socket::startAsyncReceive(Endpoint *e) {
 	if (_recvFuture.valid()) {
-		LOG(ERROR, "Tried to start new receive, but last one is still active");
+		LOG_ERROR(logger) << "Tried to start new receive, but last one is still active";
 	}
 
 	_recvPromise = std::promise<boost::system::error_code>();
@@ -238,7 +239,7 @@ Socket::ErrorCode Socket::sendFor(uint64 duration, const Endpoint *e) {
 	case std::future_status::timeout:
 		return TIMEOUT;
 	default:
-		LOG(ERROR, "Deferred future");
+		LOG_ERROR(logger) << "Deferred future";
 		return UNKNOWN_ERROR;
 	}
 }
@@ -250,7 +251,7 @@ Socket::ErrorCode Socket::sendUntil(uint64 time, const Endpoint *e) {
 
 void Socket::startAsyncSend(const Endpoint *e) {
 	if (_sendFuture.valid()) {
-		LOG(ERROR, "Tried to start new send, but last one is still active");
+		LOG_ERROR(logger) << "Tried to start new send, but last one is still active";
 	}
 
 	_sendPromise = std::promise<boost::system::error_code>();

@@ -2,11 +2,10 @@
 
 #include <thread>
 
-#include "engine/logging.hpp"
 #include "client.hpp"
 
-#undef DEFAULT_LOGGER
-#define DEFAULT_LOGGER NAMED_LOGGER("remote")
+#include "engine/logging.hpp"
+static logging::Logger logger("remote");
 
 using namespace std;
 using namespace boost;
@@ -26,10 +25,10 @@ RemoteServerInterface::RemoteServerInterface(Client *client, const char *address
 
 	auto err = socket.getSystemError();
 	if (err == asio::error::address_in_use) {
-		LOG(FATAL, "Port already in use");
+		LOG_FATAL(logger) << "Port already in use";
 		return;
 	} else if(err) {
-		LOG(FATAL, "Unknown socket error!");
+		LOG_FATAL(logger) << "Unknown socket error!";
 		return;
 	}
 
@@ -49,7 +48,7 @@ RemoteServerInterface::~RemoteServerInterface() {
 void RemoteServerInterface::asyncConnect(std::string address) {
 	connectFuture = std::async(std::launch::async, [this, address]() {
 		status = RESOLVING;
-		LOG(INFO, "Resolving " << address);
+		LOG_INFO(logger) << "Resolving " << address;
 		udp::resolver r(this->ios);
 		udp::resolver::query q(udp::v4(), address, "");
 		boost::system::error_code err;
@@ -60,7 +59,7 @@ void RemoteServerInterface::asyncConnect(std::string address) {
 		}
 		udp::endpoint ep = *iter;
 		status = CONNECTING;
-		LOG(INFO, "Connecting to " << ep.address().to_string());
+		LOG_INFO(logger) << "Connecting to " << ep.address().to_string();
 
 		socket.connect(udp::endpoint(ep.address(), 8547));
 
@@ -88,7 +87,7 @@ void RemoteServerInterface::asyncConnect(std::string address) {
 				client->getWorld()->addPlayer(localPlayerId);
 				client->getWorld()->getPlayer(localPlayerId).setFly(true);
 				status = CONNECTED;
-				LOG(INFO, "Connected to " << ep.address().to_string());
+				LOG_INFO(logger) << "Connected to " << ep.address().to_string();
 				break;
 			case CONNECTION_REJECTED:
 				if (smsg.conRejected.reason == FULL) {
@@ -101,21 +100,21 @@ void RemoteServerInterface::asyncConnect(std::string address) {
 			case MALFORMED_SERVER_MESSAGE:
 				switch (smsg.malformed.error) {
 				case MESSAGE_TOO_SHORT:
-					LOG(DEBUG, "Message too short");
+					LOG_DEBUG(logger) << "Message too short";
 					status = CONNECTION_ERROR;
 					break;
 				case WRONG_MAGIC:
-					LOG(DEBUG, "Incorrect magic");
+					LOG_DEBUG(logger) << "Incorrect magic";
 					status = CONNECTION_ERROR;
 					break;
 				default:
-					LOG(DEBUG, "Unknown error reading message");
+					LOG_DEBUG(logger) << "Unknown error reading message";
 					status = CONNECTION_ERROR;
 					break;
 				}
 				break;
 			default:
-				LOG(DEBUG, "Unexpected message");
+				LOG_DEBUG(logger) << "Unexpected message";
 				status = CONNECTION_ERROR;
 				return;
 			}
@@ -123,11 +122,11 @@ void RemoteServerInterface::asyncConnect(std::string address) {
 		}
 		case Socket::TIMEOUT:
 			status = TIMEOUT;
-			LOG(INFO, "Connection to " << ep.address().to_string() << " timed out");
+			LOG_INFO(logger) << "Connection to " << ep.address().to_string() << " timed out";
 			break;
 		default:
 			status = CONNECTION_ERROR;
-			LOG(ERROR, "Error while connecting");
+			LOG_ERROR(logger) << "Error while connecting";
 			break;
 		}
 	});
@@ -199,7 +198,7 @@ void RemoteServerInterface::tick() {
 		inBuf.clear();
 	}
 	if (error != Socket::WOULD_BLOCK) {
-		LOG(ERROR, "Socket error number " << error << " while receiving");
+		LOG_ERROR(logger) << "Socket error number " << error << " while receiving";
 	}
 }
 

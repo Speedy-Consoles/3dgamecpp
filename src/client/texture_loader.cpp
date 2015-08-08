@@ -8,6 +8,7 @@
 #include <string>
 
 #include "engine/logging.hpp"
+static logging::Logger logger("gfx");
 
 namespace std {
 	template<>
@@ -163,7 +164,7 @@ int TextureLoader::load() {
 			if (key.str == "file") {
 				img = std::unique_ptr<SDL_Surface>(IMG_Load(tok.str.c_str()));
 				if (!img) {
-					LOG(ERROR, "File '" << tok.str << "' could not be loaded");
+					LOG_ERROR(logger) << "File '" << tok.str << "' could not be loaded";
 					state = State::RECOVER_AT_NEXT_TEXTURE;
 				}
 			} else if (key.str == "width") {
@@ -449,7 +450,7 @@ int AbstractTextureManager::load(const char *path) {
 	try {
 		loader->load();
 	} catch (ParsingError &e) {
-		LOG(ERROR, path << ":" << (e.row + 1) << ":" << (e.col + 1) << ": " << e.error);
+		LOG_ERROR(logger) << path << ":" << (e.row + 1) << ":" << (e.col + 1) << ": " << e.error;
 		return 1;
 	}
 	return 0;

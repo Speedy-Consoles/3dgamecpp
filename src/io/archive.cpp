@@ -12,9 +12,11 @@
 #include <boost/filesystem.hpp>
 
 #include "engine/math.hpp"
-#include "engine/logging.hpp"
 
 #include "util.hpp"
+
+#include "engine/logging.hpp"
+static logging::Logger logger("default");
 
 using namespace std;
 
@@ -250,10 +252,10 @@ void ArchiveFile::storeChunk(const Chunk &chunk) {
 	delete[] buffer;
 
 	if (!_file.good()) {
-		LOG(ERROR, "Safe operation failed for chunk "
-				<< cc[0] << " " << cc[1] << " "<< cc[2]);
+		LOG_ERROR(logger) << "Safe operation failed for chunk "
+				<< cc[0] << " " << cc[1] << " "<< cc[2];
 	} else {
-		/*LOG(TRACE, "Safe operation successful for chunk "
+		/*LOG_TRACE(logger) << "Safe operation successful for chunk "
 				<< cc[0] << " " << cc[1] << " "<< cc[2]);*/
 	}
 }
@@ -269,11 +271,11 @@ ChunkArchive::ChunkArchive(const char *str) :
 	path p(str);
 	if (!exists(status(p))) {
 		if (!create_directory(p)) {
-			LOG(ERROR, "Could not create world directory");
+			LOG_ERROR(logger) << "Could not create world directory";
 		}
 	} else {
 		if (!is_directory(p)) {
-			LOG(ERROR, "World path is not a directory");
+			LOG_ERROR(logger) << "World path is not a directory";
 		}
 	}
 }
