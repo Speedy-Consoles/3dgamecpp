@@ -36,13 +36,13 @@ void World::tick(int tick, uint localPlayerID) {
 }
 
 void World::requestChunks() {
-	for (int p = 0; p < MAX_CLIENTS; p++) { // TODO better order
+	for (int p = 0; p < MAX_CLIENTS; p++) {
 		if (!players[p].isValid()) {
 			oldPlayerValids[p] = false;
 			continue;
 		}
 		vec3i64 pc = players[p].getChunkPos();
-		if (pc != oldPlayerChunks[p] || !oldPlayerValids[p]) {
+		if (!oldPlayerValids[p] || pc != oldPlayerChunks[p]) {
 			oldPlayerValids[p] = true;
 			oldPlayerChunks[p] = pc;
 			int checkChunkIndex = 0;

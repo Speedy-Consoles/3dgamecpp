@@ -20,6 +20,11 @@ LocalServerInterface::LocalServerInterface(Client *client, uint64 seed) :
 
 LocalServerInterface::~LocalServerInterface() {
 	client->getWorld()->deletePlayer(0);
+	wait();
+	Chunk *chunk;
+	while (loadedQueue.pop(chunk)) {
+		delete chunk;
+	}
 }
 
 ServerInterface::Status LocalServerInterface::getStatus() {
@@ -58,8 +63,12 @@ void LocalServerInterface::run() {
 				archive.storeChunk(*chunk);
 			}
 			chunk->makePassThroughs();
-			while (!loadedQueue.push(chunk) && !shouldHalt.load(memory_order_seq_cst)) {
+			while (!loadedQueue.push(chunk)) {
 				sleepFor(millis(50));
+				if (shouldHalt.load(memory_order_seq_cst)) {
+					delete chunk;
+					break;
+				}
 			}
 		} else {
 			sleepFor(millis(100));
