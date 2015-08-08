@@ -18,6 +18,7 @@ CLIENT_OBJECT_FILES = \
 	client/gl3_menu_renderer.cpp.o\
 	client/shaders.cpp.o\
 	client/bmfont.cpp.o\
+	client/server_interface.cpp.o\
 	client/local_server_interface.cpp.o\
 	client/remote_server_interface.cpp.o\
 	client/menu.cpp.o\

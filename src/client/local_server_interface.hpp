@@ -6,13 +6,17 @@
 #include "game/world_generator.hpp"
 #include "io/chunk_loader.hpp"
 #include "client.hpp"
+
 class LocalServerInterface : public ServerInterface {
 	Client *client;
 	Player *player;
 
 	WorldGenerator worldGenerator;
 	ChunkArchive archive;
-	std::queue<Chunk *> chunkQueue;
+
+	std::queue<vec3i64> preToLoadQueue;
+	ProducerQueue<Chunk *> loadedQueue;
+	ProducerQueue<vec3i64> toLoadQueue;
 
 public:
 	LocalServerInterface(Client * client, uint64 seed);
@@ -25,8 +29,8 @@ public:
 	void setConf(const GraphicsConf &, const GraphicsConf &) override;
 
 	// networking
-	void send() override;
-	void receive() override;
+	void tick() override;
+	void run() override;
 
 	// player actions
 	void setPlayerMoveInput(int moveInput) override;

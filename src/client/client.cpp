@@ -102,6 +102,7 @@ Player &Client::getLocalPlayer() {
 void Client::run() {
 	LOG(INFO, "Running client");
 	chunkManager->dispatch();
+	serverInterface->dispatch();
 	time = getCurrentTime();
 	int tick = 0;
 	while (!closeRequested) {
@@ -113,16 +114,11 @@ void Client::run() {
 			localClientId = serverInterface->getLocalClientId();
 		}
 
-		if (state == State::PLAYING) {
-			stopwatch->start(CLOCK_NET);
-			serverInterface->send();
-			stopwatch->stop(CLOCK_NET);
-		}
-		if (state == State::PLAYING || state == State::IN_MENU) {
-			stopwatch->start(CLOCK_NET);
-			serverInterface->receive();
-			stopwatch->stop(CLOCK_NET);
+		stopwatch->start(CLOCK_NET);
+		serverInterface->tick();
+		stopwatch->stop(CLOCK_NET);
 
+		if (state == State::PLAYING || state == State::IN_MENU) {
 			stopwatch->start(CLOCK_TIC);
 			if (!_isPaused)
 				world->tick(tick, localClientId);
@@ -143,6 +139,7 @@ void Client::run() {
 		stopwatch->stop(CLOCK_SYN);
 		tick++;
 	}
+	serverInterface->wait();
 	chunkManager->wait();
 }
 
@@ -178,7 +175,7 @@ void Client::handleInput() {
 			}
 			break;
 		}
-		case  SDL_WINDOWEVENT:
+		case SDL_WINDOWEVENT:
 			switch (event.window.event) {
 			case SDL_WINDOWEVENT_CLOSE:
 				closeRequested = true;

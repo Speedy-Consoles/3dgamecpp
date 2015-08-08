@@ -9,8 +9,6 @@ using namespace std;
 ChunkManager::ChunkManager(Client *client) :
 	chunks(0, vec3i64HashFunc),
 	needCounter(0, vec3i64HashFunc),
-	loadedQueue(1024),
-	toLoadQueue(1024),
 	client(client)
 {
 	// nothing
@@ -29,19 +27,12 @@ void ChunkManager::dispatch() {
 
 void ChunkManager::tick() {
 	Chunk *chunk;
-	while (chunks.size() < MAX_LOADED_CHUNKS && loadedQueue.pop(chunk)) {
+	while (chunks.size() < MAX_LOADED_CHUNKS && (chunk = client->getServerInterface()->getNextChunk())) {
 		auto it = needCounter.find(chunk->getCC());
 		if (it != needCounter.end())
 			chunks.insert({chunk->getCC(), chunk});
 		else
 			delete chunk;
-	}
-
-	while (!preToLoadQueue.empty()) {
-		vec3i64 cc = preToLoadQueue.front();
-		if (!toLoadQueue.push(cc))
-			break;
-		preToLoadQueue.pop();
 	}
 }
 
@@ -56,7 +47,7 @@ void ChunkManager::requestChunk(vec3i64 chunkCoords) {
 	auto it = needCounter.find(chunkCoords);
 	if (it == needCounter.end()) {
 		needCounter.insert({chunkCoords, 1});
-		preToLoadQueue.push(chunkCoords);
+		client->getServerInterface()->requestChunk(chunkCoords);
 	} else {
 		it->second++;
 	}
@@ -96,38 +87,5 @@ void ChunkManager::wait() {
 }
 
 void ChunkManager::run() {
-	LOG(INFO, "ChunkManager thread dispatched");
-
-	while (!shouldHalt.load(memory_order_seq_cst)) {
-		// FOR THE FUTURE:
-		// handle chunk data from server
-			// if chunk differs from cache / is not cached
-				// cache chunk
-				// put chunk into outQueue of all listeners listening to it via chunkListeners map
-			// else
-				// ignore chunk
-
-		// handle inQueue
-			// add subscription to chunkListeners map
-			// if chunk is cached
-				// or put cached chunk into
-			// else
-				// send chunk request to server
-
-		//FOR NOW:
-		vec3i64 cc;
-		if (toLoadQueue.pop(cc)) {
-			// TODO this part is, like, totally hacky
-			client->getServerInterface()->requestChunk(cc);
-			Chunk *chunk = client->getServerInterface()->getNextChunk();
-			chunk->makePassThroughs();
-			while (!loadedQueue.push(chunk) && !shouldHalt.load(memory_order_seq_cst)) {
-				sleepFor(millis(50));
-			}
-		} else {
-			sleepFor(millis(100));
-		}
-	} // while not thread interrupted
-
-	LOG(INFO,"ChunkManager thread terminating");
+	sleepFor(millis(100));
 }

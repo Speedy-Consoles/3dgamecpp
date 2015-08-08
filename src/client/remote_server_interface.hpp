@@ -47,9 +47,8 @@ public:
 
 	void placeBlock(vec3i64 bc, uint8 type) override;
 
-	void receive() override;
-
-	void send() override;
+	void tick() override;
+	void run() override;
 
 	void setConf(const GraphicsConf &, const GraphicsConf &) override;
 

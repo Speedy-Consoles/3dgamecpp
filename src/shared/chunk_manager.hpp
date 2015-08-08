@@ -1,8 +1,6 @@
 #ifndef CHUNK_MANAGER_HPP
 #define CHUNK_MANAGER_HPP
 
-#include <unordered_map>
-#include <queue>
 #include <memory>
 #include <atomic>
 #include <future>
@@ -20,9 +18,6 @@ class ChunkManager {
 
 	std::unordered_map<vec3i64, Chunk *, size_t(*)(vec3i64)> chunks;
 	std::unordered_map<vec3i64, int, size_t(*)(vec3i64)> needCounter;
-	std::queue<vec3i64> preToLoadQueue;
-	ProducerQueue<Chunk *> loadedQueue;
-	ProducerQueue<vec3i64> toLoadQueue;
 
 	std::atomic<bool> shouldHalt;
 	std::future<void> fut;

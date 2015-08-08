@@ -1,11 +1,20 @@
 #ifndef SERVER_INTERFACE_HPP
 #define SERVER_INTERFACE_HPP
 
+#include <atomic>
+#include <future>
+
 #include "game/chunk.hpp"
 #include "engine/vmath.hpp"
+#include "engine/queue.hpp"
 #include "config.hpp"
 
 class ServerInterface {
+	std::future<void> fut;
+
+protected:
+	std::atomic<bool> shouldHalt;
+
 public:
 	enum Status {
 		NOT_CONNECTED,
@@ -20,6 +29,12 @@ public:
 
 	virtual ~ServerInterface() = default;
 
+	// threading
+	void dispatch();
+	void requestTermination();
+	void wait();
+	virtual void run() = 0;
+
 	// query
 	virtual Status getStatus() = 0;
 	virtual int getLocalClientId() = 0;
@@ -27,8 +42,7 @@ public:
 	virtual void setConf(const GraphicsConf &, const GraphicsConf &) {};
 
 	// networking
-	virtual void send() = 0;
-	virtual void receive() = 0;
+	virtual void tick() = 0;
 
 	// player actions
 	virtual void setPlayerMoveInput(int moveInput) = 0;

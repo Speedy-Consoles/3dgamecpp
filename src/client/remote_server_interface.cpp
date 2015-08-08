@@ -157,9 +157,27 @@ void RemoteServerInterface::placeBlock(vec3i64 bc, uint8 type) {
 
 }
 
-void RemoteServerInterface::receive() {
+void RemoteServerInterface::tick() {
+	// send
 	if (status != CONNECTED)
 		return;
+	{
+		ClientMessage cmsg;
+		cmsg.type = ECHO_REQUEST;
+		outBuf.clear();
+		outBuf << cmsg << "wurst" << '\0';
+		socket.send(outBuf);
+	}
+	{
+		ClientMessage cmsg;
+		cmsg.type = PLAYER_INPUT;
+		cmsg.playerInput.input = moveInput;
+		outBuf.clear();
+		outBuf << cmsg;
+		socket.send(outBuf);
+	}
+
+	// receive
 	Socket::ErrorCode error;
 	inBuf.clear();
 	while ((error = socket.receiveNow(inBuf)) == Socket::OK) {
@@ -185,24 +203,8 @@ void RemoteServerInterface::receive() {
 	}
 }
 
-void RemoteServerInterface::send() {
-	if (status != CONNECTED)
-		return;
-	{
-		ClientMessage cmsg;
-		cmsg.type = ECHO_REQUEST;
-		outBuf.clear();
-		outBuf << cmsg << "wurst" << '\0';
-		socket.send(outBuf);
-	}
-	{
-		ClientMessage cmsg;
-		cmsg.type = PLAYER_INPUT;
-		cmsg.playerInput.input = moveInput;
-		outBuf.clear();
-		outBuf << cmsg;
-		socket.send(outBuf);
-	}
+void RemoteServerInterface::run() {
+	sleepFor(millis(100));
 }
 
 void RemoteServerInterface::setConf(const GraphicsConf &conf, const GraphicsConf &old) {
