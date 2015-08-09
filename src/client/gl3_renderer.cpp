@@ -202,8 +202,6 @@ void GL3Renderer::tick() {
 }
 
 void GL3Renderer::render() {
-	Player &player = client->getLocalPlayer();
-
 	// render sky
 	GL(Disable(GL_DEPTH_TEST));
 	GL(DepthMask(false));

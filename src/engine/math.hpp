@@ -18,9 +18,12 @@ T clamp(T v, T min, T max) {
     return v;
 }
 
-template <typename T> inline
-typename std::enable_if<std::is_integral<T>::value, T>::type
-cycle(T i, T range) {
+template <typename T1, typename T2> inline
+typename std::enable_if<
+	std::is_integral<T1>::value && std::is_integral<T2>::value,
+	T1
+>::type
+cycle(T1 i, T2 range) {
     return (i % range + range) % range;
 }
 

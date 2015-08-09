@@ -50,7 +50,7 @@ private:
 
 	Endianess _endianess;
 	int32 _version;
-	int64 _region_size;
+	uint64 _region_size;
 	size_t _directory_offset;
 };
 

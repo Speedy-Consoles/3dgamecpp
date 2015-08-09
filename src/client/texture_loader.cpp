@@ -385,7 +385,7 @@ void TextureLoader::getNextToken() {
 			const char *start = tok.str.c_str();
 			char *end;
 			tok.i = strtoul(start, &end, 10);
-			if (end - start == tok.str.length()) {
+			if ((size_t) (end - start) == tok.str.length()) {
 				tok.id = TOK_NUMERAL;
 			} else {
 				throw ParsingError{row, col, "Parsing Error"};
@@ -439,6 +439,8 @@ void TextureLoader::getNextToken() {
 			}
 			state = State::START;
 			continue;
+		case State::TERM:
+			break;
 		}
 	}
 }
