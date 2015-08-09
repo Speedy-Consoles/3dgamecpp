@@ -84,9 +84,9 @@ void Player::collide() {
 			}
 		}
 		if (numFirstHitFaces == 0) {
-			newPos[0] = newPos[0] + floor(remVel[0] + 0.5);
-			newPos[1] = newPos[1] + floor(remVel[1] + 0.5);
-			newPos[2] = newPos[2] + floor(remVel[2] + 0.5);
+			newPos[0] = newPos[0] + (int64) floor(remVel[0] + 0.5);
+			newPos[1] = newPos[1] + (int64) floor(remVel[1] + 0.5);
+			newPos[2] = newPos[2] + (int64) floor(remVel[2] + 0.5);
 			break;
 		}
 
@@ -97,9 +97,9 @@ void Player::collide() {
 			vel[DIR_DIMS[firstHitFaceDirs[i]]] = 0;
 		}
 
-		newPos[0] = floor(firstHitPos[0] + 0.5);
-		newPos[1] = floor(firstHitPos[1] + 0.5);
-		newPos[2] = floor(firstHitPos[2] + 0.5);
+		newPos[0] = (int64) floor(firstHitPos[0] + 0.5);
+		newPos[1] = (int64) floor(firstHitPos[1] + 0.5);
+		newPos[2] = (int64) floor(firstHitPos[2] + 0.5);
 
 		remDist = remVel.norm();
 	}
@@ -109,12 +109,12 @@ void Player::collide() {
 }
 
 void Player::ghost() {
-	pos[0] += floor(vel[0] + 0.5);
-	pos[1] += floor(vel[1] + 0.5);
-	pos[2] += floor(vel[2] + 0.5);
+	pos[0] += (int64) floor(vel[0] + 0.5);
+	pos[1] += (int64) floor(vel[1] + 0.5);
+	pos[2] += (int64) floor(vel[2] + 0.5);
 }
 
-void Player::setOrientation(double yaw, double pitch) {
+void Player::setOrientation(float yaw, float pitch) {
 	this->yaw = yaw;
 	this->pitch = pitch;
 }
@@ -139,11 +139,11 @@ vec3d Player::getVel() const {
 	return vel;
 }
 
-double Player::getYaw() const {
+float Player::getYaw() const {
 	return yaw;
 }
 
-double Player::getPitch() const {
+float Player::getPitch() const {
 	return pitch;
 }
 

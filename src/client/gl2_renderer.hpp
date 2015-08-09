@@ -51,7 +51,7 @@ class GL2Renderer : public Renderer {
 	GL2MenuRenderer menuRenderer;
 	GL2DebugRenderer debugRenderer;
 
-	double ZNEAR = 0.1f;
+	float ZNEAR = 0.1f;
 
 	static const int MAX_NEW_QUADS = 6000;
 	static const int MAX_NEW_CHUNKS = 500;

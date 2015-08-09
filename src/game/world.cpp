@@ -63,7 +63,7 @@ int World::shootRay(vec3i64 start, vec3d ray, double maxDist,
 			int64 planeDist = facePlane - start[dirDim];
 			double factor = planeDist / ray[dirDim];
 			vec3d hit;
-			hit[dirDim] = facePlane;
+			hit[dirDim] = (double) facePlane;
 			hit[otherDims[0]] = start[otherDims[0]] + ray[otherDims[0]]
 					* factor;
 			hit[otherDims[1]] = start[otherDims[1]] + ray[otherDims[1]]

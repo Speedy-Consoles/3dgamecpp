@@ -22,7 +22,7 @@ public:
 
 	void setPlayerMoveInput(int moveInput) override;
 
-	void setPlayerOrientation(double yaw, double pitch) override;
+	void setPlayerOrientation(float yaw, float pitch) override;
 	void setBlock(uint8 block) override;
 
 	void edit(vec3i64 bc, uint8 type) override;

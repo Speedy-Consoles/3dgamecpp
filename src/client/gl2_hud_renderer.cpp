@@ -48,11 +48,11 @@ void GL2HudRenderer::renderSelectedBlock() {
 	TextureManager::getVertices(tex_entry, texs);
 	GL(BindTexture(GL_TEXTURE_2D, tex_entry.tex));
 
-	GL(Color4f(1, 1, 1, 1));
+	GL(Color4f(1.0f, 1.0f, 1.0f, 1.0f));
 
 	GL(PushMatrix());
-	float d = (client->getGraphics()->getWidth() < client->getGraphics()->getHeight() ? client->getGraphics()->getWidth() : client->getGraphics()->getHeight()) * 0.05;
-	GL(Translatef(-client->getGraphics()->getDrawWidth() * 0.48, -client->getGraphics()->getDrawHeight() * 0.48, 0));
+	float d = (client->getGraphics()->getWidth() < client->getGraphics()->getHeight() ? client->getGraphics()->getWidth() : client->getGraphics()->getHeight()) * 0.05f;
+	GL(Translatef(-client->getGraphics()->getDrawWidth() * 0.48f, -client->getGraphics()->getDrawHeight() * 0.48f, 0));
 	glBegin(GL_QUADS);
 		glTexCoord2f(texs[0][0], texs[0][1]); glVertex2f(0, 0);
 		glTexCoord2f(texs[1][0], texs[1][1]); glVertex2f(d, 0);

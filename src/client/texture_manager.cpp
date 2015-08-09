@@ -222,8 +222,8 @@ auto TextureManager::get(uint block, vec3i64 bc, uint8 dir) const -> Entry {
 
 		entry.index = 0;
 
-		entry.index += clamp((vr - vl) * vl, 0, 4);
-		entry.index += clamp((vt - vb) * vb, 0, 4) * 4;
+		entry.index += (int) clamp((vr - vl) * vl, 0, 4);
+		entry.index += (int) clamp((vt - vb) * vb, 0, 4) * 4;
 	}
 
 	return entry;

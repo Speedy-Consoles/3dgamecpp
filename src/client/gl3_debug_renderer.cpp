@@ -12,8 +12,8 @@ GL3DebugRenderer::GL3DebugRenderer(Client *client, GL3Renderer *renderer, Shader
 void GL3DebugRenderer::render() {
 	const Player &player = client->getLocalPlayer();
 
-	float x = -client->getGraphics()->getDrawWidth() / 2 + 5;
-	float y = client->getGraphics()->getDrawHeight() / 2 - font.getTopOffset() - 5;
+	float x = (float) (-client->getGraphics()->getDrawWidth() / 2 + 5);
+	float y = (float) (client->getGraphics()->getDrawHeight() / 2 - font.getTopOffset() - 5);
 
 	char buffer[1024];
 #define RENDER_LINE(...) sprintf(buffer, __VA_ARGS__);\

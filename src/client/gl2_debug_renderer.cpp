@@ -45,10 +45,10 @@ void GL2DebugRenderer::renderDebug() {
 	glDisable(GL_TEXTURE_2D);
 	glPushMatrix();
 	glColor3f(1.0f, 1.0f, 1.0f);
-	glTranslatef(-client->getGraphics()->getDrawWidth() / 2 + 3, client->getGraphics()->getDrawHeight() / 2, 0);
+	glTranslatef(-client->getGraphics()->getDrawWidth() / 2.0f + 3.0f, client->getGraphics()->getDrawHeight() / 2.0f, 0.0f);
 	char buffer[1024];
 	#define RENDER_LINE(...) sprintf(buffer, __VA_ARGS__);\
-			glTranslatef(0, -16, 0);\
+			glTranslatef(0.0f, -16.0f, 0.0f);\
 			font->Render(buffer)
 
 	//RENDER_LINE("fps: %d", fpsSum);
@@ -110,8 +110,8 @@ void GL2DebugRenderer::renderPerformance() {
 	float center_positions[CLOCK_ID_NUM];
 
 	glPushMatrix();
-	glTranslatef(+client->getGraphics()->getDrawWidth() / 2.0, -client->getGraphics()->getDrawHeight() / 2, 0);
-	glScalef(10.0, client->getGraphics()->getDrawHeight(), 1.0);
+	glTranslatef(+client->getGraphics()->getDrawWidth() / 2.0f, -client->getGraphics()->getDrawHeight() / 2.0f, 0.0f);
+	glScalef(10.0, (float) client->getGraphics()->getDrawHeight(), 1.0);
 	glTranslatef(-1, 0, 0);
 	glBegin(GL_QUADS);
 	for (uint i = 0; i < CLOCK_ID_NUM; ++i) {
@@ -120,7 +120,7 @@ void GL2DebugRenderer::renderPerformance() {
 		glVertex2f(1, rel);
 		rel += client->getStopwatch()->getRel(i);
 		cum_rels[i + 1] = rel;
-		center_positions[i] = (cum_rels[i] + cum_rels[i + 1]) / 2.0;
+		center_positions[i] = (cum_rels[i] + cum_rels[i + 1]) / 2.0f;
 		glVertex2f(1, rel);
 		glVertex2f(0, rel);
 	}
@@ -147,14 +147,14 @@ void GL2DebugRenderer::renderPerformance() {
 	for (int i = 1; i < num_displayed_labels + 1; ++i) {
 		float d1 = used_positions[i] - used_positions[i - 1];
 		float d2 = used_positions[i + 1] - used_positions[i];
-		float diff = 2e-4 * (1.0 / d1 - 1.0 / d2);
-		used_positions[i] += clamp((double) diff, -0.02, 0.02);
+		float diff = 2e-4f * (1.0f / d1 - 1.0f / d2);
+		used_positions[i] += clamp(diff, -0.02f, 0.02f);
 	}
 
 	glPushMatrix();
-	glTranslatef(+client->getGraphics()->getDrawWidth() / 2.0, -client->getGraphics()->getDrawHeight() / 2, 0);
+	glTranslatef(+client->getGraphics()->getDrawWidth() / 2.0f, -client->getGraphics()->getDrawHeight() / 2.0f, 0);
 	glTranslatef(-15, 0, 0);
-	glRotatef(90.0, 0.0, 0.0, 1.0);
+	glRotatef(90, 0, 0, 1);
 	for (int i = 0; i < num_displayed_labels; ++i) {
 		int id = labeled_ids[i];
 		glPushMatrix();

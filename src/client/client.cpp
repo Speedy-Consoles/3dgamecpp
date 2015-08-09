@@ -302,13 +302,13 @@ void Client::handleInput() {
 			break;
 		case SDL_MOUSEMOTION:
 			if (state == State::PLAYING && !_isPaused) {
-				double yaw = player.getYaw();
-				double pitch = player.getPitch();
-				yaw -= event.motion.xrel / 10.0;
-				pitch -= event.motion.yrel / 10.0;
-				yaw = fmod(yaw, 360);
-				pitch = std::max(pitch, -90.0);
-				pitch = std::min(pitch, 90.0);
+				float yaw = player.getYaw();
+				float pitch = player.getPitch();
+				yaw -= event.motion.xrel / 10.0f;
+				pitch -= event.motion.yrel / 10.0f;
+				yaw = fmod(yaw, 360.0f);
+				pitch = std::max(pitch, -90.0f);
+				pitch = std::min(pitch, 90.0f);
 				serverInterface->setPlayerOrientation(yaw, pitch);
 			} else if (state == State::IN_MENU) {
 				int x = event.motion.x;

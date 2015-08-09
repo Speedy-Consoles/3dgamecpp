@@ -95,14 +95,14 @@ void Graphics::resize(int width, int height) {
 }
 
 void Graphics::calcDrawArea() {
-	double normalRatio = DEFAULT_WINDOWED_RES[0] / (double) DEFAULT_WINDOWED_RES[1];
-	double currentRatio = width / (double) height;
+	float normalRatio = (float) DEFAULT_WINDOWED_RES[0] / DEFAULT_WINDOWED_RES[1];
+	float currentRatio = (float) width / height;
 	if (currentRatio > normalRatio) {
-		drawWidth = DEFAULT_WINDOWED_RES[0];
+		drawWidth = DEFAULT_WINDOWED_RES[0] * 1.0f;
 		drawHeight = DEFAULT_WINDOWED_RES[0] / currentRatio;
 	} else {
 		drawWidth = DEFAULT_WINDOWED_RES[1] * currentRatio;
-		drawHeight = DEFAULT_WINDOWED_RES[1];
+		drawHeight = DEFAULT_WINDOWED_RES[1] * 1.0f;
 	}
 }
 
@@ -115,8 +115,8 @@ void Graphics::setMenu(bool menuActive) {
 		int x = width / 2;
 		int y = height / 2;
 		SDL_GetMouseState(&x, &y);
-		oldRelMouseX = x / (double) width;
-		oldRelMouseY = y / (double) height;
+		oldRelMouseX = x / (float) width;
+		oldRelMouseY = y / (float) height;
 	}
 }
 
@@ -128,16 +128,16 @@ int Graphics::getHeight() const {
 	return height;
 }
 
-int Graphics::getDrawWidth() const {
+float Graphics::getDrawWidth() const {
 	return drawWidth;
 }
 
-int Graphics::getDrawHeight() const {
+float Graphics::getDrawHeight() const {
 	return drawHeight;
 }
 
 float Graphics::getScalingFactor() const {
-	return (float) drawWidth / width;
+	return drawWidth / width;
 }
 
 void Graphics::setConf(const GraphicsConf &conf, const GraphicsConf &old) {

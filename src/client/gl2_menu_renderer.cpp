@@ -39,16 +39,16 @@ void GL2MenuRenderer::render() {
 
 	glPushMatrix();
 	glLoadIdentity();
-	glTranslatef(-w / 2, -h / 2, 0);
+	glTranslatef(-w / 2.0f, -h / 2.0f, 0.0f);
 
 	glPushMatrix();
-	glTranslatef(0, h, 0);
+	glTranslatef(0.0f, (float) h, 0.0f);
 	glColor4f(0.0f, 0.0f, 0.0f, 0.4f);
 	glBegin(GL_QUADS);
 		glVertex2f(0.0f, 0.0f);
-		glVertex2f(0.0f, -h);
-		glVertex2f(w, -h);
-		glVertex2f(w, 0.0f);
+		glVertex2f(0.0f, (float) -h);
+		glVertex2f((float) w, (float) -h);
+		glVertex2f((float) w, 0.0f);
 	glEnd();
 	glPopMatrix();
 

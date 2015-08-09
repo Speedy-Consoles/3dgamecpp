@@ -87,17 +87,17 @@ vec3d getVectorFromAngles(double yaw, double pitch) {
 
 vec3i64 wc2bc(vec3i64 wc) {
 	return vec3i64(
-		floor(wc[0] / (double) RESOLUTION),
-		floor(wc[1] / (double) RESOLUTION),
-		floor(wc[2] / (double) RESOLUTION)
+		(int64) floor(wc[0] / (float) RESOLUTION),
+		(int64) floor(wc[1] / (float) RESOLUTION),
+		(int64) floor(wc[2] / (float) RESOLUTION)
 	);
 }
 
 vec3i64 bc2cc(vec3i64 bc) {
 	return vec3i64(
-		floor(bc[0] / (double) Chunk::WIDTH),
-		floor(bc[1] / (double) Chunk::WIDTH),
-		floor(bc[2] / (double) Chunk::WIDTH)
+		(int64) floor(bc[0] / (float) Chunk::WIDTH),
+		(int64) floor(bc[1] / (float) Chunk::WIDTH),
+		(int64) floor(bc[2] / (float) Chunk::WIDTH)
 	);
 }
 

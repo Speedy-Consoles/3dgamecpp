@@ -32,7 +32,7 @@ void LocalServerInterface::setPlayerMoveInput(int moveInput) {
 		player->setMoveInput(moveInput);
 }
 
-void LocalServerInterface::setPlayerOrientation(double yaw, double pitch) {
+void LocalServerInterface::setPlayerOrientation(float yaw, float pitch) {
 	player->setOrientation(yaw, pitch);
 }
 
