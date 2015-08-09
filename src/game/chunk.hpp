@@ -7,6 +7,8 @@ class Chunk {
 public:
 	static const uint WIDTH = 32;
 
+	bool initialized = false;
+
 private:
 	vec3i64 cc;
 	uint airBlocks = 0;

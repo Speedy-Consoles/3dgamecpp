@@ -56,5 +56,8 @@ void GL3DebugRenderer::render() {
 	RENDER_LINE(" ");
 	RENDER_LINE("CHUNK MANAGER INFO:");
 	RENDER_LINE("needed chunks: %d", chunkManager->getNumNeededChunks());
+	RENDER_LINE("allocated chunks: %d", chunkManager->getNumAllocatedChunks());
 	RENDER_LINE("loaded chunks: %d", chunkManager->getNumLoadedChunks());
+	RENDER_LINE("requested queue size: %d", chunkManager->getRequestedQueueSize());
+	RENDER_LINE("not-in-cache queue size: %d", chunkManager->getNotInCacheQueueSize());
 }

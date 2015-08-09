@@ -96,4 +96,5 @@ void WorldGenerator::generateChunk(Chunk &chunk) {
 			}
 		}
 	}
+	chunk.initialized = true;
 }

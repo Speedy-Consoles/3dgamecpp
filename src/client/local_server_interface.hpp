@@ -13,9 +13,8 @@ class LocalServerInterface : public ServerInterface {
 
 	WorldGenerator worldGenerator;
 
-	std::queue<vec3i64> preToLoadQueue;
 	ProducerQueue<Chunk *> loadedQueue;
-	ProducerQueue<vec3i64> toLoadQueue;
+	ProducerQueue<Chunk *> toLoadQueue;
 
 public:
 	LocalServerInterface(Client * client, uint64 seed);
@@ -40,7 +39,7 @@ public:
 	void toggleFly() override;
 	
 	// chunks
-	void requestChunk(vec3i64 cc) override;
+	bool requestChunk(Chunk *chunk) override;
 	Chunk *getNextChunk() override;
 };
 

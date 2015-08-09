@@ -18,7 +18,6 @@ CLIENT_OBJECT_FILES = \
 	client/gl3_menu_renderer.cpp.o\
 	client/shaders.cpp.o\
 	client/bmfont.cpp.o\
-	client/server_interface.cpp.o\
 	client/local_server_interface.cpp.o\
 	client/remote_server_interface.cpp.o\
 	client/menu.cpp.o\
@@ -51,6 +50,7 @@ SHARED_OBJECT_FILES = \
 	engine/time.cpp.o\
 	engine/font.cpp.o\
 	engine/unicode_int.cpp.o\
+	engine/thread.cpp.o\
 	io/archive.cpp.o\
 	shared/chunk_manager.cpp.o\
 	stopwatch.cpp.o\

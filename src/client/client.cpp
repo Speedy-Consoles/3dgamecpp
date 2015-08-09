@@ -101,6 +101,7 @@ Player &Client::getLocalPlayer() {
 void Client::run() {
 	LOG_INFO(logger) << "Running client";
 	serverInterface->dispatch();
+	chunkManager->dispatch();
 	time = getCurrentTime();
 	int tick = 0;
 	while (!closeRequested) {

@@ -184,6 +184,8 @@ bool ArchiveFile::loadChunk(vec3i64 cc, Chunk &chunk) {
 		return false;
 	}
 
+	chunk.initialized = true;
+
 	return true;
 }
 

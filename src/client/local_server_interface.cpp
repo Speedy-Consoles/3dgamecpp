@@ -42,21 +42,11 @@ void LocalServerInterface::setConf(const GraphicsConf &conf, const GraphicsConf 
 }
 
 void LocalServerInterface::tick() {
-	while (!preToLoadQueue.empty()) {
-		vec3i64 cc = preToLoadQueue.front();
-		if (!toLoadQueue.push(cc))
-			break;
-		preToLoadQueue.pop();
-	}
 }
 
 void LocalServerInterface::doWork() {
-	vec3i64 cc;
-	if (toLoadQueue.pop(cc)) {
-		Chunk *chunk = new Chunk(cc);
-		if (!chunk) {
-			LOG_ERROR(logger) << "Chunk allocation failed";
-		}
+	Chunk *chunk;
+	if (toLoadQueue.pop(chunk)) {
 		worldGenerator.generateChunk(*chunk);
 		while (!loadedQueue.push(chunk)) {
 			sleepFor(millis(50));
@@ -116,8 +106,8 @@ void LocalServerInterface::toggleFly() {
 	player->setFly(!player->getFly());
 }
 
-void LocalServerInterface::requestChunk(vec3i64 chunkCoords) {
-	preToLoadQueue.push(chunkCoords);
+bool LocalServerInterface::requestChunk(Chunk *chunk) {
+	return toLoadQueue.push(chunk);
 }
 
 Chunk *LocalServerInterface::getNextChunk() {

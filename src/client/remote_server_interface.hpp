@@ -54,7 +54,7 @@ public:
 
 	int getLocalClientId() override;
 
-	void requestChunk(vec3i64 cc) override {}
+	bool requestChunk(Chunk *chunk) override { return false; }
 	Chunk *getNextChunk() override { return nullptr; }
 
 private:

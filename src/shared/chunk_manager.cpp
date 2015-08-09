@@ -7,7 +7,11 @@
 
 using namespace std;
 
+static logging::Logger logger("chm");
+
 ChunkManager::ChunkManager(Client *client) :
+	loadedQueue(1024),
+	toLoadStoreQueue(1024),
 	chunks(0, vec3i64HashFunc),
 	needCounter(0, vec3i64HashFunc),
 	client(client),
@@ -18,25 +22,71 @@ ChunkManager::ChunkManager(Client *client) :
 
 ChunkManager::~ChunkManager() {
 	for (auto it = chunks.begin(); it != chunks.end(); ++it) {
-		archive.storeChunk(*it->second);
 		delete it->second;
 	}
 }
 
 void ChunkManager::tick() {
-	Chunk *chunk;
-	while (chunks.size() < MAX_LOADED_CHUNKS) {
-		chunk = client->getServerInterface()->getNextChunk();
-		if (chunk == nullptr)
-			break;
-
-		auto it = needCounter.find(chunk->getCC());
-		if (it != needCounter.end()) {
-			chunk->makePassThroughs();
-			chunks.insert({chunk->getCC(), chunk});
+	while (!requestedQueue.empty() && numAllocatedChunks < MAX_ALLOCATED_CHUNKS) {
+		vec3i64 cc = requestedQueue.front();
+		Chunk *chunk = new Chunk(cc);
+		numAllocatedChunks++;
+		if (!chunk)
+			LOG_ERROR(logger) << "Chunk allocation failed";
+		ArchiveOperation op = {chunk, LOAD};
+		if (toLoadStoreQueue.push(op)) {
+			if (cc == vec3i64(-1, -2, -3))
+				printf("chunk pushed into chunk cache\n");
+			requestedQueue.pop();
+			continue;
 		} else {
 			delete chunk;
+			numAllocatedChunks--;
+			break;
 		}
+	}
+
+	Chunk *chunk;
+	while (loadedQueue.pop(chunk)) {
+		if (chunk->initialized) {
+			insertLoadedChunk(chunk);
+		} else {
+			notInCacheQueue.push(chunk);
+		}
+	}
+
+	while(!notInCacheQueue.empty()) {
+		Chunk *chunk = notInCacheQueue.front();
+		if (client->getServerInterface()->requestChunk(chunk))
+			requestedQueue.pop();
+	}
+
+	while ((chunk = client->getServerInterface()->getNextChunk()) != nullptr) {
+		if (!chunk->initialized)
+			LOG_WARNING(logger) << "Server interface didn't initialize chunk";
+		insertLoadedChunk(chunk);
+	}
+}
+
+void ChunkManager::doWork() {
+	ArchiveOperation op;
+	if (toLoadStoreQueue.pop(op)) {
+		if (op.chunk->getCC() == vec3i64(-1, -2, -3))
+			printf("chunk asynchronously loaded\n");
+		switch (op.type) {
+		case LOAD:
+			archive.loadChunk(*op.chunk);
+			while (!loadedQueue.push(op.chunk)) {
+				sleepFor(millis(50));
+			}
+			break;
+		case STORE:
+			archive.storeChunk(*op.chunk);
+			break;
+		}
+	} else {
+		sleepFor(millis(100));
+		printf("queue empty\n");
 	}
 }
 
@@ -58,15 +108,9 @@ const Chunk *ChunkManager::getChunk(vec3i64 chunkCoords) const {
 void ChunkManager::requestChunk(vec3i64 chunkCoords) {
 	auto it = needCounter.find(chunkCoords);
 	if (it == needCounter.end()) {
-		bool hasChunk = archive.hasChunk(chunkCoords);
-		if (hasChunk) {
-			Chunk *chunk = new Chunk(chunkCoords);
-			archive.loadChunk(*chunk);
-			chunk->makePassThroughs();
-			chunks.insert({chunkCoords, chunk});
-		} else {
-			client->getServerInterface()->requestChunk(chunkCoords);
-		}
+		if (chunkCoords == vec3i64(-1, -2, -3))
+			printf("chunk requested\n");
+		requestedQueue.push(chunkCoords);
 		needCounter.insert({chunkCoords, 1});
 	} else {
 		it->second++;
@@ -81,8 +125,8 @@ void ChunkManager::releaseChunk(vec3i64 chunkCoords) {
 			needCounter.erase(it1);
 			auto it2 = chunks.find(chunkCoords);
 			if (it2 != chunks.end()) {
-				archive.storeChunk(*it2->second);
 				delete it2->second;
+				numAllocatedChunks--;
 				chunks.erase(it2);
 			}
 		}
@@ -93,6 +137,29 @@ int ChunkManager::getNumNeededChunks() const {
 	return needCounter.size();
 }
 
+int ChunkManager::getNumAllocatedChunks() const {
+	return numAllocatedChunks;
+}
+
 int ChunkManager::getNumLoadedChunks() const {
 	return chunks.size();
+}
+
+int ChunkManager::getRequestedQueueSize() const {
+	return requestedQueue.size();
+}
+
+int ChunkManager::getNotInCacheQueueSize() const {
+	return notInCacheQueue.size();
+}
+
+void ChunkManager::insertLoadedChunk(Chunk *chunk) {
+	auto it = needCounter.find(chunk->getCC());
+	if (it != needCounter.end()) {
+		chunk->makePassThroughs();
+		chunks.insert({chunk->getCC(), chunk});
+	} else {
+		delete chunk;
+		numAllocatedChunks--;
+	}
 }
