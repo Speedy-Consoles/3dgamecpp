@@ -9,9 +9,11 @@
 class Thread {
 	std::future<void> fut;
 	std::atomic<bool> shouldHalt;
+	std::string name;
 
 public:
 	Thread() = default;
+	Thread(const char *name) : name(name) {};
 	virtual ~Thread() = default;
 	
 	// disallow copy
@@ -31,6 +33,8 @@ public:
 	void wait();
 	bool waitFor(Time);
 	bool waitUntil(Time);
+
+	static void setNameOfThisThread(const char *);
 };
 
 #endif // THREAD_HPP_
