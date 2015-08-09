@@ -58,7 +58,9 @@ void ChunkManager::tick() {
 	while(!notInCacheQueue.empty()) {
 		Chunk *chunk = notInCacheQueue.front();
 		if (client->getServerInterface()->requestChunk(chunk))
-			requestedQueue.pop();
+			notInCacheQueue.pop();
+		else
+			break;
 	}
 
 	while ((chunk = client->getServerInterface()->getNextChunk()) != nullptr) {
@@ -86,7 +88,6 @@ void ChunkManager::doWork() {
 		}
 	} else {
 		sleepFor(millis(100));
-		printf("queue empty\n");
 	}
 }
 
