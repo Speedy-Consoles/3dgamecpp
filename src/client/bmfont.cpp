@@ -57,21 +57,22 @@ static logging::Logger logger("gfx");
 class BMFontLoader {
 public:
 	BMFontLoader(FILE *f, BMFont *font, const char *fontFile);
+	virtual ~BMFontLoader() = default;
 
 	virtual int Load() = 0; // Must be implemented by derived class
 
 protected:
 	void LoadPage(int id, const char *pageFile, const char *fontFile);
 	void SetFontInfo(int outlineThickness);
-	void SetCommonInfo(int fontHeight, int base, int scaleW, int scaleH, int pages, bool isPacked);
-	void AddChar(int id, int x, int y, int w, int h, int xoffset, int yoffset, int xadvance, int page, int chnl);
+	void SetCommonInfo(short fontHeight, short base, short scaleW, short scaleH, short pages, bool isPacked);
+	void AddChar(int id, short x, short y, short w, short h, short xoffset, short yoffset, short xadvance, short page, unsigned int chnl);
 	void AddKerningPair(int first, int second, int amount);
 
-	FILE *f;
-	BMFont *font;
-	const char *fontFile;
+	FILE *f = nullptr;
+	BMFont *font = nullptr;
+	const char *fontFile = nullptr;
 
-	int outlineThickness;
+	int outlineThickness = 0;
 };
 
 class BMFontLoaderTextFormat : public BMFontLoader {
@@ -266,12 +267,12 @@ float BMFont::renderGlyph(float x, float y, float z, int glyph) {
 	if (ch == 0) ch = &defChar;
 
 	float a = scale * float(ch->xAdv);
-	float w = scale * float(ch->srcW);
+	//float w = scale * float(ch->srcW); //unused
 	float h = scale * float(ch->srcH);
 	float ox = scale * float(ch->xOff);
 	float oy = scale * float(ch->yOff);
 
-	void *coordOffset = (void *)ch->vboOffset;
+	void *coordOffset = reinterpret_cast<void *>(ch->vboOffset);
 	void *texCoordOffset = (void *)(ch->vboOffset + 2 * sizeof(float));
 	GL(VertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), coordOffset));
 	GL(VertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), texCoordOffset));
@@ -381,7 +382,7 @@ void BMFontLoader::SetFontInfo(int outlineThickness)
 	this->outlineThickness = outlineThickness;
 }
 
-void BMFontLoader::SetCommonInfo(int lineHeight, int base, int scaleW, int scaleH, int pages, bool isPacked)
+void BMFontLoader::SetCommonInfo(short lineHeight, short base, short scaleW, short scaleH, short pages, bool isPacked)
 {
 	font->lineHeight = lineHeight;
 	font->base = base;
@@ -402,7 +403,7 @@ void BMFontLoader::SetCommonInfo(int lineHeight, int base, int scaleW, int scale
 	GL(TexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_LINEAR));
 }
 
-void BMFontLoader::AddChar(int id, int x, int y, int w, int h, int xoffset, int yoffset, int xadvance, int page, int chnl)
+void BMFontLoader::AddChar(int id, short x, short y, short w, short h, short xoffset, short yoffset, short xadvance, short page, unsigned int chnl)
 {
 	// Convert to a 4 element vector
 	// TODO: Does this depend on hardware? It probably does
@@ -544,7 +545,7 @@ void BMFontLoaderTextFormat::InterpretKerning(string &str, int start)
 	int second = 0;
 	int amount = 0;
 
-	int pos, pos2 = start;
+	unsigned int pos, pos2 = start;
 	while (true) {
 		pos = SkipWhiteSpace(str, pos2);
 		pos2 = FindEndOfToken(str, pos);
@@ -577,17 +578,17 @@ void BMFontLoaderTextFormat::InterpretChar(string &str, int start)
 {
 	// Read all attributes
 	int id = 0;
-	int x = 0;
-	int y = 0;
-	int width = 0;
-	int height = 0;
-	int xoffset = 0;
-	int yoffset = 0;
-	int xadvance = 0;
-	int page = 0;
-	int chnl = 0;
+	short x = 0;
+	short y = 0;
+	short width = 0;
+	short height = 0;
+	short xoffset = 0;
+	short yoffset = 0;
+	short xadvance = 0;
+	short page = 0;
+	unsigned short chnl = 0;
 
-	int pos, pos2 = start;
+	unsigned int pos, pos2 = start;
 	while (true) {
 		pos = SkipWhiteSpace(str, pos2);
 		pos2 = FindEndOfToken(str, pos);
@@ -603,25 +604,25 @@ void BMFontLoaderTextFormat::InterpretChar(string &str, int start)
 		string value = str.substr(pos, pos2 - pos);
 
 		if (token == "id")
-			id = strtol(value.c_str(), 0, 10);
+			id = (int) strtol(value.c_str(), 0, 10);
 		else if (token == "x")
-			x = strtol(value.c_str(), 0, 10);
+			x = (short) strtol(value.c_str(), 0, 10);
 		else if (token == "y")
-			y = strtol(value.c_str(), 0, 10);
+			y = (short) strtol(value.c_str(), 0, 10);
 		else if (token == "width")
-			width = strtol(value.c_str(), 0, 10);
+			width = (short) strtol(value.c_str(), 0, 10);
 		else if (token == "height")
-			height = strtol(value.c_str(), 0, 10);
+			height = (short) strtol(value.c_str(), 0, 10);
 		else if (token == "xoffset")
-			xoffset = strtol(value.c_str(), 0, 10);
+			xoffset = (short) strtol(value.c_str(), 0, 10);
 		else if (token == "yoffset")
-			yoffset = strtol(value.c_str(), 0, 10);
+			yoffset = (short) strtol(value.c_str(), 0, 10);
 		else if (token == "xadvance")
-			xadvance = strtol(value.c_str(), 0, 10);
+			xadvance = (short) strtol(value.c_str(), 0, 10);
 		else if (token == "page")
-			page = strtol(value.c_str(), 0, 10);
+			page = (short) strtol(value.c_str(), 0, 10);
 		else if (token == "chnl")
-			chnl = strtol(value.c_str(), 0, 10);
+			chnl = (unsigned int) strtol(value.c_str(), 0, 10);
 
 		if (pos == str.size()) break;
 	}
@@ -632,15 +633,15 @@ void BMFontLoaderTextFormat::InterpretChar(string &str, int start)
 
 void BMFontLoaderTextFormat::InterpretCommon(string &str, int start)
 {
-	int fontHeight;
-	int base;
-	int scaleW;
-	int scaleH;
-	int pages;
-	int packed;
+	short fontHeight = 0;
+	short base = 0;
+	short scaleW = 0;
+	short scaleH = 0;
+	short pages = 0;
+	bool packed = false;
 
 	// Read all attributes
-	int pos, pos2 = start;
+	unsigned int pos, pos2 = start;
 	while (true) {
 		pos = SkipWhiteSpace(str, pos2);
 		pos2 = FindEndOfToken(str, pos);
@@ -656,30 +657,30 @@ void BMFontLoaderTextFormat::InterpretCommon(string &str, int start)
 		string value = str.substr(pos, pos2 - pos);
 
 		if (token == "lineHeight")
-			fontHeight = (short)strtol(value.c_str(), 0, 10);
+			fontHeight = (short) strtol(value.c_str(), 0, 10);
 		else if (token == "base")
-			base = (short)strtol(value.c_str(), 0, 10);
+			base = (short) strtol(value.c_str(), 0, 10);
 		else if (token == "scaleW")
-			scaleW = (short)strtol(value.c_str(), 0, 10);
+			scaleW = (short) strtol(value.c_str(), 0, 10);
 		else if (token == "scaleH")
-			scaleH = (short)strtol(value.c_str(), 0, 10);
+			scaleH = (short) strtol(value.c_str(), 0, 10);
 		else if (token == "pages")
-			pages = strtol(value.c_str(), 0, 10);
+			pages = (short) strtol(value.c_str(), 0, 10);
 		else if (token == "packed")
-			packed = strtol(value.c_str(), 0, 10);
+			packed = strtol(value.c_str(), 0, 10) != 0;
 
 		if (pos == str.size()) break;
 	}
 
-	SetCommonInfo(fontHeight, base, scaleW, scaleH, pages, packed ? true : false);
+	SetCommonInfo(fontHeight, base, scaleW, scaleH, pages, packed);
 }
 
 void BMFontLoaderTextFormat::InterpretInfo(string &str, int start)
 {
-	int outlineThickness;
+	int outlineThickness = 0;
 
 	// Read all attributes
-	int pos, pos2 = start;
+	unsigned int pos, pos2 = start;
 	while (true) {
 		pos = SkipWhiteSpace(str, pos2);
 		pos2 = FindEndOfToken(str, pos);
@@ -709,7 +710,7 @@ void BMFontLoaderTextFormat::InterpretPage(string &str, int start, const char *f
 	string file;
 
 	// Read all attributes
-	int pos, pos2 = start;
+	unsigned int pos, pos2 = start;
 	while (true) {
 		pos = SkipWhiteSpace(str, pos2);
 		pos2 = FindEndOfToken(str, pos);

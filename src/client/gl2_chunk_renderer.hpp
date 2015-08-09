@@ -43,13 +43,12 @@ class GL2ChunkRenderer {
 	int *vsIndices;
 
 	// face buffer for chunk rendering
-	PACKED(
 	struct FaceVertexData {
 		vec3f vertex[4];
 		vec3f color[4];
 		vec2f tex[4];
 		vec3f normal;
-	});
+	};
 	FaceVertexData vb[(Chunk::WIDTH + 1) * Chunk::WIDTH * Chunk::WIDTH * 3];
 
 	struct FaceIndexData {

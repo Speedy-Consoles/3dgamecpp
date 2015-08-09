@@ -1,10 +1,11 @@
 #ifndef VMATH_HPP
 #define VMATH_HPP
 
-#include "std_types.hpp"
-
 #include <cmath>
 #include <algorithm>
+
+#include "std_types.hpp"
+#include "macros.hpp"
 
 template <typename T> struct dotp_t_selector { typedef T dotp_t; };
 template <> struct dotp_t_selector<uint8> { typedef uint dotp_t; };

@@ -1,10 +1,3 @@
-/*
- * archive.cpp
- *
- *  Created on: Sep 3, 2014
- *      Author: lars
- */
-
 #include "archive.hpp"
 
 #include <cstring>

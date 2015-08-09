@@ -102,7 +102,7 @@ int encodeUTF8(unsigned int value, char *outEncodedBuffer, unsigned int *outLeng
 		// Encode it with 2 characters
 		buf[0] = 0xC0 + (value >> 6);
 		length = 2;
-	} else if (value >= 0x800 && value <= 0xD7FF || value >= 0xE000 && value <= 0xFFFF) {
+	} else if ((value >= 0x800 && value <= 0xD7FF) || (value >= 0xE000 && value <= 0xFFFF)) {
 		// Note: Values 0xD800 to 0xDFFF are not valid unicode characters
 		buf[0] = 0xE0 + (value >> 12);
 		length = 3;

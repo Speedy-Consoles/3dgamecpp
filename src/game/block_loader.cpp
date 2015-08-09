@@ -209,6 +209,8 @@ void BlockLoader::getNextToken() {
 			}
 			state = State::START;
 			continue;
+		case State::TERM:
+			break;
 		}
 	}
 }
