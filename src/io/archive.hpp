@@ -42,7 +42,6 @@ public:
 
 	bool hasChunk(vec3i64);
 
-	DEPRECATED(Chunk *loadChunk(vec3i64));
 	bool loadChunk(Chunk &);
 	bool loadChunk(vec3i64, Chunk &);
 	void storeChunk(const Chunk &);
@@ -84,7 +83,6 @@ public:
 
 	bool hasChunk(vec3i64);
 
-	DEPRECATED(Chunk *loadChunk(vec3i64));
 	bool loadChunk(Chunk &);
 	bool loadChunk(vec3i64, Chunk &);
 	void storeChunk(const Chunk &);

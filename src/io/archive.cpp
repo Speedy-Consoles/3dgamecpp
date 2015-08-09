@@ -9,7 +9,7 @@
 #include "util.hpp"
 
 #include "engine/logging.hpp"
-static logging::Logger logger("default");
+static logging::Logger logger("io");
 
 using namespace std;
 
@@ -33,7 +33,7 @@ ArchiveFile::ArchiveFile(const char *filename, uint region_size) :
 		_file.close();
 		_file.open(filename, ios_base::in | ios_base::out | ios_base::binary);
 		if (!_file.good()) {
-			printf("PANIC\n");
+			LOG_ERROR(logger) << "Could not open Archive file '" << filename << "'";
 		}
 	}
 
@@ -93,16 +93,6 @@ bool ArchiveFile::hasChunk(vec3i64 cc) {
 	return _dir[id].offset != 0;
 }
 
-Chunk *ArchiveFile::loadChunk(vec3i64 cc) {
-	Chunk *chunk = new Chunk(cc);
-	if (loadChunk(cc, *chunk)) {
-		return chunk;
-	} else {
-		delete chunk;
-		return nullptr;
-	}
-}
-
 bool ArchiveFile::loadChunk(Chunk &chunk) {
 	return loadChunk(chunk.getCC(), chunk);
 }
@@ -135,6 +125,10 @@ bool ArchiveFile::loadChunk(vec3i64 cc, Chunk &chunk) {
 			_file.read((char *) &run_length, sizeof (uint8));
 			_file.read((char *) &block_type, sizeof (uint8));
 			for (size_t i = 0; i < run_length; ++i) {
+				if (index >= chunk_size) {
+					LOG_ERROR(logger) << "Block data exceeded Chunk size";
+					break;
+				}
 				chunk.initBlock(index++, block_type);
 			}
 		} else {
@@ -143,7 +137,7 @@ bool ArchiveFile::loadChunk(vec3i64 cc, Chunk &chunk) {
 	}
 
 	if (!_file.good()) {
-		printf("in stream bad!\n");
+		LOG_ERROR(logger) << "Bad in-stream";
 		return false;
 	}
 
@@ -249,16 +243,6 @@ ChunkArchive::ChunkArchive(const char *str) :
 bool ChunkArchive::hasChunk(vec3i64 cc) {
 	ArchiveFile *archive_file = getArchiveFile(cc);
 	return archive_file->hasChunk(cc);
-}
-
-Chunk *ChunkArchive::loadChunk(vec3i64 cc) {
-	Chunk *chunk = new Chunk(cc);
-	if (loadChunk(cc, *chunk)) {
-		return chunk;
-	} else {
-		delete chunk;
-		return nullptr;
-	}
 }
 
 bool ChunkArchive::loadChunk(vec3i64 cc, Chunk &chunk) {
