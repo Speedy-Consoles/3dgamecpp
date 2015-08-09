@@ -19,6 +19,7 @@ deps
 *.lib
 *.dll
 *.bmfc
+*.region
 
 msvc/**/Debug
 msvc/**/Release

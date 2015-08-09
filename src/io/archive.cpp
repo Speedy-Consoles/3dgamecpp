@@ -20,21 +20,6 @@ static const int32 ENDIANESS_BYTES_FLIPPED = 0x04030201;
 
 static const uint8 ESCAPE_CHAR = (uint8) (-1);
 
-PACKED(
-struct Header {
-	char magic[4];
-	int32 endianess_bytes;
-	int32 version;
-	uint32 size;
-	uint32 directory_offset;
-});
-
-PACKED(
-struct DirectoryEntry {
-	uint32 offset;
-	uint32 size;
-});
-
 ArchiveFile::~ArchiveFile() {
 	_file.close();
 }
@@ -54,78 +39,58 @@ ArchiveFile::ArchiveFile(const char *filename, uint region_size) :
 
 	bool all_ok;
 
-	Header header;
-	_file.read((char *)(&header), sizeof (Header));
+	_file.read((char *)(&_header), sizeof (Header));
 	if (_file.eof()) {
 		_file.clear();
 		all_ok = false;
 	} else {
-		switch (header.endianess_bytes) {
-		case ENDIANESS_BYTES:
-			_endianess = NATIVE;
-			break;
-		case ENDIANESS_BYTES_FLIPPED:
-			_endianess = FLIPPED;
-			break;
-		default:
-			_endianess = UNKNOWN;
-			break;
-		}
-
-		_version = header.version;
-		size_t size = (size_t) header.size;
-		_directory_offset = (size_t) header.directory_offset;
-
-		bool is_magic_ok = memcmp(header.magic, MAGIC, 4 * sizeof (char)) == 0;
-		bool is_endianess_ok = _endianess == NATIVE;
-		bool is_version_ok = _version == 1;
-		bool is_size_ok = size == _region_size * _region_size * _region_size;
+		bool is_magic_ok = memcmp(_header.magic, MAGIC, 4 * sizeof (char)) == 0;
+		bool is_endianess_ok = _header.endianess_bytes == ENDIANESS_BYTES;
+		bool is_version_ok = _header.version == 1;
+		bool is_size_ok = _header.num_chunks == _region_size * _region_size * _region_size;
 
 		all_ok = is_magic_ok && is_endianess_ok && is_version_ok && is_size_ok;
 	}
 
-	if (!all_ok) {
+	if (all_ok) {
+		_file.seekg(_header.directory_offset);
+		_dir.resize(_header.num_chunks);
+		_file.read((char *)(_dir.data()), _header.num_chunks * sizeof (DirectoryEntry));
+	} else {
 		initialize();
 	}
 }
 
 void ArchiveFile::initialize() {
-	Header header;
-	memcpy(header.magic, MAGIC, 4 * sizeof (char));
-	header.endianess_bytes = ENDIANESS_BYTES;
-	_endianess = NATIVE;
-	_version = header.version = 0x0001;
-	uint size = _region_size * _region_size * _region_size;
-	header.size = size;
-	_directory_offset = header.directory_offset = sizeof (Header);
+	memcpy(_header.magic, MAGIC, 4 * sizeof (char));
+	_header.endianess_bytes = ENDIANESS_BYTES;
+	_header.version = 0x0001;
+	uint num_chunks = _region_size * _region_size * _region_size;
+	_header.num_chunks = num_chunks;
+	_header.directory_offset = sizeof (Header);
 
 	// write header
 	_file.seekp(0);
-	_file.write((char *)(&header), sizeof (Header));
+	_file.write((char *)(&_header), sizeof (Header));
 
 	// zero the directory
-	const size_t BULK_SIZE = 1024 * sizeof (DirectoryEntry);
-	char *zeros = new char[BULK_SIZE];
-	memset(zeros, 0, BULK_SIZE);
-	for (uint i = 0; i < size / 1024; ++i) {
-		_file.write(zeros, BULK_SIZE);
+	_dir.clear();
+	_dir.resize(num_chunks);
+	memset(_dir.data(), 0, num_chunks * sizeof(DirectoryEntry));
+
+	const size_t total_directory_bytes = num_chunks * sizeof(DirectoryEntry);
+	for (uint i = 0; i < total_directory_bytes; ++i) {
+		_file.put(0);
 	}
-	_file.write(zeros, (size % 1024) * sizeof (DirectoryEntry));
 	_file.flush();
-	delete zeros;
 }
 
 bool ArchiveFile::hasChunk(vec3i64 cc) {
-	// read directory entry
 	size_t x = cycle(cc[0], _region_size);
 	size_t y = cycle(cc[1], _region_size);
 	size_t z = cycle(cc[2], _region_size);
 	size_t id = x + (_region_size * (y + (_region_size * z)));
-	_file.seekg(_directory_offset + id * sizeof (DirectoryEntry));
-	DirectoryEntry dir_entry;
-	_file.read((char *)(&dir_entry), sizeof (DirectoryEntry));
-
-	return dir_entry.offset != 0;
+	return _dir[id].offset != 0;
 }
 
 Chunk *ArchiveFile::loadChunk(vec3i64 cc) {
@@ -148,9 +113,7 @@ bool ArchiveFile::loadChunk(vec3i64 cc, Chunk &chunk) {
 	size_t y = cycle(cc[1], _region_size);
 	size_t z = cycle(cc[2], _region_size);
 	size_t id = x + (_region_size * (y + (_region_size * z)));
-	_file.seekg(_directory_offset + id * sizeof (DirectoryEntry));
-	DirectoryEntry dir_entry;
-	_file.read((char *)(&dir_entry), sizeof (DirectoryEntry));
+	const DirectoryEntry &dir_entry = _dir[id];
 
 	// seek there
 	if (dir_entry.offset == 0) {
@@ -188,15 +151,11 @@ bool ArchiveFile::loadChunk(vec3i64 cc, Chunk &chunk) {
 }
 
 void ArchiveFile::storeChunk(const Chunk &chunk) {
-	// read directory entry
 	vec3i64 cc = chunk.getCC();
 	size_t x = cycle(cc[0], _region_size);
 	size_t y = cycle(cc[1], _region_size);
 	size_t z = cycle(cc[2], _region_size);
 	size_t id = x + (_region_size * (y + (_region_size * z)));
-	_file.seekg(_directory_offset + id * sizeof (DirectoryEntry));
-	DirectoryEntry dir_entry;
-	_file.read((char *)(&dir_entry), sizeof (DirectoryEntry));
 
 	// encode the chunk
 	const uint8 *blocks = chunk.getBlocks();
@@ -234,6 +193,7 @@ void ArchiveFile::storeChunk(const Chunk &chunk) {
 	}
 
 	// store the chunk
+	DirectoryEntry &dir_entry = _dir[id];
 	size_t store_size = (size_t) (head - buffer) * sizeof (uint8);
 	if (dir_entry.offset != 0 && store_size <= dir_entry.size) {
 		// chunk already existed, but the new one fits the old space
@@ -249,7 +209,7 @@ void ArchiveFile::storeChunk(const Chunk &chunk) {
 		_file.seekg(0, ios_base::end);
 		dir_entry.offset = (uint32) (_file.tellg());
 		dir_entry.size = store_size;
-		_file.seekp(_directory_offset + id * sizeof (DirectoryEntry));
+		_file.seekp(_header.directory_offset + id * sizeof (DirectoryEntry));
 		_file.write((char *)(&dir_entry), sizeof (DirectoryEntry));
 		_file.seekp(0, ios_base::end);
 	}
