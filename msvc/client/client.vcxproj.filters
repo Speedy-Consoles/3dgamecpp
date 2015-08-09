@@ -115,9 +115,6 @@
     <ClCompile Include="..\..\src\client\gl2_sky_renderer.cpp">
       <Filter>Source Files\gfx</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\client\server_interface.cpp">
-      <Filter>Source Files\net</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\client\client.hpp">

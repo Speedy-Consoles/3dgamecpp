@@ -30,7 +30,7 @@ public:
 
 	// networking
 	void tick() override;
-	void run() override;
+	void doWork() override;
 
 	// player actions
 	void setPlayerMoveInput(int moveInput) override;

@@ -202,7 +202,7 @@ void RemoteServerInterface::tick() {
 	}
 }
 
-void RemoteServerInterface::run() {
+void RemoteServerInterface::doWork() {
 	sleepFor(millis(100));
 }
 

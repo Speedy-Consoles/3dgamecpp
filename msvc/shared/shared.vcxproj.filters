@@ -101,6 +101,9 @@
     <ClInclude Include="..\..\src\shared\chunk_manager.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\engine\thread.hpp">
+      <Filter>Header Files\engine</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\stopwatch.cpp">
@@ -122,9 +125,6 @@
       <Filter>Source Files\engine</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\engine\socket.cpp">
-      <Filter>Source Files\engine</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\engine\time.cpp">
       <Filter>Source Files\engine</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\game\chunk.cpp">
@@ -156,6 +156,12 @@
     </ClCompile>
     <ClCompile Include="..\..\src\shared\chunk_manager.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\engine\time.cpp">
+      <Filter>Source Files\engine</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\engine\thread.cpp">
+      <Filter>Source Files\engine</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

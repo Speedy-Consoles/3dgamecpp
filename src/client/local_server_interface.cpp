@@ -50,34 +50,24 @@ void LocalServerInterface::tick() {
 	}
 }
 
-void LocalServerInterface::run() {
-	LOG_INFO(logger) << "ChunkManager thread dispatched";
-
-	while (!shouldHalt.load(memory_order_seq_cst)) {
-		vec3i64 cc;
-		if (toLoadQueue.pop(cc)) {
-			Chunk *chunk = new Chunk(cc);
-			if (!chunk) {
-				LOG_ERROR(logger) << "Chunk allocation failed";
-			}
-			if (!archive.loadChunk(*chunk)) {
-				worldGenerator.generateChunk(*chunk);
-				archive.storeChunk(*chunk);
-			}
-			chunk->makePassThroughs();
-			while (!loadedQueue.push(chunk)) {
-				sleepFor(millis(50));
-				if (shouldHalt.load(memory_order_seq_cst)) {
-					delete chunk;
-					break;
-				}
-			}
-		} else {
-			sleepFor(millis(100));
+void LocalServerInterface::doWork() {
+	vec3i64 cc;
+	if (toLoadQueue.pop(cc)) {
+		Chunk *chunk = new Chunk(cc);
+		if (!chunk) {
+			LOG_ERROR(logger) << "Chunk allocation failed";
 		}
-	} // while not thread interrupted
-
-	LOG_INFO(logger) << "ChunkManager thread terminating";
+		if (!archive.loadChunk(*chunk)) {
+			worldGenerator.generateChunk(*chunk);
+			archive.storeChunk(*chunk);
+		}
+		chunk->makePassThroughs();
+		while (!loadedQueue.push(chunk)) {
+			sleepFor(millis(50));
+		}
+	} else {
+		sleepFor(millis(100));
+	}
 }
 
 void LocalServerInterface::setPlayerMoveInput(int moveInput) {

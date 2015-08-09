@@ -1,20 +1,13 @@
 #ifndef SERVER_INTERFACE_HPP
 #define SERVER_INTERFACE_HPP
 
-#include <atomic>
-#include <future>
-
 #include "game/chunk.hpp"
 #include "engine/vmath.hpp"
 #include "engine/queue.hpp"
+#include "engine/thread.hpp"
 #include "config.hpp"
 
-class ServerInterface {
-	std::future<void> fut;
-
-protected:
-	std::atomic<bool> shouldHalt;
-
+class ServerInterface : public Thread {
 public:
 	enum Status {
 		NOT_CONNECTED,
@@ -28,12 +21,6 @@ public:
 	};
 
 	virtual ~ServerInterface() = default;
-
-	// threading
-	void dispatch();
-	void requestTermination();
-	void wait();
-	virtual void run() = 0;
 
 	// query
 	virtual Status getStatus() = 0;

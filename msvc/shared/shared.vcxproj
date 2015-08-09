@@ -23,6 +23,7 @@
     <ClInclude Include="..\..\src\engine\socket.hpp" />
     <ClInclude Include="..\..\src\engine\stack.hpp" />
     <ClInclude Include="..\..\src\engine\std_types.hpp" />
+    <ClInclude Include="..\..\src\engine\thread.hpp" />
     <ClInclude Include="..\..\src\engine\time.hpp" />
     <ClInclude Include="..\..\src\engine\unicode_int.hpp" />
     <ClInclude Include="..\..\src\engine\vmath.hpp" />
@@ -44,6 +45,7 @@
     <ClCompile Include="..\..\src\engine\logging.cpp" />
     <ClCompile Include="..\..\src\engine\net.cpp" />
     <ClCompile Include="..\..\src\engine\socket.cpp" />
+    <ClCompile Include="..\..\src\engine\thread.cpp" />
     <ClCompile Include="..\..\src\engine\time.cpp" />
     <ClCompile Include="..\..\src\engine\unicode_int.cpp" />
     <ClCompile Include="..\..\src\game\block_loader.cpp" />
