@@ -11,8 +11,8 @@ using namespace std;
 
 LocalServerInterface::LocalServerInterface(Client *client, uint64 seed) :
 	client(client),
-	archive((std::string("./") + client->getWorld()->getId() + "/").c_str()),
 	worldGenerator(seed),
+	archive((std::string("./") + client->getWorld()->getId() + "/").c_str()),
 	loadedQueue(1024),
 	toLoadQueue(1024)
 {

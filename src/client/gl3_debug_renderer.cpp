@@ -37,12 +37,12 @@ void GL3DebugRenderer::render() {
 	RENDER_LINE("zvel: %8.1f", player.getVel()[2]);
 
 	const World *world = client->getWorld();
-	RENDER_LINE("");
+	RENDER_LINE(" ");
 	RENDER_LINE("WORLD INFO:");
-	RENDER_LINE("needed chunks: %d", world->getNumNeededChunks());
+	RENDER_LINE("needed chunks: %lu", (unsigned long) world->getNumNeededChunks());
 
 	ChunkRendererDebugInfo crdi = chunkRenderer->getDebugInfo();
-	RENDER_LINE("");
+	RENDER_LINE(" ");
 	RENDER_LINE("CHUNK RENDERER INFO:");
 	RENDER_LINE("checked distance: %d", crdi.checkedDistance);
 	RENDER_LINE("new faces: %d", crdi.newFaces);
@@ -53,7 +53,7 @@ void GL3DebugRenderer::render() {
 	RENDER_LINE("render queue size: %d", crdi.renderQueueSize);
 
 	const ChunkManager *chunkManager = client->getChunkManager();
-	RENDER_LINE("");
+	RENDER_LINE(" ");
 	RENDER_LINE("CHUNK MANAGER INFO:");
 	RENDER_LINE("needed chunks: %d", chunkManager->getNumNeededChunks());
 	RENDER_LINE("loaded chunks: %d", chunkManager->getNumLoadedChunks());
