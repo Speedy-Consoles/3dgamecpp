@@ -76,8 +76,8 @@ private:
 
 	vec3i64 pos;
 	vec3d vel;
-	double yaw;
-	double pitch;
+	float yaw;
+	float pitch;
 
 	int moveInput;
 
@@ -94,7 +94,7 @@ private:
 public:
 	void tick(int tick, bool isLocalPlayer);
 
-	void setOrientation(double yaw, double pitch);
+	void setOrientation(float yaw, float pitch);
 	void setFly(bool fly);
 	void setMoveInput(int moveInput);
 
@@ -102,8 +102,8 @@ public:
 
 	vec3i64 getPos() const;
 	vec3d getVel() const;
-	double getYaw() const;
-	double getPitch() const;
+	float getYaw() const;
+	float getPitch() const;
 	bool getFly() const;
 	int getMoveInput() const;
 	vec3i64 getChunkPos() const;

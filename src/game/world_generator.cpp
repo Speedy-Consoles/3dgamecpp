@@ -29,8 +29,8 @@ void WorldGenerator::generateChunk(Chunk &chunk) {
 	auto cc = chunk.getCC();
 	for (uint ix = 0; ix < Chunk::WIDTH; ix++) {
 		for (uint iy = 0; iy < Chunk::WIDTH; iy++) {
-			int64 x = round((cc[0] * Chunk::WIDTH + ix) / overAllScale);
-			int64 y = round((cc[1] * Chunk::WIDTH + iy) / overAllScale);
+			int64 x = (int64) round((cc[0] * Chunk::WIDTH + ix) / overAllScale);
+			int64 y = (int64) round((cc[1] * Chunk::WIDTH + iy) / overAllScale);
 			double ax = x / areaXYScale;
 			double ay = y / areaXYScale;
 			double ap = perlin.perlin(ax, ay, 0);

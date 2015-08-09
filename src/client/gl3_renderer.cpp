@@ -45,8 +45,8 @@ GL3Renderer::GL3Renderer(Client *client) :
 	blockShader.setDiffuseLightColor(diffuseColor);
 
 	// fog
-	auto endFog = (client->getConf().render_distance - 1) * Chunk::WIDTH;
-	auto startFog = (client->getConf().render_distance - 1) * Chunk::WIDTH * 1 / 2.0;
+	float endFog = (float) ((client->getConf().render_distance - 1) * Chunk::WIDTH);
+	float startFog = (client->getConf().render_distance - 1) * Chunk::WIDTH * 0.5f;
 	bool fog = client->getConf().fog == Fog::FANCY || client->getConf().fog == Fog::FAST;
 
 	defaultShader.setEndFogDistance(endFog);
@@ -92,8 +92,8 @@ void GL3Renderer::setConf(const GraphicsConf &conf, const GraphicsConf &old) {
 	if (conf.render_distance != old.render_distance) {
 		makePerspectiveMatrix();
 
-		auto endFog = (conf.render_distance - 1) * Chunk::WIDTH;
-		auto startFog = (conf.render_distance - 1) * Chunk::WIDTH * 1 / 2.0;
+		float endFog = (float) ((conf.render_distance - 1) * Chunk::WIDTH);
+		float startFog = (conf.render_distance - 1) * Chunk::WIDTH * 0.5f;
 
 		defaultShader.setEndFogDistance(endFog);
 		defaultShader.setStartFogDistance(startFog);
@@ -119,17 +119,17 @@ void GL3Renderer::rerenderChunk(vec3i64 chunkCoords) {
 }
 
 void GL3Renderer::makePerspectiveMatrix() {
-	double normalRatio = DEFAULT_WINDOWED_RES[0] / (double) DEFAULT_WINDOWED_RES[1];
-	double currentRatio = client->getGraphics()->getWidth() / (double) client->getGraphics()->getHeight();
-	double angle;
+	float normalRatio = (float) DEFAULT_WINDOWED_RES[0] / DEFAULT_WINDOWED_RES[1];
+	float currentRatio = (float) client->getGraphics()->getWidth() / client->getGraphics()->getHeight();
+	float angle;
 
-	float yfov = client->getConf().fov / normalRatio * TAU / 360.0;
+	float yfov = client->getConf().fov / normalRatio * (float) (TAU / 360.0);
 	if (currentRatio > normalRatio)
 		angle = atan(tan(yfov / 2) * normalRatio / currentRatio) * 2;
 	else
 		angle = yfov;
 
-	float zFar = Chunk::WIDTH * sqrt(3 * (client->getConf().render_distance + 1) * (client->getConf().render_distance + 1));
+	float zFar = Chunk::WIDTH * sqrtf(3.0f * (client->getConf().render_distance + 1) * (client->getConf().render_distance + 1));
 	glm::mat4 perspectiveMatrix = glm::perspective((float) angle,
 			(float) currentRatio, ZNEAR, zFar);
 	auto &defaultShader = shaderManager.getDefaultShader();
@@ -139,8 +139,8 @@ void GL3Renderer::makePerspectiveMatrix() {
 }
 
 void GL3Renderer::makeOrthogonalMatrix() {
-	float normalRatio = DEFAULT_WINDOWED_RES[0] / (double) DEFAULT_WINDOWED_RES[1];
-	float currentRatio = client->getGraphics()->getWidth() / (double) client->getGraphics()->getHeight();
+	float normalRatio = DEFAULT_WINDOWED_RES[0] / (float) DEFAULT_WINDOWED_RES[1];
+	float currentRatio = client->getGraphics()->getWidth() / (float) client->getGraphics()->getHeight();
 	glm::mat4 hudMatrix;
 	if (currentRatio > normalRatio)
 		hudMatrix = glm::ortho(-DEFAULT_WINDOWED_RES[0] / 2.0f, DEFAULT_WINDOWED_RES[0] / 2.0f, -DEFAULT_WINDOWED_RES[0]
@@ -155,7 +155,7 @@ void GL3Renderer::makeOrthogonalMatrix() {
 
 void GL3Renderer::makeMaxFOV() {
 	float ratio = (float) DEFAULT_WINDOWED_RES[0] / DEFAULT_WINDOWED_RES[1];
-	float yfov = client->getConf().fov / ratio * TAU / 360.0;
+	float yfov = client->getConf().fov / ratio * (float) (TAU / 360.0);
 	if (ratio < 1.0)
 		maxFOV = yfov;
 	else

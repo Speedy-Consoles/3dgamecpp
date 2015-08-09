@@ -35,14 +35,14 @@ Menu::Menu(Client *client) :
 
 	frame = new Frame(10, 10, 0, 0);
 
-	auto *applyButton = new Button(0, y, 100, 20);
+	auto *applyButton = new Button(0, (float) y, 100, 20);
 	applyButton->text() = string("Apply");
 	applyButton->setOnClick([this](){ apply(); });
 	frame->add(applyButton);
 	y += yIncr * 2;
 
-	frame->add(new Label(0, y, 180, 20, "Fullscreen:"));
-	fsButton = new CycleButton<bool>(180, y, 100, 20);
+	frame->add(new Label(0, (float) y, 180, 20, "Fullscreen:"));
+	fsButton = new CycleButton<bool>(180, (float) y, 100, 20);
 	fsButton->add(false, "Off");
 	fsButton->add(true, "On");
 	fsButton->setOnDataChange([this](bool b){
@@ -51,8 +51,8 @@ Menu::Menu(Client *client) :
 	frame->add(fsButton);
 	y += yIncr;
 
-	frame->add(new Label(0, y, 180, 20, "Anti-aliasing:"));
-	aaButton = new CycleButton<AntiAliasing>(180, y, 100, 20);
+	frame->add(new Label(0, (float) y, 180, 20, "Anti-aliasing:"));
+	aaButton = new CycleButton<AntiAliasing>(180, (float) y, 100, 20);
 	aaButton->add(AntiAliasing::NONE, "Off");
 	aaButton->add(AntiAliasing::MSAA_2, "MSAA x2");
 	aaButton->add(AntiAliasing::MSAA_4, "MSAA x4");
@@ -64,8 +64,8 @@ Menu::Menu(Client *client) :
 	frame->add(aaButton);
 	y += yIncr;
 
-	frame->add(new Label(0, y, 180, 20, "Fog:"));
-	fogButton = new CycleButton<Fog>(180, y, 100, 20);
+	frame->add(new Label(0, (float) y, 180, 20, "Fog:"));
+	fogButton = new CycleButton<Fog>(180, (float) y, 100, 20);
 	fogButton->add(Fog::NONE, "Off");
 	fogButton->add(Fog::FAST, "Fast");
 	fogButton->add(Fog::FANCY, "Fancy");
@@ -75,8 +75,8 @@ Menu::Menu(Client *client) :
 	frame->add(fogButton);
 	y += yIncr;
 
-	frame->add(new Label(0, y, 180, 20, "Render distance:"));
-	rdButton = new CycleButton<int>(180, y, 100, 20);
+	frame->add(new Label(0, (float) y, 180, 20, "Render distance:"));
+	rdButton = new CycleButton<int>(180, (float) y, 100, 20);
 	rdButton->add(4, "4");
 	rdButton->add(8, "8");
 	rdButton->add(12, "12");
@@ -89,8 +89,8 @@ Menu::Menu(Client *client) :
 	frame->add(rdButton);
 	y += yIncr;
 
-	frame->add(new Label(0, y, 180, 20, "Mipmapping:"));
-	mipButton = new CycleButton<uint>(180, y, 100, 20);
+	frame->add(new Label(0, (float) y, 180, 20, "Mipmapping:"));
+	mipButton = new CycleButton<uint>(180, (float) y, 100, 20);
 	mipButton->add(0, "Off");
 	mipButton->add(1000, "Max");
 	mipButton->setOnDataChange([this](uint level){
@@ -99,8 +99,8 @@ Menu::Menu(Client *client) :
 	frame->add(mipButton);
 	y += yIncr;
 
-	frame->add(new Label(0, y, 180, 20, "Filtering:"));
-	filtButton = new CycleButton<TexFiltering>(180, y, 100, 20);
+	frame->add(new Label(0, (float) y, 180, 20, "Filtering:"));
+	filtButton = new CycleButton<TexFiltering>(180, (float) y, 100, 20);
 	filtButton->add(TexFiltering::NEAREST, "Nearest");
 	filtButton->add(TexFiltering::LINEAR, "Linear");
 	filtButton->setOnDataChange([this](TexFiltering filt){

@@ -144,7 +144,7 @@ void RemoteServerInterface::setPlayerMoveInput(int moveInput) {
 	this->moveInput = moveInput;
 }
 
-void RemoteServerInterface::setPlayerOrientation(double yaw, double pitch) {
+void RemoteServerInterface::setPlayerOrientation(float yaw, float pitch) {
 
 }
 

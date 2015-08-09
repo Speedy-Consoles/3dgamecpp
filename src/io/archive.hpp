@@ -29,7 +29,7 @@ public:
 	};
 
 	~ArchiveFile();
-	ArchiveFile(const char *, size_t size = 16);
+	ArchiveFile(const char *, uint size = 16);
 
 	ArchiveFile() = delete;
 	ArchiveFile(const ArchiveFile &) = delete;
@@ -50,7 +50,7 @@ private:
 
 	Endianess _endianess;
 	int32 _version;
-	uint64 _region_size;
+	uint _region_size;
 	size_t _directory_offset;
 };
 

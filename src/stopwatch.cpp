@@ -67,7 +67,7 @@ void Stopwatch::save() {
 	}
 
 	for (auto &clock: _clocks) {
-		clock.rel = (double) clock.dur / _total;
+		clock.rel = (float) clock.dur / _total;
 		clock.dur = 0;
 	}
 

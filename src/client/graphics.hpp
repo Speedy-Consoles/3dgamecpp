@@ -34,12 +34,12 @@ private:
 	int width;
 	int height;
 
-	double drawWidth;
-	double drawHeight;
+	float drawWidth;
+	float drawHeight;
 
 	// for saving mouse position in menu
-	double oldRelMouseX = 0.5;
-	double oldRelMouseY = 0.5;
+	float oldRelMouseX = 0.5;
+	float oldRelMouseY = 0.5;
 
 public:
 	Graphics(Client *client, const Client::State *state);
@@ -57,8 +57,8 @@ public:
 	int getHeight() const;
 	int getWidth() const;
 
-	int getDrawHeight() const;
-	int getDrawWidth() const;
+	float getDrawHeight() const;
+	float getDrawWidth() const;
 
 	float getScalingFactor() const;
 

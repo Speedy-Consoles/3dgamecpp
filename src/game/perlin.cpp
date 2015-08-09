@@ -7,7 +7,7 @@
 using namespace std;
 
 Perlin::Perlin(uint64 seed) {
-    default_random_engine random(seed);
+    default_random_engine random((uint) seed);
     uniform_int_distribution<> distr(0, 255);
     int permutation[256];
     for (int i = 0; i < 256; i++) {

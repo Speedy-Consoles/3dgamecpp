@@ -202,7 +202,7 @@ void GL3ChunkRenderer::render() {
 	while(LOADING_ORDER[checkChunkIndex].norm() <= client->getConf().render_distance
 			&& renderQueue.size() < MAX_RENDER_QUEUE_SIZE) {
 		vec3i64 cc = pc + LOADING_ORDER[checkChunkIndex].cast<int64>();
-		int index = gridCycleIndex(cc, visibleDiameter);
+		int64 index = gridCycleIndex(cc, visibleDiameter);
 		if (chunkGrid[index].status != OK || chunkGrid[index].content != cc) {
 			auto it = inRenderQueue.find(cc);
 			if (it == inRenderQueue.end()) {
@@ -243,7 +243,7 @@ void GL3ChunkRenderer::render() {
 	// render chunks
 	vec3d lookDir = getVectorFromAngles(player.getYaw(), player.getPitch());
 	vsFringe[0] = pc;
-	vsIndices[0] = gridCycleIndex(pc, visibleDiameter);
+	vsIndices[0] = (int) gridCycleIndex(pc, visibleDiameter);
 	chunkGrid[vsIndices[0]].vsExits = 0x3F;
 	chunkGrid[vsIndices[0]].vsVisited = true;
 	int fringeSize = 1;
@@ -281,13 +281,13 @@ void GL3ChunkRenderer::render() {
 					|| !inFrustum(ncc, player.getPos(), lookDir))
 				continue;
 
-			int nIndex = gridCycleIndex(ncc, visibleDiameter);
+			int64 nIndex = gridCycleIndex(ncc, visibleDiameter);
 
 			if (!chunkGrid[nIndex].vsVisited) {
 				chunkGrid[nIndex].vsVisited = true;
 				chunkGrid[nIndex].vsExits = 0;
 				vsFringe[fringeEnd] = ncc;
-				vsIndices[fringeEnd] = nIndex;
+				vsIndices[fringeEnd] = (int) nIndex;
 				fringeEnd = (fringeEnd + 1) % vsFringeCapacity;
 				fringeSize++;
 			}
@@ -315,7 +315,7 @@ void GL3ChunkRenderer::render() {
 }
 
 void GL3ChunkRenderer::rerenderChunk(vec3i64 chunkCoords) {
-	int index = gridCycleIndex(chunkCoords, visibleDiameter);
+	int64 index = gridCycleIndex(chunkCoords, visibleDiameter);
 	if (chunkGrid[index].status != OK || chunkGrid[index].content != chunkCoords)
 		return;
 	chunkGrid[index].status = OUTDATED;
@@ -330,7 +330,7 @@ void GL3ChunkRenderer::buildChunk(Chunk const *chunks[27]) {
 	const Chunk &chunk = *(chunks[BIG_CUBE_CYCLE_BASE_INDEX]);
 	vec3i64 cc = chunk.getCC();
 
-	uint index = gridCycleIndex(cc, visibleDiameter);
+	int64 index = gridCycleIndex(cc, visibleDiameter);
 
 	if (chunkGrid[index].status != NO_CHUNK)
 		faces -= chunkGrid[index].numFaces;
@@ -360,7 +360,7 @@ void GL3ChunkRenderer::buildChunk(Chunk const *chunks[27]) {
 	const uint8 *blocks = chunk.getBlocks();
 	for (uint8 d = 0; d < 3; d++) {
 		vec3i64 dir = uDirs[d].cast<int64>();
-		uint dimFlipIndexDiff = ((dir[2] * Chunk::WIDTH + dir[1]) * Chunk::WIDTH + dir[0]) * (Chunk::WIDTH - 1);
+		uint dimFlipIndexDiff = (uint) (((dir[2] * Chunk::WIDTH + dir[1]) * Chunk::WIDTH + dir[0]) * (Chunk::WIDTH - 1));
 		uint i = 0;
 		uint ni = 0;
 		for (int z = (d == 2) ? -1 : 0; z < (int) Chunk::WIDTH; z++) {

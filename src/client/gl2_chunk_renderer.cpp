@@ -130,7 +130,7 @@ void GL2ChunkRenderer::renderChunks() {
 				visibleFaces += chunkFaces[index];
 				client->getStopwatch()->start(CLOCK_DLC);
 				GL(PushMatrix());
-				GL(Translatef(cd[0] * (int)Chunk::WIDTH, cd[1] * (int)Chunk::WIDTH, cd[2] * (int)Chunk::WIDTH))
+				GL(Translatef(cd[0] * (float) Chunk::WIDTH, cd[1] * (float) Chunk::WIDTH, cd[2] * (float) Chunk::WIDTH))
 				GL(CallList(dlFirstAddress + index));
 				GL(PopMatrix());
 				client->getStopwatch()->stop(CLOCK_DLC);
@@ -285,16 +285,16 @@ void GL2ChunkRenderer::renderChunk(Chunk &c) {
 						for (int j = 0; j < 4; j++) {
 							vb[n].tex[j][0] = texs[j][0];
 							vb[n].tex[j][1] = texs[j][1];
-							double light = 1.0;
+							float light = 1.0;
 							bool s1 = (corners & QUAD_CORNER_MASK[j][0]) > 0;
 							bool s2 = (corners & QUAD_CORNER_MASK[j][2]) > 0;
 							bool m = (corners & QUAD_CORNER_MASK[j][1]) > 0;
 							if (s1)
-								light -= 0.2;
+								light -= 0.2f;
 							if (s2)
-								light -= 0.2;
+								light -= 0.2f;
 							if (m || (s1 && s2))
-								light -= 0.2;
+								light -= 0.2f;
 							vb[n].color[j][0] = light;
 							vb[n].color[j][1] = light;
 							vb[n].color[j][2] = light;

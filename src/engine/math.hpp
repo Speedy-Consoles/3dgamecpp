@@ -21,7 +21,7 @@ T clamp(T v, T min, T max) {
 template <typename T1, typename T2> inline
 typename std::enable_if<
 	std::is_integral<T1>::value && std::is_integral<T2>::value,
-	T1
+	T2
 >::type
 cycle(T1 i, T2 range) {
     return (i % range + range) % range;

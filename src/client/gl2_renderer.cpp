@@ -273,11 +273,11 @@ void GL2Renderer::destroyFBO() {
 }
 
 void GL2Renderer::makePerspective() {
-	double normalRatio = DEFAULT_WINDOWED_RES[0] / (double) DEFAULT_WINDOWED_RES[1];
-	double currentRatio = client->getGraphics()->getWidth() / (double) client->getGraphics()->getHeight();
-	double angle;
+	float normalRatio = DEFAULT_WINDOWED_RES[0] / (float) DEFAULT_WINDOWED_RES[1];
+	float currentRatio = client->getGraphics()->getWidth() / (float) client->getGraphics()->getHeight();
+	float angle;
 
-	float yfov = client->getConf().fov / normalRatio * TAU / 360.0;
+	float yfov = client->getConf().fov / normalRatio * (float) (TAU / 360.0);
 	if (currentRatio > normalRatio)
 		angle = atan(tan(yfov / 2) * normalRatio / currentRatio) * 2;
 	else
@@ -311,14 +311,14 @@ void GL2Renderer::makeOrthogonal() {
 }
 
 void GL2Renderer::makeFog() {
-	double fogEnd = std::max(0.0, Chunk::WIDTH * (client->getConf().render_distance - 1.0));
-	GL(Fogf(GL_FOG_START, fogEnd - ZNEAR - fogEnd / 3.0));
+	float fogEnd = std::max(0.0f, Chunk::WIDTH * (client->getConf().render_distance - 1.0f));
+	GL(Fogf(GL_FOG_START, fogEnd - ZNEAR - fogEnd / 3.0f));
 	GL(Fogf(GL_FOG_END, fogEnd - ZNEAR));
 }
 
 void GL2Renderer::makeMaxFOV() {
 	float ratio = (float) DEFAULT_WINDOWED_RES[0] / DEFAULT_WINDOWED_RES[1];
-	float yfov = client->getConf().fov / ratio * TAU / 360.0;
+	float yfov = client->getConf().fov / ratio * (float) (TAU / 360.0);
 	if (ratio < 1.0)
 		maxFOV = yfov;
 	else
