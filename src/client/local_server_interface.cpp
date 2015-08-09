@@ -7,12 +7,12 @@
 
 #include "engine/logging.hpp"
 static logging::Logger logger("local");
+
 using namespace std;
 
 LocalServerInterface::LocalServerInterface(Client *client, uint64 seed) :
 	client(client),
 	worldGenerator(seed),
-	archive((std::string("./") + client->getWorld()->getId() + "/").c_str()),
 	loadedQueue(1024),
 	toLoadQueue(1024)
 {
@@ -57,11 +57,7 @@ void LocalServerInterface::doWork() {
 		if (!chunk) {
 			LOG_ERROR(logger) << "Chunk allocation failed";
 		}
-		if (!archive.loadChunk(*chunk)) {
-			worldGenerator.generateChunk(*chunk);
-			archive.storeChunk(*chunk);
-		}
-		chunk->makePassThroughs();
+		worldGenerator.generateChunk(*chunk);
 		while (!loadedQueue.push(chunk)) {
 			sleepFor(millis(50));
 		}

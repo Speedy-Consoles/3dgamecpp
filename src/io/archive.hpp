@@ -40,6 +40,8 @@ public:
 
 	void initialize();
 
+	bool hasChunk(vec3i64);
+
 	DEPRECATED(Chunk *loadChunk(vec3i64));
 	bool loadChunk(Chunk &);
 	bool loadChunk(vec3i64, Chunk &);
@@ -65,6 +67,8 @@ public:
 
 	ChunkArchive &operator = (const ChunkArchive &) = delete;
 	ChunkArchive &operator = (ChunkArchive &&) = delete;
+
+	bool hasChunk(vec3i64);
 
 	DEPRECATED(Chunk *loadChunk(vec3i64));
 	bool loadChunk(Chunk &);

@@ -19,16 +19,13 @@ class ChunkManager {
 	std::unordered_map<vec3i64, Chunk *, size_t(*)(vec3i64)> chunks;
 	std::unordered_map<vec3i64, int, size_t(*)(vec3i64)> needCounter;
 
-	std::atomic<bool> shouldHalt;
-	std::future<void> fut;
-
 	Client *client = nullptr;
+
+	ChunkArchive archive;
 
 public:
 	ChunkManager(Client *client);
 	~ChunkManager();
-
-	void dispatch();
 
 	void tick();
 
@@ -40,12 +37,6 @@ public:
 
 	int getNumNeededChunks() const;
 	int getNumLoadedChunks() const;
-
-	void requestTermination();
-	void wait();
-
-private:
-	void run();
 };
 
 #endif /* CHUNK_MANAGER_HPP */

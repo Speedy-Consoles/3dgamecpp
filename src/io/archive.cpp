@@ -115,6 +115,19 @@ void ArchiveFile::initialize() {
 	delete zeros;
 }
 
+bool ArchiveFile::hasChunk(vec3i64 cc) {
+	// read directory entry
+	size_t x = cycle(cc[0], _region_size);
+	size_t y = cycle(cc[1], _region_size);
+	size_t z = cycle(cc[2], _region_size);
+	size_t id = x + (_region_size * (y + (_region_size * z)));
+	_file.seekg(_directory_offset + id * sizeof (DirectoryEntry));
+	DirectoryEntry dir_entry;
+	_file.read((char *)(&dir_entry), sizeof (DirectoryEntry));
+
+	return dir_entry.offset != 0;
+}
+
 Chunk *ArchiveFile::loadChunk(vec3i64 cc) {
 	Chunk *chunk = new Chunk(cc);
 	if (loadChunk(cc, *chunk)) {
@@ -273,11 +286,9 @@ ChunkArchive::ChunkArchive(const char *str) :
 	}
 }
 
-void ChunkArchive::clearHandles() {
-	for (auto iter : _file_map) {
-		delete iter.second;
-	}
-	_file_map.clear();
+bool ChunkArchive::hasChunk(vec3i64 cc) {
+	ArchiveFile *archive_file = getArchiveFile(cc);
+	return archive_file->hasChunk(cc);
 }
 
 Chunk *ChunkArchive::loadChunk(vec3i64 cc) {
@@ -302,6 +313,13 @@ bool ChunkArchive::loadChunk(Chunk &chunk) {
 void ChunkArchive::storeChunk(const Chunk &chunk) {
 	ArchiveFile *archive_file = getArchiveFile(chunk.getCC());
 	archive_file->storeChunk(chunk);
+}
+
+void ChunkArchive::clearHandles() {
+	for (auto iter : _file_map) {
+		delete iter.second;
+	}
+	_file_map.clear();
 }
 
 ArchiveFile *ChunkArchive::getArchiveFile(vec3i64 cc) {

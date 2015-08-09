@@ -7,7 +7,6 @@
 #include <memory>
 
 class ServerInterface;
-class ChunkManager;
 class World;
 class Player;
 class Menu;

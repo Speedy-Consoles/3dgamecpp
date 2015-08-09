@@ -12,7 +12,6 @@ class LocalServerInterface : public ServerInterface {
 	Player *player;
 
 	WorldGenerator worldGenerator;
-	ChunkArchive archive;
 
 	std::queue<vec3i64> preToLoadQueue;
 	ProducerQueue<Chunk *> loadedQueue;

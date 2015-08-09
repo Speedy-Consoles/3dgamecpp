@@ -3,36 +3,40 @@
 #include "engine/time.hpp"
 #include "client/client.hpp"
 #include "client/server_interface.hpp"
+#include "game/world.hpp"
 
 using namespace std;
 
 ChunkManager::ChunkManager(Client *client) :
 	chunks(0, vec3i64HashFunc),
 	needCounter(0, vec3i64HashFunc),
-	client(client)
+	client(client),
+	archive("./region/")
 {
 	// nothing
 }
 
 ChunkManager::~ChunkManager() {
 	for (auto it = chunks.begin(); it != chunks.end(); ++it) {
+		archive.storeChunk(*it->second);
 		delete it->second;
 	}
 }
 
-void ChunkManager::dispatch() {
-	shouldHalt = false;
-	fut = async(launch::async, [this]() { run(); });
-}
-
 void ChunkManager::tick() {
 	Chunk *chunk;
-	while (chunks.size() < MAX_LOADED_CHUNKS && (chunk = client->getServerInterface()->getNextChunk())) {
+	while (chunks.size() < MAX_LOADED_CHUNKS) {
+		chunk = client->getServerInterface()->getNextChunk();
+		if (chunk == nullptr)
+			break;
+
 		auto it = needCounter.find(chunk->getCC());
-		if (it != needCounter.end())
+		if (it != needCounter.end()) {
+			chunk->makePassThroughs();
 			chunks.insert({chunk->getCC(), chunk});
-		else
+		} else {
 			delete chunk;
+		}
 	}
 }
 
@@ -54,8 +58,16 @@ const Chunk *ChunkManager::getChunk(vec3i64 chunkCoords) const {
 void ChunkManager::requestChunk(vec3i64 chunkCoords) {
 	auto it = needCounter.find(chunkCoords);
 	if (it == needCounter.end()) {
+		bool hasChunk = archive.hasChunk(chunkCoords);
+		if (hasChunk) {
+			Chunk *chunk = new Chunk(chunkCoords);
+			archive.loadChunk(*chunk);
+			chunk->makePassThroughs();
+			chunks.insert({chunkCoords, chunk});
+		} else {
+			client->getServerInterface()->requestChunk(chunkCoords);
+		}
 		needCounter.insert({chunkCoords, 1});
-		client->getServerInterface()->requestChunk(chunkCoords);
 	} else {
 		it->second++;
 	}
@@ -69,6 +81,7 @@ void ChunkManager::releaseChunk(vec3i64 chunkCoords) {
 			needCounter.erase(it1);
 			auto it2 = chunks.find(chunkCoords);
 			if (it2 != chunks.end()) {
+				archive.storeChunk(*it2->second);
 				delete it2->second;
 				chunks.erase(it2);
 			}
@@ -82,18 +95,4 @@ int ChunkManager::getNumNeededChunks() const {
 
 int ChunkManager::getNumLoadedChunks() const {
 	return chunks.size();
-}
-
-void ChunkManager::requestTermination() {
-	 shouldHalt.store(true, memory_order_relaxed);
-}
-
-void ChunkManager::wait() {
-	requestTermination();
-	if (fut.valid())
-		fut.get();
-}
-
-void ChunkManager::run() {
-	sleepFor(millis(100));
 }

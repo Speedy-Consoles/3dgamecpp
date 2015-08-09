@@ -100,7 +100,6 @@ Player &Client::getLocalPlayer() {
 
 void Client::run() {
 	LOG_INFO(logger) << "Running client";
-	chunkManager->dispatch();
 	serverInterface->dispatch();
 	time = getCurrentTime();
 	int tick = 0;
@@ -139,7 +138,6 @@ void Client::run() {
 		tick++;
 	}
 	serverInterface->wait();
-	chunkManager->wait();
 }
 
 void Client::setConf(const GraphicsConf &conf) {
