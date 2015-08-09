@@ -39,7 +39,7 @@ ArchiveFile::~ArchiveFile() {
 	_file.close();
 }
 
-ArchiveFile::ArchiveFile(const char *filename, size_t region_size) :
+ArchiveFile::ArchiveFile(const char *filename, uint region_size) :
 	_region_size(region_size)
 {
 	_file.open(filename, ios_base::in | ios_base::out | ios_base::binary);
