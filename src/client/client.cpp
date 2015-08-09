@@ -21,7 +21,7 @@
 #include "engine/logging.hpp"
 #include "engine/socket.hpp"
 
-logging::Logger logger("client");
+static logging::Logger logger("client");
 
 int main(int argc, char *argv[]) {
 	logging::init("logging.conf");

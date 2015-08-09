@@ -23,51 +23,24 @@ void init(const char *file) {
 	PropertyConfigurator::configure(file);
 }
 
-static Level level_all((int)Severity::ALL, "all");
-static Level level_trace((int)Severity::TRACE, "trace");
-static Level level_debug((int)Severity::DEBUG, "debug");
-static Level level_unspecified((int)Severity::UNSPECIFIED, "unspecified");
-static Level level_info((int)Severity::INFO, "info");
-static Level level_warning((int)Severity::WARNING, "warning");
-static Level level_error((int)Severity::ERROR, "error");
-static Level level_fatal((int)Severity::FATAL, "fatal");
-static Level level_off((int)Severity::OFF, "off");
-
 LevelPtr getLevel(Severity sev) {
-	switch (log.sev) {
+	switch (sev) {
 		default:
-		case Severity::UNSPECIFIED: return level_unspecified;
-		case Severity::ALL:         return level_all;
-		case Severity::TRACE:       return level_trace;
-		case Severity::DEBUG:       return level_debug;
-		case Severity::INFO:        return level_info;
-		case Severity::WARNING:     return level_warning;
-		case Severity::ERROR:       return level_error;
-		case Severity::FATAL:       return level_fatal;
-		case Severity::OFF:         return level_off;
+		case Severity::UNSPECIFIED: return Level::getDebug();
+		case Severity::ALL:         return Level::getAll();
+		case Severity::TRACE:       return Level::getTrace();
+		case Severity::DEBUG:       return Level::getDebug();
+		case Severity::INFO:        return Level::getInfo();
+		case Severity::WARNING:     return Level::getWarn();
+		case Severity::ERROR:       return Level::getError();
+		case Severity::FATAL:       return Level::getFatal();
+		case Severity::OFF:         return Level::getOff();
 	}
 }
 
 void Logger::submit(const Log &log) {
 	auto logger = ::log4cxx::Logger::getLogger(name);
-
-	static Level unspecified()
-	LevelPtr level = getLevel(log.sev);
-
-	const char *sev_str = nullptr;
-	switch (log.sev) {
-		default:
-		case Severity::UNSPECIFIED: sev_str = "   "; break;
-		case Severity::TRACE:       sev_str = "TRC"; break;
-		case Severity::DEBUG:       sev_str = "DBG"; break;
-		case Severity::INFO:        sev_str = "INF"; break;
-		case Severity::WARNING:     sev_str = "WRN"; break;
-		case Severity::ERROR:       sev_str = "ERR"; break;
-		case Severity::FATAL:       sev_str = "FAT"; break;
-	}
-
-	LOG4CXX_LOG(logger, sev, msg)
-	printf("[%s] %s:%s:%d: %s\n", sev_str, log.file, log.func, log.line, log.msg.str().c_str());
+	LOG4CXX_LOG(logger, getLevel(log.sev), log.msg.str())
 }
 
 } // namespace logging
@@ -120,44 +93,32 @@ void Logger::submit(const Log &log) {
 
 using namespace logging;
 
-std::unique_ptr<Log> Logger::log() {
+std::unique_ptr<Log> logging::Logger::log() {
 	return std::unique_ptr<Log>(new Log(this));
 }
 
-std::unique_ptr<Log> Logger::trace() {
-	auto l = log();
-	l << Severity::TRACE;
-	return l;
+std::unique_ptr<Log> logging::Logger::trace() {
+	return log() << Severity::TRACE;
 }
 
-std::unique_ptr<Log> Logger::debug() {
-	auto l = log();
-	l << Severity::DEBUG;
-	return l;
+std::unique_ptr<Log> logging::Logger::debug() {
+	return log() << Severity::DEBUG;
 }
 
-std::unique_ptr<Log> Logger::info() {
-	auto l = log();
-	l << Severity::INFO;
-	return l;
+std::unique_ptr<Log> logging::Logger::info() {
+	return log() << Severity::INFO;
 }
 
-std::unique_ptr<Log> Logger::warning() {
-	auto l = log();
-	l << Severity::WARNING;
-	return l;
+std::unique_ptr<Log> logging::Logger::warning() {
+	return log() << Severity::WARNING;
 }
 
-std::unique_ptr<Log> Logger::error() {
-	auto l = log();
-	l << Severity::ERROR;
-	return l;
+std::unique_ptr<Log> logging::Logger::error() {
+	return log() << Severity::ERROR;
 }
 
-std::unique_ptr<Log> Logger::fatal() {
-	auto l = log();
-	l << Severity::FATAL;
-	return l;
+std::unique_ptr<Log> logging::Logger::fatal() {
+	return log() << Severity::FATAL;
 }
 
 void Log::submit() {
@@ -178,22 +139,22 @@ namespace std {
 	}
 }
 
-std::unique_ptr<Log> &operator << (std::unique_ptr<Log> &log, Severity sev) {
+std::unique_ptr<Log> &&operator << (std::unique_ptr<Log> &&log, Severity sev) {
 	log->sev = sev;
-	return log;
+	return std::move(log);
 }
 
-std::unique_ptr<Log> &operator << (std::unique_ptr<Log> &log, LineNumber indicator) {
+std::unique_ptr<Log> &&operator << (std::unique_ptr<Log> &&log, LineNumber indicator) {
 	log->line = indicator.line;
-	return log;
+	return std::move(log);
 }
 
-std::unique_ptr<Log> &operator << (std::unique_ptr<Log> &log, FileName indicator) {
+std::unique_ptr<Log> &&operator << (std::unique_ptr<Log> &&log, FileName indicator) {
 	log->file = indicator.name;
-	return log;
+	return std::move(log);
 }
 
-std::unique_ptr<Log> &operator << (std::unique_ptr<Log> &log, FunctionName indicator) {
+std::unique_ptr<Log> &&operator << (std::unique_ptr<Log> &&log, FunctionName indicator) {
 	log->func = indicator.name;
-	return log;
+	return std::move(log);
 }
