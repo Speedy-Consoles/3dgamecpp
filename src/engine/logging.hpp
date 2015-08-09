@@ -59,6 +59,9 @@ public:
 	Log(Logger *logger) : logger(logger) {}
 	~Log() = default;
 
+	Log(const Log &) = delete;
+	Log &operator = (const Log &) = delete;
+
 	void submit();
 
 	Severity sev = Severity::UNSPECIFIED;
@@ -79,15 +82,15 @@ namespace std {
 	void default_delete<logging::Log>::operator()(logging::Log* log) const;
 }
 
-std::unique_ptr<logging::Log> &operator << (std::unique_ptr<logging::Log> &, logging::Severity sev);
-std::unique_ptr<logging::Log> &operator << (std::unique_ptr<logging::Log> &, logging::LineNumber indicator);
-std::unique_ptr<logging::Log> &operator << (std::unique_ptr<logging::Log> &, logging::FileName indicator);
-std::unique_ptr<logging::Log> &operator << (std::unique_ptr<logging::Log> &, logging::FunctionName indicator);
+std::unique_ptr<logging::Log> &&operator << (std::unique_ptr<logging::Log> &&, logging::Severity sev);
+std::unique_ptr<logging::Log> &&operator << (std::unique_ptr<logging::Log> &&, logging::LineNumber indicator);
+std::unique_ptr<logging::Log> &&operator << (std::unique_ptr<logging::Log> &&, logging::FileName indicator);
+std::unique_ptr<logging::Log> &&operator << (std::unique_ptr<logging::Log> &&, logging::FunctionName indicator);
 
 template <typename T>
-std::unique_ptr<logging::Log> &operator << (std::unique_ptr<logging::Log> &log, T t) {
+std::unique_ptr<logging::Log> &&operator << (std::unique_ptr<logging::Log> &&log, T t) {
 	log->msg << t;
-	return log;
+	return std::move(log);
 }
 
 #define LOG_ENV \

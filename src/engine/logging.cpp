@@ -125,39 +125,27 @@ std::unique_ptr<Log> Logger::log() {
 }
 
 std::unique_ptr<Log> Logger::trace() {
-	auto l = log();
-	l << Severity::TRACE;
-	return l;
+	return log() << Severity::TRACE;
 }
 
 std::unique_ptr<Log> Logger::debug() {
-	auto l = log();
-	l << Severity::DEBUG;
-	return l;
+	return log() << Severity::DEBUG;
 }
 
 std::unique_ptr<Log> Logger::info() {
-	auto l = log();
-	l << Severity::INFO;
-	return l;
+	return log() << Severity::INFO;
 }
 
 std::unique_ptr<Log> Logger::warning() {
-	auto l = log();
-	l << Severity::WARNING;
-	return l;
+	return log() << Severity::WARNING;
 }
 
 std::unique_ptr<Log> Logger::error() {
-	auto l = log();
-	l << Severity::ERROR;
-	return l;
+	return log() << Severity::ERROR;
 }
 
 std::unique_ptr<Log> Logger::fatal() {
-	auto l = log();
-	l << Severity::FATAL;
-	return l;
+	return log() << Severity::FATAL;
 }
 
 void Log::submit() {
@@ -178,22 +166,22 @@ namespace std {
 	}
 }
 
-std::unique_ptr<Log> &operator << (std::unique_ptr<Log> &log, Severity sev) {
+std::unique_ptr<Log> &&operator << (std::unique_ptr<Log> &&log, Severity sev) {
 	log->sev = sev;
-	return log;
+	return std::move(log);
 }
 
-std::unique_ptr<Log> &operator << (std::unique_ptr<Log> &log, LineNumber indicator) {
+std::unique_ptr<Log> &&operator << (std::unique_ptr<Log> &&log, LineNumber indicator) {
 	log->line = indicator.line;
-	return log;
+	return std::move(log);
 }
 
-std::unique_ptr<Log> &operator << (std::unique_ptr<Log> &log, FileName indicator) {
+std::unique_ptr<Log> &&operator << (std::unique_ptr<Log> &&log, FileName indicator) {
 	log->file = indicator.name;
-	return log;
+	return std::move(log);
 }
 
-std::unique_ptr<Log> &operator << (std::unique_ptr<Log> &log, FunctionName indicator) {
+std::unique_ptr<Log> &&operator << (std::unique_ptr<Log> &&log, FunctionName indicator) {
 	log->func = indicator.name;
-	return log;
+	return std::move(log);
 }
