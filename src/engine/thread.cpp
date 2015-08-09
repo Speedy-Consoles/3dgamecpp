@@ -96,7 +96,7 @@ void Thread::setNameOfThisThread(const char *name) {
 void Thread::setNameOfThisThread(const char *) {
 	static bool b = false;
 	if (!b) {
-		LOG_DEBUG(logger) << "Tried to wait on invalid thread";
+		LOG_DEBUG(logger) << "Naming threads not implemented";
 		b = true;
 	}
 }
