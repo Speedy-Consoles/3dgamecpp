@@ -29,6 +29,11 @@ struct ChunkRendererDebugInfo {
 
 class GL3ChunkRenderer {
 private:
+	// performance limits
+	static const int MAX_NEW_FACES = 3000;
+	static const int MAX_NEW_CHUNKS = 100;
+	static const int MAX_RENDER_QUEUE_SIZE= 500;
+
 	enum ChunkStatus {
 		NO_CHUNK = 0,
 		OUTDATED,
@@ -51,20 +56,12 @@ private:
 	GL3Renderer *renderer;
 	ShaderManager *shaderManager;
 
-	// performance limits
-	static const int MAX_NEW_FACES = 3000;
-	static const int MAX_NEW_CHUNKS = 100;
-	static const int MAX_RENDER_QUEUE_SIZE= 500;
-
 	// the grid
 	GridInfo *chunkGrid;
 
 	// vao, vbo locations
 	GLuint *vaos;
 	GLuint *vbos;
-
-	// cache
-	int visibleDiameter;
 
 	// texture location
 	GLuint blockTextures;
@@ -87,6 +84,10 @@ private:
 	int visibleChunks = 0;
 	int visibleFaces = 0;
 
+	// chunk construction state
+	size_t bufferSize;
+	glm::mat4 playerTranslationMatrix;
+
 #pragma pack(push)
 #pragma pack(1)
 	// buffer for block vertices
@@ -99,6 +100,11 @@ private:
 #pragma pack(pop)
 
 	BlockVertexData blockVertexBuffer[Chunk::WIDTH * Chunk::WIDTH * (Chunk::WIDTH + 1) * 3 * 2 * 3];
+
+protected:
+
+	// cache
+	int renderDistance;
 
 public:
 	GL3ChunkRenderer(Client *client, GL3Renderer *renderer, ShaderManager *shaderManager);
@@ -113,12 +119,20 @@ public:
 
 private:
 	void loadTextures();
-	void buildChunk(Chunk const *chunkInfos[27]);
+
+	void buildChunk(const Chunk *chunks[27]);
+
+	void beginRender();
+	void renderChunk(size_t index);
+	void finishRender();
+	void beginChunkConstruction();
+	void emitFace(vec3i64 icc, uint blockType, uint faceDir, uint8 shadowLevels);
+	void finishChunkConstruction(size_t index);
 
 	bool inFrustum(vec3i64 cc, vec3i64 pos, vec3d lookDir);
 
-	void destroyRenderDistanceDependent();
 	void initRenderDistanceDependent(int renderDistance);
+	void destroyRenderDistanceDependent();
 };
 
 #endif // GL3_CHUNK_RENDERER_HPP_

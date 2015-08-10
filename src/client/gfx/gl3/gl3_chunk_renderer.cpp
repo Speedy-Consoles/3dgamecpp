@@ -122,16 +122,18 @@ void GL3ChunkRenderer::setConf(const GraphicsConf &conf, const GraphicsConf &old
 }
 
 void GL3ChunkRenderer::initRenderDistanceDependent(int renderDistance) {
-	visibleDiameter = renderDistance * 2 + 1;
+	int visibleDiameter = renderDistance * 2 + 1;
 	int n = visibleDiameter * visibleDiameter * visibleDiameter;
 	chunkGrid = new GridInfo[n];
+	vsFringeCapacity = visibleDiameter * visibleDiameter * 6;
+	vsFringe = new vec3i64[vsFringeCapacity];
+	vsIndices = new int[vsFringeCapacity];
+	faces = 0;
+
 	vaos = new GLuint[n];
 	vbos = new GLuint[n];
 	GL(GenVertexArrays(n, vaos));
 	GL(GenBuffers(n, vbos));
-	vsFringeCapacity = visibleDiameter * visibleDiameter * 6;
-	vsFringe = new vec3i64[vsFringeCapacity];
-	vsIndices = new int[vsFringeCapacity];
 	for (int i = 0; i < n; i++) {
 		GL(BindVertexArray(vaos[i]));
 		GL(BindBuffer(GL_ARRAY_BUFFER, vbos[i]));
@@ -150,10 +152,12 @@ void GL3ChunkRenderer::initRenderDistanceDependent(int renderDistance) {
 		chunkGrid[i].vsVisited = false;
 	}
 	GL(BindVertexArray(0));
-	faces = 0;
+
+	this->renderDistance = renderDistance;
 }
 
 void GL3ChunkRenderer::destroyRenderDistanceDependent() {
+	int visibleDiameter = renderDistance * 2 + 1;
 	int n = visibleDiameter * visibleDiameter * visibleDiameter;
 	delete[] chunkGrid;
 	GL(DeleteBuffers(n, vbos));
@@ -169,25 +173,7 @@ void GL3ChunkRenderer::render() {
 	if (!player.isValid())
 		return;
 
-	glm::mat4 viewMatrix = glm::rotate(glm::mat4(1.0f), (float) (-player.getPitch() / 360.0 * TAU), glm::vec3(1.0f, 0.0f, 0.0f));
-	viewMatrix = glm::rotate(viewMatrix, (float) (-player.getYaw() / 360.0 * TAU), glm::vec3(0.0f, 1.0f, 0.0f));
-	viewMatrix = glm::rotate(viewMatrix, (float) (-TAU / 4.0), glm::vec3(1.0f, 0.0f, 0.0f));
-	viewMatrix = glm::rotate(viewMatrix, (float) (TAU / 4.0), glm::vec3(0.0f, 0.0f, 1.0f));
-	auto *shader = &shaderManager->getBlockShader();
-
 	vec3i64 playerPos = player.getPos();
-	int64 m = RESOLUTION * Chunk::WIDTH;
-	glm::mat4 translationMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(
-		(float) -((playerPos[0] % m + m) % m) / RESOLUTION,
-		(float) -((playerPos[1] % m + m) % m) / RESOLUTION,
-		(float) -((playerPos[2] % m + m) % m) / RESOLUTION)
-	);
-
-	shader->setViewMatrix(viewMatrix);
-	shader->setLightEnabled(true);
-
-	GL(ActiveTexture(GL_TEXTURE0));
-	GL(BindTexture(GL_TEXTURE_2D_ARRAY, blockTextures));
 
 	// put chunks into render queue
 	vec3i64 pc = player.getChunkPos();
@@ -200,7 +186,7 @@ void GL3ChunkRenderer::render() {
 			checkChunkIndex = LOADING_ORDER_DISTANCE_INDICES[(int) newRadius];
 		oldPlayerChunk = pc;
 	}
-	while(LOADING_ORDER[checkChunkIndex].norm() <= client->getConf().render_distance
+	while (LOADING_ORDER[checkChunkIndex].norm() <= client->getConf().render_distance
 			&& renderQueue.size() < MAX_RENDER_QUEUE_SIZE) {
 		vec3i64 cc = pc + LOADING_ORDER[checkChunkIndex].cast<int64>();
 		int64 index = gridCycleIndex(cc, visibleDiameter);
@@ -241,7 +227,11 @@ void GL3ChunkRenderer::render() {
 		inRenderQueue.erase(inRenderQueue.find(cc));
 	}
 
+
+
+
 	// render chunks
+	beginRender();
 	vec3d lookDir = getVectorFromAngles(player.getYaw(), player.getPitch());
 	vsFringe[0] = pc;
 	vsIndices[0] = (int) gridCycleIndex(pc, visibleDiameter);
@@ -263,12 +253,8 @@ void GL3ChunkRenderer::render() {
 		fringeSize--;
 
 		if (chunkGrid[index].status != NO_CHUNK && chunkGrid[index].content == cc && chunkGrid[index].numFaces > 0) {
+			renderChunk(index);
 			visibleFaces += chunkGrid[index].numFaces;
-			GL(BindVertexArray(vaos[index]));
-			glm::mat4 modelMatrix = translationMatrix * glm::translate(glm::mat4(1.0f), glm::vec3((float) (cd[0] * (int) Chunk::WIDTH), (float) (cd[1] * (int) Chunk::WIDTH), (float) (cd[2] * (int) Chunk::WIDTH)));
-			shader->setModelMatrix(modelMatrix);
-			shader->useProgram();
-			GL(DrawArrays(GL_TRIANGLES, 0, chunkGrid[index].numFaces * 3));
 		}
 
 		for (int d = 0; d < 6; d++) {
@@ -312,7 +298,8 @@ void GL3ChunkRenderer::render() {
 			}
 		}
 	}
-	GL(BindVertexArray(0));
+	
+	finishRender();
 }
 
 void GL3ChunkRenderer::rerenderChunk(vec3i64 chunkCoords) {
@@ -328,10 +315,12 @@ void GL3ChunkRenderer::rerenderChunk(vec3i64 chunkCoords) {
 }
 
 void GL3ChunkRenderer::buildChunk(Chunk const *chunks[27]) {
+	beginChunkConstruction();
+
 	const Chunk &chunk = *(chunks[BIG_CUBE_CYCLE_BASE_INDEX]);
 	vec3i64 cc = chunk.getCC();
 
-	int64 index = gridCycleIndex(cc, visibleDiameter);
+	size_t index = gridCycleIndex(cc, visibleDiameter);
 
 	if (chunkGrid[index].status != NO_CHUNK)
 		faces -= chunkGrid[index].numFaces;
@@ -341,11 +330,8 @@ void GL3ChunkRenderer::buildChunk(Chunk const *chunks[27]) {
 	chunkGrid[index].status = OK;
 	chunkGrid[index].passThroughs = chunk.getPassThroughs();
 
-	GL(BindBuffer(GL_ARRAY_BUFFER, vbos[index]));
-
 	if (chunk.getAirBlocks() == Chunk::WIDTH * Chunk::WIDTH * Chunk::WIDTH) {
-		GL(BufferData(GL_ARRAY_BUFFER, 0, 0, GL_STATIC_DRAW));
-		GL(BindBuffer(GL_ARRAY_BUFFER, 0));
+		finishChunkConstruction(index);
 		return;
 	}
 
@@ -355,8 +341,6 @@ void GL3ChunkRenderer::buildChunk(Chunk const *chunks[27]) {
 	for (uint8 d = 0; d < 3; d++) {
 		uDirs[d] = DIRS[d].cast<uint8>();
 	}
-
-	size_t bufferSize = 0;
 
 	const uint8 *blocks = chunk.getBlocks();
 	for (uint8 d = 0; d < 3; d++) {
@@ -394,7 +378,7 @@ void GL3ChunkRenderer::buildChunk(Chunk const *chunks[27]) {
 						thisType = blocks[i++];
 					}
 
-					if((thisType == 0) != (thatType == 0)) {
+					if ((thisType == 0) != (thatType == 0)) {
 						vec3i64 faceBlock;
 						uint8 faceType;
 						uint8 faceDir;
@@ -428,10 +412,9 @@ void GL3ChunkRenderer::buildChunk(Chunk const *chunks[27]) {
 								corners |= 1 << j;
 							}
 						}
-						vec3i64 bc = chunk.getCC() * chunk.WIDTH + faceBlock.cast<int64>();
+						vec3i64 bc = chunk.getCC() * chunk.WIDTH + faceBlock;
 
-						ushort posIndices[4];
-						uchar shadowCombination = 0;
+						uchar shadowLevels = 0;
 						for (int j = 0; j < 4; j++) {
 							int shadowLevel = 0;
 							bool s1 = (corners & QUAD_CORNER_MASK[j][0]) > 0;
@@ -443,29 +426,95 @@ void GL3ChunkRenderer::buildChunk(Chunk const *chunks[27]) {
 								shadowLevel++;
 							if (m || (s1 && s2))
 								shadowLevel++;
-							shadowCombination |= shadowLevel << 2 * j;
-							vec3ui8 vertex = faceBlock.cast<uint8>() + DIR_QUAD_CORNER_CYCLES_3D[faceDir][j].cast<uint8>();
-							posIndices[j] = (vertex[2] * (Chunk::WIDTH + 1) + vertex[1]) * (Chunk::WIDTH + 1) + vertex[0];
+							shadowLevels |= shadowLevel << 2 * j;
 						}
-						int indices[6] = {0, 1, 2, 2, 3, 0};
-						for (int j = 0; j < 6; j++) {
-							blockVertexBuffer[bufferSize].positionIndex = posIndices[indices[j]];
-							blockVertexBuffer[bufferSize].textureIndex = faceType;
-							blockVertexBuffer[bufferSize].dirIndexCornerIndex = faceDir | (indices[j] << 3);
-							blockVertexBuffer[bufferSize].shadowLevels = shadowCombination;
-							bufferSize++;
-						}
+
+						emitFace(faceBlock, faceType, faceDir, shadowLevels);
+						chunkGrid[index].numFaces += 2;
 					}
 				}
 			}
 		}
 	}
 
-	GL(BufferData(GL_ARRAY_BUFFER, sizeof(BlockVertexData) * bufferSize, blockVertexBuffer, GL_STATIC_DRAW));
+	finishChunkConstruction(index);
+	newFaces += chunkGrid[index].numFaces;
+	faces += chunkGrid[index].numFaces;
+}
 
-	chunkGrid[index].numFaces = bufferSize / 3;
-	newFaces += bufferSize / 3;
-	faces += bufferSize / 3;
+void GL3ChunkRenderer::beginRender() {
+	Player &player = client->getLocalPlayer();
+	if (!player.isValid())
+		return;
+
+	glm::mat4 viewMatrix = glm::rotate(glm::mat4(1.0f), (float) (-player.getPitch() / 360.0 * TAU), glm::vec3(1.0f, 0.0f, 0.0f));
+	viewMatrix = glm::rotate(viewMatrix, (float) (-player.getYaw() / 360.0 * TAU), glm::vec3(0.0f, 1.0f, 0.0f));
+	viewMatrix = glm::rotate(viewMatrix, (float) (-TAU / 4.0), glm::vec3(1.0f, 0.0f, 0.0f));
+	viewMatrix = glm::rotate(viewMatrix, (float) (TAU / 4.0), glm::vec3(0.0f, 0.0f, 1.0f));
+
+	vec3i64 playerPos = player.getPos();
+	int64 m = RESOLUTION * Chunk::WIDTH;
+	playerTranslationMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(
+		(float) -cycle(playerPos[0], m) / RESOLUTION,
+		(float) -cycle(playerPos[1], m) / RESOLUTION,
+		(float) -cycle(playerPos[2], m) / RESOLUTION)
+	);
+
+	auto *shader = &shaderManager->getBlockShader();
+	shader->setViewMatrix(viewMatrix);
+	shader->setLightEnabled(true);
+
+	GL(ActiveTexture(GL_TEXTURE0));
+	GL(BindTexture(GL_TEXTURE_2D_ARRAY, blockTextures));
+}
+
+void GL3ChunkRenderer::renderChunk(size_t index) {
+	Player &player = client->getLocalPlayer();
+	vec3i64 cd = chunkGrid[index].content - player.getChunkPos();
+	
+	glm::mat4 chunkTranslationMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(
+		(float) (cd[0] * Chunk::WIDTH),
+		(float) (cd[1] * Chunk::WIDTH),
+		(float) (cd[2] * Chunk::WIDTH)
+	));
+	glm::mat4 modelMatrix = playerTranslationMatrix * chunkTranslationMatrix;
+
+	auto *shader = &shaderManager->getBlockShader();
+	shader->setModelMatrix(modelMatrix);
+	shader->useProgram();
+
+	GL(BindVertexArray(vaos[index]));
+	GL(DrawArrays(GL_TRIANGLES, 0, chunkGrid[index].numFaces * 3));
+}
+
+void GL3ChunkRenderer::finishRender() {
+	GL(BindVertexArray(0));
+}
+
+void GL3ChunkRenderer::beginChunkConstruction() {
+	bufferSize = 0;
+}
+
+void GL3ChunkRenderer::emitFace(vec3i64 icc, uint blockType, uint faceDir, uint8 shadowLevels) {
+	ushort posIndices[4];
+	for (int i = 0; i < 4; i++) {
+		vec3i64 v = icc + DIR_QUAD_CORNER_CYCLES_3D[faceDir][i].cast<int64>();
+		posIndices[i] = (ushort) ((v[2] * (Chunk::WIDTH + 1) + v[1]) * (Chunk::WIDTH + 1) + v[0]);
+	}
+	static const int INDICES[6] = {0, 1, 2, 2, 3, 0};
+	for (int i = 0; i < 6; i++) {
+		blockVertexBuffer[bufferSize].positionIndex = posIndices[INDICES[i]];
+		blockVertexBuffer[bufferSize].textureIndex = blockType;
+		blockVertexBuffer[bufferSize].dirIndexCornerIndex = faceDir | (INDICES[i] << 3);
+		blockVertexBuffer[bufferSize].shadowLevels = shadowLevels;
+		bufferSize++;
+	}
+}
+
+void GL3ChunkRenderer::finishChunkConstruction(size_t index) {
+	GL(BindBuffer(GL_ARRAY_BUFFER, vbos[index]));
+	auto size = sizeof(BlockVertexData) * bufferSize;
+	GL(BufferData(GL_ARRAY_BUFFER, size, blockVertexBuffer, GL_STATIC_DRAW));
 	GL(BindBuffer(GL_ARRAY_BUFFER, 0));
 }
 

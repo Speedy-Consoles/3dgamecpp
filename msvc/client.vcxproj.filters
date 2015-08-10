@@ -9,10 +9,6 @@
       <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
       <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
     </Filter>
-    <Filter Include="Shader Files">
-      <UniqueIdentifier>{8076c443-1ae5-453f-9f2d-3261649eebbb}</UniqueIdentifier>
-      <Extensions>frag;vert</Extensions>
-    </Filter>
     <Filter Include="Header Files\gfx">
       <UniqueIdentifier>{590dadd7-b11f-4d53-b1d6-219144c92842}</UniqueIdentifier>
     </Filter>
@@ -42,6 +38,10 @@
     </Filter>
     <Filter Include="Source Files\client">
       <UniqueIdentifier>{6d1f8668-c715-42be-adf1-2667616dff95}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\gfx\Shader Files">
+      <UniqueIdentifier>{8076c443-1ae5-453f-9f2d-3261649eebbb}</UniqueIdentifier>
+      <Extensions>frag;vert</Extensions>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -128,6 +128,9 @@
     </ClCompile>
     <ClCompile Include="..\src\client\remote_server_interface.cpp">
       <Filter>Source Files\client</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\client\gfx\chunk_renderer.cpp">
+      <Filter>Source Files\gfx</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -223,6 +226,9 @@
     </ClInclude>
     <ClInclude Include="..\src\client\server_interface.hpp">
       <Filter>Header Files\client</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\client\gfx\chunk_renderer.hpp">
+      <Filter>Header Files\gfx</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

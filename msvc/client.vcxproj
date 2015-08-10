@@ -13,6 +13,7 @@
   <ItemGroup>
     <ClCompile Include="..\src\client\client.cpp" />
     <ClCompile Include="..\src\client\config.cpp" />
+    <ClCompile Include="..\src\client\gfx\chunk_renderer.cpp" />
     <ClCompile Include="..\src\client\gfx\font.cpp" />
     <ClCompile Include="..\src\client\gfx\gl2\gl2_chunk_renderer.cpp" />
     <ClCompile Include="..\src\client\gfx\gl2\gl2_debug_renderer.cpp" />
@@ -43,6 +44,7 @@
   <ItemGroup>
     <ClInclude Include="..\src\client\client.hpp" />
     <ClInclude Include="..\src\client\config.hpp" />
+    <ClInclude Include="..\src\client\gfx\chunk_renderer.hpp" />
     <ClInclude Include="..\src\client\gfx\font.hpp" />
     <ClInclude Include="..\src\client\gfx\gl2\gl2_chunk_renderer.hpp" />
     <ClInclude Include="..\src\client\gfx\gl2\gl2_debug_renderer.hpp" />

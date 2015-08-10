@@ -111,7 +111,7 @@ vec3ui8 bc2icc(vec3i64 bc) {
 	);
 }
 
-int64 gridCycleIndex(vec3i64 v, int64 gridSize) {
+size_t gridCycleIndex(vec3i64 v, size_t gridSize) {
 	return (cycle(v[2], gridSize) * gridSize
 			+ cycle(v[1], gridSize)) * gridSize
 			+ cycle(v[0], gridSize);
