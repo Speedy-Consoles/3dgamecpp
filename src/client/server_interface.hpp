@@ -19,7 +19,8 @@ public:
 		CONNECTION_ERROR,
 		CONNECTED,
 	};
-
+	
+	ServerInterface() : Thread("ServerInterface") {}
 	virtual ~ServerInterface() = default;
 
 	// query

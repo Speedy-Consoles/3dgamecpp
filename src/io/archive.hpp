@@ -42,18 +42,31 @@ public:
 
 	bool hasChunk(vec3i64);
 
-	DEPRECATED(Chunk *loadChunk(vec3i64));
 	bool loadChunk(Chunk &);
 	bool loadChunk(vec3i64, Chunk &);
 	void storeChunk(const Chunk &);
 
 private:
 	std::fstream _file;
-
-	Endianess _endianess;
-	int32 _version;
 	uint _region_size;
-	size_t _directory_offset;
+
+	PACKED(
+	struct Header {
+		char magic[4];
+		int32 endianess_bytes;
+		int32 version;
+		uint32 num_chunks;
+		uint32 directory_offset;
+	});
+
+	PACKED(
+	struct DirectoryEntry {
+		uint32 offset;
+		uint32 size;
+	});
+
+	Header _header;
+	std::vector<DirectoryEntry> _dir;
 };
 
 class ChunkArchive {
@@ -70,7 +83,6 @@ public:
 
 	bool hasChunk(vec3i64);
 
-	DEPRECATED(Chunk *loadChunk(vec3i64));
 	bool loadChunk(Chunk &);
 	bool loadChunk(vec3i64, Chunk &);
 	void storeChunk(const Chunk &);
