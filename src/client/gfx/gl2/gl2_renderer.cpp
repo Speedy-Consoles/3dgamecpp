@@ -1,24 +1,21 @@
 #include "gl2_renderer.hpp"
 
-#include "game/world.hpp"
-#include "game/chunk.hpp"
-#include "menu.hpp"
-#include "stopwatch.hpp"
-#include "engine/time.hpp"
-
-#include "util.hpp"
-#include "engine/math.hpp"
-#include "constants.hpp"
-#include "engine/logging.hpp"
-
-#include "gui/frame.hpp"
-
 #include <SDL2/SDL_image.h>
 
-#include "engine/logging.hpp"
-static logging::Logger logger("render");
+#include "shared/engine/logging.hpp"
+#include "shared/engine/stopwatch.hpp"
+#include "shared/engine/time.hpp"
+#include "shared/engine/math.hpp"
+#include "shared/game/world.hpp"
+#include "shared/game/chunk.hpp"
+#include "shared/constants.hpp"
+#include "shared/block_utils.hpp"
+#include "client/menu.hpp"
+#include "client/gui/frame.hpp"
 
 using namespace gui;
+
+static logging::Logger logger("render");
 
 GL2Renderer::GL2Renderer(Client *client) :
 	client(client),

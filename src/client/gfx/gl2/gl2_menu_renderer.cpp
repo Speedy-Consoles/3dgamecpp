@@ -1,17 +1,17 @@
 #include "gl2_menu_renderer.hpp"
 
+#include "shared/engine/logging.hpp"
+
+#include "client/gui/frame.hpp"
+#include "client/gui/label.hpp"
+#include "client/gui/button.hpp"
+#include "client/gui/cycle_button.hpp"
+
 #include "gl2_renderer.hpp"
 
-#include "gui/frame.hpp"
-#include "gui/label.hpp"
-#include "gui/button.hpp"
-#include "gui/cycle_button.hpp"
-
-#include "engine/logging.hpp"
-static logging::Logger logger("render");
-
-
 using namespace gui;
+
+static logging::Logger logger("render");
 
 GL2MenuRenderer::GL2MenuRenderer(Client *client, GL2Renderer *renderer) :
 	client(client), renderer(renderer)

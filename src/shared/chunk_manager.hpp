@@ -7,12 +7,12 @@
 #include <queue>
 #include <stack>
 
-#include "util.hpp"
 #include "engine/vmath.hpp"
 #include "engine/queue.hpp"
 #include "engine/thread.hpp"
-#include "io/archive.hpp"
 #include "game/chunk.hpp"
+#include "block_utils.hpp"
+#include "chunk_archive.hpp"
 
 class Client;
 

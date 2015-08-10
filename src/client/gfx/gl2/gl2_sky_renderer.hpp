@@ -1,7 +1,7 @@
 #ifndef GL2_SKY_RENDERER_HPP_
 #define GL2_SKY_RENDERER_HPP_
 
-#include "engine/vmath.hpp"
+#include "shared/engine/vmath.hpp"
 
 class Client;
 class GL2Renderer;

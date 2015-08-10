@@ -3,9 +3,9 @@
 
 #include <GL/glew.h>
 
-#include "game/chunk.hpp"
-#include "engine/macros.hpp"
-#include "engine/std_types.hpp"
+#include "shared/engine/macros.hpp"
+#include "shared/engine/std_types.hpp"
+#include "shared/game/chunk.hpp"
 
 class Client;
 class GL2Renderer;

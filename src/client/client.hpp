@@ -1,10 +1,10 @@
 #ifndef CLIENT_HPP
 #define CLIENT_HPP
 
-#include "engine/std_types.hpp"
-#include "engine/time.hpp"
-
 #include <memory>
+
+#include "shared/engine/std_types.hpp"
+#include "shared/engine/time.hpp"
 
 class ServerInterface;
 class World;

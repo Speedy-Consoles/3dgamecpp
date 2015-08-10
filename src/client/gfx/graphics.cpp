@@ -2,14 +2,14 @@
 
 #include <SDL2/SDL_image.h>
 
-#include "engine/logging.hpp"
-#include "gl2_renderer.hpp"
-#include "gl3_renderer.hpp"
+#include "shared/engine/logging.hpp"
 
-#include "engine/logging.hpp"
-static logging::Logger logger("gfx");
+#include "gl2/gl2_renderer.hpp"
+#include "gl3/gl3_renderer.hpp"
 
 using namespace gui;
+
+static logging::Logger logger("gfx");
 
 Graphics::Graphics(Client *client, const Client::State *state) : client(client), state(*state) {
 	LOG_DEBUG(logger) << "Constructing Graphics";

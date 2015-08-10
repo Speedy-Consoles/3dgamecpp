@@ -2,21 +2,19 @@
 
 #include <glm/gtc/matrix_transform.hpp>
 
-#include "engine/logging.hpp"
-#include "engine/math.hpp"
+#include "shared/engine/logging.hpp"
+#include "shared/engine/math.hpp"
+#include "shared/engine/stopwatch.hpp"
+#include "shared/game/world.hpp"
+#include "client/menu.hpp"
+#include "client/gfx/graphics.hpp"
 
 #include "gl3_chunk_renderer.hpp"
 #include "gl3_debug_renderer.hpp"
-#include "graphics.hpp"
-#include "menu.hpp"
-#include "stopwatch.hpp"
-
-#include "game/world.hpp"
-
-#include "engine/logging.hpp"
-static logging::Logger logger("render");
 
 using namespace gui;
+
+static logging::Logger logger("render");
 
 GL3Renderer::GL3Renderer(Client *client) :
 	client(client),

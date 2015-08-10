@@ -1,14 +1,7 @@
-/*
- * menu.cpp
- *
- *  Created on: 16.09.2014
- *      Author: lars
- */
-
 #include "menu.hpp"
 
-#include "graphics.hpp"
-#include "util.hpp"
+#include "shared/block_utils.hpp"
+#include "client/gfx/graphics.hpp"
 
 #include "gui/frame.hpp"
 #include "gui/label.hpp"

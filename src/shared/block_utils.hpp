@@ -1,5 +1,5 @@
-#ifndef UTIL_HPP
-#define UTIL_HPP
+#ifndef BLOCK_UTILS_HPP_
+#define BLOCK_UTILS_HPP_
 
 #include <vector>
 
@@ -65,4 +65,4 @@ enum FaceDirMask {
 	MASK_ALL   = MASK_SIDES | MASK_VERT,
 };
 
-#endif // UTIL_HPP
+#endif // BLOCK_UTILS_HPP_

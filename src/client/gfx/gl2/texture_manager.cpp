@@ -1,18 +1,12 @@
-/*
- * texture_manager.cpp
- *
- *  Created on: 19.09.2014
- *      Author: lars
- */
-
 #include "texture_manager.hpp"
-
-#include "client/client.hpp"
-#include "util.hpp"
 
 #include <SDL2/SDL_image.h>
 
-#include "engine/logging.hpp"
+#include "shared/engine/logging.hpp"
+#include "shared/block_utils.hpp"
+#include "client/client.hpp"
+
+
 static logging::Logger logger("gfx");
 
 static const auto TEX2D = GL_TEXTURE_2D;

@@ -3,12 +3,13 @@
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/info_parser.hpp>
 
-#include "engine/logging.hpp"
-static logging::Logger logger("conf");
+#include "shared/engine/logging.hpp"
 
 using namespace std;
 using namespace boost;
 using namespace boost::property_tree;
+
+static logging::Logger logger("conf");
 
 // Default values for all customizable options
 RenderBackend DEFAULT_RENDER_BACKEND  = RenderBackend::OGL_2;

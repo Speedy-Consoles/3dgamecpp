@@ -1,10 +1,3 @@
-/*
- * time.hpp
- *
- *  Created on: 24.09.2014
- *      Author: lars
- */
-
 #ifndef TIME_HPP_
 #define TIME_HPP_
 

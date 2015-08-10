@@ -1,10 +1,3 @@
-/*
- * buffer.hpp
- *
- *  Created on: 24.09.2014
- *      Author: lars
- */
-
 #ifndef BUFFER_HPP_
 #define BUFFER_HPP_
 

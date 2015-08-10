@@ -1,7 +1,7 @@
 #ifndef PERLIN_HPP
 #define PERLIN_HPP
 
-#include "engine/std_types.hpp"
+#include "shared/engine/std_types.hpp"
 
 // slightly modified version of
 // https://gist.github.com/Flafla2/f0260a861be0ebdeef76

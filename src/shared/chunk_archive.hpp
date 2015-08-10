@@ -1,12 +1,5 @@
-/*
- * archive.hpp
- *
- *  Created on: Sep 3, 2014
- *      Author: lars
- */
-
-#ifndef ARCHIVE_HPP
-#define ARCHIVE_HPP
+#ifndef CHUNK_ARCHIVE_HPP_
+#define CHUNK_ARCHIVE_HPP_
 
 #include <fstream>
 #include <string>
@@ -96,4 +89,4 @@ private:
 	std::unordered_map<vec3i64, ArchiveFile *, size_t(*)(vec3i64)> _file_map;
 };
 
-#endif // ARCHIVE_HPP
+#endif // CHUNK_ARCHIVE_HPP_

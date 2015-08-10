@@ -1,24 +1,18 @@
-/*
- * texture_manager.hpp
- *
- *  Created on: 19.09.2014
- *      Author: lars
- */
-
 #ifndef TEXTURE_MANAGER_HPP_
 #define TEXTURE_MANAGER_HPP_
 
 #include "texture_loader.hpp"
 
-#include <GL/glew.h>
-#include <GL/gl.h>
 #include <unordered_map>
 #include <vector>
 #include <list>
 
-#include "engine/std_types.hpp"
-#include "config.hpp"
-#include "util.hpp"
+#include <GL/glew.h>
+#include <GL/gl.h>
+
+#include "shared/engine/std_types.hpp"
+#include "shared/block_utils.hpp"
+#include "client/config.hpp"
 
 struct SDL_Surface;
 

@@ -1,13 +1,13 @@
 #ifndef TEXTURE_LOADER_HPP_
 #define TEXTURE_LOADER_HPP_
 
-#include <SDL2/SDL.h>
-
 #include <string>
 #include <vector>
 #include <memory>
 
-#include "engine/std_types.hpp"
+#include <SDL2/SDL.h>
+
+#include "shared/engine/std_types.hpp"
 
 class TextureLoader;
 class Client;

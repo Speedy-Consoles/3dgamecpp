@@ -1,13 +1,15 @@
 #include "texture_loader.hpp"
-#include "client/client.hpp"
-#include "game/block_manager.hpp"
-#include "util.hpp"
 
-#include <SDL2/SDL_image.h>
 #include <memory>
 #include <string>
 
-#include "engine/logging.hpp"
+#include <SDL2/SDL_image.h>
+
+#include "shared/engine/logging.hpp"
+#include "shared/block_utils.hpp"
+#include "shared/block_manager.hpp"
+#include "client/client.hpp"
+
 static logging::Logger logger("gfx");
 
 namespace std {

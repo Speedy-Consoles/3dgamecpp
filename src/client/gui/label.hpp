@@ -1,10 +1,3 @@
-/*
- * label.hpp
- *
- *  Created on: 21.09.2014
- *      Author: lars
- */
-
 #ifndef LABEL_HPP_
 #define LABEL_HPP_
 

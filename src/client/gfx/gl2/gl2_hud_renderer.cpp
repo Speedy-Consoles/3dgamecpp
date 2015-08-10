@@ -1,7 +1,8 @@
 #include "gl2_hud_renderer.hpp"
 
+#include "shared/engine/logging.hpp"
+
 #include "gl2_renderer.hpp"
-#include "engine/logging.hpp"
 
 GL2HudRenderer::GL2HudRenderer(Client *client, GL2Renderer *renderer) :
 	client(client), renderer(renderer)

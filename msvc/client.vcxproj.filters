@@ -13,5 +13,216 @@
       <UniqueIdentifier>{8076c443-1ae5-453f-9f2d-3261649eebbb}</UniqueIdentifier>
       <Extensions>frag;vert</Extensions>
     </Filter>
+    <Filter Include="Header Files\gfx">
+      <UniqueIdentifier>{590dadd7-b11f-4d53-b1d6-219144c92842}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\gfx">
+      <UniqueIdentifier>{ee080973-c5a1-46d4-8924-9c4d9aa35535}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\gui">
+      <UniqueIdentifier>{85bb9d60-0ccd-415e-aedb-181e8da3eeea}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\gfx\gl2">
+      <UniqueIdentifier>{ff1c71fb-d022-40c2-8885-aac7e2adc060}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\gfx\gl3">
+      <UniqueIdentifier>{c800e59c-9b46-4a95-8efa-c8efd50b7357}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\gfx\gl2">
+      <UniqueIdentifier>{54b2fabb-11a2-4505-a0fa-e2bb385763aa}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\gfx\gl3">
+      <UniqueIdentifier>{cef2b8a5-0fe8-4aa9-9b50-2705e4ac50f5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\gui">
+      <UniqueIdentifier>{0bf25de1-3b98-4066-b9e9-f028cb8ba558}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\client">
+      <UniqueIdentifier>{94ba30e2-efd3-49df-9385-19f62064d95c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\client">
+      <UniqueIdentifier>{6d1f8668-c715-42be-adf1-2667616dff95}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\src\client\gfx\gl2\gl2_chunk_renderer.cpp">
+      <Filter>Source Files\gfx\gl2</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\client\gfx\gl2\gl2_debug_renderer.cpp">
+      <Filter>Source Files\gfx\gl2</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\client\gfx\gl2\gl2_hud_renderer.cpp">
+      <Filter>Source Files\gfx\gl2</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\client\gfx\gl2\gl2_menu_renderer.cpp">
+      <Filter>Source Files\gfx\gl2</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\client\gfx\gl2\gl2_renderer.cpp">
+      <Filter>Source Files\gfx\gl2</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\client\gfx\gl2\gl2_sky_renderer.cpp">
+      <Filter>Source Files\gfx\gl2</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\client\gfx\gl2\texture_loader.cpp">
+      <Filter>Source Files\gfx\gl2</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\client\gfx\gl2\texture_manager.cpp">
+      <Filter>Source Files\gfx\gl2</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\client\gfx\gl3\gl3_chunk_renderer.cpp">
+      <Filter>Source Files\gfx\gl3</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\client\gfx\gl3\gl3_debug_renderer.cpp">
+      <Filter>Source Files\gfx\gl3</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\client\gfx\gl3\gl3_font.cpp">
+      <Filter>Source Files\gfx\gl3</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\client\gfx\gl3\gl3_hud_renderer.cpp">
+      <Filter>Source Files\gfx\gl3</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\client\gfx\gl3\gl3_menu_renderer.cpp">
+      <Filter>Source Files\gfx\gl3</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\client\gfx\gl3\gl3_renderer.cpp">
+      <Filter>Source Files\gfx\gl3</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\client\gfx\gl3\gl3_shaders.cpp">
+      <Filter>Source Files\gfx\gl3</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\client\gfx\gl3\gl3_sky_renderer.cpp">
+      <Filter>Source Files\gfx\gl3</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\client\gfx\gl3\gl3_target_renderer.cpp">
+      <Filter>Source Files\gfx\gl3</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\client\gfx\font.cpp">
+      <Filter>Source Files\gfx</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\client\gfx\graphics.cpp">
+      <Filter>Source Files\gfx</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\client\gui\button.cpp">
+      <Filter>Source Files\gui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\client\gui\frame.cpp">
+      <Filter>Source Files\gui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\client\gui\label.cpp">
+      <Filter>Source Files\gui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\client\gui\widget.cpp">
+      <Filter>Source Files\gui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\client\client.cpp">
+      <Filter>Source Files\client</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\client\config.cpp">
+      <Filter>Source Files\client</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\client\local_server_interface.cpp">
+      <Filter>Source Files\client</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\client\menu.cpp">
+      <Filter>Source Files\client</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\client\remote_server_interface.cpp">
+      <Filter>Source Files\client</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\src\client\gfx\gl2\gl2_chunk_renderer.hpp">
+      <Filter>Header Files\gfx\gl2</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\client\gfx\gl2\gl2_debug_renderer.hpp">
+      <Filter>Header Files\gfx\gl2</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\client\gfx\gl2\gl2_hud_renderer.hpp">
+      <Filter>Header Files\gfx\gl2</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\client\gfx\gl2\gl2_menu_renderer.hpp">
+      <Filter>Header Files\gfx\gl2</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\client\gfx\gl2\gl2_renderer.hpp">
+      <Filter>Header Files\gfx\gl2</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\client\gfx\gl2\gl2_sky_renderer.hpp">
+      <Filter>Header Files\gfx\gl2</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\client\gfx\gl2\texture_loader.hpp">
+      <Filter>Header Files\gfx\gl2</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\client\gfx\gl2\texture_manager.hpp">
+      <Filter>Header Files\gfx\gl2</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\client\gfx\gl3\gl3_chunk_renderer.hpp">
+      <Filter>Header Files\gfx\gl3</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\client\gfx\gl3\gl3_debug_renderer.hpp">
+      <Filter>Header Files\gfx\gl3</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\client\gfx\gl3\gl3_font.hpp">
+      <Filter>Header Files\gfx\gl3</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\client\gfx\gl3\gl3_hud_renderer.hpp">
+      <Filter>Header Files\gfx\gl3</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\client\gfx\gl3\gl3_menu_renderer.hpp">
+      <Filter>Header Files\gfx\gl3</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\client\gfx\gl3\gl3_renderer.hpp">
+      <Filter>Header Files\gfx\gl3</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\client\gfx\gl3\gl3_shaders.hpp">
+      <Filter>Header Files\gfx\gl3</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\client\gfx\gl3\gl3_sky_renderer.hpp">
+      <Filter>Header Files\gfx\gl3</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\client\gfx\gl3\gl3_target_renderer.hpp">
+      <Filter>Header Files\gfx\gl3</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\client\gfx\font.hpp">
+      <Filter>Header Files\gfx</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\client\gfx\graphics.hpp">
+      <Filter>Header Files\gfx</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\client\gfx\renderer.hpp">
+      <Filter>Header Files\gfx</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\client\gui\button.hpp">
+      <Filter>Header Files\gui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\client\gui\cycle_button.hpp">
+      <Filter>Header Files\gui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\client\gui\frame.hpp">
+      <Filter>Header Files\gui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\client\gui\label.hpp">
+      <Filter>Header Files\gui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\client\gui\widget.hpp">
+      <Filter>Header Files\gui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\client\client.hpp">
+      <Filter>Header Files\client</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\client\config.hpp">
+      <Filter>Header Files\client</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\client\local_server_interface.hpp">
+      <Filter>Header Files\client</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\client\menu.hpp">
+      <Filter>Header Files\client</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\client\remote_server_interface.hpp">
+      <Filter>Header Files\client</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\client\server_interface.hpp">
+      <Filter>Header Files\client</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

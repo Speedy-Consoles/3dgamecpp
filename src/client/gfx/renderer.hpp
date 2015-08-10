@@ -1,7 +1,7 @@
 #ifndef RENDERER_HPP
 #define RENDERER_HPP
 
-#include "engine/vmath.hpp"
+#include "shared/engine/vmath.hpp"
 
 struct GraphicsConf;
 

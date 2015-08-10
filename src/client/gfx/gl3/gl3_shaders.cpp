@@ -1,13 +1,13 @@
-#include "shaders.hpp"
+#include "gl3_shaders.hpp"
 
 #include <fstream>
 #include <vector>
+
 #include <glm/gtc/type_ptr.hpp>
 
-#include "engine/logging.hpp"
-#include "engine/math.hpp"
+#include "shared/engine/logging.hpp"
+#include "shared/engine/math.hpp"
 
-#include "engine/logging.hpp"
 static logging::Logger logger("gfx");
 
 Shader::Shader(ShaderManager *manager, const char *vert_src, const char *frag_src) :

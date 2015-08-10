@@ -1,9 +1,9 @@
 #include "net.hpp"
 
 #include <cstring>
-#include "logging.hpp"
 
-#include "engine/logging.hpp"
+#include "shared/engine/logging.hpp"
+
 static logging::Logger logger("net");
 
 Buffer &operator << (Buffer &lhs, const ServerMessage &rhs) {

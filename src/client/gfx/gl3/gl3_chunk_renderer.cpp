@@ -1,22 +1,23 @@
 #include "gl3_chunk_renderer.hpp"
 
+#include <memory>
+
+#include <SDL2/SDL_image.h>
 #include <glm/mat4x4.hpp>
 #include <glm/vec3.hpp>
 #include <glm/gtc/matrix_transform.hpp>
-#include <SDL2/SDL_image.h>
-#include <memory>
 
-#include "gl3_renderer.hpp"
-#include "engine/logging.hpp"
-#include "game/world.hpp"
-#include "game/player.hpp"
-#include "util.hpp"
+#include "shared/engine/logging.hpp"
+#include "shared/game/world.hpp"
+#include "shared/game/player.hpp"
+#include "shared/block_utils.hpp"
 #include "shared/chunk_manager.hpp"
 
-#include "engine/logging.hpp"
-static logging::Logger logger("render");
+#include "gl3_renderer.hpp"
 
 using namespace std;
+
+static logging::Logger logger("render");
 
 GL3ChunkRenderer::GL3ChunkRenderer(Client *client, GL3Renderer *renderer, ShaderManager *shaderManager) :
 		client(client),

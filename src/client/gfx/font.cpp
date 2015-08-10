@@ -41,8 +41,9 @@
 
 #include "font.hpp"
 
-#include "unicode_int.hpp"
 #include <cstring>
+
+#include "shared/engine/unicode_int.hpp"
 
 void Font::writeLine(float x, float y, float z, const char *text, int count, Alignment alignment) {
 	if (count <= 0)

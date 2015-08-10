@@ -2,12 +2,12 @@
 
 #include <cstdio>
 
+#include "shared/engine/logging.hpp"
+#include "shared/constants.hpp"
+#include "shared/block_utils.hpp"
+
 #include "chunk.hpp"
 
-#include "constants.hpp"
-#include "util.hpp"
-
-#include "engine/logging.hpp"
 static logging::Logger logger("default");
 
 const double World::GRAVITY = -9.81 * RESOLUTION / 60.0 / 60.0 * 4;

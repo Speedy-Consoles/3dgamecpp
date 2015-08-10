@@ -1,16 +1,18 @@
 #ifndef GL3_CHUNK_RENDERER_HPP_
 #define GL3_CHUNK_RENDERER_HPP_
 
-#include <GL/glew.h>
 #include <memory>
 #include <unordered_set>
 #include <queue>
 
+#include <GL/glew.h>
+
+#include "shared/engine/math.hpp"
+#include "shared/game/chunk.hpp"
 #include "client/client.hpp"
-#include "shaders.hpp"
-#include "config.hpp"
-#include "engine/math.hpp"
-#include "game/chunk.hpp"
+#include "client/config.hpp"
+
+#include "gl3_shaders.hpp"
 
 class World;
 class GL3Renderer;

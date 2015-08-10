@@ -1,10 +1,11 @@
 #ifndef SERVER_INTERFACE_HPP
 #define SERVER_INTERFACE_HPP
 
-#include "game/chunk.hpp"
-#include "engine/vmath.hpp"
-#include "engine/queue.hpp"
-#include "engine/thread.hpp"
+#include "shared/engine/vmath.hpp"
+#include "shared/engine/queue.hpp"
+#include "shared/engine/thread.hpp"
+#include "shared/game/chunk.hpp"
+
 #include "config.hpp"
 
 class ServerInterface : public Thread {

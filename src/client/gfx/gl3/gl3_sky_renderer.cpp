@@ -1,10 +1,9 @@
 #include "gl3_sky_renderer.hpp"
 
-#include "client/gl3_renderer.hpp"
-
-#include "engine/logging.hpp"
-
 #include <glm/gtc/matrix_transform.hpp>
+
+#include "shared/engine/logging.hpp"
+#include "client/gfx/gl3/gl3_renderer.hpp"
 
 GL3SkyRenderer::GL3SkyRenderer(Client *client, GL3Renderer *renderer, ShaderManager *shaderManager) :
 	client(client),

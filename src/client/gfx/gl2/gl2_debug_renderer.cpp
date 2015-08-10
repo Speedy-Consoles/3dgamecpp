@@ -1,9 +1,9 @@
 #include "gl2_debug_renderer.hpp"
 
-#include "gl2_renderer.hpp"
+#include "shared/engine/logging.hpp"
+#include "shared/engine/math.hpp"
 
-#include "engine/logging.hpp"
-#include "engine/math.hpp"
+#include "gl2_renderer.hpp"
 
 static logging::Logger logger("render");
 

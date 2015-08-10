@@ -1,19 +1,12 @@
-/*
- * cycle_button.hpp
- *
- *  Created on: 22.09.2014
- *      Author: lars
- */
-
 #ifndef CYCLE_BUTTON_HPP_
 #define CYCLE_BUTTON_HPP_
 
 #include "button.hpp"
 
-#include "engine/std_types.hpp"
-
 #include <string>
 #include <vector>
+
+#include "shared/engine/std_types.hpp"
 
 namespace gui {
 

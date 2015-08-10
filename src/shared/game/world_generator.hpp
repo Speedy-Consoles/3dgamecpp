@@ -8,10 +8,10 @@
 #ifndef WORLD_GENERATOR_HPP_
 #define WORLD_GENERATOR_HPP_
 
-#include "engine/macros.hpp"
+#include "shared/engine/macros.hpp"
 
-#include "game/perlin.hpp"
-#include "game/chunk.hpp"
+#include "perlin.hpp"
+#include "chunk.hpp"
 
 class WorldGenerator {
 public:

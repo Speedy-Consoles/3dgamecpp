@@ -3,12 +3,13 @@
 #include <thread>
 #include <atomic>
 
-#include "graphics.hpp"
+#include "shared/engine/logging.hpp"
 
-#include "engine/logging.hpp"
-static logging::Logger logger("local");
+#include "client/gfx/graphics.hpp"
 
 using namespace std;
+
+static logging::Logger logger("local");
 
 LocalServerInterface::LocalServerInterface(Client *client, uint64 seed) :
 	client(client),

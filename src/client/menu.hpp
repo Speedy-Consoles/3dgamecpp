@@ -1,10 +1,3 @@
-/*
- * menu.hpp
- *
- *  Created on: 16.09.2014
- *      Author: lars
- */
-
 #ifndef MENU_HPP_
 #define MENU_HPP_
 

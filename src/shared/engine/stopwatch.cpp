@@ -1,6 +1,7 @@
 #include "stopwatch.hpp"
 
-#include "engine/logging.hpp"
+#include "shared/engine/logging.hpp"
+
 static logging::Logger logger("default");
 
 Stopwatch::Stopwatch(size_t size) : _clocks(size) {

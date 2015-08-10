@@ -6,20 +6,21 @@
 #include <cstdio>
 #include <cstring>
 
-#include "util.hpp"
-#include "constants.hpp"
+#include "shared/engine/logging.hpp"
+#include "shared/engine/socket.hpp"
+#include "shared/engine/stopwatch.hpp"
+#include "shared/engine/time.hpp"
+#include "shared/game/world.hpp"
+#include "shared/block_manager.hpp"
+#include "shared/block_utils.hpp"
+#include "shared/constants.hpp"
+#include "gui/frame.hpp"
+#include "gfx/graphics.hpp"
+
+#include "config.hpp"
+#include "menu.hpp"
 #include "local_server_interface.hpp"
 #include "remote_server_interface.hpp"
-#include "graphics.hpp"
-#include "config.hpp"
-#include "stopwatch.hpp"
-#include "engine/time.hpp"
-#include "game/world.hpp"
-#include "game/block_manager.hpp"
-#include "menu.hpp"
-#include "gui/frame.hpp"
-#include "engine/logging.hpp"
-#include "engine/socket.hpp"
 
 static logging::Logger logger("client");
 

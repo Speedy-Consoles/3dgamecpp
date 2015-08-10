@@ -1,10 +1,3 @@
-/*
- * frame.cpp
- *
- *  Created on: 21.09.2014
- *      Author: lars
- */
-
 #include "frame.hpp"
 
 #include "label.hpp"

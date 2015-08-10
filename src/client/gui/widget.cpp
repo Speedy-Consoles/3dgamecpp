@@ -1,10 +1,3 @@
-/*
- * widget.cpp
- *
- *  Created on: 21.09.2014
- *      Author: lars
- */
-
 #include "widget.hpp"
 
 using namespace gui;

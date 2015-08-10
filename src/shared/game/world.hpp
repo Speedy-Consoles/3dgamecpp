@@ -7,9 +7,10 @@
 #include <string>
 #include <memory>
 
-#include "constants.hpp"
-#include "player.hpp"
+#include "shared/constants.hpp"
 #include "shared/chunk_manager.hpp"
+
+#include "player.hpp"
 
 class Chunk;
 

@@ -1,26 +1,25 @@
 #ifndef GL2_RENDERER_HPP
 #define GL2_RENDERER_HPP
 
+#include "client/gfx/renderer.hpp"
+
 #include <GL/glew.h>
 #include <FTGL/ftgl.h>
 
-#include "renderer.hpp"
+#include "shared/engine/vmath.hpp"
+#include "shared/block_utils.hpp"
+#include "shared/constants.hpp"
+#include "shared/game/chunk.hpp"
+#include "client/gfx/graphics.hpp"
+#include "client/client.hpp"
+#include "client/config.hpp"
 
 #include "gl2_chunk_renderer.hpp"
 #include "gl2_sky_renderer.hpp"
 #include "gl2_hud_renderer.hpp"
 #include "gl2_menu_renderer.hpp"
 #include "gl2_debug_renderer.hpp"
-
-#include "graphics.hpp"
-#include "engine/vmath.hpp"
-#include "util.hpp"
-#include "constants.hpp"
-#include "client.hpp"
-#include "config.hpp"
 #include "texture_manager.hpp"
-
-#include "game/chunk.hpp"
 
 class World;
 class Player;

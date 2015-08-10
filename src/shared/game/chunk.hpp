@@ -1,7 +1,7 @@
 #ifndef CHUNK_HPP
 #define CHUNK_HPP
 
-#include "engine/vmath.hpp"
+#include "shared/engine/vmath.hpp"
 
 class Chunk {
 public:

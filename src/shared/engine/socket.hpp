@@ -1,10 +1,3 @@
-/*
- * socket.hpp
- *
- *  Created on: 24.09.2014
- *      Author: lars
- */
-
 #ifndef SOCKET_HPP_
 #define SOCKET_HPP_
 

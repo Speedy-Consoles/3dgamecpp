@@ -42,7 +42,7 @@
 #ifndef BMFONT_HPP
 #define BMFONT_HPP
 
-#include "engine/font.hpp"
+#include "client/gfx/font.hpp"
 
 #include <vector>
 #include <string>
@@ -50,8 +50,9 @@
 
 #include <GL/glew.h>
 
-#include "engine/std_types.hpp"
-#include "client/shaders.hpp"
+#include "shared/engine/std_types.hpp"
+
+#include "gl3_shaders.hpp"
 
 class BMFontLoader;
 

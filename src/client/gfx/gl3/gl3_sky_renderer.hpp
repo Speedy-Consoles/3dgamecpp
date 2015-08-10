@@ -1,9 +1,9 @@
 #ifndef GL3_SYK_RENDERER_HPP_
 #define GL3_SYK_RENDERER_HPP_
 
+#include "shared/engine/macros.hpp"
 #include "client/client.hpp"
-#include "client/graphics.hpp"
-#include "engine/macros.hpp"
+#include "client/gfx/graphics.hpp"
 
 class GL3Renderer;
 class ShaderManager;

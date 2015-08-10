@@ -6,12 +6,14 @@
 #include <GL/glew.h>
 #include <SDL2/SDL.h>
 
-#include "game/world.hpp"
-#include "stopwatch.hpp"
-#include "menu.hpp"
-#include "client.hpp"
+#include "shared/game/world.hpp"
+#include "shared/engine/stopwatch.hpp"
+
+#include "client/client.hpp"
+#include "client/menu.hpp"
+#include "client/config.hpp"
+
 #include "renderer.hpp"
-#include "config.hpp"
 
 namespace gui {
 	class Frame;

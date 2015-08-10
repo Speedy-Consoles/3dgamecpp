@@ -11,9 +11,13 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\src\shared\block_loader.cpp" />
+    <ClCompile Include="..\src\shared\block_manager.cpp" />
+    <ClCompile Include="..\src\shared\block_utils.cpp" />
+    <ClCompile Include="..\src\shared\chunk_archive.cpp" />
+    <ClCompile Include="..\src\shared\chunk_manager.cpp" />
     <ClCompile Include="..\src\shared\engine\buffer.cpp" />
     <ClCompile Include="..\src\shared\engine\logging.cpp" />
-    <ClCompile Include="..\src\shared\engine\net.cpp" />
     <ClCompile Include="..\src\shared\engine\socket.cpp" />
     <ClCompile Include="..\src\shared\engine\stopwatch.cpp" />
     <ClCompile Include="..\src\shared\engine\thread.cpp" />
@@ -24,14 +28,20 @@
     <ClCompile Include="..\src\shared\game\player.cpp" />
     <ClCompile Include="..\src\shared\game\world.cpp" />
     <ClCompile Include="..\src\shared\game\world_generator.cpp" />
+    <ClCompile Include="..\src\shared\net.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\src\shared\block_loader.hpp" />
+    <ClInclude Include="..\src\shared\block_manager.hpp" />
+    <ClInclude Include="..\src\shared\block_utils.hpp" />
+    <ClInclude Include="..\src\shared\chunk_archive.hpp" />
+    <ClInclude Include="..\src\shared\chunk_manager.hpp" />
+    <ClInclude Include="..\src\shared\constants.hpp" />
     <ClInclude Include="..\src\shared\engine\buffer.hpp" />
     <ClInclude Include="..\src\shared\engine\logging.hpp" />
     <ClInclude Include="..\src\shared\engine\macros.hpp" />
     <ClInclude Include="..\src\shared\engine\math.hpp" />
     <ClInclude Include="..\src\shared\engine\monitor.hpp" />
-    <ClInclude Include="..\src\shared\engine\net.hpp" />
     <ClInclude Include="..\src\shared\engine\queue.hpp" />
     <ClInclude Include="..\src\shared\engine\socket.hpp" />
     <ClInclude Include="..\src\shared\engine\stack.hpp" />
@@ -46,6 +56,7 @@
     <ClInclude Include="..\src\shared\game\player.hpp" />
     <ClInclude Include="..\src\shared\game\world.hpp" />
     <ClInclude Include="..\src\shared\game\world_generator.hpp" />
+    <ClInclude Include="..\src\shared\net.hpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{FBCF5514-8FC8-47DB-A218-915245EDCF28}</ProjectGuid>

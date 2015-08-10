@@ -1,17 +1,17 @@
-#include "archive.hpp"
+#include "chunk_archive.hpp"
 
 #include <cstring>
 
 #include <boost/filesystem.hpp>
 
 #include "engine/math.hpp"
-
-#include "util.hpp"
-
 #include "engine/logging.hpp"
-static logging::Logger logger("io");
+
+#include "block_utils.hpp"
 
 using namespace std;
+
+static logging::Logger logger("io");
 
 const char ArchiveFile::MAGIC[4] = {89, -105, 34, -33};
 

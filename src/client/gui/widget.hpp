@@ -1,10 +1,3 @@
-/*
- * widget.hpp
- *
- *  Created on: 21.09.2014
- *      Author: lars
- */
-
 #ifndef WIDGET_HPP_
 #define WIDGET_HPP_
 

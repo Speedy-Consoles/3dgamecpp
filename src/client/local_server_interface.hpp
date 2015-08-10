@@ -2,8 +2,10 @@
 #define LOCAL_SERVER_INTERFACE_HPP
 
 #include "server_interface.hpp"
-#include "game/world.hpp"
-#include "game/world_generator.hpp"
+
+#include "shared/game/world.hpp"
+#include "shared/game/world_generator.hpp"
+
 #include "client.hpp"
 
 class LocalServerInterface : public ServerInterface {

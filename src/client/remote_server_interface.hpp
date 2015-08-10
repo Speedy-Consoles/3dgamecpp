@@ -1,15 +1,16 @@
 #ifndef REMOTE_SERVER_INTERFACE_HPP
 #define REMOTE_SERVER_INTERFACE_HPP
 
+#include "server_interface.hpp"
+
 #include <future>
 #include <string>
 
-#include "server_interface.hpp"
-#include "engine/time.hpp"
-#include "engine/net.hpp"
-#include "engine/socket.hpp"
-#include "engine/buffer.hpp"
-#include "game/world.hpp"
+#include "shared/engine/time.hpp"
+#include "shared/engine/socket.hpp"
+#include "shared/engine/buffer.hpp"
+#include "shared/game/world.hpp"
+#include "shared/net.hpp"
 
 class RemoteServerInterface : public ServerInterface {
 private:

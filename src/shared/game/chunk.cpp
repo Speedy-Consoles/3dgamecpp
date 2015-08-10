@@ -1,6 +1,6 @@
 #include "chunk.hpp"
 
-#include "util.hpp"
+#include "shared/block_utils.hpp"
 
 Chunk::Chunk(vec3i64 cc) : cc(cc) {
 	// nothing

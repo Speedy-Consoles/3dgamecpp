@@ -1,10 +1,3 @@
-/*
- * button.hpp
- *
- *  Created on: 21.09.2014
- *      Author: lars
- */
-
 #ifndef BUTTON_HPP_
 #define BUTTON_HPP_
 

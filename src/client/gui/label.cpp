@@ -1,10 +1,3 @@
-/*
- * label.cpp
- *
- *  Created on: 21.09.2014
- *      Author: lars
- */
-
 #include "label.hpp"
 
 using namespace gui;

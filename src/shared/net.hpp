@@ -1,8 +1,8 @@
 #ifndef NET_HPP
 #define NET_HPP
 
-#include "std_types.hpp"
-#include "buffer.hpp"
+#include "engine/std_types.hpp"
+#include "engine/buffer.hpp"
 #include "game/player.hpp"
 
 static const uint8 MAGIC[4] = {0xaa, 0x0d, 0xbe, 0x15};

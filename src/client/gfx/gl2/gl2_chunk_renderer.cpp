@@ -2,7 +2,7 @@
 
 #include "gl2_renderer.hpp"
 
-#include "engine/logging.hpp"
+#include "shared/engine/logging.hpp"
 
 GL2ChunkRenderer::GL2ChunkRenderer(Client *client, GL2Renderer *renderer) :
 	client(client), renderer(renderer)

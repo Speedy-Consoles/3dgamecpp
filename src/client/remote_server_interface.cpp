@@ -2,14 +2,15 @@
 
 #include <thread>
 
-#include "client.hpp"
+#include "shared/engine/logging.hpp"
 
-#include "engine/logging.hpp"
-static logging::Logger logger("remote");
+#include "client.hpp"
 
 using namespace std;
 using namespace boost;
 using namespace boost::asio::ip;
+
+static logging::Logger logger("remote");
 
 RemoteServerInterface::RemoteServerInterface(Client *client, const char *address) :
 		client(client),

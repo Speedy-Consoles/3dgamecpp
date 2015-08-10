@@ -1,10 +1,3 @@
-/*
- * frame.hpp
- *
- *  Created on: 21.09.2014
- *      Author: lars
- */
-
 #ifndef FRAME_HPP_
 #define FRAME_HPP_
 

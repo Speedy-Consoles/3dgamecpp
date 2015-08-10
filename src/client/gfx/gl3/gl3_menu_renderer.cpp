@@ -1,12 +1,12 @@
 #include "gl3_menu_renderer.hpp"
 
-#include "graphics.hpp"
-#include "bmfont.hpp"
+#include "client/gfx/graphics.hpp"
+#include "client/gui/widget.hpp"
+#include "client/gui/frame.hpp"
+#include "client/gui/label.hpp"
+#include "client/gui/button.hpp"
 
-#include "gui/widget.hpp"
-#include "gui/frame.hpp"
-#include "gui/label.hpp"
-#include "gui/button.hpp"
+#include "gl3_font.hpp"
 
 using namespace gui;
 

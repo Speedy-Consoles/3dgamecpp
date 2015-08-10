@@ -5,19 +5,18 @@
 #include <glm/mat4x4.hpp>
 #include <glm/vec3.hpp>
 
-#include "renderer.hpp"
-#include "shaders.hpp"
+#include "shared/game/chunk.hpp"
+#include "shared/block_utils.hpp"
+#include "client/client.hpp"
+#include "client/gfx/renderer.hpp"
+
+#include "gl3_shaders.hpp"
 #include "gl3_chunk_renderer.hpp"
 #include "gl3_sky_renderer.hpp"
 #include "gl3_target_renderer.hpp"
 #include "gl3_hud_renderer.hpp"
 #include "gl3_menu_renderer.hpp"
 #include "gl3_debug_renderer.hpp"
-#include "bmfont.hpp"
-
-#include "game/chunk.hpp"
-#include "util.hpp"
-#include "client.hpp"
 
 class Graphics;
 class World;

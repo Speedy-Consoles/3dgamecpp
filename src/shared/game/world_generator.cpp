@@ -1,13 +1,6 @@
-/*
- * world_generator.cpp
- *
- *  Created on: 17.09.2014
- *      Author: lars
- */
-
 #include "world_generator.hpp"
 
-#include "engine/math.hpp"
+#include "shared/engine/math.hpp"
 
 WorldGenerator::WorldGenerator(uint64 seed) : perlin(seed) {
 	double s = surfaceThresholdXScale;

@@ -39,19 +39,20 @@
 		Seperated file format logic from rendering logic by subclassing
 */
 
-#include "bmfont.hpp"
-#include "engine/unicode_int.hpp"
+#include "gl3_font.hpp"
 
-#include "engine/macros.hpp"
+#include <fstream>
 
 #include <SDL2/SDL_image.h>
 #include <GL/glew.h>
-#include <fstream>
 #include <glm/mat4x4.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-#include "engine/logging.hpp"
+#include "shared/engine/macros.hpp"
+#include "shared/engine/logging.hpp"
+#include "shared/engine/unicode_int.hpp"
+
 static logging::Logger logger("gfx");
 
 class BMFontLoader {

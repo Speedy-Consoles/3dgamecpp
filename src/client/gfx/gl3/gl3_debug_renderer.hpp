@@ -1,9 +1,10 @@
 #ifndef GL3_DEBUG_RENDERER_HPP_
 #define GL3_DEBUG_RENDERER_HPP_
 
-#include "client/graphics.hpp"
-#include "client/bmfont.hpp"
-#include "game/world.hpp"
+#include "shared/game/world.hpp"
+#include "client/gfx/graphics.hpp"
+
+#include "gl3_font.hpp"
 
 class GL3Renderer;
 class GL3ChunkRenderer;

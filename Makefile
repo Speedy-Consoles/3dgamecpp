@@ -3,27 +3,28 @@ CLIENT_EXECUTABLE_NAME = 3dgame
 CLIENT_OBJECT_FILES = \
 	client/client.cpp.o\
 	client/config.cpp.o\
-	client/graphics.cpp.o\
-	client/gl2_renderer.cpp.o\
-	client/gl2_chunk_renderer.cpp.o\
-	client/gl2_sky_renderer.cpp.o\
-	client/gl2_hud_renderer.cpp.o\
-	client/gl2_debug_renderer.cpp.o\
-	client/gl2_menu_renderer.cpp.o\
-	client/gl3_renderer.cpp.o\
-	client/gl3_chunk_renderer.cpp.o\
-	client/gl3_sky_renderer.cpp.o\
-	client/gl3_target_renderer.cpp.o\
-	client/gl3_hud_renderer.cpp.o\
-	client/gl3_debug_renderer.cpp.o\
-	client/gl3_menu_renderer.cpp.o\
-	client/shaders.cpp.o\
-	client/bmfont.cpp.o\
 	client/local_server_interface.cpp.o\
-	client/remote_server_interface.cpp.o\
 	client/menu.cpp.o\
-	client/texture_manager.cpp.o\
-	client/texture_loader.cpp.o\
+	client/remote_server_interface.cpp.o\
+	client/gfx/font.cpp.o\
+	client/gfx/graphics.cpp.o\
+	client/gfx/gl2/gl2_renderer.cpp.o\
+	client/gfx/gl2/gl2_chunk_renderer.cpp.o\
+	client/gfx/gl2/gl2_sky_renderer.cpp.o\
+	client/gfx/gl2/gl2_hud_renderer.cpp.o\
+	client/gfx/gl2/gl2_debug_renderer.cpp.o\
+	client/gfx/gl2/gl2_menu_renderer.cpp.o\
+	client/gfx/gl2/texture_manager.cpp.o\
+	client/gfx/gl2/texture_loader.cpp.o\
+	client/gfx/gl3/gl3_renderer.cpp.o\
+	client/gfx/gl3/gl3_chunk_renderer.cpp.o\
+	client/gfx/gl3/gl3_sky_renderer.cpp.o\
+	client/gfx/gl3/gl3_target_renderer.cpp.o\
+	client/gfx/gl3/gl3_hud_renderer.cpp.o\
+	client/gfx/gl3/gl3_debug_renderer.cpp.o\
+	client/gfx/gl3/gl3_menu_renderer.cpp.o\
+	client/gfx/gl3/gl3_shaders.cpp.o\
+	client/gfx/gl3/gl3_font.cpp.o\
 	client/gui/button.cpp.o\
 	client/gui/frame.cpp.o\
 	client/gui/label.cpp.o\
@@ -37,25 +38,24 @@ SERVER_OBJECT_FILES = \
 # stuff needed by both client and server
 SHARED_ARCHIVE_NAME = shared_archive
 SHARED_OBJECT_FILES = \
-	game/block_loader.cpp.o\
-	game/block_manager.cpp.o\
-	game/chunk.cpp.o\
-	game/perlin.cpp.o\
-	game/player.cpp.o\
-	game/world.cpp.o\
-	game/world_generator.cpp.o\
-	engine/buffer.cpp.o\
-	engine/logging.cpp.o\
-	engine/net.cpp.o\
-	engine/socket.cpp.o\
-	engine/time.cpp.o\
-	engine/font.cpp.o\
-	engine/unicode_int.cpp.o\
-	engine/thread.cpp.o\
-	io/archive.cpp.o\
+	shared/engine/buffer.cpp.o\
+	shared/engine/logging.cpp.o\
+	shared/engine/socket.cpp.o\
+	shared/engine/stopwatch.cpp.o\
+	shared/engine/thread.cpp.o\
+	shared/engine/time.cpp.o\
+	shared/engine/unicode_int.cpp.o\
+	shared/game/chunk.cpp.o\
+	shared/game/perlin.cpp.o\
+	shared/game/player.cpp.o\
+	shared/game/world.cpp.o\
+	shared/game/world_generator.cpp.o\
+	shared/block_loader.cpp.o\
+	shared/block_manager.cpp.o\
+	shared/block_utils.cpp.o\
+	shared/chunk_archive.cpp.o\
 	shared/chunk_manager.cpp.o\
-	stopwatch.cpp.o\
-	util.cpp.o
+	shared/net.cpp.o
 
 # what programs to use
 CXX = g++

@@ -1,10 +1,3 @@
-/*
- * time.cpp
- *
- *  Created on: 24.09.2014
- *      Author: lars
- */
-
 #include "time.hpp"
 
 #include <chrono>

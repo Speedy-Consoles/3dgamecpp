@@ -1,19 +1,13 @@
-/*
- * socket.cpp
- *
- *  Created on: 24.09.2014
- *      Author: lars
- */
-
 #include "socket.hpp"
 
 #include <utility>
 
-#include "engine/logging.hpp"
-static logging::Logger logger("net");
+#include "logging.hpp"
 
 using namespace boost;
 using namespace boost::asio::ip;
+
+static logging::Logger logger("net");
 
 Socket::~Socket() {
 	if (_socket.is_open()) {

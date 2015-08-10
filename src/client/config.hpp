@@ -3,7 +3,7 @@
 
 #include <string>
 
-#include "engine/vmath.hpp"
+#include "shared/engine/vmath.hpp"
 
 enum class RenderBackend {
 	UNSUPPORTED = -1,

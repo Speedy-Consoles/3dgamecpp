@@ -1,11 +1,11 @@
 #include "gl3_target_renderer.hpp"
 
-#include "gl3_renderer.hpp"
-#include "config.hpp"
-
-#include "engine/logging.hpp"
-
 #include <glm/gtc/matrix_transform.hpp>
+
+#include "shared/engine/logging.hpp"
+#include "client/config.hpp"
+
+#include "gl3_renderer.hpp"
 
 GL3TargetRenderer::GL3TargetRenderer(Client *client, GL3Renderer *renderer, ShaderManager *shaderManager) :
 	client(client),

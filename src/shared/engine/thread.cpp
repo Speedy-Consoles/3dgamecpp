@@ -1,9 +1,10 @@
 #include "thread.hpp"
 
-#include "engine/logging.hpp"
-static logging::Logger logger("thread");
+#include "logging.hpp"
 
 using namespace std;
+
+static logging::Logger logger("thread");
 
 bool Thread::isRunning() {
 	if (!fut.valid())

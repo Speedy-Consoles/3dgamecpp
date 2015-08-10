@@ -1,8 +1,9 @@
 #include "gl3_hud_renderer.hpp"
 
-#include "client/gl3_renderer.hpp"
+#include "shared/engine/logging.hpp"
 
-#include "engine/logging.hpp"
+#include "client/gfx/gl3/gl3_renderer.hpp"
+
 
 GL3HudRenderer::GL3HudRenderer(Client *client, GL3Renderer *renderer, ShaderManager *shaderManager) :
 	client(client),

@@ -1,10 +1,3 @@
-/*
- * buffer.cpp
- *
- *  Created on: 24.09.2014
- *      Author: lars
- */
-
 #include "buffer.hpp"
 
 #include <cstring>
