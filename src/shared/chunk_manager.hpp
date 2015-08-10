@@ -5,6 +5,7 @@
 #include <atomic>
 #include <future>
 #include <queue>
+#include <stack>
 
 #include "util.hpp"
 #include "engine/vmath.hpp"
@@ -16,9 +17,7 @@
 class Client;
 
 class ChunkManager : public Thread {
-	static const int MAX_ALLOCATED_CHUNKS = 10000;
-
-	int numAllocatedChunks = 0;
+	static const int CHUNK_POOL_SIZE = 10000;
 
 	enum ArchiveOperationType {
 		LOAD = 0,
@@ -29,6 +28,9 @@ class ChunkManager : public Thread {
 		Chunk *chunk;
 		ArchiveOperationType type;
 	};
+
+	Chunk *chunkPool[CHUNK_POOL_SIZE];
+	std::stack<Chunk *> unusedChunks;
 
 	std::queue<vec3i64> requestedQueue;
 	std::queue<Chunk *> notInCacheQueue;

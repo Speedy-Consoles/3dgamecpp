@@ -18,6 +18,7 @@ private:
 	uint16 passThroughs = 0;
 
 public:
+	Chunk() = default;
 	Chunk(vec3i64 cc);
 
 	void makePassThroughs();

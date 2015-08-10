@@ -17,29 +17,31 @@ ChunkManager::ChunkManager(Client *client) :
 	client(client),
 	archive("./region/")
 {
-	// nothing
+	for (int i = 0; i < CHUNK_POOL_SIZE; i++) {
+		chunkPool[i] = new Chunk();
+		unusedChunks.push(chunkPool[i]);
+	}
 }
 
 ChunkManager::~ChunkManager() {
-	// TODO delete all chunks
+	for (int i = 0; i < CHUNK_POOL_SIZE; i++) {
+		delete chunkPool[i];
+	}
 }
 
 void ChunkManager::tick() {
-	while (!requestedQueue.empty() && numAllocatedChunks < MAX_ALLOCATED_CHUNKS) {
+	while (!requestedQueue.empty() && !unusedChunks.empty()) {
 		vec3i64 cc = requestedQueue.front();
-		Chunk *chunk = new Chunk(cc);
-		numAllocatedChunks++;
+		Chunk *chunk = unusedChunks.top();
+		chunk->setCC(cc);
 		if (!chunk)
 			LOG_ERROR(logger) << "Chunk allocation failed";
 		ArchiveOperation op = {chunk, LOAD};
 		if (toLoadStoreQueue.push(op)) {
 			requestedQueue.pop();
-			continue;
-		} else {
-			delete chunk;
-			numAllocatedChunks--;
+			unusedChunks.pop();
+		} else
 			break;
-		}
 	}
 
 	while (!preToStoreQueue.empty()) {
@@ -71,8 +73,8 @@ void ChunkManager::tick() {
 			}
 			break;
 		case STORE:
-			delete op.chunk;
-			numAllocatedChunks--;
+			op.chunk->initialized = false;
+			unusedChunks.push(op.chunk);
 			break;
 		}
 	}
@@ -91,6 +93,7 @@ void ChunkManager::doWork() {
 		switch (op.type) {
 		case LOAD:
 			archive.loadChunk(*op.chunk);
+			op.chunk->makePassThroughs();
 			break;
 		case STORE:
 			archive.storeChunk(*op.chunk);
@@ -165,7 +168,7 @@ int ChunkManager::getNumNeededChunks() const {
 }
 
 int ChunkManager::getNumAllocatedChunks() const {
-	return numAllocatedChunks;
+	return CHUNK_POOL_SIZE - unusedChunks.size();
 }
 
 int ChunkManager::getNumLoadedChunks() const {
@@ -183,10 +186,9 @@ int ChunkManager::getNotInCacheQueueSize() const {
 void ChunkManager::insertLoadedChunk(Chunk *chunk) {
 	auto it = needCounter.find(chunk->getCC());
 	if (it != needCounter.end()) {
-		chunk->makePassThroughs();
 		chunks.insert({chunk->getCC(), chunk});
 	} else {
-		delete chunk;
-		numAllocatedChunks--;
+		chunk->initialized = false;
+		unusedChunks.push(chunk);
 	}
 }

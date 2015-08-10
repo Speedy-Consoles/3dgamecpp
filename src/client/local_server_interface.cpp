@@ -22,11 +22,6 @@ LocalServerInterface::LocalServerInterface(Client *client, uint64 seed) :
 
 LocalServerInterface::~LocalServerInterface() {
 	client->getWorld()->deletePlayer(0);
-	wait();
-	Chunk *chunk;
-	while (loadedQueue.pop(chunk)) {
-		delete chunk;
-	}
 }
 
 ServerInterface::Status LocalServerInterface::getStatus() {
@@ -48,6 +43,7 @@ void LocalServerInterface::doWork() {
 	Chunk *chunk;
 	if (toLoadQueue.pop(chunk)) {
 		worldGenerator.generateChunk(*chunk);
+		chunk->makePassThroughs();
 		while (!loadedQueue.push(chunk)) {
 			sleepFor(millis(50));
 		}
