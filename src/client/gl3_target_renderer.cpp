@@ -29,20 +29,20 @@ GL3TargetRenderer::GL3TargetRenderer(Client *client, GL3Renderer *renderer, Shad
 	for (int d = 0; d < 6; d++) {
 		for (int i = 0; i < 4; i++) {
 			vec3f vertices[4];
-			vec3f dirOff = DIRS[d].cast<float>() * 0.0005;
+			vec3f dirOff = DIRS[d].cast<float>() * 0.0005f;
 			vec3f vOff[4];
 			vOff[0] = DIR_QUAD_CORNER_CYCLES_3D[d][i].cast<float>() - pointFive;
-			vOff[0][OTHER_DIR_DIMS[d][0]] *= 1.001;
-			vOff[0][OTHER_DIR_DIMS[d][1]] *= 1.001;
+			vOff[0][OTHER_DIR_DIMS[d][0]] *= 1.001f;
+			vOff[0][OTHER_DIR_DIMS[d][1]] *= 1.001f;
 			vOff[1] = DIR_QUAD_CORNER_CYCLES_3D[d][i].cast<float>() - pointFive;
-			vOff[1][OTHER_DIR_DIMS[d][0]] *= 0.97;
-			vOff[1][OTHER_DIR_DIMS[d][1]] *= 0.97;
+			vOff[1][OTHER_DIR_DIMS[d][0]] *= 0.97f;
+			vOff[1][OTHER_DIR_DIMS[d][1]] *= 0.97f;
 			vOff[2] = DIR_QUAD_CORNER_CYCLES_3D[d][(i + 3) % 4].cast<float>() - pointFive;
-			vOff[2][OTHER_DIR_DIMS[d][0]] *= 0.97;
-			vOff[2][OTHER_DIR_DIMS[d][1]] *= 0.97;
+			vOff[2][OTHER_DIR_DIMS[d][0]] *= 0.97f;
+			vOff[2][OTHER_DIR_DIMS[d][1]] *= 0.97f;
 			vOff[3] = DIR_QUAD_CORNER_CYCLES_3D[d][(i + 3) % 4].cast<float>() - pointFive;
-			vOff[3][OTHER_DIR_DIMS[d][0]] *= 1.001;
-			vOff[3][OTHER_DIR_DIMS[d][1]] *= 1.001;
+			vOff[3][OTHER_DIR_DIMS[d][0]] *= 1.001f;
+			vOff[3][OTHER_DIR_DIMS[d][1]] *= 1.001f;
 
 			for (int j = 0; j < 4; j++) {
 				vertices[j] = dirOff + vOff[j] + pointFive;
