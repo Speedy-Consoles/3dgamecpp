@@ -1,6 +1,7 @@
 #include "gl3_debug_renderer.hpp"
 
 #include "gl3_chunk_renderer.hpp"
+#include "gl3_renderer.hpp"
 
 GL3DebugRenderer::GL3DebugRenderer(Client *client, GL3Renderer *renderer, GL3ChunkRenderer *chunkRenderer, ShaderManager *shaderManager) :
 	client(client),
@@ -22,7 +23,10 @@ void GL3DebugRenderer::render() {
 			font.write(x, y, 0.0f, buffer, 0);\
 			y -= font.getLineHeight()
 
+	RENDER_LINE("FPS: %d", renderer->getFps());
+
 	const Player &player = client->getLocalPlayer();
+	RENDER_LINE(" ");
 	RENDER_LINE("PLAYER INFO:");
 	RENDER_LINE("x: %" PRId64 " (%" PRId64 ")", player.getPos()[0],
 		(int64)floor(player.getPos()[0] / (double)RESOLUTION));

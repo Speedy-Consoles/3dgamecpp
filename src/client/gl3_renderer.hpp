@@ -91,6 +91,8 @@ public:
 
 	float getMaxFOV() { return maxFOV; }
 
+	int getFps();
+
 private:
 	void render();
 	void renderTarget();

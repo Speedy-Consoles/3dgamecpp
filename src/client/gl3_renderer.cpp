@@ -256,3 +256,7 @@ void GL3Renderer::renderTarget() {
 	defaultShader.setFogEnabled(false);
 	// TODO
 }
+
+int GL3Renderer::getFps() {
+	return fpsSum;
+}
