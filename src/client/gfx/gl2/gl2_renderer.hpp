@@ -102,6 +102,8 @@ public:
 	TextureManager *getTextureManager();
 	bool inFrustum(vec3i64 cc, vec3i64 pos, vec3d lookDir);
 
+	virtual float getMaxFOV() { return 0.0f; }
+
 private:
 	void initGL();
 

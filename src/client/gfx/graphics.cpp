@@ -157,6 +157,7 @@ void Graphics::tick() {
 		oldState = state;
 	}
 	renderer->tick();
+	renderer->render();
 }
 
 void Graphics::flip() {

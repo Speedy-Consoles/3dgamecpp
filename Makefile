@@ -8,6 +8,7 @@ CLIENT_OBJECT_FILES = \
 	client/remote_server_interface.cpp.o\
 	client/gfx/font.cpp.o\
 	client/gfx/graphics.cpp.o\
+	client/gfx/chunk_renderer.cpp.o\
 	client/gfx/gl2/gl2_renderer.cpp.o\
 	client/gfx/gl2/gl2_chunk_renderer.cpp.o\
 	client/gfx/gl2/gl2_sky_renderer.cpp.o\

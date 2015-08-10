@@ -28,6 +28,8 @@ GL3Renderer::GL3Renderer(Client *client) :
 	menuRenderer(client, this, &shaderManager),
 	debugRenderer(client, this, &chunkRenderer, &shaderManager)
 {
+	chunkRenderer.init();
+
 	makeMaxFOV();
 	makePerspectiveMatrix();
 	makeOrthogonalMatrix();
@@ -178,9 +180,7 @@ void GL3Renderer::makeSkyFbo() {
 }
 
 void GL3Renderer::tick() {
-	render();
-
-	client->getGraphics()->flip();
+	chunkRenderer.tick();
 
 	if (getCurrentTime() - lastStopWatchSave > millis(200)) {
 		lastStopWatchSave = getCurrentTime();
@@ -230,6 +230,8 @@ void GL3Renderer::render() {
 	} else if (client->getState() == Client::State::IN_MENU){
 		menuRenderer.render();
 	}
+
+	client->getGraphics()->flip();
 }
 
 int GL3Renderer::getFps() {

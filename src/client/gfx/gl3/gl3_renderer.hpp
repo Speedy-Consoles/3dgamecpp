@@ -80,6 +80,7 @@ public:
 	~GL3Renderer();
 
 	void tick() override;
+	void render() override;
 	void resize() override;
 	void setConf(const GraphicsConf &, const GraphicsConf &) override;
 
@@ -90,12 +91,9 @@ public:
 	void makeSkyFbo();
 	void makeMaxFOV();
 
-	float getMaxFOV() { return maxFOV; }
+	float getMaxFOV() override { return maxFOV; };
 
 	int getFps();
-
-private:
-	void render();
 };
 
 #endif // GL_3_RENDERER_HPP

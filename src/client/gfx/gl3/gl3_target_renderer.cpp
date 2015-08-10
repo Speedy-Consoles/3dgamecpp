@@ -3,6 +3,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 
 #include "shared/engine/logging.hpp"
+#include "shared/engine/math.hpp"
 #include "client/config.hpp"
 
 #include "gl3_renderer.hpp"
