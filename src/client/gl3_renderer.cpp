@@ -25,6 +25,7 @@ GL3Renderer::GL3Renderer(Client *client) :
 	fontDejavu(&shaderManager.getFontShader()),
 	chunkRenderer(client, this, &shaderManager),
 	skyRenderer(client, this, &shaderManager),
+	targetRenderer(client, this, &shaderManager),
 	hudRenderer(client, this, &shaderManager),
 	menuRenderer(client, this, &shaderManager),
 	debugRenderer(client, this, &chunkRenderer, &shaderManager)
@@ -219,7 +220,7 @@ void GL3Renderer::render() {
 	GL(DepthMask(true));
 	GL(Clear(GL_DEPTH_BUFFER_BIT));
 	chunkRenderer.render();
-	renderTarget();
+	targetRenderer.render();
 
 	// render overlay
 	GL(Disable(GL_DEPTH_TEST));
@@ -231,30 +232,6 @@ void GL3Renderer::render() {
 	} else if (client->getState() == Client::State::IN_MENU){
 		menuRenderer.render();
 	}
-}
-
-void GL3Renderer::renderTarget() {
-	Player &player = client->getLocalPlayer();
-	if (!player.isValid())
-		return;
-	// view matrix for scene
-	glm::mat4 viewMatrix = glm::rotate(glm::mat4(1.0f), (float) (-player.getPitch() / 360.0 * TAU), glm::vec3(1.0f, 0.0f, 0.0f));
-	viewMatrix = glm::rotate(viewMatrix, (float) (-player.getYaw() / 360.0 * TAU), glm::vec3(0.0f, 1.0f, 0.0f));
-	viewMatrix = glm::rotate(viewMatrix, (float) (-TAU / 4.0), glm::vec3(1.0f, 0.0f, 0.0f));
-	viewMatrix = glm::rotate(viewMatrix, (float) (TAU / 4.0), glm::vec3(0.0f, 0.0f, 1.0f));
-	vec3i64 playerPos = player.getPos();
-	int64 m = RESOLUTION * Chunk::WIDTH;
-	viewMatrix = glm::translate(viewMatrix, glm::vec3(
-		(float) -((playerPos[0] % m + m) % m) / RESOLUTION,
-		(float) -((playerPos[1] % m + m) % m) / RESOLUTION,
-		(float) -((playerPos[2] % m + m) % m) / RESOLUTION)
-	);
-	auto &defaultShader = shaderManager.getDefaultShader();
-	defaultShader.useProgram();
-	defaultShader.setViewMatrix(viewMatrix);
-	defaultShader.setLightEnabled(false);
-	defaultShader.setFogEnabled(false);
-	// TODO
 }
 
 int GL3Renderer::getFps() {

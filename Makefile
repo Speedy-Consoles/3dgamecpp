@@ -13,6 +13,7 @@ CLIENT_OBJECT_FILES = \
 	client/gl3_renderer.cpp.o\
 	client/gl3_chunk_renderer.cpp.o\
 	client/gl3_sky_renderer.cpp.o\
+	client/gl3_target_renderer.cpp.o\
 	client/gl3_hud_renderer.cpp.o\
 	client/gl3_debug_renderer.cpp.o\
 	client/gl3_menu_renderer.cpp.o\
