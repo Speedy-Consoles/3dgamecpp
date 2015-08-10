@@ -10,7 +10,7 @@ using namespace std;
 static logging::Logger logger("chm");
 
 ChunkManager::ChunkManager(Client *client) :
-	loadedQueue(1024),
+	loadedStoredQueue(1024),
 	toLoadStoreQueue(1024),
 	chunks(0, vec3i64HashFunc),
 	needCounter(0, vec3i64HashFunc),
@@ -21,9 +21,7 @@ ChunkManager::ChunkManager(Client *client) :
 }
 
 ChunkManager::~ChunkManager() {
-	for (auto it = chunks.begin(); it != chunks.end(); ++it) {
-		delete it->second;
-	}
+	// TODO delete all chunks
 }
 
 void ChunkManager::tick() {
@@ -35,8 +33,6 @@ void ChunkManager::tick() {
 			LOG_ERROR(logger) << "Chunk allocation failed";
 		ArchiveOperation op = {chunk, LOAD};
 		if (toLoadStoreQueue.push(op)) {
-			if (cc == vec3i64(-1, -2, -3))
-				printf("chunk pushed into chunk cache\n");
 			requestedQueue.pop();
 			continue;
 		} else {
@@ -46,13 +42,14 @@ void ChunkManager::tick() {
 		}
 	}
 
-	Chunk *chunk;
-	while (loadedQueue.pop(chunk)) {
-		if (chunk->initialized) {
-			insertLoadedChunk(chunk);
-		} else {
-			notInCacheQueue.push(chunk);
-		}
+	while (!preToStoreQueue.empty()) {
+		Chunk *chunk = preToStoreQueue.front();
+		ArchiveOperation op = {chunk, STORE};
+		if (toLoadStoreQueue.push(op)) {
+			preToStoreQueue.pop();
+			continue;
+		} else
+			break;
 	}
 
 	while(!notInCacheQueue.empty()) {
@@ -63,6 +60,24 @@ void ChunkManager::tick() {
 			break;
 	}
 
+	ArchiveOperation op;
+	while (loadedStoredQueue.pop(op)) {
+		switch(op.type) {
+		case LOAD:
+			if (op.chunk->initialized) {
+				insertLoadedChunk(op.chunk);
+			} else {
+				notInCacheQueue.push(op.chunk);
+			}
+			break;
+		case STORE:
+			delete op.chunk;
+			numAllocatedChunks--;
+			break;
+		}
+	}
+
+	Chunk *chunk;
 	while ((chunk = client->getServerInterface()->getNextChunk()) != nullptr) {
 		if (!chunk->initialized)
 			LOG_WARNING(logger) << "Server interface didn't initialize chunk";
@@ -73,21 +88,35 @@ void ChunkManager::tick() {
 void ChunkManager::doWork() {
 	ArchiveOperation op;
 	if (toLoadStoreQueue.pop(op)) {
-		if (op.chunk->getCC() == vec3i64(-1, -2, -3))
-			printf("chunk asynchronously loaded\n");
 		switch (op.type) {
 		case LOAD:
 			archive.loadChunk(*op.chunk);
-			while (!loadedQueue.push(op.chunk)) {
-				sleepFor(millis(50));
-			}
 			break;
 		case STORE:
 			archive.storeChunk(*op.chunk);
 			break;
 		}
+		while (!loadedStoredQueue.push(op)) {
+			sleepFor(millis(50));
+		}
 	} else {
 		sleepFor(millis(100));
+	}
+}
+
+void ChunkManager::onStop() {
+	ArchiveOperation op;
+	while (toLoadStoreQueue.pop(op)) {
+		if (op.type == STORE) {
+			archive.storeChunk(*op.chunk);
+		}
+	}
+}
+
+void ChunkManager::storeChunks() {
+	wait();
+	for (auto it = chunks.begin(); it != chunks.end(); ++it) {
+		archive.storeChunk(*it->second);
 	}
 }
 
@@ -96,7 +125,7 @@ void ChunkManager::placeBlock(vec3i64 blockCoords, uint8 blockType) {
 	auto it = chunks.find(cc);
 	if (it != chunks.end())
 		it->second->setBlock(bc2icc(blockCoords), blockType);
-	// TODO also operate on cache
+	// TODO operate on cache if chunk is not loaded
 }
 
 const Chunk *ChunkManager::getChunk(vec3i64 chunkCoords) const {
@@ -109,8 +138,6 @@ const Chunk *ChunkManager::getChunk(vec3i64 chunkCoords) const {
 void ChunkManager::requestChunk(vec3i64 chunkCoords) {
 	auto it = needCounter.find(chunkCoords);
 	if (it == needCounter.end()) {
-		if (chunkCoords == vec3i64(-1, -2, -3))
-			printf("chunk requested\n");
 		requestedQueue.push(chunkCoords);
 		needCounter.insert({chunkCoords, 1});
 	} else {
@@ -126,8 +153,7 @@ void ChunkManager::releaseChunk(vec3i64 chunkCoords) {
 			needCounter.erase(it1);
 			auto it2 = chunks.find(chunkCoords);
 			if (it2 != chunks.end()) {
-				delete it2->second;
-				numAllocatedChunks--;
+				preToStoreQueue.push(it2->second);
 				chunks.erase(it2);
 			}
 		}

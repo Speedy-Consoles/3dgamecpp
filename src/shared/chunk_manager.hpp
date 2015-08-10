@@ -32,7 +32,8 @@ class ChunkManager : public Thread {
 
 	std::queue<vec3i64> requestedQueue;
 	std::queue<Chunk *> notInCacheQueue;
-	ProducerQueue<Chunk *> loadedQueue;
+	std::queue<Chunk *> preToStoreQueue;
+	ProducerQueue<ArchiveOperation> loadedStoredQueue;
 	ProducerQueue<ArchiveOperation> toLoadStoreQueue;
 	std::unordered_map<vec3i64, Chunk *, size_t(*)(vec3i64)> chunks;
 	std::unordered_map<vec3i64, int, size_t(*)(vec3i64)> needCounter;
@@ -47,6 +48,8 @@ public:
 
 	void tick();
 	virtual void doWork() override;
+	virtual void onStop() override;
+	void storeChunks();
 
 	void placeBlock(vec3i64 blockCoords, uint8 blockType);
 

@@ -138,6 +138,8 @@ void Client::run() {
 		stopwatch->stop(CLOCK_SYN);
 		tick++;
 	}
+	chunkManager->wait();
+	chunkManager->storeChunks();
 	serverInterface->wait();
 }
 
