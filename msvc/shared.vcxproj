@@ -11,54 +11,54 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\src\constants.hpp" />
-    <ClInclude Include="..\..\src\engine\buffer.hpp" />
-    <ClInclude Include="..\..\src\engine\font.hpp" />
-    <ClInclude Include="..\..\src\engine\logging.hpp" />
-    <ClInclude Include="..\..\src\engine\macros.hpp" />
-    <ClInclude Include="..\..\src\engine\math.hpp" />
-    <ClInclude Include="..\..\src\engine\monitor.hpp" />
-    <ClInclude Include="..\..\src\engine\net.hpp" />
-    <ClInclude Include="..\..\src\engine\queue.hpp" />
-    <ClInclude Include="..\..\src\engine\socket.hpp" />
-    <ClInclude Include="..\..\src\engine\stack.hpp" />
-    <ClInclude Include="..\..\src\engine\std_types.hpp" />
-    <ClInclude Include="..\..\src\engine\thread.hpp" />
-    <ClInclude Include="..\..\src\engine\time.hpp" />
-    <ClInclude Include="..\..\src\engine\unicode_int.hpp" />
-    <ClInclude Include="..\..\src\engine\vmath.hpp" />
-    <ClInclude Include="..\..\src\game\block_loader.hpp" />
-    <ClInclude Include="..\..\src\game\block_manager.hpp" />
-    <ClInclude Include="..\..\src\game\chunk.hpp" />
-    <ClInclude Include="..\..\src\game\perlin.hpp" />
-    <ClInclude Include="..\..\src\game\player.hpp" />
-    <ClInclude Include="..\..\src\game\world.hpp" />
-    <ClInclude Include="..\..\src\game\world_generator.hpp" />
-    <ClInclude Include="..\..\src\io\archive.hpp" />
-    <ClInclude Include="..\..\src\shared\chunk_manager.hpp" />
-    <ClInclude Include="..\..\src\stopwatch.hpp" />
-    <ClInclude Include="..\..\src\util.hpp" />
+    <ClCompile Include="..\src\engine\buffer.cpp" />
+    <ClCompile Include="..\src\engine\font.cpp" />
+    <ClCompile Include="..\src\engine\logging.cpp" />
+    <ClCompile Include="..\src\engine\net.cpp" />
+    <ClCompile Include="..\src\engine\socket.cpp" />
+    <ClCompile Include="..\src\engine\thread.cpp" />
+    <ClCompile Include="..\src\engine\time.cpp" />
+    <ClCompile Include="..\src\engine\unicode_int.cpp" />
+    <ClCompile Include="..\src\game\block_loader.cpp" />
+    <ClCompile Include="..\src\game\block_manager.cpp" />
+    <ClCompile Include="..\src\game\chunk.cpp" />
+    <ClCompile Include="..\src\game\perlin.cpp" />
+    <ClCompile Include="..\src\game\player.cpp" />
+    <ClCompile Include="..\src\game\world.cpp" />
+    <ClCompile Include="..\src\game\world_generator.cpp" />
+    <ClCompile Include="..\src\io\archive.cpp" />
+    <ClCompile Include="..\src\shared\chunk_manager.cpp" />
+    <ClCompile Include="..\src\stopwatch.cpp" />
+    <ClCompile Include="..\src\util.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\src\engine\buffer.cpp" />
-    <ClCompile Include="..\..\src\engine\font.cpp" />
-    <ClCompile Include="..\..\src\engine\logging.cpp" />
-    <ClCompile Include="..\..\src\engine\net.cpp" />
-    <ClCompile Include="..\..\src\engine\socket.cpp" />
-    <ClCompile Include="..\..\src\engine\thread.cpp" />
-    <ClCompile Include="..\..\src\engine\time.cpp" />
-    <ClCompile Include="..\..\src\engine\unicode_int.cpp" />
-    <ClCompile Include="..\..\src\game\block_loader.cpp" />
-    <ClCompile Include="..\..\src\game\block_manager.cpp" />
-    <ClCompile Include="..\..\src\game\chunk.cpp" />
-    <ClCompile Include="..\..\src\game\perlin.cpp" />
-    <ClCompile Include="..\..\src\game\player.cpp" />
-    <ClCompile Include="..\..\src\game\world.cpp" />
-    <ClCompile Include="..\..\src\game\world_generator.cpp" />
-    <ClCompile Include="..\..\src\io\archive.cpp" />
-    <ClCompile Include="..\..\src\shared\chunk_manager.cpp" />
-    <ClCompile Include="..\..\src\stopwatch.cpp" />
-    <ClCompile Include="..\..\src\util.cpp" />
+    <ClInclude Include="..\src\constants.hpp" />
+    <ClInclude Include="..\src\engine\buffer.hpp" />
+    <ClInclude Include="..\src\engine\font.hpp" />
+    <ClInclude Include="..\src\engine\logging.hpp" />
+    <ClInclude Include="..\src\engine\macros.hpp" />
+    <ClInclude Include="..\src\engine\math.hpp" />
+    <ClInclude Include="..\src\engine\monitor.hpp" />
+    <ClInclude Include="..\src\engine\net.hpp" />
+    <ClInclude Include="..\src\engine\queue.hpp" />
+    <ClInclude Include="..\src\engine\socket.hpp" />
+    <ClInclude Include="..\src\engine\stack.hpp" />
+    <ClInclude Include="..\src\engine\std_types.hpp" />
+    <ClInclude Include="..\src\engine\thread.hpp" />
+    <ClInclude Include="..\src\engine\time.hpp" />
+    <ClInclude Include="..\src\engine\unicode_int.hpp" />
+    <ClInclude Include="..\src\engine\vmath.hpp" />
+    <ClInclude Include="..\src\game\block_loader.hpp" />
+    <ClInclude Include="..\src\game\block_manager.hpp" />
+    <ClInclude Include="..\src\game\chunk.hpp" />
+    <ClInclude Include="..\src\game\perlin.hpp" />
+    <ClInclude Include="..\src\game\player.hpp" />
+    <ClInclude Include="..\src\game\world.hpp" />
+    <ClInclude Include="..\src\game\world_generator.hpp" />
+    <ClInclude Include="..\src\io\archive.hpp" />
+    <ClInclude Include="..\src\shared\chunk_manager.hpp" />
+    <ClInclude Include="..\src\stopwatch.hpp" />
+    <ClInclude Include="..\src\util.hpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{FBCF5514-8FC8-47DB-A218-915245EDCF28}</ProjectGuid>
@@ -91,10 +91,14 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <IncludePath>$(SolutionDir)..\src;$(SolutionDir)..\deps\include;$(IncludePath)</IncludePath>
     <TargetExt>.lib</TargetExt>
+    <OutDir>$(SolutionDir)bin\$(Configuration)\</OutDir>
+    <IntDir>$(SolutionDir)obj\$(ProjectName)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <IncludePath>$(SolutionDir)..\src;$(SolutionDir)..\deps\include;$(IncludePath)</IncludePath>
     <TargetExt>.lib</TargetExt>
+    <OutDir>$(SolutionDir)bin\$(Configuration)\</OutDir>
+    <IntDir>$(SolutionDir)obj\$(ProjectName)\</IntDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -103,6 +107,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_WIN32_WINNT=0x0501;_WINSOCK_DEPRECATED_NO_WARNINGS;_CRT_SECURE_NO_WARNINGS;NO_LOG4CXX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <DisableSpecificWarnings>4244</DisableSpecificWarnings>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -118,7 +123,8 @@
       <PreprocessorDefinitions>_WIN32_WINNT=0x0501;_WINSOCK_DEPRECATED_NO_WARNINGS;_CRT_SECURE_NO_WARNINGS;NO_LOG4CXX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <DisableSpecificWarnings>
       </DisableSpecificWarnings>
-      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <MultiProcessorCompilation>false</MultiProcessorCompilation>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
