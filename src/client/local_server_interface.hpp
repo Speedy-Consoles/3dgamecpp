@@ -4,7 +4,6 @@
 #include "server_interface.hpp"
 #include "game/world.hpp"
 #include "game/world_generator.hpp"
-#include "io/chunk_loader.hpp"
 #include "client.hpp"
 
 class LocalServerInterface : public ServerInterface {

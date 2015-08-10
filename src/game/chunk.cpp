@@ -1,7 +1,5 @@
 #include "chunk.hpp"
 
-#include "io/chunk_loader.hpp"
-
 #include "util.hpp"
 
 Chunk::Chunk(vec3i64 cc) : cc(cc) {
