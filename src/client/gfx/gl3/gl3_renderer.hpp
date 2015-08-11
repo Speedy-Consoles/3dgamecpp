@@ -58,14 +58,6 @@ private:
 	GL3MenuRenderer menuRenderer;
 	GL3DebugRenderer debugRenderer;
 
-	// performance info
-	int prevFPS[20];
-	int fpsCounter = 0;
-	int fpsSum = 0;
-	size_t fpsIndex = 0;
-	time_t lastFPSUpdate = 0;
-	time_t lastStopWatchSave = 0;
-
 	// light
 	glm::vec3 ambientColor = glm::vec3(0.4f, 0.4f, 0.35f);
 	glm::vec3 diffuseDirection = glm::vec3(1.0f, 0.5f, 3.0f);
@@ -92,8 +84,6 @@ public:
 	void makeMaxFOV();
 
 	float getMaxFOV() override { return maxFOV; };
-
-	int getFps();
 };
 
 #endif // GL_3_RENDERER_HPP

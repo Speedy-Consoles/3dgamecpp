@@ -21,6 +21,13 @@ private:
 	GL3ChunkRenderer *chunkRenderer = nullptr;
 
 	BMFont font;
+
+	int prevFPS[20];
+	int fpsCounter = 0;
+	int fpsSum = 0;
+	size_t fpsIndex = 0;
+	time_t lastFPSUpdate = 0;
+	time_t lastStopWatchSave = 0;
 };
 
 #endif //GL3_DEBUG_RENDERER_HPP_

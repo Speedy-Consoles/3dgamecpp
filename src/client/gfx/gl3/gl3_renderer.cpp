@@ -181,23 +181,6 @@ void GL3Renderer::makeSkyFbo() {
 
 void GL3Renderer::tick() {
 	chunkRenderer.tick();
-
-	if (getCurrentTime() - lastStopWatchSave > millis(200)) {
-		lastStopWatchSave = getCurrentTime();
-		client->getStopwatch()->stop(CLOCK_ALL);
-		client->getStopwatch()->save();
-		client->getStopwatch()->start(CLOCK_ALL);
-	}
-
-	while (getCurrentTime() - lastFPSUpdate > millis(50)) {
-		lastFPSUpdate += millis(50);
-		fpsSum -= prevFPS[fpsIndex];
-		fpsSum += fpsCounter;
-		prevFPS[fpsIndex] = fpsCounter;
-		fpsCounter = 0;
-		fpsIndex = (fpsIndex + 1) % 20;
-	}
-	fpsCounter++;
 }
 
 void GL3Renderer::render() {
@@ -232,8 +215,4 @@ void GL3Renderer::render() {
 	}
 
 	client->getGraphics()->flip();
-}
-
-int GL3Renderer::getFps() {
-	return fpsSum;
 }
