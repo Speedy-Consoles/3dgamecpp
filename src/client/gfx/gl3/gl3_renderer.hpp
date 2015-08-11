@@ -12,8 +12,8 @@
 
 #include "gl3_shaders.hpp"
 #include "gl3_chunk_renderer.hpp"
-#include "gl3_sky_renderer.hpp"
 #include "gl3_target_renderer.hpp"
+#include "gl3_sky_renderer.hpp"
 #include "gl3_hud_renderer.hpp"
 #include "gl3_menu_renderer.hpp"
 #include "gl3_debug_renderer.hpp"
@@ -52,8 +52,8 @@ private:
 
 	// chunk renderer
 	GL3ChunkRenderer chunkRenderer;
-	GL3SkyRenderer skyRenderer;
 	GL3TargetRenderer targetRenderer;
+	GL3SkyRenderer skyRenderer;
 	GL3HudRenderer hudRenderer;
 	GL3MenuRenderer menuRenderer;
 	GL3DebugRenderer debugRenderer;

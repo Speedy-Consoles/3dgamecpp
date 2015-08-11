@@ -11,6 +11,7 @@ CLIENT_OBJECT_FILES = \
 	client/gfx/chunk_renderer.cpp.o\
 	client/gfx/gl2/gl2_renderer.cpp.o\
 	client/gfx/gl2/gl2_chunk_renderer.cpp.o\
+	client/gfx/gl2/gl2_target_renderer.cpp.o\
 	client/gfx/gl2/gl2_sky_renderer.cpp.o\
 	client/gfx/gl2/gl2_hud_renderer.cpp.o\
 	client/gfx/gl2/gl2_debug_renderer.cpp.o\

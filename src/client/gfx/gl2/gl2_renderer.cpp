@@ -21,6 +21,7 @@ GL2Renderer::GL2Renderer(Client *client) :
 	client(client),
 	texManager(client),
 	chunkRenderer(client, this),
+	targetRenderer(client, this),
 	skyRenderer(client, this),
 	hudRenderer(client, this),
 	menuRenderer(client, this),
@@ -375,6 +376,7 @@ void GL2Renderer::render() {
 		));
 		glLightfv(GL_LIGHT0, GL_POSITION, sunLightPosition.ptr());
 		chunkRenderer.render();
+		targetRenderer.render();
 
 		// copy framebuffer to screen
 		if (fbo) {

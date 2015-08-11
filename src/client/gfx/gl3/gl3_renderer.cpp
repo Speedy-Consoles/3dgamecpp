@@ -22,8 +22,8 @@ GL3Renderer::GL3Renderer(Client *client) :
 	fontTimes(&shaderManager.getFontShader()),
 	fontDejavu(&shaderManager.getFontShader()),
 	chunkRenderer(client, this, &shaderManager),
-	skyRenderer(client, this, &shaderManager),
 	targetRenderer(client, this, &shaderManager),
+	skyRenderer(client, this, &shaderManager),
 	hudRenderer(client, this, &shaderManager),
 	menuRenderer(client, this, &shaderManager),
 	debugRenderer(client, this, &chunkRenderer, &shaderManager)

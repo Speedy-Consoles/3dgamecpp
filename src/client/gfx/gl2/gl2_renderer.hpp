@@ -15,6 +15,7 @@
 #include "client/config.hpp"
 
 #include "gl2_chunk_renderer.hpp"
+#include "gl2_target_renderer.hpp"
 #include "gl2_sky_renderer.hpp"
 #include "gl2_hud_renderer.hpp"
 #include "gl2_menu_renderer.hpp"
@@ -45,6 +46,7 @@ class GL2Renderer : public Renderer {
 	TextureManager texManager;
 
 	GL2ChunkRenderer chunkRenderer;
+	GL2TargetRenderer targetRenderer;
 	GL2SkyRenderer skyRenderer;
 	GL2HudRenderer hudRenderer;
 	GL2MenuRenderer menuRenderer;
