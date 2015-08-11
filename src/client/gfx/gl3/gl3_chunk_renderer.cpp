@@ -201,18 +201,20 @@ void GL3ChunkRenderer::beginChunkConstruction() {
 	bufferSize = 0;
 }
 
-void GL3ChunkRenderer::emitFace(vec3i64 icc, uint blockType, uint faceDir, uint8 shadowLevels) {
+void GL3ChunkRenderer::emitFace(vec3i64 bc, vec3i64 icc, uint blockType, uint faceDir, int shadowLevels[4]) {
 	ushort posIndices[4];
+	uint8 compactShadowLevels = 0;
 	for (int i = 0; i < 4; i++) {
 		vec3i64 v = icc + DIR_QUAD_CORNER_CYCLES_3D[faceDir][i].cast<int64>();
 		posIndices[i] = (ushort) ((v[2] * (Chunk::WIDTH + 1) + v[1]) * (Chunk::WIDTH + 1) + v[0]);
+		compactShadowLevels |= shadowLevels[i] << 2 * i;
 	}
 	static const int INDICES[6] = {0, 1, 2, 2, 3, 0};
 	for (int i = 0; i < 6; i++) {
 		blockVertexBuffer[bufferSize].positionIndex = posIndices[INDICES[i]];
 		blockVertexBuffer[bufferSize].textureIndex = blockType;
 		blockVertexBuffer[bufferSize].dirIndexCornerIndex = faceDir | (INDICES[i] << 3);
-		blockVertexBuffer[bufferSize].shadowLevels = shadowLevels;
+		blockVertexBuffer[bufferSize].shadowLevels = compactShadowLevels;
 		bufferSize++;
 	}
 }

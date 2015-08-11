@@ -13,9 +13,9 @@ using namespace std;
 static logging::Logger logger("render");
 
 ChunkRenderer::ChunkRenderer(Client *client, Renderer *renderer) :
-		renderer(renderer),
 		inRenderQueue(0, vec3i64HashFunc),
-		client(client) {
+		client(client),
+		renderer(renderer) {
 }
 
 ChunkRenderer::~ChunkRenderer() {
@@ -303,22 +303,21 @@ void ChunkRenderer::buildChunk(Chunk const *chunks[27]) {
 						}
 						vec3i64 bc = chunk.getCC() * chunk.WIDTH + faceBlock;
 
-						uchar shadowLevels = 0;
+						int shadowLevels[4];
 						for (int j = 0; j < 4; j++) {
-							int shadowLevel = 0;
+							shadowLevels[j] = 0;
 							bool s1 = (corners & QUAD_CORNER_MASK[j][0]) > 0;
 							bool s2 = (corners & QUAD_CORNER_MASK[j][2]) > 0;
 							bool m = (corners & QUAD_CORNER_MASK[j][1]) > 0;
 							if (s1)
-								shadowLevel++;
+								shadowLevels[j]++;
 							if (s2)
-								shadowLevel++;
+								shadowLevels[j]++;
 							if (m || (s1 && s2))
-								shadowLevel++;
-							shadowLevels |= shadowLevel << 2 * j;
+								shadowLevels[j]++;
 						}
 
-						emitFace(faceBlock, faceType, faceDir, shadowLevels);
+						emitFace(bc, faceBlock, faceType, faceDir, shadowLevels);
 						chunkGrid[index].numFaces += 2;
 					}
 				}

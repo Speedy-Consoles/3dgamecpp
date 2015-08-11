@@ -1,6 +1,8 @@
 #ifndef GL2_CHUNK_RENDERER_HPP_
 #define GL2_CHUNK_RENDERER_HPP_
 
+#include "client/gfx/chunk_renderer.hpp"
+
 #include <GL/glew.h>
 
 #include "shared/engine/macros.hpp"
@@ -11,36 +13,7 @@ class Client;
 class GL2Renderer;
 struct GraphicsConf;
 
-class GL2ChunkRenderer {
-	enum DisplayListStatus {
-		NO_CHUNK = 0,
-		OUTDATED,
-		OK,
-	};
-
-	static const int MAX_NEW_QUADS = 6000;
-	static const int MAX_NEW_CHUNKS = 500;
-
-	Client *client;
-	GL2Renderer *renderer;
-
-	int renderDistance = 0;
-
-	// display lists
-	GLuint dlFirstAddress;
-	vec3i64 *dlChunks;
-	uint8 *dlStatus;
-
-	// chunk data
-	int *chunkFaces;
-	uint16 *chunkPassThroughs;
-
-	// visibility search for rendering
-	uint8 *vsExits;
-	bool *vsVisited;
-	int vsFringeCapacity;
-	vec3i64 *vsFringe;
-	int *vsIndices;
+class GL2ChunkRenderer : public ChunkRenderer {
 
 	// face buffer for chunk rendering
 	struct FaceVertexData {
@@ -49,39 +22,39 @@ class GL2ChunkRenderer {
 		vec2f tex[4];
 		vec3f normal;
 	};
-	FaceVertexData vb[(Chunk::WIDTH + 1) * Chunk::WIDTH * Chunk::WIDTH * 3];
 
 	struct FaceIndexData {
 		GLuint tex;
 		int index;
 	};
+
+	// display lists
+	GLuint dlFirstAddress = 0;
+	vec3i64 *dlChunks = nullptr;
+	uint8 *dlStatus = nullptr;
+
+	// chunk construction state
+	int numQuads = 0;
+	FaceVertexData vb[(Chunk::WIDTH + 1) * Chunk::WIDTH * Chunk::WIDTH * 3];
 	FaceIndexData faceIndexBuffer[(Chunk::WIDTH + 1) * Chunk::WIDTH * Chunk::WIDTH * 3];
-
-	//int faceBufferIndices[255][(Chunk::WIDTH + 1) * Chunk::WIDTH * Chunk::WIDTH * 3];
-	//float faceBuffer[(Chunk::WIDTH + 1) * Chunk::WIDTH * Chunk::WIDTH * 3 * (3 + 4 * (2 + 3 + 3))];
-
-	// performance stuff
-	int newFaces = 0;
-	int newChunks = 0;
-	int faces = 0;
-	int visibleChunks = 0;
-	int visibleFaces = 0;
 
 public:
 	GL2ChunkRenderer(Client *client, GL2Renderer *renderer);
 	~GL2ChunkRenderer();
 
-	void setConf(const GraphicsConf &, const GraphicsConf &);
-	void render();
+protected:
+	void initRenderDistanceDependent(int renderDistance) override;
+	void destroyRenderDistanceDependent() override;
 
-private:
-	void initRenderDistanceDependent();
-	void destroyRenderDistanceDependent();
+	void beginRender() override {}
+	void renderChunk(size_t index) override;
+	void finishRender() override {}
+	void beginChunkConstruction() override;
+	void emitFace(vec3i64 bc, vec3i64 icc, uint blockType, uint faceDir, int shadowLevels[4]) override;
+	void finishChunkConstruction(size_t index) override;
 
-	void renderChunks();
-	void renderChunk(Chunk &c);
-	void renderTarget();
-	void renderPlayers();
+//	void renderTarget();
+//	void renderPlayers();
 };
 
 #endif //GL2_CHUNK_RENDERER_HPP_

@@ -26,6 +26,8 @@ GL2Renderer::GL2Renderer(Client *client) :
 	menuRenderer(client, this),
 	debugRenderer(client, this)
 {
+	chunkRenderer.init();
+
 	makeMaxFOV();
 	makePerspective();
 	makeOrthogonal();
@@ -45,6 +47,7 @@ GL2Renderer::~GL2Renderer() {
 }
 
 void GL2Renderer::tick() {
+	chunkRenderer.tick();
 	render();
 
 	client->getStopwatch()->start(CLOCK_FSH);
@@ -112,25 +115,15 @@ void GL2Renderer::setConf(const GraphicsConf &conf, const GraphicsConf &old) {
 	}
 
 	texManager.setConfig(conf, old);
+	chunkRenderer.setConf(conf, old);
 }
 
 void GL2Renderer::rerenderChunk(vec3i64 chunkCoords) {
-	// TODO
+	chunkRenderer.rerenderChunk(chunkCoords);
 }
 
 TextureManager *GL2Renderer::getTextureManager() {
 	return &texManager;
-}
-
-bool GL2Renderer::inFrustum(vec3i64 cc, vec3i64 pos, vec3d lookDir) {
-	double chunkDia = sqrt(3) * Chunk::WIDTH * RESOLUTION;
-	vec3d cp = (cc * Chunk::WIDTH * RESOLUTION - pos).cast<double>();
-	double chunkLookDist = lookDir * cp + chunkDia;
-	if (chunkLookDist < 0)
-		return false;
-	vec3d orthoChunkPos = cp - lookDir * chunkLookDist;
-	double orthoChunkDist = std::max(0.0, orthoChunkPos.norm() - chunkDia);
-	return atan(orthoChunkDist / chunkLookDist) <= maxFOV / 2;
 }
 
 void GL2Renderer::initGL() {

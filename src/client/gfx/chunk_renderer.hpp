@@ -45,7 +45,6 @@ private:
 		bool vsVisited;
 		uint8 vsExits;
 	};
-	Renderer *renderer;
 
 	// visibility search
 	int vsFringeCapacity = 0;
@@ -67,6 +66,7 @@ private:
 
 protected:
 	Client *client;
+	Renderer *renderer;
 
 	// the grid
 	GridInfo *chunkGrid = nullptr;
@@ -101,7 +101,7 @@ protected:
 	virtual void renderChunk(size_t index) = 0;
 	virtual void finishRender() = 0;
 	virtual void beginChunkConstruction() = 0;
-	virtual void emitFace(vec3i64 icc, uint blockType, uint faceDir, uint8 shadowLevels) = 0;
+	virtual void emitFace(vec3i64 bc, vec3i64 icc, uint blockType, uint faceDir, int shadowLevels[4]) = 0;
 	virtual void finishChunkConstruction(size_t index) = 0;
 };
 

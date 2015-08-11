@@ -51,7 +51,7 @@ protected:
 	void renderChunk(size_t index) override;
 	void finishRender() override;
 	void beginChunkConstruction() override;
-	void emitFace(vec3i64 icc, uint blockType, uint faceDir, uint8 shadowLevels) override;
+	void emitFace(vec3i64 bc, vec3i64 icc, uint blockType, uint faceDir, int shadowLevels[4]) override;
 	void finishChunkConstruction(size_t index) override;
 };
 

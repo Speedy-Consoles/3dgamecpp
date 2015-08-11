@@ -100,9 +100,8 @@ public:
 	void rerenderChunk(vec3i64 chunkCoords) override;
 
 	TextureManager *getTextureManager();
-	bool inFrustum(vec3i64 cc, vec3i64 pos, vec3d lookDir);
 
-	virtual float getMaxFOV() { return 0.0f; }
+	virtual float getMaxFOV() { return maxFOV; }
 
 private:
 	void initGL();
