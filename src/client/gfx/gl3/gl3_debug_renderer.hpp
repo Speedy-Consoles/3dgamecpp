@@ -1,6 +1,7 @@
 #ifndef GL3_DEBUG_RENDERER_HPP_
 #define GL3_DEBUG_RENDERER_HPP_
 
+#include "shared/engine/stopwatch.hpp"
 #include "shared/game/world.hpp"
 #include "client/gfx/graphics.hpp"
 
@@ -17,6 +18,10 @@ class GL3DebugRenderer {
 	BMFont font;
 
 	int numFaces = 0;
+	int num_displayed_labels;
+	uint labeled_ids[CLOCK_ID_NUM];
+	float used_positions[CLOCK_ID_NUM + 2];
+
 	GLuint vao = 0;
 	GLuint vbo = 0;
 

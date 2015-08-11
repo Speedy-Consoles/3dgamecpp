@@ -5,8 +5,25 @@
 #include <glm/gtc/matrix_transform.hpp>
 
 #include "shared/engine/logging.hpp"
+#include "shared/engine/math.hpp"
 #include "gl3_chunk_renderer.hpp"
 #include "gl3_renderer.hpp"
+
+static const vec3f relColors[CLOCK_ID_NUM] = {
+	{0.6f, 0.6f, 1.0f},
+	{0.0f, 0.0f, 0.8f},
+	{0.6f, 0.0f, 0.8f},
+	{0.0f, 0.6f, 0.8f},
+	{0.4f, 0.4f, 0.8f},
+	{0.7f, 0.7f, 0.0f},
+	{0.8f, 0.8f, 0.3f},
+	{0.0f, 0.8f, 0.0f},
+	{0.0f, 0.4f, 0.0f},
+	{0.7f, 0.1f, 0.7f},
+	{0.7f, 0.7f, 0.4f},
+	{0.2f, 0.6f, 0.6f},
+	{0.8f, 0.0f, 0.0f},
+};
 
 GL3DebugRenderer::GL3DebugRenderer(Client *client, GL3Renderer *renderer, GL3ChunkRenderer *chunkRenderer) :
 	client(client),
@@ -42,38 +59,6 @@ void GL3DebugRenderer::tick() {
 		client->getStopwatch()->save();
 		client->getStopwatch()->start(CLOCK_ALL);
 	}
-
-	const char *relNames[CLOCK_ID_NUM] = {
-		"CLR",
-		"NDL",
-		"DLC",
-		"CHL",
-		"CHR",
-		"PLA",
-		"HUD",
-		"FLP",
-		"TIC",
-		"NET",
-		"SYN",
-		"FSH",
-		"ALL"
-	};
-
-	vec3f relColors[CLOCK_ID_NUM] {
-		{0.6f, 0.6f, 1.0f},
-		{0.0f, 0.0f, 0.8f},
-		{0.6f, 0.0f, 0.8f},
-		{0.0f, 0.6f, 0.8f},
-		{0.4f, 0.4f, 0.8f},
-		{0.7f, 0.7f, 0.0f},
-		{0.8f, 0.8f, 0.3f},
-		{0.0f, 0.8f, 0.0f},
-		{0.0f, 0.4f, 0.0f},
-		{0.7f, 0.1f, 0.7f},
-		{0.7f, 0.7f, 0.4f},
-		{0.2f, 0.6f, 0.6f},
-		{0.8f, 0.0f, 0.0f},
-	};
 
 	PACKED(
 	struct VertexData {
@@ -112,46 +97,27 @@ void GL3DebugRenderer::tick() {
 	GL(BufferData(GL_ARRAY_BUFFER, sizeof(vertexData), vertexData, GL_STATIC_DRAW));
 	GL(BindBuffer(GL_ARRAY_BUFFER, 0));
 
-//	static const float REL_THRESHOLD = 0.001f;
-//	uint labeled_ids[CLOCK_ID_NUM];
-//	int num_displayed_labels = 0;
-//	for (int i = 0; i < CLOCK_ID_NUM; ++i) {
-//		if (client->getStopwatch()->getRel(i) > REL_THRESHOLD)
-//			labeled_ids[num_displayed_labels++] = i;
-//	}
-//
-//	float used_positions[CLOCK_ID_NUM + 2];
-//	used_positions[0] = 0.0;
-//	for (int i = 0; i < num_displayed_labels; ++i) {
-//		int id = labeled_ids[i];
-//		used_positions[i + 1] = center_positions[id];
-//	}
-//	used_positions[num_displayed_labels + 1] = 1.0;
-//
-//	for (int iteration = 0; iteration < 3; ++iteration)
-//	for (int i = 1; i < num_displayed_labels + 1; ++i) {
-//		float d1 = used_positions[i] - used_positions[i - 1];
-//		float d2 = used_positions[i + 1] - used_positions[i];
-//		float diff = 2e-4f * (1.0f / d1 - 1.0f / d2);
-//		used_positions[i] += clamp(diff, -0.02f, 0.02f);
-//	}
-//
-//	glPushMatrix();
-//	glTranslatef(+client->getGraphics()->getDrawWidth() / 2.0f, -client->getGraphics()->getDrawHeight() / 2.0f, 0);
-//	glTranslatef(-15, 0, 0);
-//	glRotatef(90, 0, 0, 1);
-//	for (int i = 0; i < num_displayed_labels; ++i) {
-//		int id = labeled_ids[i];
-//		glPushMatrix();
-//		glTranslatef(used_positions[i + 1] * client->getGraphics()->getDrawHeight() - 14, 0, 0);
-//		char buffer[1024];
-//		sprintf(buffer, "%s", relNames[id]);
-//		auto color = relColors[id];
-//		glColor3f(color[0], color[1], color[2]);
-//		font->Render(buffer);
-//		glPopMatrix();
-//	}
-//	glPopMatrix();
+	static const float REL_THRESHOLD = 0.001f;
+	num_displayed_labels = 0;
+	for (int i = 0; i < CLOCK_ID_NUM; ++i) {
+		if (client->getStopwatch()->getRel(i) > REL_THRESHOLD)
+			labeled_ids[num_displayed_labels++] = i;
+	}
+
+	used_positions[0] = 0.0;
+	for (int i = 0; i < num_displayed_labels; ++i) {
+		int id = labeled_ids[i];
+		used_positions[i + 1] = center_positions[id];
+	}
+	used_positions[num_displayed_labels + 1] = 1.0;
+
+	for (int iteration = 0; iteration < 3; ++iteration)
+	for (int i = 1; i < num_displayed_labels + 1; ++i) {
+		float d1 = used_positions[i] - used_positions[i - 1];
+		float d2 = used_positions[i + 1] - used_positions[i];
+		float diff = 2e-4f * (1.0f / d1 - 1.0f / d2);
+		used_positions[i] += clamp(diff, -0.02f, 0.02f);
+	}
 }
 
 void GL3DebugRenderer::render() {
@@ -170,6 +136,8 @@ void GL3DebugRenderer::renderDebug() {
 		fpsIndex = (fpsIndex + 1) % 20;
 	}
 	fpsCounter++;
+
+	font.setColor(glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
 
 	float x = (float) (-client->getGraphics()->getDrawWidth() / 2 + 5);
 	float y = (float) (client->getGraphics()->getDrawHeight() / 2 - font.getTopOffset() - 5);
@@ -223,15 +191,43 @@ void GL3DebugRenderer::renderDebug() {
 }
 
 void GL3DebugRenderer::renderPerformance() {
-	HudShader *shader = &((GL3Renderer *) renderer)->getShaderManager()->getHudShader();
+	HudShader *hudShader = &((GL3Renderer *) renderer)->getShaderManager()->getHudShader();
 	float height = client->getGraphics()->getDrawHeight();
 	float width = 20.0f;
 	float moveRight = client->getGraphics()->getDrawWidth() / 2.0f - width;
 	glm::mat4 modelMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(moveRight, 0.0f, 0.0f));
 	modelMatrix = glm::scale(modelMatrix, glm::vec3(width, height, 1.0f));
 	modelMatrix = glm::translate(modelMatrix, glm::vec3(0.0f, -0.5f, 0.0f));
-	shader->setModelMatrix(modelMatrix);
-	shader->useProgram();
+	hudShader->setModelMatrix(modelMatrix);
+	hudShader->useProgram();
 	GL(BindVertexArray(vao));
 	GL(DrawArrays(GL_TRIANGLES, 0, numFaces * 3));
+
+	static const char *relNames[CLOCK_ID_NUM] = {
+		"CLR",
+		"NDL",
+		"DLC",
+		"CHL",
+		"CHR",
+		"PLA",
+		"HUD",
+		"FLP",
+		"TIC",
+		"NET",
+		"SYN",
+		"FSH",
+		"ALL"
+	};
+
+	for (int i = 0; i < num_displayed_labels; ++i) {
+		int id = labeled_ids[i];
+		float x = client->getGraphics()->getDrawWidth() / 2.0f - 60;
+		float y = (used_positions[i + 1] - 0.5f) * client->getGraphics()->getDrawHeight() - 14;
+
+		char buffer[1024];
+		sprintf(buffer, "%s", relNames[id]);
+		auto color = relColors[id];
+		font.setColor(glm::vec4(color[0], color[1], color[2], 1.0f));
+		font.write(x, y, 0.0f, buffer, 0);
+	}
 }
