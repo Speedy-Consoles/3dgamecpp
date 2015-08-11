@@ -39,8 +39,13 @@ LevelPtr getLevel(Severity sev) {
 }
 
 void Logger::submit(const Log &log) {
+	::log4cxx::spi::LocationInfo loc_info(log.file, log.func, log.line);
+
 	auto logger = ::log4cxx::Logger::getLogger(name);
-	LOG4CXX_LOG(logger, getLevel(log.sev), log.msg.str())
+	if (logger->isEnabledFor(getLevel(log.sev))) {
+		::log4cxx::helpers::MessageBuffer oss_;
+		logger->forcedLog(getLevel(log.sev), oss_.str(oss_ << log.msg.str()), loc_info);
+	}
 }
 
 } // namespace logging
@@ -72,15 +77,16 @@ void Logger::submit(const Log &log) {
 		case Severity::FATAL:       sev_str = "FAT"; break;
 	}
 
-	std::stringstream ss;
-	ss << "[" << sev_str << "] " << name << ": "
+	std::stringstream console_ss;
+	console_ss << "[" << sev_str << "] " << name << ": "
 	   << log.msg.str();
-	std::string console_str = ss.str();
-	ss.clear();
-	ss << "[" << sev_str << "] " << name << " "
+	std::string console_str = console_ss.str();
+
+	std::stringstream file_ss;
+	file_ss << "[" << sev_str << "] " << name << " "
 	   << log.file << ":" << log.func << ":" << log.line << ": "
 	   << log.msg.str();
-	std::string file_str = ss.str();
+	std::string file_str = file_ss.str();
 
 	std::lock_guard<std::mutex> lock(mutex);
 	std::cout << console_str << std::endl;

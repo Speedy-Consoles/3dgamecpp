@@ -57,7 +57,7 @@ class GL2Renderer : public Renderer {
 	static const int MAX_NEW_QUADS = 6000;
 	static const int MAX_NEW_CHUNKS = 500;
 
-	double maxFOV;
+	float maxFOV;
 
 	// performance info
 	int prevFPS[20];
