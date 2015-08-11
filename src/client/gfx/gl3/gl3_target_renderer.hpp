@@ -10,7 +10,7 @@ class ShaderManager;
 
 class GL3TargetRenderer {
 public:
-	GL3TargetRenderer(Client *client, GL3Renderer *renderer, ShaderManager *shaderManager);
+	GL3TargetRenderer(Client *client, GL3Renderer *renderer);
 	~GL3TargetRenderer();
 
 	void render();
@@ -18,7 +18,6 @@ public:
 private:
 	Client *client = nullptr;
 	GL3Renderer *renderer = nullptr;
-	ShaderManager *shaderManager = nullptr;
 
 	vec3f targetColor{ 0.0f, 0.0f, 0.0f };
 

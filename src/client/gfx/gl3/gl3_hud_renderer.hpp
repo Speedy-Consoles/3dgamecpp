@@ -10,7 +10,7 @@ class ShaderManager;
 
 class GL3HudRenderer {
 public:
-	GL3HudRenderer(Client *client, GL3Renderer *renderer, ShaderManager *shaderManager);
+	GL3HudRenderer(Client *client, GL3Renderer *renderer);
 	~GL3HudRenderer() = default;
 
 	void render();
@@ -18,7 +18,6 @@ public:
 private:
 	Client *client = nullptr;
 	GL3Renderer *renderer = nullptr;
-	ShaderManager *shaderManager = nullptr;
 
 	GLuint vao;
 	GLuint vbo;

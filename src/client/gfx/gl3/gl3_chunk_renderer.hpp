@@ -21,9 +21,6 @@ private:
 	};
 #pragma pack(pop)
 
-	// shader manager
-	ShaderManager *shaderManager;
-
 	// vao, vbo locations
 	GLuint *vaos;
 	GLuint *vbos;
@@ -37,7 +34,7 @@ private:
 	BlockVertexData blockVertexBuffer[Chunk::WIDTH * Chunk::WIDTH * (Chunk::WIDTH + 1) * 3 * 2 * 3];
 
 public:
-	GL3ChunkRenderer(Client *client, GL3Renderer *renderer, ShaderManager *shaderManager);
+	GL3ChunkRenderer(Client *client, GL3Renderer *renderer);
 	~GL3ChunkRenderer();
 
 private:

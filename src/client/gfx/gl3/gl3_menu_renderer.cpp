@@ -1,6 +1,7 @@
 #include "gl3_menu_renderer.hpp"
 
 #include "client/gfx/graphics.hpp"
+#include "client/gfx/gl3/gl3_renderer.hpp"
 #include "client/gui/widget.hpp"
 #include "client/gui/frame.hpp"
 #include "client/gui/label.hpp"
@@ -12,7 +13,7 @@ using namespace gui;
 
 class GL3MenuRendererImpl {
 public:
-	GL3MenuRendererImpl(Client *client, GL3Renderer *renderer, ShaderManager *shaderManager);
+	GL3MenuRendererImpl(Client *client, GL3Renderer *renderer);
 	void render();
 
 private:
@@ -30,8 +31,8 @@ private:
 
 GL3MenuRenderer::~GL3MenuRenderer() = default;
 
-GL3MenuRenderer::GL3MenuRenderer(Client *client, GL3Renderer *renderer, ShaderManager *shaderManager) :
-	impl(new GL3MenuRendererImpl(client, renderer, shaderManager))
+GL3MenuRenderer::GL3MenuRenderer(Client *client, GL3Renderer *renderer) :
+	impl(new GL3MenuRendererImpl(client, renderer))
 {
 	// nothing
 }
@@ -42,10 +43,10 @@ void GL3MenuRenderer::render() {
 
 // PIMPL
 
-GL3MenuRendererImpl::GL3MenuRendererImpl(Client *client, GL3Renderer *renderer, ShaderManager *shaderManager) :
+GL3MenuRendererImpl::GL3MenuRendererImpl(Client *client, GL3Renderer *renderer) :
 	client(client),
 	renderer(renderer),
-	font(&shaderManager->getFontShader())
+	font(&((GL3Renderer *) renderer)->getShaderManager()->getFontShader())
 {
 	font.load("fonts/dejavusansmono20.fnt");
 	font.setEncoding(Font::Encoding::UTF8);

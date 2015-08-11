@@ -1,19 +1,41 @@
 #include "gl3_debug_renderer.hpp"
 
+#include <glm/mat4x4.hpp>
+#include <glm/vec3.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+
+#include "shared/engine/logging.hpp"
 #include "gl3_chunk_renderer.hpp"
 #include "gl3_renderer.hpp"
 
-GL3DebugRenderer::GL3DebugRenderer(Client *client, GL3Renderer *renderer, GL3ChunkRenderer *chunkRenderer, ShaderManager *shaderManager) :
+GL3DebugRenderer::GL3DebugRenderer(Client *client, GL3Renderer *renderer, GL3ChunkRenderer *chunkRenderer) :
 	client(client),
 	renderer(renderer),
 	chunkRenderer(chunkRenderer),
-	font(&shaderManager->getFontShader())
+	font(&((GL3Renderer *) renderer)->getShaderManager()->getFontShader())
 {
+	GL(GenVertexArrays(1, &vao));
+	GL(GenBuffers(1, &vbo));
+	GL(BindVertexArray(vao));
+	GL(BindBuffer(GL_ARRAY_BUFFER, vbo));
+	GL(VertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 24, (void *) 0));
+	GL(VertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 24, (void *) 8));
+	GL(EnableVertexAttribArray(0));
+	GL(EnableVertexAttribArray(1));
+	GL(BindBuffer(GL_ARRAY_BUFFER, 0));
+	GL(BindVertexArray(0));
+
 	font.load("fonts/dejavusansmono20.fnt");
 	font.setEncoding(Font::Encoding::UTF8);
 }
 
-void GL3DebugRenderer::render() {
+GL3DebugRenderer::~GL3DebugRenderer() {
+	GL(DeleteVertexArrays(1, &vao));
+	GL(DeleteBuffers(1, &vbo));
+}
+
+
+void GL3DebugRenderer::tick() {
 	if (getCurrentTime() - lastStopWatchSave > millis(200)) {
 		lastStopWatchSave = getCurrentTime();
 		client->getStopwatch()->stop(CLOCK_ALL);
@@ -21,6 +43,124 @@ void GL3DebugRenderer::render() {
 		client->getStopwatch()->start(CLOCK_ALL);
 	}
 
+	const char *relNames[CLOCK_ID_NUM] = {
+		"CLR",
+		"NDL",
+		"DLC",
+		"CHL",
+		"CHR",
+		"PLA",
+		"HUD",
+		"FLP",
+		"TIC",
+		"NET",
+		"SYN",
+		"FSH",
+		"ALL"
+	};
+
+	vec3f relColors[CLOCK_ID_NUM] {
+		{0.6f, 0.6f, 1.0f},
+		{0.0f, 0.0f, 0.8f},
+		{0.6f, 0.0f, 0.8f},
+		{0.0f, 0.6f, 0.8f},
+		{0.4f, 0.4f, 0.8f},
+		{0.7f, 0.7f, 0.0f},
+		{0.8f, 0.8f, 0.3f},
+		{0.0f, 0.8f, 0.0f},
+		{0.0f, 0.4f, 0.0f},
+		{0.7f, 0.1f, 0.7f},
+		{0.7f, 0.7f, 0.4f},
+		{0.2f, 0.6f, 0.6f},
+		{0.8f, 0.0f, 0.0f},
+	};
+
+	PACKED(
+	struct VertexData {
+		GLfloat xy[2];
+		GLfloat rgba[4];
+	});
+
+	VertexData vertexData[CLOCK_ID_NUM * 6];
+
+	int vertexIndices[6] = {0, 1, 2, 2, 3, 0};
+
+	float relStart = 0.0f;
+	float relEnd = 0.0f;
+	float center_positions[CLOCK_ID_NUM];
+	numFaces = 0;
+
+	int vIndex = 0;
+	for (uint i = 0; i < CLOCK_ID_NUM; ++i) {
+		relStart = relEnd;
+		relEnd += client->getStopwatch()->getRel(i);
+		vec2f vertexPositions[4] = {{0, relStart}, {1, relStart}, {1, relEnd}, {0, relEnd}};
+		for (size_t j = 0; j < 6; j++) {
+			vertexData[vIndex].rgba[0] = relColors[i][0];
+			vertexData[vIndex].rgba[1] = relColors[i][1];
+			vertexData[vIndex].rgba[2] = relColors[i][2];
+			vertexData[vIndex].rgba[3] = 1.0f;
+			vertexData[vIndex].xy[0] = vertexPositions[vertexIndices[j]][0];
+			vertexData[vIndex].xy[1] = vertexPositions[vertexIndices[j]][1];
+			vIndex++;
+		}
+		center_positions[i] = (relEnd + relStart) / 2.0f;
+		numFaces += 2;
+	}
+
+	GL(BindBuffer(GL_ARRAY_BUFFER, vbo));
+	GL(BufferData(GL_ARRAY_BUFFER, sizeof(vertexData), vertexData, GL_STATIC_DRAW));
+	GL(BindBuffer(GL_ARRAY_BUFFER, 0));
+
+//	static const float REL_THRESHOLD = 0.001f;
+//	uint labeled_ids[CLOCK_ID_NUM];
+//	int num_displayed_labels = 0;
+//	for (int i = 0; i < CLOCK_ID_NUM; ++i) {
+//		if (client->getStopwatch()->getRel(i) > REL_THRESHOLD)
+//			labeled_ids[num_displayed_labels++] = i;
+//	}
+//
+//	float used_positions[CLOCK_ID_NUM + 2];
+//	used_positions[0] = 0.0;
+//	for (int i = 0; i < num_displayed_labels; ++i) {
+//		int id = labeled_ids[i];
+//		used_positions[i + 1] = center_positions[id];
+//	}
+//	used_positions[num_displayed_labels + 1] = 1.0;
+//
+//	for (int iteration = 0; iteration < 3; ++iteration)
+//	for (int i = 1; i < num_displayed_labels + 1; ++i) {
+//		float d1 = used_positions[i] - used_positions[i - 1];
+//		float d2 = used_positions[i + 1] - used_positions[i];
+//		float diff = 2e-4f * (1.0f / d1 - 1.0f / d2);
+//		used_positions[i] += clamp(diff, -0.02f, 0.02f);
+//	}
+//
+//	glPushMatrix();
+//	glTranslatef(+client->getGraphics()->getDrawWidth() / 2.0f, -client->getGraphics()->getDrawHeight() / 2.0f, 0);
+//	glTranslatef(-15, 0, 0);
+//	glRotatef(90, 0, 0, 1);
+//	for (int i = 0; i < num_displayed_labels; ++i) {
+//		int id = labeled_ids[i];
+//		glPushMatrix();
+//		glTranslatef(used_positions[i + 1] * client->getGraphics()->getDrawHeight() - 14, 0, 0);
+//		char buffer[1024];
+//		sprintf(buffer, "%s", relNames[id]);
+//		auto color = relColors[id];
+//		glColor3f(color[0], color[1], color[2]);
+//		font->Render(buffer);
+//		glPopMatrix();
+//	}
+//	glPopMatrix();
+}
+
+void GL3DebugRenderer::render() {
+	renderDebug();
+	if (client->getStopwatch())
+		renderPerformance();
+}
+
+void GL3DebugRenderer::renderDebug() {
 	while (getCurrentTime() - lastFPSUpdate > millis(50)) {
 		lastFPSUpdate += millis(50);
 		fpsSum -= prevFPS[fpsIndex];
@@ -80,4 +220,18 @@ void GL3DebugRenderer::render() {
 	RENDER_LINE("loaded chunks: %d", chunkManager->getNumLoadedChunks());
 	RENDER_LINE("requested queue size: %d", chunkManager->getRequestedQueueSize());
 	RENDER_LINE("not-in-cache queue size: %d", chunkManager->getNotInCacheQueueSize());
+}
+
+void GL3DebugRenderer::renderPerformance() {
+	HudShader *shader = &((GL3Renderer *) renderer)->getShaderManager()->getHudShader();
+	float height = client->getGraphics()->getDrawHeight();
+	float width = 20.0f;
+	float moveRight = client->getGraphics()->getDrawWidth() / 2.0f - width;
+	glm::mat4 modelMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(moveRight, 0.0f, 0.0f));
+	modelMatrix = glm::scale(modelMatrix, glm::vec3(width, height, 1.0f));
+	modelMatrix = glm::translate(modelMatrix, glm::vec3(0.0f, -0.5f, 0.0f));
+	shader->setModelMatrix(modelMatrix);
+	shader->useProgram();
+	GL(BindVertexArray(vao));
+	GL(DrawArrays(GL_TRIANGLES, 0, numFaces * 3));
 }

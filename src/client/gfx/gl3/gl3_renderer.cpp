@@ -21,12 +21,12 @@ GL3Renderer::GL3Renderer(Client *client) :
 	shaderManager(),
 	fontTimes(&shaderManager.getFontShader()),
 	fontDejavu(&shaderManager.getFontShader()),
-	chunkRenderer(client, this, &shaderManager),
-	targetRenderer(client, this, &shaderManager),
-	skyRenderer(client, this, &shaderManager),
-	hudRenderer(client, this, &shaderManager),
-	menuRenderer(client, this, &shaderManager),
-	debugRenderer(client, this, &chunkRenderer, &shaderManager)
+	chunkRenderer(client, this),
+	targetRenderer(client, this),
+	skyRenderer(client, this),
+	hudRenderer(client, this),
+	menuRenderer(client, this),
+	debugRenderer(client, this, &chunkRenderer)
 {
 	chunkRenderer.init();
 
@@ -181,6 +181,7 @@ void GL3Renderer::makeSkyFbo() {
 
 void GL3Renderer::tick() {
 	chunkRenderer.tick();
+	debugRenderer.tick();
 }
 
 void GL3Renderer::render() {

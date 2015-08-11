@@ -10,7 +10,7 @@ class ShaderManager;
 
 class GL3SkyRenderer {
 public:
-	GL3SkyRenderer(Client *client, GL3Renderer *renderer, ShaderManager *shaderManager);
+	GL3SkyRenderer(Client *client, GL3Renderer *renderer);
 	~GL3SkyRenderer();
 
 	void render();
@@ -18,7 +18,6 @@ public:
 private:
 	Client *client = nullptr;
 	GL3Renderer *renderer = nullptr;
-	ShaderManager *shaderManager = nullptr;
 
 	vec3f skyColor{ 0.15f, 0.15f, 0.9f };
 	vec3f fogColor{ 0.6f, 0.6f, 0.8f };

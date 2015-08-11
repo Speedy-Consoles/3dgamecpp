@@ -20,9 +20,8 @@ using namespace std;
 
 static logging::Logger logger("render");
 
-GL3ChunkRenderer::GL3ChunkRenderer(Client *client, GL3Renderer *renderer, ShaderManager *shaderManager) :
-		ChunkRenderer(client, renderer),
-		shaderManager(shaderManager) {
+GL3ChunkRenderer::GL3ChunkRenderer(Client *client, GL3Renderer *renderer) :
+		ChunkRenderer(client, renderer) {
 	loadTextures();
 }
 
@@ -166,7 +165,7 @@ void GL3ChunkRenderer::beginRender() {
 		(float) -cycle(playerPos[2], m) / RESOLUTION)
 	);
 
-	auto *shader = &shaderManager->getBlockShader();
+	auto *shader = &((GL3Renderer *) renderer)->getShaderManager()->getBlockShader();
 	shader->setViewMatrix(viewMatrix);
 	shader->setLightEnabled(true);
 
@@ -185,7 +184,7 @@ void GL3ChunkRenderer::renderChunk(size_t index) {
 	));
 	glm::mat4 modelMatrix = playerTranslationMatrix * chunkTranslationMatrix;
 
-	auto *shader = &shaderManager->getBlockShader();
+	auto *shader = &((GL3Renderer *) renderer)->getShaderManager()->getBlockShader();
 	shader->setModelMatrix(modelMatrix);
 	shader->useProgram();
 

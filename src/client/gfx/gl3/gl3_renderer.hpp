@@ -78,12 +78,14 @@ public:
 
 	void rerenderChunk(vec3i64 chunkCoords) override;
 
+	ShaderManager *getShaderManager() { return &shaderManager; }
+	float getMaxFOV() override { return maxFOV; };
+
+private:
 	void makePerspectiveMatrix();
 	void makeOrthogonalMatrix();
 	void makeSkyFbo();
 	void makeMaxFOV();
-
-	float getMaxFOV() override { return maxFOV; };
 };
 
 #endif // GL_3_RENDERER_HPP

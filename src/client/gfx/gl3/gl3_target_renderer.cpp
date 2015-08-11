@@ -8,10 +8,9 @@
 
 #include "gl3_renderer.hpp"
 
-GL3TargetRenderer::GL3TargetRenderer(Client *client, GL3Renderer *renderer, ShaderManager *shaderManager) :
+GL3TargetRenderer::GL3TargetRenderer(Client *client, GL3Renderer *renderer) :
 	client(client),
-	renderer(renderer),
-	shaderManager(shaderManager)
+	renderer(renderer)
 {
 	GL(GenVertexArrays(1, &vao));
 	GL(GenBuffers(1, &vbo));
@@ -67,7 +66,8 @@ GL3TargetRenderer::GL3TargetRenderer(Client *client, GL3Renderer *renderer, Shad
 }
 
 GL3TargetRenderer::~GL3TargetRenderer() {
-	// nothing
+	GL(DeleteVertexArrays(1, &vao));
+	GL(DeleteBuffers(1, &vbo));
 }
 
 void GL3TargetRenderer::render() {
@@ -91,7 +91,7 @@ void GL3TargetRenderer::render() {
 			(float) diff[2] / RESOLUTION)
 		);
 
-		auto &defaultShader = shaderManager->getDefaultShader();
+		auto &defaultShader = ((GL3Renderer *) renderer)->getShaderManager()->getDefaultShader();
 
 		defaultShader.setViewMatrix(viewMatrix);
 		defaultShader.setModelMatrix(modelMatrix);

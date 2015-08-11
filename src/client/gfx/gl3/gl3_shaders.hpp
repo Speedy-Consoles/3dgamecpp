@@ -148,11 +148,13 @@ public:
 };
 
 class HudShader : public Shader {
-	GLint _projectionMatrixLoc;
+	GLint _mvpMatrixLoc;
 	
 	bool _projectionMatrixDirty = true;
+	bool _modelMatrixDirty = true;
 	
 	glm::mat4 _projectionMatrix = glm::mat4();
+	glm::mat4 _modelMatrix = glm::mat4();
 
 public:
 	HudShader(ShaderManager *);
@@ -160,6 +162,7 @@ public:
 	
 	void useProgram();
 	
+    void setModelMatrix(const glm::mat4 &matrix);
     void setProjectionMatrix(const glm::mat4 &matrix);
 };
 
@@ -180,7 +183,7 @@ class FontShader : public Shader {
 	GLboolean _hasOutline = GL_FALSE;
     GLshort _page = 0;
 	GLshort _channel = 0;
-	glm::vec4 _textColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);;
+	glm::vec4 _textColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
 	glm::vec4 _outlineColor = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
 	GLshort _mode = 0;
 

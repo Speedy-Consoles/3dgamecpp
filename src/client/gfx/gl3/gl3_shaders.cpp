@@ -4,6 +4,8 @@
 #include <vector>
 
 #include <glm/gtc/type_ptr.hpp>
+#include <glm/gtx/string_cast.hpp>
+#include <iostream>
 
 #include "shared/engine/logging.hpp"
 #include "shared/engine/math.hpp"
@@ -372,15 +374,17 @@ void BlockShader::setEndFogDistance(float distance) {
 HudShader::HudShader(ShaderManager *manager) :
 	Shader(manager, "shaders/hud.vert", "shaders/hud.frag")
 {
-	_projectionMatrixLoc = getUniformLocation("projectionMatrix");
+	_mvpMatrixLoc = getUniformLocation("projectionMatrix");
 }
 
 void HudShader::useProgram() {
 	Shader::useProgram();
 
-	if (_projectionMatrixDirty) {
-		glUniformMatrix4fv(_projectionMatrixLoc, 1, GL_FALSE, glm::value_ptr(_projectionMatrix));
+	if (_projectionMatrixDirty || _modelMatrixDirty) {
+		glm::mat4 mvpMatrix = _projectionMatrix * _modelMatrix;
+		glUniformMatrix4fv(_mvpMatrixLoc, 1, GL_FALSE, glm::value_ptr(mvpMatrix));
 		_projectionMatrixDirty = false;
+		_modelMatrixDirty = false;
 	}
 }
 
@@ -388,6 +392,13 @@ void HudShader::setProjectionMatrix(const glm::mat4 &matrix) {
 	if (_projectionMatrix != matrix) {
 		_projectionMatrix = matrix;
 		_projectionMatrixDirty = true;
+	}
+}
+
+void HudShader::setModelMatrix(const glm::mat4 &matrix) {
+	if (_modelMatrix != matrix) {
+		_modelMatrix = matrix;
+		_modelMatrixDirty = true;
 	}
 }
 
