@@ -1,7 +1,7 @@
 #ifndef GL2_TEXTURE_MANAGER_HPP_
 #define GL2_TEXTURE_MANAGER_HPP_
 
-#include "texture_loader.hpp"
+#include "client/gfx/texture_loader.hpp"
 
 #include <unordered_map>
 #include <vector>

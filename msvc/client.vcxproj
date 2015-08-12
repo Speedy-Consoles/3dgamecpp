@@ -22,7 +22,6 @@
     <ClCompile Include="..\src\client\gfx\gl2\gl2_renderer.cpp" />
     <ClCompile Include="..\src\client\gfx\gl2\gl2_sky_renderer.cpp" />
     <ClCompile Include="..\src\client\gfx\gl2\gl2_target_renderer.cpp" />
-    <ClCompile Include="..\src\client\gfx\gl2\texture_loader.cpp" />
     <ClCompile Include="..\src\client\gfx\gl2\gl2_texture_manager.cpp" />
     <ClCompile Include="..\src\client\gfx\gl3\gl3_chunk_renderer.cpp" />
     <ClCompile Include="..\src\client\gfx\gl3\gl3_debug_renderer.cpp" />
@@ -34,6 +33,7 @@
     <ClCompile Include="..\src\client\gfx\gl3\gl3_sky_renderer.cpp" />
     <ClCompile Include="..\src\client\gfx\gl3\gl3_target_renderer.cpp" />
     <ClCompile Include="..\src\client\gfx\graphics.cpp" />
+    <ClCompile Include="..\src\client\gfx\texture_loader.cpp" />
     <ClCompile Include="..\src\client\gui\button.cpp" />
     <ClCompile Include="..\src\client\gui\frame.cpp" />
     <ClCompile Include="..\src\client\gui\label.cpp" />
@@ -54,7 +54,6 @@
     <ClInclude Include="..\src\client\gfx\gl2\gl2_renderer.hpp" />
     <ClInclude Include="..\src\client\gfx\gl2\gl2_sky_renderer.hpp" />
     <ClInclude Include="..\src\client\gfx\gl2\gl2_target_renderer.hpp" />
-    <ClInclude Include="..\src\client\gfx\gl2\texture_loader.hpp" />
     <ClInclude Include="..\src\client\gfx\gl2\gl2_texture_manager.hpp" />
     <ClInclude Include="..\src\client\gfx\gl3\gl3_chunk_renderer.hpp" />
     <ClInclude Include="..\src\client\gfx\gl3\gl3_debug_renderer.hpp" />
@@ -67,6 +66,7 @@
     <ClInclude Include="..\src\client\gfx\gl3\gl3_target_renderer.hpp" />
     <ClInclude Include="..\src\client\gfx\graphics.hpp" />
     <ClInclude Include="..\src\client\gfx\renderer.hpp" />
+    <ClInclude Include="..\src\client\gfx\texture_loader.hpp" />
     <ClInclude Include="..\src\client\gui\button.hpp" />
     <ClInclude Include="..\src\client\gui\cycle_button.hpp" />
     <ClInclude Include="..\src\client\gui\frame.hpp" />

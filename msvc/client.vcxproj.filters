@@ -62,9 +62,6 @@
     <ClCompile Include="..\src\client\gfx\gl2\gl2_sky_renderer.cpp">
       <Filter>Source Files\gfx\gl2</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\client\gfx\gl2\texture_loader.cpp">
-      <Filter>Source Files\gfx\gl2</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\client\gfx\gl3\gl3_chunk_renderer.cpp">
       <Filter>Source Files\gfx\gl3</Filter>
     </ClCompile>
@@ -133,6 +130,9 @@
     </ClCompile>
     <ClCompile Include="..\src\client\gfx\gl2\gl2_texture_manager.cpp">
       <Filter>Source Files\gfx\gl2</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\client\gfx\texture_loader.cpp">
+      <Filter>Source Files\gfx</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -229,11 +229,11 @@
     <ClInclude Include="..\src\client\gfx\gl2\gl2_target_renderer.hpp">
       <Filter>Header Files\gfx\gl2</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\client\gfx\gl2\texture_loader.hpp">
-      <Filter>Header Files\gfx\gl2</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\client\gfx\gl2\gl2_texture_manager.hpp">
       <Filter>Header Files\gfx\gl2</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\client\gfx\texture_loader.hpp">
+      <Filter>Header Files\gfx</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
