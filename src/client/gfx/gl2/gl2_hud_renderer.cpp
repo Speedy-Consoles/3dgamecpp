@@ -46,7 +46,7 @@ void GL2HudRenderer::renderSelectedBlock() {
 	GL(Enable(GL_TEXTURE_2D));
 	vec2f texs[4];
 	GL2TextureManager::Entry tex_entry = renderer->getTextureManager()->get(client->getLocalPlayer().getBlock());
-	GL2TextureManager::getVertices(tex_entry, texs);
+	GL2TextureManager::getTextureCoords(tex_entry.index, tex_entry.type, texs);
 	GL(BindTexture(GL_TEXTURE_2D, tex_entry.tex));
 
 	GL(Color4f(1.0f, 1.0f, 1.0f, 1.0f));

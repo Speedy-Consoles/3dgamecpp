@@ -36,8 +36,6 @@ public:
 	Entry get(uint block, uint8 dir = DIR_EAST) const;
 	Entry get(uint block, vec3i64 bc, uint8 dir) const;
 
-	static void getVertices(const Entry &entry, vec2f out[4]);
-
 protected:
 	void add(SDL_Surface *img, const std::vector<TextureLoadEntry> &entries) override;
 	void clear() override;

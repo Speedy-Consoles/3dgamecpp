@@ -48,7 +48,7 @@ void GL2ChunkRenderer::beginChunkConstruction() {
 void GL2ChunkRenderer::emitFace(vec3i64 bc, vec3i64 icc, uint blockType, uint faceDir, int shadowLevels[4]) {
 	vec2f texs[4];
 	GL2TextureManager::Entry tex_entry = ((GL2Renderer *) renderer)->getTextureManager()->get(blockType, bc, faceDir);
-	GL2TextureManager::getVertices(tex_entry, texs);
+	GL2TextureManager::getTextureCoords(tex_entry.index, tex_entry.type, texs);
 
 	faceIndexBuffer[numQuads] = FaceIndexData{tex_entry.tex, numQuads};
 
