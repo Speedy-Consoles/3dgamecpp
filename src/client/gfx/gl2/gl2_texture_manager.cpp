@@ -1,4 +1,4 @@
-#include "texture_manager.hpp"
+#include "gl2_texture_manager.hpp"
 
 #include <SDL2/SDL_image.h>
 
@@ -11,13 +11,13 @@ static logging::Logger logger("gfx");
 
 static const auto TEX2D = GL_TEXTURE_2D;
 
-TextureManager::TextureManager(Client *client) :
+GL2TextureManager::GL2TextureManager(Client *client) :
 	AbstractTextureManager(client)
 {
 	// nothing
 }
 
-TextureManager::~TextureManager() {
+GL2TextureManager::~GL2TextureManager() {
 	clear();
 }
 
@@ -48,7 +48,7 @@ static void setLoadingOptions(const GraphicsConf &conf) {
 	}
 }
 
-void TextureManager::setConfig(const GraphicsConf &conf, const GraphicsConf &old) {
+void GL2TextureManager::setConfig(const GraphicsConf &conf, const GraphicsConf &old) {
 	if (conf.tex_mipmapping != old.tex_mipmapping || conf.tex_filtering != old.tex_filtering) {
 		for (auto iter : loadedTextures) {
 			GLuint tex = iter;
@@ -58,7 +58,7 @@ void TextureManager::setConfig(const GraphicsConf &conf, const GraphicsConf &old
 	}
 }
 
-auto TextureManager::get(uint block, uint8 dir) const -> Entry {
+auto GL2TextureManager::get(uint block, uint8 dir) const -> Entry {
 	int key = (int) block;
 	key <<= 3;
 	key |= dir;
@@ -169,7 +169,7 @@ static void getShiftedBlockCoordinate(vec3i64 bc, uint8 dir,
 	}
 }
 
-auto TextureManager::get(uint block, vec3i64 bc, uint8 dir) const -> Entry {
+auto GL2TextureManager::get(uint block, vec3i64 bc, uint8 dir) const -> Entry {
 	Entry entry = get(block, dir);
 
 	if (entry.type == TextureType::WANG_TILES) {
@@ -223,7 +223,7 @@ auto TextureManager::get(uint block, vec3i64 bc, uint8 dir) const -> Entry {
 	return entry;
 }
 
-void TextureManager::getVertices(const Entry &entry, vec2f out[4]) {
+void GL2TextureManager::getVertices(const Entry &entry, vec2f out[4]) {
 	float x = 0.0;
 	float y = 1.0;
 	float w = 1.0;
@@ -255,7 +255,7 @@ void TextureManager::getVertices(const Entry &entry, vec2f out[4]) {
 	out[3] = {x    , y + h};
 }
 
-void TextureManager::add(SDL_Surface *img, const std::vector<TextureLoadEntry> &entries) {
+void GL2TextureManager::add(SDL_Surface *img, const std::vector<TextureLoadEntry> &entries) {
 	std::unique_ptr<SDL_Surface> tmp;
 
 	for (const auto &entry : entries) {
@@ -280,7 +280,7 @@ void TextureManager::add(SDL_Surface *img, const std::vector<TextureLoadEntry> &
 	}
 }
 
-void TextureManager::clear() {
+void GL2TextureManager::clear() {
 	for (auto iter : loadedTextures) {
 		GLuint tex = iter;
 		GL(DeleteTextures(1, &tex));
@@ -289,7 +289,7 @@ void TextureManager::clear() {
 	loadedTextures.clear();
 }
 
-GLuint TextureManager::loadTexture(int block, uint8 dir_mask, SDL_Surface *img, TextureType type) {
+GLuint GL2TextureManager::loadTexture(int block, uint8 dir_mask, SDL_Surface *img, TextureType type) {
 	GLuint tex;
 	GL(GenTextures(1, &tex));
 	GL(BindTexture(TEX2D, tex));

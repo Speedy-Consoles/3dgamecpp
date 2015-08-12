@@ -125,7 +125,7 @@ void GL2Renderer::rerenderChunk(vec3i64 chunkCoords) {
 	chunkRenderer.rerenderChunk(chunkCoords);
 }
 
-TextureManager *GL2Renderer::getTextureManager() {
+GL2TextureManager *GL2Renderer::getTextureManager() {
 	return &texManager;
 }
 

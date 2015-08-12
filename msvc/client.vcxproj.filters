@@ -39,9 +39,8 @@
     <Filter Include="Source Files\client">
       <UniqueIdentifier>{6d1f8668-c715-42be-adf1-2667616dff95}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\gfx\Shader Files">
-      <UniqueIdentifier>{8076c443-1ae5-453f-9f2d-3261649eebbb}</UniqueIdentifier>
-      <Extensions>frag;vert</Extensions>
+    <Filter Include="Shader Files">
+      <UniqueIdentifier>{29233ef8-e11a-4c44-9b0d-38b1867c7cff}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -64,9 +63,6 @@
       <Filter>Source Files\gfx\gl2</Filter>
     </ClCompile>
     <ClCompile Include="..\src\client\gfx\gl2\texture_loader.cpp">
-      <Filter>Source Files\gfx\gl2</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\client\gfx\gl2\texture_manager.cpp">
       <Filter>Source Files\gfx\gl2</Filter>
     </ClCompile>
     <ClCompile Include="..\src\client\gfx\gl3\gl3_chunk_renderer.cpp">
@@ -135,6 +131,9 @@
     <ClCompile Include="..\src\client\gfx\gl2\gl2_target_renderer.cpp">
       <Filter>Source Files\gfx\gl2</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\client\gfx\gl2\gl2_texture_manager.cpp">
+      <Filter>Source Files\gfx\gl2</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\client\gfx\gl2\gl2_chunk_renderer.hpp">
@@ -153,12 +152,6 @@
       <Filter>Header Files\gfx\gl2</Filter>
     </ClInclude>
     <ClInclude Include="..\src\client\gfx\gl2\gl2_sky_renderer.hpp">
-      <Filter>Header Files\gfx\gl2</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\client\gfx\gl2\texture_loader.hpp">
-      <Filter>Header Files\gfx\gl2</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\client\gfx\gl2\texture_manager.hpp">
       <Filter>Header Files\gfx\gl2</Filter>
     </ClInclude>
     <ClInclude Include="..\src\client\gfx\gl3\gl3_chunk_renderer.hpp">
@@ -236,5 +229,37 @@
     <ClInclude Include="..\src\client\gfx\gl2\gl2_target_renderer.hpp">
       <Filter>Header Files\gfx\gl2</Filter>
     </ClInclude>
+    <ClInclude Include="..\src\client\gfx\gl2\texture_loader.hpp">
+      <Filter>Header Files\gfx\gl2</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\client\gfx\gl2\gl2_texture_manager.hpp">
+      <Filter>Header Files\gfx\gl2</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\shaders\block.frag">
+      <Filter>Shader Files</Filter>
+    </None>
+    <None Include="..\shaders\block.vert">
+      <Filter>Shader Files</Filter>
+    </None>
+    <None Include="..\shaders\default.frag">
+      <Filter>Shader Files</Filter>
+    </None>
+    <None Include="..\shaders\default.vert">
+      <Filter>Shader Files</Filter>
+    </None>
+    <None Include="..\shaders\font.frag">
+      <Filter>Shader Files</Filter>
+    </None>
+    <None Include="..\shaders\font.vert">
+      <Filter>Shader Files</Filter>
+    </None>
+    <None Include="..\shaders\hud.frag">
+      <Filter>Shader Files</Filter>
+    </None>
+    <None Include="..\shaders\hud.vert">
+      <Filter>Shader Files</Filter>
+    </None>
   </ItemGroup>
 </Project>

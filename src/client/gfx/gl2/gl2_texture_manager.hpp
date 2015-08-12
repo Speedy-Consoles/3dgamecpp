@@ -1,5 +1,5 @@
-#ifndef TEXTURE_MANAGER_HPP_
-#define TEXTURE_MANAGER_HPP_
+#ifndef GL2_TEXTURE_MANAGER_HPP_
+#define GL2_TEXTURE_MANAGER_HPP_
 
 #include "texture_loader.hpp"
 
@@ -19,7 +19,7 @@ struct SDL_Surface;
 class TextureLoader;
 class Client;
 
-class TextureManager : public AbstractTextureManager {
+class GL2TextureManager : public AbstractTextureManager {
 public:
 	struct Entry {
 		GLuint tex;
@@ -27,14 +27,8 @@ public:
 		int index;
 	};
 
-	TextureManager(Client *);
-	~TextureManager();
-
-	// not copyable or movable
-	TextureManager(const TextureManager &) = delete;
-	TextureManager(TextureManager &&) = delete;
-	TextureManager &operator = (const TextureManager &) = delete;
-	TextureManager &operator = (TextureManager &&) = delete;
+	GL2TextureManager(Client *);
+	~GL2TextureManager();
 
 	void setConfig(const GraphicsConf &, const GraphicsConf &);
 	
@@ -54,4 +48,4 @@ private:
 	GLuint loadTexture(int block, uint8 dir, SDL_Surface *, TextureType type);
 };
 
-#endif // TEXTURE_MANAGER_HPP_
+#endif // GL2_TEXTURE_MANAGER_HPP_
