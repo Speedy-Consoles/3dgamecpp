@@ -222,7 +222,21 @@ void ChunkRenderer::buildChunk(Chunk const *chunks[27]) {
 	chunkGrid[index].status = OK;
 	chunkGrid[index].passThroughs = chunk.getPassThroughs();
 
+	// skip air chunks and earth chunks
+	bool skip = false;
 	if (chunk.getAirBlocks() == Chunk::WIDTH * Chunk::WIDTH * Chunk::WIDTH) {
+		skip = true;
+	} else if (chunk.getAirBlocks() == 0) {
+		skip = true;
+		for (int i = 0; i < 27; ++i) {
+			if (BIG_CUBE_CYCLE[i].norm() <= 1 && chunks[i]->getAirBlocks() != 0) {
+				skip = false;
+				break;
+			}
+		}
+	}
+
+	if (skip) {
 		finishChunkConstruction(index);
 		return;
 	}
