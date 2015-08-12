@@ -2,6 +2,7 @@
 #define GL2_TEXTURE_MANAGER_HPP_
 
 #include "client/gfx/texture_loader.hpp"
+#include "client/gfx/texture_manager.hpp"
 
 #include <unordered_map>
 #include <vector>
@@ -19,7 +20,7 @@ struct SDL_Surface;
 class TextureLoader;
 class Client;
 
-class GL2TextureManager : public AbstractTextureManager {
+class GL2TextureManager : public TextureManager {
 public:
 	struct Entry {
 		GLuint tex;

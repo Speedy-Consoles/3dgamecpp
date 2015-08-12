@@ -9,6 +9,8 @@ CLIENT_OBJECT_FILES = \
 	client/gfx/font.cpp.o\
 	client/gfx/graphics.cpp.o\
 	client/gfx/chunk_renderer.cpp.o\
+	client/gfx/texture_loader.cpp.o\
+	client/gfx/texture_manager.cpp.o\
 	client/gfx/gl2/gl2_renderer.cpp.o\
 	client/gfx/gl2/gl2_chunk_renderer.cpp.o\
 	client/gfx/gl2/gl2_target_renderer.cpp.o\
@@ -16,8 +18,7 @@ CLIENT_OBJECT_FILES = \
 	client/gfx/gl2/gl2_hud_renderer.cpp.o\
 	client/gfx/gl2/gl2_debug_renderer.cpp.o\
 	client/gfx/gl2/gl2_menu_renderer.cpp.o\
-	client/gfx/gl2/texture_manager.cpp.o\
-	client/gfx/gl2/texture_loader.cpp.o\
+	client/gfx/gl2/gl2_texture_manager.cpp.o\
 	client/gfx/gl3/gl3_renderer.cpp.o\
 	client/gfx/gl3/gl3_chunk_renderer.cpp.o\
 	client/gfx/gl3/gl3_sky_renderer.cpp.o\

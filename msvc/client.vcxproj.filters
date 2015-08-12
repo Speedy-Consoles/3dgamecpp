@@ -134,6 +134,9 @@
     <ClCompile Include="..\src\client\gfx\texture_loader.cpp">
       <Filter>Source Files\gfx</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\client\gfx\texture_manager.cpp">
+      <Filter>Source Files\gfx</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\client\gfx\gl2\gl2_chunk_renderer.hpp">
@@ -233,6 +236,9 @@
       <Filter>Header Files\gfx\gl2</Filter>
     </ClInclude>
     <ClInclude Include="..\src\client\gfx\texture_loader.hpp">
+      <Filter>Header Files\gfx</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\client\gfx\texture_manager.hpp">
       <Filter>Header Files\gfx</Filter>
     </ClInclude>
   </ItemGroup>

@@ -9,8 +9,61 @@
 
 #include "shared/engine/std_types.hpp"
 
-class TextureLoader;
 class Client;
+class TextureManager;
+class BlockManager;
+
+class TextureLoader {
+	const char *path;
+	FILE *f = nullptr;
+	const BlockManager *bm = nullptr;
+	TextureManager *tm = nullptr;
+
+public:
+
+	struct ParsingError {
+		int row, col;
+		std::string error;
+	};
+
+	TextureLoader(const char *path, const BlockManager *bm, TextureManager *tm);
+	~TextureLoader();
+
+	int load();
+
+private:
+
+	enum TokenId {
+		TOK_EOF,
+		TOK_LBRACE,
+		TOK_RBRACE,
+		TOK_EQUAL,
+		TOK_STRING,
+		TOK_NUMERAL,
+		TOK_IDENT,
+	};
+
+	struct Token {
+		TokenId id;
+		int pos;
+		int row;
+		int col;
+		std::string str;
+		union {
+			long i;
+			const char *err;
+		};
+	};
+
+	int ch = 0;
+	int pos = 0;
+	int row = 0;
+	int col = 0;
+	void getNextChar();
+
+	Token tok;
+	void getNextToken();
+};
 
 enum class TextureType {
 	SINGLE_TEXTURE,
@@ -30,22 +83,5 @@ namespace std {
 	template<>
 	void default_delete<SDL_Surface>::operator()(SDL_Surface* s) const;
 }
-
-class AbstractTextureManager {
-protected:
-	Client *_client = nullptr;
-	std::vector<std::string> files;
-
-public:
-	virtual ~AbstractTextureManager() = default;
-	AbstractTextureManager(Client *client) : _client(client) {}
-	int load(const char *);
-	int reloadAll();
-
-protected:
-	friend TextureLoader;
-	virtual void add(SDL_Surface *img, const std::vector<TextureLoadEntry> &entries) = 0;
-	virtual void clear() = 0;
-};
 
 #endif //TEXTURE_LOADER_HPP_

@@ -12,7 +12,7 @@ static logging::Logger logger("gfx");
 static const auto TEX2D = GL_TEXTURE_2D;
 
 GL2TextureManager::GL2TextureManager(Client *client) :
-	AbstractTextureManager(client)
+	TextureManager(client)
 {
 	// nothing
 }
