@@ -77,18 +77,14 @@ private:
 };
 
 enum ClockId {
-	CLOCK_CLR,
-	CLOCK_NDL,
-	CLOCK_DLC,
-	CLOCK_CHL,
-	CLOCK_CHR,
-	CLOCK_PLA,
-	CLOCK_HUD,
-	CLOCK_FLP,
-	CLOCK_TIC,
-	CLOCK_NET,
-	CLOCK_SYN,
-	CLOCK_FSH,
+	CLOCK_WOT, // world tick
+	CLOCK_CRT, // chunk renderer tick
+	CLOCK_BCH, // build chunk
+	CLOCK_CRR, // chunk renderer render
+	CLOCK_IRQ, // iterate render queue
+	CLOCK_FSH, // glFinish
+	CLOCK_FLP, // flip
+	CLOCK_SYN, // synchronize
 	CLOCK_ALL,
 
 	CLOCK_ID_NUM

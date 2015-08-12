@@ -1,6 +1,7 @@
 #include "chunk_renderer.hpp"
 
 #include "shared/engine/logging.hpp"
+#include "shared/engine/stopwatch.hpp"
 #include "shared/game/player.hpp"
 #include "shared/block_utils.hpp"
 #include "shared/chunk_manager.hpp"
@@ -70,6 +71,7 @@ void ChunkRenderer::tick() {
 		checkChunkIndex++;
 	}
 
+	client->getStopwatch()->start(CLOCK_IRQ);
 	// build chunks in render queue
 	newFaces = 0;
 	newChunks = 0;
@@ -86,13 +88,16 @@ void ChunkRenderer::tick() {
 		}
 		if (cantRender)
 			break;
+		client->getStopwatch()->start(CLOCK_BCH);
 		buildChunk(chunks);
+		client->getStopwatch()->stop(CLOCK_BCH);
 		for (int i = 0; i < 27; ++i) {
 			client->getChunkManager()->releaseChunk(chunks[i]->getCC());
 		}
 		renderQueue.pop_front();
 		inRenderQueue.erase(inRenderQueue.find(cc));
 	}
+	client->getStopwatch()->stop(CLOCK_IRQ);
 
 	render();
 }

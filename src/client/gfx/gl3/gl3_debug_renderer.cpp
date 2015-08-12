@@ -9,7 +9,7 @@
 #include "gl3_chunk_renderer.hpp"
 #include "gl3_renderer.hpp"
 
-static const vec3f relColors[CLOCK_ID_NUM] = {
+static const vec3f relColors[] = {
 	{0.6f, 0.6f, 1.0f},
 	{0.0f, 0.0f, 0.8f},
 	{0.6f, 0.0f, 0.8f},
@@ -204,18 +204,14 @@ void GL3DebugRenderer::renderPerformance() {
 	GL(DrawArrays(GL_TRIANGLES, 0, numFaces * 3));
 
 	static const char *relNames[CLOCK_ID_NUM] = {
-		"CLR",
-		"NDL",
-		"DLC",
-		"CHL",
-		"CHR",
-		"PLA",
-		"HUD",
-		"FLP",
-		"TIC",
-		"NET",
-		"SYN",
-		"FSH",
+		"WOT", // world tick
+		"CRT", // chunk renderer tick
+		"BCH", // build chunk
+		"CRR", // chunk renderer render
+		"IRQ", // iterate render queue
+		"FSH", // glFinish
+		"FLP", // flip
+		"SYN", // synchronize
 		"ALL"
 	};
 

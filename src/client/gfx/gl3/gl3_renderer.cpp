@@ -180,7 +180,9 @@ void GL3Renderer::makeSkyFbo() {
 }
 
 void GL3Renderer::tick() {
+	client->getStopwatch()->start(CLOCK_CRT);
 	chunkRenderer.tick();
+	client->getStopwatch()->stop(CLOCK_CRT);
 	debugRenderer.tick();
 }
 
@@ -201,7 +203,9 @@ void GL3Renderer::render() {
 	GL(Enable(GL_DEPTH_TEST));
 	GL(DepthMask(true));
 	GL(Clear(GL_DEPTH_BUFFER_BIT));
+	client->getStopwatch()->start(CLOCK_CRR);
 	chunkRenderer.render();
+	client->getStopwatch()->stop(CLOCK_CRR);
 	targetRenderer.render();
 
 	// render overlay

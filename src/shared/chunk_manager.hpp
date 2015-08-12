@@ -17,7 +17,7 @@
 class Client;
 
 class ChunkManager : public Thread {
-	static const int CHUNK_POOL_SIZE = 10000;
+	static const int CHUNK_POOL_SIZE = 30000;
 
 	enum ArchiveOperationType {
 		LOAD = 0,

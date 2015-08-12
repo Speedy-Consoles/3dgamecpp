@@ -48,7 +48,9 @@ GL2Renderer::~GL2Renderer() {
 }
 
 void GL2Renderer::tick() {
+	client->getStopwatch()->start(CLOCK_CRT);
 	chunkRenderer.tick();
+	client->getStopwatch()->stop(CLOCK_CRT);
 	render();
 
 	client->getStopwatch()->start(CLOCK_FSH);
@@ -336,11 +338,9 @@ void GL2Renderer::render() {
 		GL(DrawBuffer(GL_BACK));
 	}
 
-	client->getStopwatch()->start(CLOCK_CLR);
 	GL(Disable(GL_DEPTH_TEST));
 	GL(DepthMask(true));
 	GL(Clear(GL_DEPTH_BUFFER_BIT));
-	client->getStopwatch()->stop(CLOCK_CLR);
 
 	GL(MatrixMode(GL_MODELVIEW));
 	switchToPerspective();
@@ -406,11 +406,9 @@ void GL2Renderer::render() {
 	GL(DepthMask(false));
 
 	if (client->getState() == Client::State::PLAYING && player.isValid()) {
-		client->getStopwatch()->start(CLOCK_HUD);
 		hudRenderer.render();
 		if (client->isDebugOn())
 			debugRenderer.render();
-		client->getStopwatch()->stop(CLOCK_HUD);
 	} else if (client->getState() == Client::State::IN_MENU){
 		menuRenderer.render();
 	}

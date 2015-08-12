@@ -114,15 +114,13 @@ void Client::run() {
 			localClientId = serverInterface->getLocalClientId();
 		}
 
-		stopwatch->start(CLOCK_NET);
 		serverInterface->tick();
-		stopwatch->stop(CLOCK_NET);
 
 		if (state == State::PLAYING || state == State::IN_MENU) {
-			stopwatch->start(CLOCK_TIC);
+			stopwatch->start(CLOCK_WOT);
 			if (!_isPaused)
 				world->tick(tick, localClientId);
-			stopwatch->stop(CLOCK_TIC);
+			stopwatch->stop(CLOCK_WOT);
 		}
 
 #ifndef NO_GRAPHICS

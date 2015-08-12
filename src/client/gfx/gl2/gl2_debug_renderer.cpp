@@ -73,18 +73,14 @@ void GL2DebugRenderer::renderDebug() {
 
 void GL2DebugRenderer::renderPerformance() {
 	const char *rel_names[] = {
-		"CLR",
-		"NDL",
-		"DLC",
-		"CHL",
-		"CHR",
-		"PLA",
-		"HUD",
-		"FLP",
-		"TIC",
-		"NET",
-		"SYN",
-		"FSH",
+		"WOT", // world tick
+		"CRT", // chunk renderer tick
+		"BCH", // build chunk
+		"CRR", // chunk renderer render
+		"IRQ", // iterate render queue
+		"FSH", // glFinish
+		"FLP", // flip
+		"SYN", // synchronize
 		"ALL"
 	};
 
