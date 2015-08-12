@@ -22,9 +22,10 @@ public:
 	Chunk(vec3i64 cc);
 
 	void makePassThroughs();
-	vec3i64 getCC() const { return cc; }
 	void setCC(vec3i64 cc) { this->cc = cc; }
 	void initBlock(size_t index, uint8 type);
+	void reset();
+	vec3i64 getCC() const { return cc; }
 	void setBlock(vec3ui8 icc, uint8 type);
 	uint8 getBlock(vec3ui8 icc) const;
 

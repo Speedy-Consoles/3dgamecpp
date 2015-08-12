@@ -73,7 +73,7 @@ void ChunkManager::tick() {
 			}
 			break;
 		case STORE:
-			op.chunk->initialized = false;
+			op.chunk->reset();
 			unusedChunks.push(op.chunk);
 			break;
 		}
@@ -188,7 +188,7 @@ void ChunkManager::insertLoadedChunk(Chunk *chunk) {
 	if (it != needCounter.end()) {
 		chunks.insert({chunk->getCC(), chunk});
 	} else {
-		chunk->initialized = false;
+		chunk->reset();
 		unusedChunks.push(chunk);
 	}
 }
