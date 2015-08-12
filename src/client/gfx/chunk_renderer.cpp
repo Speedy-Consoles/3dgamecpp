@@ -98,8 +98,6 @@ void ChunkRenderer::tick() {
 		inRenderQueue.erase(inRenderQueue.find(cc));
 	}
 	client->getStopwatch()->stop(CLOCK_IRQ);
-
-	render();
 }
 
 void ChunkRenderer::render() {
