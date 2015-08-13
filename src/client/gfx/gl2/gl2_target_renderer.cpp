@@ -15,10 +15,6 @@ GL2TargetRenderer::GL2TargetRenderer(Client *client, GL2Renderer *renderer) :
 	// nothing
 }
 
-GL2TargetRenderer::~GL2TargetRenderer() {
-	// nothing
-}
-
 void GL2TargetRenderer::render() {
 	Player &player = client->getLocalPlayer();
 	vec3i64 pc = player.getChunkPos();

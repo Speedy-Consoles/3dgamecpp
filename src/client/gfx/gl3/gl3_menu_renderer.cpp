@@ -53,7 +53,8 @@ GL3MenuRendererImpl::GL3MenuRendererImpl(Client *client, GL3Renderer *renderer) 
 }
 
 void GL3MenuRendererImpl::render() {
-	renderWidget((const Widget *) client->getMenu()->getFrame());
+	if (client->getState() == Client::State::IN_MENU)
+		renderWidget((const Widget *) client->getMenu()->getFrame());
 }
 
 

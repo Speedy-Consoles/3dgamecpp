@@ -3,6 +3,8 @@
 
 #include <memory>
 
+#include "client/gfx/component_renderer.hpp"
+
 class GL3Renderer;
 class Client;
 class ShaderManager;
@@ -10,13 +12,12 @@ class Graphics;
 
 class GL3MenuRendererImpl;
 
-
-class GL3MenuRenderer {
+class GL3MenuRenderer : public ComponentRenderer {
 public:
 	~GL3MenuRenderer();
 	GL3MenuRenderer(Client *client, GL3Renderer *renderer);
 
-	void render();
+	void render() override;
 
 private:
 	// pimpl idiom

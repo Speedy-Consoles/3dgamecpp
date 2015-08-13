@@ -40,12 +40,13 @@ private:
 	GL3TextureManager texManager;
 
 	// chunk renderer
-	GL3ChunkRenderer chunkRenderer;
-	GL3TargetRenderer targetRenderer;
-	GL3SkyRenderer skyRenderer;
-	GL3HudRenderer hudRenderer;
-	GL3MenuRenderer menuRenderer;
-	GL3DebugRenderer debugRenderer;
+	GL3ChunkRenderer *p_chunkRenderer;
+	std::unique_ptr<ComponentRenderer> chunkRenderer;
+	std::unique_ptr<ComponentRenderer> targetRenderer;
+	std::unique_ptr<ComponentRenderer> skyRenderer;
+	std::unique_ptr<ComponentRenderer> hudRenderer;
+	std::unique_ptr<ComponentRenderer> menuRenderer;
+	std::unique_ptr<ComponentRenderer> debugRenderer;
 
 	// 3D values
 	float ZNEAR = 0.1f;

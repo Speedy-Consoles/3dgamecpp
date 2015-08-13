@@ -3,11 +3,13 @@
 
 #include <FTGL/ftgl.h>
 
+#include "client/gfx/component_renderer.hpp"
+
 class Client;
 class GL2Renderer;
 struct GraphicsConf;
 
-class GL2DebugRenderer {
+class GL2DebugRenderer : public ComponentRenderer {
 	Client *client = nullptr;
 	GL2Renderer *renderer = nullptr;
 
@@ -16,9 +18,8 @@ class GL2DebugRenderer {
 public:
 	GL2DebugRenderer(Client *client, GL2Renderer *renderer);
 	~GL2DebugRenderer();
-
-	void setConf(const GraphicsConf &, const GraphicsConf &);
-	void render();
+	
+	void render() override;
 
 private:
 	void renderDebug();

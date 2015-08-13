@@ -29,11 +29,10 @@ GL2MenuRenderer::~GL2MenuRenderer() {
 	delete font;
 }
 
-void GL2MenuRenderer::setConf(const GraphicsConf &, const GraphicsConf &) {
-
-}
-
 void GL2MenuRenderer::render() {
+	if (client->getState() != Client::State::IN_MENU)
+		return;
+
 	auto w = client->getGraphics()->getDrawWidth();
 	auto h = client->getGraphics()->getDrawHeight();
 

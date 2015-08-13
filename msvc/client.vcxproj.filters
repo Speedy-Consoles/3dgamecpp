@@ -247,6 +247,9 @@
     <ClInclude Include="..\src\client\gfx\gl3\gl3_texture_manager.hpp">
       <Filter>Header Files\gfx\gl3</Filter>
     </ClInclude>
+    <ClInclude Include="..\src\client\gfx\component_renderer.hpp">
+      <Filter>Header Files\gfx</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\shaders\block.frag">

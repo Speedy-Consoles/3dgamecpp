@@ -1,20 +1,20 @@
 #ifndef GL2_HUD_RENDERER_HPP_
 #define GL2_HUD_RENDERER_HPP_
 
+#include "client/gfx/component_renderer.hpp"
+
 class Client;
 class GL2Renderer;
 struct GraphicsConf;
 
-class GL2HudRenderer {
+class GL2HudRenderer : public ComponentRenderer {
 	Client *client;
 	GL2Renderer *renderer;
 
 public:
 	GL2HudRenderer(Client *client, GL2Renderer *renderer);
-	~GL2HudRenderer();
 
-	void setConf(const GraphicsConf &, const GraphicsConf &);
-	void render();
+	void render() override;
 
 private:
 	void renderCrosshair();

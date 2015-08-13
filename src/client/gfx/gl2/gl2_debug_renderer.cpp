@@ -24,11 +24,10 @@ GL2DebugRenderer::~GL2DebugRenderer() {
 	delete font;
 }
 
-void GL2DebugRenderer::setConf(const GraphicsConf &, const GraphicsConf &) {
-
-}
-
 void GL2DebugRenderer::render() {
+	if (!client->isDebugOn() || client->getState() != Client::State::PLAYING)
+		return;
+
 	renderDebug();
 
 	if (client->getStopwatch())

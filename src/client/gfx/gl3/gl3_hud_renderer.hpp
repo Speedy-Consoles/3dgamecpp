@@ -4,16 +4,16 @@
 #include "shared/engine/macros.hpp"
 #include "client/gfx/graphics.hpp"
 #include "client/client.hpp"
+#include "client/gfx/component_renderer.hpp"
 
 class GL3Renderer;
 class ShaderManager;
 
-class GL3HudRenderer {
+class GL3HudRenderer : public ComponentRenderer {
 public:
 	GL3HudRenderer(Client *client, GL3Renderer *renderer);
-	~GL3HudRenderer() = default;
 
-	void render();
+	void render() override;
 
 private:
 	Client *client = nullptr;

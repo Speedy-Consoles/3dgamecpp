@@ -6,6 +6,8 @@
 #include "shared/block_utils.hpp"
 #include "shared/chunk_manager.hpp"
 #include "shared/constants.hpp"
+#include "client/client.hpp"
+#include "client/config.hpp"
 
 #include "renderer.hpp"
 

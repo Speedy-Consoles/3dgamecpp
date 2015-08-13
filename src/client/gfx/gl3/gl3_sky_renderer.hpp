@@ -2,18 +2,19 @@
 #define GL3_SYK_RENDERER_HPP_
 
 #include "shared/engine/macros.hpp"
+#include "shared/engine/vmath.hpp"
 #include "client/client.hpp"
 #include "client/gfx/graphics.hpp"
+#include "client/gfx/component_renderer.hpp"
 
 class GL3Renderer;
 class ShaderManager;
 
-class GL3SkyRenderer {
+class GL3SkyRenderer : public ComponentRenderer {
 public:
 	GL3SkyRenderer(Client *client, GL3Renderer *renderer);
-	~GL3SkyRenderer();
 
-	void render();
+	void render() override;
 
 private:
 	Client *client = nullptr;

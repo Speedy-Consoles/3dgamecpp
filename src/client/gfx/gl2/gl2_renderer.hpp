@@ -44,13 +44,14 @@ class GL2Renderer : public Renderer {
 	Client *client;
 
 	GL2TextureManager texManager;
-
-	GL2ChunkRenderer chunkRenderer;
-	GL2TargetRenderer targetRenderer;
-	GL2SkyRenderer skyRenderer;
-	GL2HudRenderer hudRenderer;
-	GL2MenuRenderer menuRenderer;
-	GL2DebugRenderer debugRenderer;
+	
+	GL2ChunkRenderer *p_chunkRenderer;
+	std::unique_ptr<ComponentRenderer> chunkRenderer;
+	std::unique_ptr<ComponentRenderer> targetRenderer;
+	std::unique_ptr<ComponentRenderer> skyRenderer;
+	std::unique_ptr<ComponentRenderer> hudRenderer;
+	std::unique_ptr<ComponentRenderer> menuRenderer;
+	std::unique_ptr<ComponentRenderer> debugRenderer;
 
 	float ZNEAR = 0.1f;
 
