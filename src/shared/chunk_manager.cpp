@@ -13,6 +13,7 @@ ChunkManager::ChunkManager(Client *client) :
 	loadedStoredQueue(1024),
 	toLoadStoreQueue(1024),
 	chunks(0, vec3i64HashFunc),
+	oldRevisions(0, vec3i64HashFunc),
 	needCounter(0, vec3i64HashFunc),
 	client(client),
 	archive("./region/")
@@ -67,14 +68,14 @@ void ChunkManager::tick() {
 		switch(op.type) {
 		case LOAD:
 			if (op.chunk->initialized) {
-				insertLoadedChunk(op.chunk);
+				if (insertLoadedChunk(op.chunk))
+					oldRevisions.insert({op.chunk->getCC(), op.chunk->getRevision()});
 			} else {
 				notInCacheQueue.push(op.chunk);
 			}
 			break;
 		case STORE:
-			op.chunk->reset();
-			unusedChunks.push(op.chunk);
+			recycleChunk(op.chunk);
 			break;
 		}
 	}
@@ -160,8 +161,14 @@ void ChunkManager::releaseChunk(vec3i64 chunkCoords) {
 			needCounter.erase(it1);
 			auto it2 = chunks.find(chunkCoords);
 			if (it2 != chunks.end()) {
-				preToStoreQueue.push(it2->second);
+				auto it3 = oldRevisions.find(chunkCoords);
+				if (it3 == oldRevisions.end() || it2->second->getRevision() != it3->second)
+					preToStoreQueue.push(it2->second);
+				else
+					recycleChunk(it2->second);
 				chunks.erase(it2);
+				if (it3 != oldRevisions.end())
+					oldRevisions.erase(it3);
 			}
 		}
 	}
@@ -187,12 +194,18 @@ int ChunkManager::getNotInCacheQueueSize() const {
 	return notInCacheQueue.size();
 }
 
-void ChunkManager::insertLoadedChunk(Chunk *chunk) {
+bool ChunkManager::insertLoadedChunk(Chunk *chunk) {
 	auto it = needCounter.find(chunk->getCC());
 	if (it != needCounter.end()) {
 		chunks.insert({chunk->getCC(), chunk});
+		return true;
 	} else {
-		chunk->reset();
-		unusedChunks.push(chunk);
+		recycleChunk(chunk);
+		return false;
 	}
+}
+
+void ChunkManager::recycleChunk(Chunk *chunk) {
+	chunk->reset();
+	unusedChunks.push(chunk);
 }

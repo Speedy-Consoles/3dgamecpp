@@ -38,6 +38,7 @@ class ChunkManager : public Thread {
 	ProducerQueue<ArchiveOperation> loadedStoredQueue;
 	ProducerQueue<ArchiveOperation> toLoadStoreQueue;
 	std::unordered_map<vec3i64, Chunk *, size_t(*)(vec3i64)> chunks;
+	std::unordered_map<vec3i64, uint32, size_t(*)(vec3i64)> oldRevisions;
 	std::unordered_map<vec3i64, int, size_t(*)(vec3i64)> needCounter;
 
 	Client *client = nullptr;
@@ -68,7 +69,8 @@ public:
 	int getNotInCacheQueueSize() const;
 
 private:
-	void insertLoadedChunk(Chunk *chunk);
+	bool insertLoadedChunk(Chunk *chunk);
+	void recycleChunk(Chunk *chunk);
 };
 
 #endif /* CHUNK_MANAGER_HPP */
