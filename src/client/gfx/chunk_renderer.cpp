@@ -115,12 +115,14 @@ void ChunkRenderer::render() {
 
 	int visibleDiameter = renderDistance * 2 + 1;
 	vec3d lookDir = getVectorFromAngles(player.getYaw(), player.getPitch());
+	vec3i64 pc = player.getChunkPos();
 
 	visibleChunks = 0;
 	visibleFaces = 0;
 
 	for (int i = 0; i < visibleDiameter * visibleDiameter * visibleDiameter; i++) {
 		if (chunkGrid[i].status != NO_CHUNK
+				&& (chunkGrid[i].content - pc).norm() <= client->getConf().render_distance
 				&& chunkGrid[i].vsInsVersion == vsCounter
 				&& chunkGrid[i].vsIns > 0
 				&& chunkGrid[i].numFaces > 0
