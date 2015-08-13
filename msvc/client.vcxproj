@@ -22,8 +22,7 @@
     <ClCompile Include="..\src\client\gfx\gl2\gl2_renderer.cpp" />
     <ClCompile Include="..\src\client\gfx\gl2\gl2_sky_renderer.cpp" />
     <ClCompile Include="..\src\client\gfx\gl2\gl2_target_renderer.cpp" />
-    <ClCompile Include="..\src\client\gfx\gl2\texture_loader.cpp" />
-    <ClCompile Include="..\src\client\gfx\gl2\texture_manager.cpp" />
+    <ClCompile Include="..\src\client\gfx\gl2\gl2_texture_manager.cpp" />
     <ClCompile Include="..\src\client\gfx\gl3\gl3_chunk_renderer.cpp" />
     <ClCompile Include="..\src\client\gfx\gl3\gl3_debug_renderer.cpp" />
     <ClCompile Include="..\src\client\gfx\gl3\gl3_font.cpp" />
@@ -33,7 +32,10 @@
     <ClCompile Include="..\src\client\gfx\gl3\gl3_shaders.cpp" />
     <ClCompile Include="..\src\client\gfx\gl3\gl3_sky_renderer.cpp" />
     <ClCompile Include="..\src\client\gfx\gl3\gl3_target_renderer.cpp" />
+    <ClCompile Include="..\src\client\gfx\gl3\gl3_texture_manager.cpp" />
     <ClCompile Include="..\src\client\gfx\graphics.cpp" />
+    <ClCompile Include="..\src\client\gfx\texture_loader.cpp" />
+    <ClCompile Include="..\src\client\gfx\texture_manager.cpp" />
     <ClCompile Include="..\src\client\gui\button.cpp" />
     <ClCompile Include="..\src\client\gui\frame.cpp" />
     <ClCompile Include="..\src\client\gui\label.cpp" />
@@ -54,8 +56,7 @@
     <ClInclude Include="..\src\client\gfx\gl2\gl2_renderer.hpp" />
     <ClInclude Include="..\src\client\gfx\gl2\gl2_sky_renderer.hpp" />
     <ClInclude Include="..\src\client\gfx\gl2\gl2_target_renderer.hpp" />
-    <ClInclude Include="..\src\client\gfx\gl2\texture_loader.hpp" />
-    <ClInclude Include="..\src\client\gfx\gl2\texture_manager.hpp" />
+    <ClInclude Include="..\src\client\gfx\gl2\gl2_texture_manager.hpp" />
     <ClInclude Include="..\src\client\gfx\gl3\gl3_chunk_renderer.hpp" />
     <ClInclude Include="..\src\client\gfx\gl3\gl3_debug_renderer.hpp" />
     <ClInclude Include="..\src\client\gfx\gl3\gl3_font.hpp" />
@@ -65,8 +66,11 @@
     <ClInclude Include="..\src\client\gfx\gl3\gl3_shaders.hpp" />
     <ClInclude Include="..\src\client\gfx\gl3\gl3_sky_renderer.hpp" />
     <ClInclude Include="..\src\client\gfx\gl3\gl3_target_renderer.hpp" />
+    <ClInclude Include="..\src\client\gfx\gl3\gl3_texture_manager.hpp" />
     <ClInclude Include="..\src\client\gfx\graphics.hpp" />
     <ClInclude Include="..\src\client\gfx\renderer.hpp" />
+    <ClInclude Include="..\src\client\gfx\texture_loader.hpp" />
+    <ClInclude Include="..\src\client\gfx\texture_manager.hpp" />
     <ClInclude Include="..\src\client\gui\button.hpp" />
     <ClInclude Include="..\src\client\gui\cycle_button.hpp" />
     <ClInclude Include="..\src\client\gui\frame.hpp" />
@@ -76,6 +80,16 @@
     <ClInclude Include="..\src\client\menu.hpp" />
     <ClInclude Include="..\src\client\remote_server_interface.hpp" />
     <ClInclude Include="..\src\client\server_interface.hpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\shaders\block.frag" />
+    <None Include="..\shaders\block.vert" />
+    <None Include="..\shaders\default.frag" />
+    <None Include="..\shaders\default.vert" />
+    <None Include="..\shaders\font.frag" />
+    <None Include="..\shaders\font.vert" />
+    <None Include="..\shaders\hud.frag" />
+    <None Include="..\shaders\hud.vert" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{F829FC7B-DD1F-4805-845E-88D91D2E8BF3}</ProjectGuid>

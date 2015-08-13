@@ -8,6 +8,7 @@
 #include "shared/engine/logging.hpp"
 #include "shared/block_utils.hpp"
 #include "shared/block_manager.hpp"
+#include "client/gfx/texture_manager.hpp"
 #include "client/client.hpp"
 
 static logging::Logger logger("gfx");
@@ -19,57 +20,7 @@ namespace std {
 	}
 }
 
-struct ParsingError {
-	int row, col;
-	std::string error;
-};
-
-enum TokenId {
-	TOK_EOF,
-	TOK_LBRACE,
-	TOK_RBRACE,
-	TOK_EQUAL,
-	TOK_STRING,
-	TOK_NUMERAL,
-	TOK_IDENT,
-};
-
-struct Token {
-	TokenId id;
-	int pos;
-	int row;
-	int col;
-	std::string str;
-	union {
-		long i;
-		const char *err;
-	};
-};
-
-class TextureLoader {
-	const char *path;
-	FILE *f = nullptr;
-	const BlockManager *bm = nullptr;
-	AbstractTextureManager *tm = nullptr;
-
-public:
-	TextureLoader(const char *path, const BlockManager *bm, AbstractTextureManager *tm);
-	~TextureLoader();
-
-	int load();
-
-private:
-	int ch = 0;
-	int pos = 0;
-	int row = 0;
-	int col = 0;
-	void getNextChar();
-
-	Token tok;
-	void getNextToken();
-};
-
-TextureLoader::TextureLoader(const char *path, const BlockManager *bm, AbstractTextureManager *tm) :
+TextureLoader::TextureLoader(const char *path, const BlockManager *bm, TextureManager *tm) :
 	path(path), bm(bm), tm(tm)
 {
 	f = fopen(path, "r");
@@ -445,26 +396,4 @@ void TextureLoader::getNextToken() {
 			break;
 		}
 	}
-}
-
-int AbstractTextureManager::load(const char *path) {
-	files.push_back(path);
-	auto *bm = _client->getBlockManager();
-	auto loader = std::unique_ptr<TextureLoader>(new TextureLoader(path, bm, this));
-	try {
-		loader->load();
-	} catch (ParsingError &e) {
-		LOG_ERROR(logger) << path << ":" << (e.row + 1) << ":" << (e.col + 1) << ": " << e.error;
-		return 1;
-	}
-	return 0;
-}
-
-int AbstractTextureManager::reloadAll() {
-	clear();
-	int result = 0;
-	for (std::string &file : files) {
-		result |= load(file.c_str());
-	}
-	return result;
 }

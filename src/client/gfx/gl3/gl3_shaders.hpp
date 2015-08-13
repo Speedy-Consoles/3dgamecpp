@@ -16,14 +16,14 @@ enum ShaderProgram {
 
 static const int NUM_PROGRAMS = 4;
 
-class ShaderManager;
+class GL3ShaderManager;
 
 class Shader {
-	ShaderManager *_manager = nullptr;
+	GL3ShaderManager *_manager = nullptr;
 	GLuint _programLocation;
 
 public:
-	Shader(ShaderManager *, const char *, const char *);
+	Shader(GL3ShaderManager *, const char *, const char *);
 	virtual ~Shader();
 
 	GLuint getProgramLocation() const { return _programLocation; }
@@ -72,7 +72,7 @@ class DefaultShader : public Shader {
 	GLfloat _fogEndDistance = 0;
 
 public:
-	DefaultShader(ShaderManager *);
+	DefaultShader(GL3ShaderManager *);
 	virtual ~DefaultShader() = default;
 
 	void useProgram();
@@ -128,7 +128,7 @@ class BlockShader : public Shader {
 	GLfloat _fogEndDistance = 0;
 
 public:
-	BlockShader(ShaderManager *);
+	BlockShader(GL3ShaderManager *);
 	virtual ~BlockShader() = default;
 
 	void useProgram();
@@ -157,7 +157,7 @@ class HudShader : public Shader {
 	glm::mat4 _modelMatrix = glm::mat4();
 
 public:
-	HudShader(ShaderManager *);
+	HudShader(GL3ShaderManager *);
 	virtual ~HudShader() = default;
 	
 	void useProgram();
@@ -198,7 +198,7 @@ class FontShader : public Shader {
 	bool _modeDirty = true;
 
 public:
-	FontShader(ShaderManager *);
+	FontShader(GL3ShaderManager *);
 	virtual ~FontShader() = default;
 	
 	void useProgram();
@@ -215,12 +215,12 @@ public:
 	void setMode(FontRenderMode mode);
 };
 
-class ShaderManager {
+class GL3ShaderManager {
 	std::vector<std::unique_ptr<Shader>> _programs;
 	GLuint _activeProgram;
 
 public:
-	ShaderManager();
+	GL3ShaderManager();
 	
 	DefaultShader &getDefaultShader();
 	BlockShader &getBlockShader();

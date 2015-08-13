@@ -1,7 +1,8 @@
-#ifndef TEXTURE_MANAGER_HPP_
-#define TEXTURE_MANAGER_HPP_
+#ifndef GL3_TEXTURE_MANAGER_HPP_
+#define GL3_TEXTURE_MANAGER_HPP_
 
-#include "texture_loader.hpp"
+#include "client/gfx/texture_loader.hpp"
+#include "client/gfx/texture_manager.hpp"
 
 #include <unordered_map>
 #include <vector>
@@ -19,29 +20,22 @@ struct SDL_Surface;
 class TextureLoader;
 class Client;
 
-class TextureManager : public AbstractTextureManager {
+class GL3TextureManager : public TextureManager {
 public:
 	struct Entry {
 		GLuint tex;
+		GLuint layer;
 		TextureType type;
 		int index;
 	};
 
-	TextureManager(Client *);
-	~TextureManager();
-
-	// not copyable or movable
-	TextureManager(const TextureManager &) = delete;
-	TextureManager(TextureManager &&) = delete;
-	TextureManager &operator = (const TextureManager &) = delete;
-	TextureManager &operator = (TextureManager &&) = delete;
+	GL3TextureManager(Client *);
+	~GL3TextureManager();
 
 	void setConfig(const GraphicsConf &, const GraphicsConf &);
 	
 	Entry get(uint block, uint8 dir = DIR_EAST) const;
 	Entry get(uint block, vec3i64 bc, uint8 dir) const;
-
-	static void getVertices(const Entry &entry, vec2f out[4]);
 
 protected:
 	void add(SDL_Surface *img, const std::vector<TextureLoadEntry> &entries) override;
@@ -51,7 +45,7 @@ private:
 	std::unordered_map<int, Entry> textures;
 	std::list<GLuint> loadedTextures;
 
-	GLuint loadTexture(int block, uint8 dir, SDL_Surface *, TextureType type);
+	GLuint blockTextures = 0;
 };
 
-#endif // TEXTURE_MANAGER_HPP_
+#endif // GL3_TEXTURE_MANAGER_HPP_

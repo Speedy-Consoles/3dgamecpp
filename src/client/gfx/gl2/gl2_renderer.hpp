@@ -20,7 +20,7 @@
 #include "gl2_hud_renderer.hpp"
 #include "gl2_menu_renderer.hpp"
 #include "gl2_debug_renderer.hpp"
-#include "texture_manager.hpp"
+#include "gl2_texture_manager.hpp"
 
 class World;
 class Player;
@@ -43,7 +43,7 @@ class GL2Renderer : public Renderer {
 
 	Client *client;
 
-	TextureManager texManager;
+	GL2TextureManager texManager;
 
 	GL2ChunkRenderer chunkRenderer;
 	GL2TargetRenderer targetRenderer;
@@ -101,7 +101,7 @@ public:
 
 	void rebuildChunk(vec3i64 chunkCoords) override;
 
-	TextureManager *getTextureManager();
+	GL2TextureManager *getTextureManager();
 
 	virtual float getMaxFOV() { return maxFOV; }
 
