@@ -7,8 +7,9 @@
 #include "shared/engine/vmath.hpp"
 #include "shared/game/chunk.hpp"
 #include "client/client.hpp"
-#include "client/config.hpp"
+#include "client/gfx/component_renderer.hpp"
 
+struct GraphicsConf;
 class Renderer;
 
 struct ChunkRendererDebugInfo {
@@ -21,7 +22,7 @@ struct ChunkRendererDebugInfo {
 	int buildQueueSize = 0;
 };
 
-class ChunkRenderer {
+class ChunkRenderer : public ComponentRenderer {
 private:
 	// performance limits
 	static const int MAX_NEW_FACES = 3000;
@@ -84,9 +85,9 @@ public:
 
 	void init();
 
-	void setConf(const GraphicsConf &, const GraphicsConf &);
-	void tick();
-	void render();
+	void setConf(const GraphicsConf &, const GraphicsConf &) override;
+	void tick() override;
+	void render() override;
 
 	void rebuildChunk(vec3i64 chunkCoords);
 

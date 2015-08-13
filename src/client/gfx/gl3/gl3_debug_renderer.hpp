@@ -1,16 +1,15 @@
 #ifndef GL3_DEBUG_RENDERER_HPP_
 #define GL3_DEBUG_RENDERER_HPP_
 
-#include "shared/engine/stopwatch.hpp"
-#include "shared/game/world.hpp"
-#include "client/gfx/graphics.hpp"
+#include "client/client.hpp"
+#include "client/gfx/component_renderer.hpp"
 
 #include "gl3_font.hpp"
 
 class GL3Renderer;
 class GL3ChunkRenderer;
 
-class GL3DebugRenderer {
+class GL3DebugRenderer : public ComponentRenderer {
 	Client *client = nullptr;
 	GL3Renderer *renderer = nullptr;
 	GL3ChunkRenderer *chunkRenderer = nullptr;
@@ -35,8 +34,8 @@ public:
 	GL3DebugRenderer(Client *client, GL3Renderer *renderer, GL3ChunkRenderer *chunkRenderer);
 	~GL3DebugRenderer();
 
-	void tick();
-	void render();
+	void tick() override;
+	void render() override;
 
 private:
 	void renderDebug();

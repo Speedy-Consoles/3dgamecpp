@@ -48,6 +48,7 @@
     <ClInclude Include="..\src\client\client.hpp" />
     <ClInclude Include="..\src\client\config.hpp" />
     <ClInclude Include="..\src\client\gfx\chunk_renderer.hpp" />
+    <ClInclude Include="..\src\client\gfx\component_renderer.hpp" />
     <ClInclude Include="..\src\client\gfx\font.hpp" />
     <ClInclude Include="..\src\client\gfx\gl2\gl2_chunk_renderer.hpp" />
     <ClInclude Include="..\src\client\gfx\gl2\gl2_debug_renderer.hpp" />

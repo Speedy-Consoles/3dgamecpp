@@ -20,16 +20,17 @@ GL3Renderer::GL3Renderer(Client *client) :
 	client(client),
 	shaderManager(),
 	texManager(client),
-	chunkRenderer(client, this),
-	targetRenderer(client, this),
-	skyRenderer(client, this),
-	hudRenderer(client, this),
-	menuRenderer(client, this),
-	debugRenderer(client, this, &chunkRenderer),
 	fontTimes(&shaderManager.getFontShader()),
 	fontDejavu(&shaderManager.getFontShader())
 {
-	chunkRenderer.init();
+	p_chunkRenderer = new GL3ChunkRenderer(client, this);
+	p_chunkRenderer->init();
+	chunkRenderer = std::unique_ptr<ComponentRenderer>(p_chunkRenderer);
+	targetRenderer = std::unique_ptr<ComponentRenderer>(new GL3TargetRenderer(client, this));
+	skyRenderer = std::unique_ptr<ComponentRenderer>(new GL3SkyRenderer(client, this));
+	hudRenderer = std::unique_ptr<ComponentRenderer>(new GL3HudRenderer(client, this));
+	menuRenderer = std::unique_ptr<ComponentRenderer>(new GL3MenuRenderer(client, this));
+	debugRenderer = std::unique_ptr<ComponentRenderer>(new GL3DebugRenderer(client, this, p_chunkRenderer));
 
 	makeMaxFOV();
 	makePerspectiveMatrix();
@@ -120,11 +121,11 @@ void GL3Renderer::setConf(const GraphicsConf &conf, const GraphicsConf &old) {
 	defaultShader.setFogEnabled(fog);
 	blockShader.setFogEnabled(fog);
 
-	chunkRenderer.setConf(conf, old);
+	chunkRenderer->setConf(conf, old);
 }
 
 void GL3Renderer::rebuildChunk(vec3i64 chunkCoords) {
-	chunkRenderer.rebuildChunk(chunkCoords);
+	p_chunkRenderer->rebuildChunk(chunkCoords);
 }
 
 void GL3Renderer::makePerspectiveMatrix() {
@@ -189,19 +190,19 @@ void GL3Renderer::makeSkyFbo() {
 
 void GL3Renderer::tick() {
 	client->getStopwatch()->start(CLOCK_CRT);
-	chunkRenderer.tick();
+	chunkRenderer->tick();
 	client->getStopwatch()->stop(CLOCK_CRT);
-	debugRenderer.tick();
+	debugRenderer->tick();
 }
 
 void GL3Renderer::render() {
 	// render sky
 	GL(Disable(GL_DEPTH_TEST));
 	GL(DepthMask(false));
-	skyRenderer.render();
+	skyRenderer->render();
 	if (client->getConf().fog == Fog::FANCY || client->getConf().fog == Fog::FAST) {
 		GL(BindFramebuffer(GL_FRAMEBUFFER, skyFbo));
-		skyRenderer.render();
+		skyRenderer->render();
 		GL(BindFramebuffer(GL_FRAMEBUFFER, 0));
 		GL(ActiveTexture(GL_TEXTURE1));
 		GL(BindTexture(GL_TEXTURE_2D, skyTex));
@@ -212,20 +213,17 @@ void GL3Renderer::render() {
 	GL(DepthMask(true));
 	GL(Clear(GL_DEPTH_BUFFER_BIT));
 	client->getStopwatch()->start(CLOCK_CRR);
-	chunkRenderer.render();
+	chunkRenderer->render();
 	client->getStopwatch()->stop(CLOCK_CRR);
-	targetRenderer.render();
+	targetRenderer->render();
 
 	// render overlay
 	GL(Disable(GL_DEPTH_TEST));
 	GL(DepthMask(false));
-	if (client->getState() == Client::State::PLAYING) {
-		hudRenderer.render();
-		if (client->isDebugOn())
-			debugRenderer.render();
-	} else if (client->getState() == Client::State::IN_MENU){
-		menuRenderer.render();
-	}
+
+	hudRenderer->render();
+	debugRenderer->render();
+	menuRenderer->render();
 
 	client->getGraphics()->flip();
 }

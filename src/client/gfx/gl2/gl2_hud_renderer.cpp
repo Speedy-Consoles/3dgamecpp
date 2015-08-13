@@ -10,17 +10,11 @@ GL2HudRenderer::GL2HudRenderer(Client *client, GL2Renderer *renderer) :
 	// nothing
 }
 
-GL2HudRenderer::~GL2HudRenderer() {
-
-}
-
-void GL2HudRenderer::setConf(const GraphicsConf &, const GraphicsConf &) {
-
-}
-
 void GL2HudRenderer::render() {
-	renderCrosshair();
-	renderSelectedBlock();
+	if (client->getState() == Client::State::PLAYING) {
+		renderCrosshair();
+		renderSelectedBlock();
+	}
 }
 
 void GL2HudRenderer::renderCrosshair() {
@@ -43,6 +37,10 @@ void GL2HudRenderer::renderCrosshair() {
 }
 
 void GL2HudRenderer::renderSelectedBlock() {
+	const Player &player = client->getLocalPlayer();
+	if (!player.isValid())
+		return;
+
 	GL(Enable(GL_TEXTURE_2D));
 	vec2f texs[4];
 	GL2TextureManager::Entry tex_entry = renderer->getTextureManager()->get(client->getLocalPlayer().getBlock());

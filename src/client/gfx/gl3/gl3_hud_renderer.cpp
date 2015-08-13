@@ -49,9 +49,11 @@ GL3HudRenderer::GL3HudRenderer(Client *client, GL3Renderer *renderer) :
 }
 
 void GL3HudRenderer::render() {
-	HudShader &shader = ((GL3Renderer *) renderer)->getShaderManager()->getHudShader();
-	shader.setModelMatrix(glm::mat4(1.0f));
-	shader.useProgram();
-	GL(BindVertexArray(vao));
-	GL(DrawArrays(GL_TRIANGLES, 0, 12));
+	if (client->getState() == Client::State::PLAYING) {
+		HudShader &shader = ((GL3Renderer *) renderer)->getShaderManager()->getHudShader();
+		shader.setModelMatrix(glm::mat4(1.0f));
+		shader.useProgram();
+		GL(BindVertexArray(vao));
+		GL(DrawArrays(GL_TRIANGLES, 0, 12));
+	}
 }

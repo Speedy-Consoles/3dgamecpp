@@ -8,14 +8,6 @@ GL2SkyRenderer::GL2SkyRenderer(Client *client, GL2Renderer *renderer) :
 	// nothing
 }
 
-GL2SkyRenderer::~GL2SkyRenderer() {
-
-}
-
-void GL2SkyRenderer::setConf(const GraphicsConf &, const GraphicsConf &) {
-
-}
-
 void GL2SkyRenderer::render() {
 	glBegin(GL_QUADS);
 	glColor3fv(fogColor.ptr());

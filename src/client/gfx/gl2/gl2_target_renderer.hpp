@@ -2,23 +2,21 @@
 #define GL2_TARGET_RENDERER_HPP_
 
 #include "shared/engine/macros.hpp"
-#include "client/client.hpp"
-#include "client/gfx/graphics.hpp"
+#include "shared/engine/vmath.hpp"
+#include "client/gfx/component_renderer.hpp"
 
+class Client;
 class GL2Renderer;
-class ShaderManager;
 
-class GL2TargetRenderer {
+class GL2TargetRenderer : public ComponentRenderer {
 public:
 	GL2TargetRenderer(Client *client, GL2Renderer *renderer);
-	~GL2TargetRenderer();
 
-	void render();
+	void render() override;
 
 private:
 	Client *client = nullptr;
 	GL2Renderer *renderer = nullptr;
-	ShaderManager *shaderManager = nullptr;
 
 	vec3f targetColor{ 0.0f, 0.0f, 0.0f };
 };

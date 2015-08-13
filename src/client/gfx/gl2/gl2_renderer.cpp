@@ -19,15 +19,16 @@ static logging::Logger logger("render");
 
 GL2Renderer::GL2Renderer(Client *client) :
 	client(client),
-	texManager(client),
-	chunkRenderer(client, this),
-	targetRenderer(client, this),
-	skyRenderer(client, this),
-	hudRenderer(client, this),
-	menuRenderer(client, this),
-	debugRenderer(client, this)
+	texManager(client)
 {
-	chunkRenderer.init();
+	p_chunkRenderer = new GL2ChunkRenderer(client, this);
+	p_chunkRenderer->init();
+	chunkRenderer  = std::unique_ptr<ComponentRenderer>(p_chunkRenderer);
+	targetRenderer = std::unique_ptr<ComponentRenderer>(new GL2TargetRenderer(client, this));
+	skyRenderer    = std::unique_ptr<ComponentRenderer>(new GL2SkyRenderer(client, this));
+	hudRenderer    = std::unique_ptr<ComponentRenderer>(new GL2HudRenderer(client, this));
+	menuRenderer   = std::unique_ptr<ComponentRenderer>(new GL2MenuRenderer(client, this));
+	debugRenderer  = std::unique_ptr<ComponentRenderer>(new GL2DebugRenderer(client, this));
 
 	makeMaxFOV();
 	makePerspective();
@@ -49,7 +50,7 @@ GL2Renderer::~GL2Renderer() {
 
 void GL2Renderer::tick() {
 	client->getStopwatch()->start(CLOCK_CRT);
-	chunkRenderer.tick();
+	chunkRenderer->tick();
 	client->getStopwatch()->stop(CLOCK_CRT);
 	render();
 
@@ -118,11 +119,11 @@ void GL2Renderer::setConf(const GraphicsConf &conf, const GraphicsConf &old) {
 	}
 
 	texManager.setConfig(conf, old);
-	chunkRenderer.setConf(conf, old);
+	chunkRenderer->setConf(conf, old);
 }
 
 void GL2Renderer::rebuildChunk(vec3i64 chunkCoords) {
-	chunkRenderer.rebuildChunk(chunkCoords);
+	p_chunkRenderer->rebuildChunk(chunkCoords);
 }
 
 GL2TextureManager *GL2Renderer::getTextureManager() {
@@ -355,7 +356,7 @@ void GL2Renderer::render() {
 		GL(DepthMask(false));
 
 		GL(Rotated(-player.getPitch(), 1, 0, 0));
-		skyRenderer.render();
+		skyRenderer->render();
 
 		GL(Enable(GL_DEPTH_TEST));
 		GL(Enable(GL_TEXTURE_2D));
@@ -375,8 +376,8 @@ void GL2Renderer::render() {
 			(float) -((playerPos[2] % m + m) % m) / RESOLUTION
 		));
 		glLightfv(GL_LIGHT0, GL_POSITION, sunLightPosition.ptr());
-		chunkRenderer.render();
-		targetRenderer.render();
+		chunkRenderer->render();
+		targetRenderer->render();
 
 		// copy framebuffer to screen
 		if (fbo) {
@@ -405,11 +406,7 @@ void GL2Renderer::render() {
 	GL(Disable(GL_FOG));
 	GL(DepthMask(false));
 
-	if (client->getState() == Client::State::PLAYING && player.isValid()) {
-		hudRenderer.render();
-		if (client->isDebugOn())
-			debugRenderer.render();
-	} else if (client->getState() == Client::State::IN_MENU){
-		menuRenderer.render();
-	}
+	hudRenderer->render();
+	debugRenderer->render();
+	menuRenderer->render();
 }

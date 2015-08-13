@@ -3,6 +3,8 @@
 
 #include <FTGL/ftgl.h>
 
+#include "client/gfx/component_renderer.hpp"
+
 class Client;
 class GL2Renderer;
 struct GraphicsConf;
@@ -14,7 +16,7 @@ namespace gui {
 	class Button;
 }
 
-class GL2MenuRenderer {
+class GL2MenuRenderer : public ComponentRenderer {
 	Client *client = nullptr;
 	GL2Renderer *renderer = nullptr;
 
@@ -24,8 +26,7 @@ public:
 	GL2MenuRenderer(Client *client, GL2Renderer *renderer);
 	~GL2MenuRenderer();
 
-	void setConf(const GraphicsConf &, const GraphicsConf &);
-	void render();
+	void render() override;
 
 private:
 	void renderWidget(const gui::Widget *);

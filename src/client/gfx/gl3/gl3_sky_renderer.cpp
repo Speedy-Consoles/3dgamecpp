@@ -4,7 +4,9 @@
 
 #include "shared/engine/logging.hpp"
 #include "shared/engine/math.hpp"
-#include "client/gfx/gl3/gl3_renderer.hpp"
+#include "client/gfx/component_renderer.hpp"
+
+#include "gl3_renderer.hpp"
 
 GL3SkyRenderer::GL3SkyRenderer(Client *client, GL3Renderer *renderer) :
 	client(client),
@@ -39,10 +41,6 @@ GL3SkyRenderer::GL3SkyRenderer(Client *client, GL3Renderer *renderer) :
 	GL(EnableVertexAttribArray(1));
 	GL(BindBuffer(GL_ARRAY_BUFFER, 0));
 	GL(BindVertexArray(0));
-}
-
-GL3SkyRenderer::~GL3SkyRenderer() {
-	// nothing
 }
 
 void GL3SkyRenderer::render() {
