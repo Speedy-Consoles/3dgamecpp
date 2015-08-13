@@ -9,10 +9,11 @@ static logging::Logger logger("render");
 GL2ChunkRenderer::GL2ChunkRenderer(Client *client, GL2Renderer *renderer) :
 	ChunkRenderer(client, renderer)
 {
+	initRenderDistanceDependent(client->getConf().render_distance);
 }
 
 GL2ChunkRenderer::~GL2ChunkRenderer() {
-	LOG_DEBUG(logger) << "Destroying chunk renderer";
+	destroyRenderDistanceDependent();
 }
 
 void GL2ChunkRenderer::initRenderDistanceDependent(int renderDistance) {

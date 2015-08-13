@@ -27,7 +27,6 @@ GL3Renderer::GL3Renderer(Client *client) :
 	texManager(client)
 {
 	p_chunkRenderer = new GL3ChunkRenderer(client, this);
-	p_chunkRenderer->init();
 	chunkRenderer = std::unique_ptr<ComponentRenderer>(p_chunkRenderer);
 	targetRenderer = std::unique_ptr<ComponentRenderer>(new GL3TargetRenderer(client, this));
 	skyRenderer = std::unique_ptr<ComponentRenderer>(new GL3SkyRenderer(client, this));

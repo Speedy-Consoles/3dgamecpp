@@ -83,8 +83,6 @@ public:
 	ChunkRenderer(Client *client, Renderer *renderer);
 	virtual ~ChunkRenderer();
 
-	void init();
-
 	void setConf(const GraphicsConf &, const GraphicsConf &) override;
 	void tick() override;
 	void render() override;

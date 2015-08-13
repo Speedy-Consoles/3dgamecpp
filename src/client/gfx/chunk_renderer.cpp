@@ -19,14 +19,11 @@ ChunkRenderer::ChunkRenderer(Client *client, Renderer *renderer) :
 		inBuildQueue(0, vec3i64HashFunc),
 		client(client),
 		renderer(renderer) {
+	// nothing
 }
 
 ChunkRenderer::~ChunkRenderer() {
-	destroyRenderDistanceDependent();
-}
-
-void ChunkRenderer::init() {
-	initRenderDistanceDependent(client->getConf().render_distance);
+	// nothing
 }
 
 void ChunkRenderer::setConf(const GraphicsConf &conf, const GraphicsConf &old) {

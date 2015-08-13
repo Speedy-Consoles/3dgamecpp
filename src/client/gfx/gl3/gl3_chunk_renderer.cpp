@@ -23,11 +23,11 @@ static logging::Logger logger("render");
 GL3ChunkRenderer::GL3ChunkRenderer(Client *client, GL3Renderer *renderer) :
 	ChunkRenderer(client, renderer)
 {
-	// nothing
+	initRenderDistanceDependent(client->getConf().render_distance);
 }
 
 GL3ChunkRenderer::~GL3ChunkRenderer() {
-	// nothing
+	destroyRenderDistanceDependent();
 }
 
 void GL3ChunkRenderer::initRenderDistanceDependent(int renderDistance) {

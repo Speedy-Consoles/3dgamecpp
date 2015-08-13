@@ -30,7 +30,6 @@ GL2Renderer::GL2Renderer(Client *client) :
 	texManager(client)
 {
 	p_chunkRenderer = new GL2ChunkRenderer(client, this);
-	p_chunkRenderer->init();
 	chunkRenderer = std::unique_ptr<ComponentRenderer>(p_chunkRenderer);
 	targetRenderer = std::unique_ptr<ComponentRenderer>(new GL2TargetRenderer(client, this));
 	skyRenderer = std::unique_ptr<ComponentRenderer>(new GL2SkyRenderer(client, this));
