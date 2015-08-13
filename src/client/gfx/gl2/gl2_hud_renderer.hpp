@@ -5,7 +5,6 @@
 
 class Client;
 class GL2Renderer;
-struct GraphicsConf;
 
 class GL2HudRenderer : public ComponentRenderer {
 	Client *client;
@@ -15,10 +14,6 @@ public:
 	GL2HudRenderer(Client *client, GL2Renderer *renderer);
 
 	void render() override;
-
-private:
-	void renderCrosshair();
-	void renderSelectedBlock();
 };
 
 #endif //GL2_HUD_RENDERER_HPP_

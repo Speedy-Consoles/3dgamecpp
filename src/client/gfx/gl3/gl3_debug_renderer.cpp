@@ -6,6 +6,10 @@
 
 #include "shared/engine/logging.hpp"
 #include "shared/engine/math.hpp"
+#include "shared/engine/stopwatch.hpp"
+#include "client/client.hpp"
+#include "client/gfx/graphics.hpp"
+
 #include "gl3_chunk_renderer.hpp"
 #include "gl3_renderer.hpp"
 

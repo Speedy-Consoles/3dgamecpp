@@ -11,32 +11,9 @@ GL2HudRenderer::GL2HudRenderer(Client *client, GL2Renderer *renderer) :
 }
 
 void GL2HudRenderer::render() {
-	if (client->getState() == Client::State::PLAYING) {
-		renderCrosshair();
-		renderSelectedBlock();
-	}
-}
+	if (client->getState() != Client::State::PLAYING)
+		return;
 
-void GL2HudRenderer::renderCrosshair() {
-	GL(Disable(GL_TEXTURE_2D));
-
-	GL(Color4d(0, 0, 0, 0.5));
-
-	glBegin(GL_QUADS);
-		glVertex2d(-20, -2);
-		glVertex2d(20, -2);
-		glVertex2d(20, 2);
-		glVertex2d(-20, 2);
-
-		glVertex2d(-2, -20);
-		glVertex2d(2, -20);
-		glVertex2d(2, 20);
-		glVertex2d(-2, 20);
-	glEnd();
-	LOG_OPENGL_ERROR;
-}
-
-void GL2HudRenderer::renderSelectedBlock() {
 	const Player &player = client->getLocalPlayer();
 	if (!player.isValid())
 		return;

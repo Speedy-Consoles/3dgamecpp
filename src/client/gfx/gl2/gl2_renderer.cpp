@@ -13,6 +13,14 @@
 #include "client/menu.hpp"
 #include "client/gui/frame.hpp"
 
+#include "gl2_chunk_renderer.hpp"
+#include "gl2_target_renderer.hpp"
+#include "gl2_sky_renderer.hpp"
+#include "gl2_crosshair_renderer.hpp"
+#include "gl2_hud_renderer.hpp"
+#include "gl2_menu_renderer.hpp"
+#include "gl2_debug_renderer.hpp"
+
 using namespace gui;
 
 static logging::Logger logger("render");
@@ -23,12 +31,13 @@ GL2Renderer::GL2Renderer(Client *client) :
 {
 	p_chunkRenderer = new GL2ChunkRenderer(client, this);
 	p_chunkRenderer->init();
-	chunkRenderer  = std::unique_ptr<ComponentRenderer>(p_chunkRenderer);
+	chunkRenderer = std::unique_ptr<ComponentRenderer>(p_chunkRenderer);
 	targetRenderer = std::unique_ptr<ComponentRenderer>(new GL2TargetRenderer(client, this));
-	skyRenderer    = std::unique_ptr<ComponentRenderer>(new GL2SkyRenderer(client, this));
-	hudRenderer    = std::unique_ptr<ComponentRenderer>(new GL2HudRenderer(client, this));
-	menuRenderer   = std::unique_ptr<ComponentRenderer>(new GL2MenuRenderer(client, this));
-	debugRenderer  = std::unique_ptr<ComponentRenderer>(new GL2DebugRenderer(client, this));
+	skyRenderer = std::unique_ptr<ComponentRenderer>(new GL2SkyRenderer(client, this));
+	crosshairRenderer = std::unique_ptr<ComponentRenderer>(new GL2CrosshairRenderer(client, this));
+	hudRenderer = std::unique_ptr<ComponentRenderer>(new GL2HudRenderer(client, this));
+	menuRenderer = std::unique_ptr<ComponentRenderer>(new GL2MenuRenderer(client, this));
+	debugRenderer = std::unique_ptr<ComponentRenderer>(new GL2DebugRenderer(client, this));
 
 	makeMaxFOV();
 	makePerspective();
@@ -49,9 +58,7 @@ GL2Renderer::~GL2Renderer() {
 }
 
 void GL2Renderer::tick() {
-	client->getStopwatch()->start(CLOCK_CRT);
 	chunkRenderer->tick();
-	client->getStopwatch()->stop(CLOCK_CRT);
 	render();
 
 	client->getStopwatch()->start(CLOCK_FSH);
@@ -405,7 +412,8 @@ void GL2Renderer::render() {
 	GL(Disable(GL_LIGHTING));
 	GL(Disable(GL_FOG));
 	GL(DepthMask(false));
-
+	
+	crosshairRenderer->render();
 	hudRenderer->render();
 	debugRenderer->render();
 	menuRenderer->render();
