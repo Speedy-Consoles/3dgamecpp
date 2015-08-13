@@ -10,6 +10,11 @@
 #include "client/gfx/graphics.hpp"
 
 #include "gl3_chunk_renderer.hpp"
+#include "gl3_target_renderer.hpp"
+#include "gl3_sky_renderer.hpp"
+#include "gl3_crosshair_renderer.hpp"
+#include "gl3_hud_renderer.hpp"
+#include "gl3_menu_renderer.hpp"
 #include "gl3_debug_renderer.hpp"
 
 using namespace gui;
@@ -19,15 +24,14 @@ static logging::Logger logger("render");
 GL3Renderer::GL3Renderer(Client *client) :
 	client(client),
 	shaderManager(),
-	texManager(client),
-	fontTimes(&shaderManager.getFontShader()),
-	fontDejavu(&shaderManager.getFontShader())
+	texManager(client)
 {
 	p_chunkRenderer = new GL3ChunkRenderer(client, this);
 	p_chunkRenderer->init();
 	chunkRenderer = std::unique_ptr<ComponentRenderer>(p_chunkRenderer);
 	targetRenderer = std::unique_ptr<ComponentRenderer>(new GL3TargetRenderer(client, this));
 	skyRenderer = std::unique_ptr<ComponentRenderer>(new GL3SkyRenderer(client, this));
+	crosshairRenderer = std::unique_ptr<ComponentRenderer>(new GL3CrosshairRenderer(client, this));
 	hudRenderer = std::unique_ptr<ComponentRenderer>(new GL3HudRenderer(client, this));
 	menuRenderer = std::unique_ptr<ComponentRenderer>(new GL3MenuRenderer(client, this));
 	debugRenderer = std::unique_ptr<ComponentRenderer>(new GL3DebugRenderer(client, this, p_chunkRenderer));
@@ -62,12 +66,6 @@ GL3Renderer::GL3Renderer(Client *client) :
 
 	// sky
 	makeSkyFbo();
-
-    // font
-	fontTimes.load("fonts/times32.fnt");
-	fontTimes.setEncoding(Font::Encoding::UTF8);
-	fontDejavu.load("fonts/dejavusansmono16.fnt");
-	fontDejavu.setEncoding(Font::Encoding::UTF8);
 
 	// textures
 	LOG_DEBUG(logger) << "Loading textures";
@@ -189,9 +187,7 @@ void GL3Renderer::makeSkyFbo() {
 }
 
 void GL3Renderer::tick() {
-	client->getStopwatch()->start(CLOCK_CRT);
 	chunkRenderer->tick();
-	client->getStopwatch()->stop(CLOCK_CRT);
 	debugRenderer->tick();
 }
 
@@ -212,15 +208,14 @@ void GL3Renderer::render() {
 	GL(Enable(GL_DEPTH_TEST));
 	GL(DepthMask(true));
 	GL(Clear(GL_DEPTH_BUFFER_BIT));
-	client->getStopwatch()->start(CLOCK_CRR);
 	chunkRenderer->render();
-	client->getStopwatch()->stop(CLOCK_CRR);
 	targetRenderer->render();
 
 	// render overlay
 	GL(Disable(GL_DEPTH_TEST));
 	GL(DepthMask(false));
 
+	crosshairRenderer->render();
 	hudRenderer->render();
 	debugRenderer->render();
 	menuRenderer->render();

@@ -13,19 +13,71 @@ using namespace std;
 
 static logging::Logger logger("io");
 
-const char ArchiveFile::MAGIC[4] = {89, -105, 34, -33};
+static const char MAGIC[4] = {89, -105, 34, -33};
 
 static const int32 ENDIANESS_BYTES = 0x01020304;
 static const int32 ENDIANESS_BYTES_FLIPPED = 0x04030201;
 
 static const uint8 ESCAPE_CHAR = (uint8) (-1);
 
+class ArchiveFile {
+public:
+	enum Endianess {
+		UNKNOWN = -1,
+		NATIVE,
+		FLIPPED
+	};
+
+	~ArchiveFile();
+	ArchiveFile(const char *, uint size = 16);
+
+	ArchiveFile() = delete;
+	ArchiveFile(const ArchiveFile &) = delete;
+	ArchiveFile(ArchiveFile &&) = delete;
+
+	ArchiveFile &operator = (const ArchiveFile &) = delete;
+	ArchiveFile &operator = (ArchiveFile &&) = delete;
+
+	Time getLastAccess() const { return _last_access; }
+
+	void initialize();
+
+	bool hasChunk(vec3i64);
+
+	bool loadChunk(Chunk &);
+	bool loadChunk(vec3i64, Chunk &);
+	void storeChunk(const Chunk &);
+
+private:
+	std::fstream _file;
+	const uint _region_size;
+	Time _last_access;
+
+	PACKED(
+	struct Header {
+		char magic[4];
+		int32 endianess_bytes;
+		int32 version;
+		uint32 num_chunks;
+		uint32 directory_offset;
+	});
+
+	PACKED(
+	struct DirectoryEntry {
+		uint32 offset;
+		uint32 size;
+	});
+
+	Header _header;
+	std::vector<DirectoryEntry> _dir;
+};
+
 ArchiveFile::~ArchiveFile() {
 	_file.close();
 }
 
 ArchiveFile::ArchiveFile(const char *filename, uint region_size) :
-	_region_size(region_size)
+	_region_size(region_size), _last_access(getCurrentTime())
 {
 	_file.open(filename, ios_base::in | ios_base::out | ios_base::binary);
 	if (_file.fail()) {
@@ -98,6 +150,8 @@ bool ArchiveFile::loadChunk(Chunk &chunk) {
 }
 
 bool ArchiveFile::loadChunk(vec3i64 cc, Chunk &chunk) {
+	_last_access = getCurrentTime();
+
 	// read directory entry
 	size_t x = cycle(cc[0], _region_size);
 	size_t y = cycle(cc[1], _region_size);
@@ -147,6 +201,8 @@ bool ArchiveFile::loadChunk(vec3i64 cc, Chunk &chunk) {
 }
 
 void ArchiveFile::storeChunk(const Chunk &chunk) {
+	_last_access = getCurrentTime();
+
 	vec3i64 cc = chunk.getCC();
 	size_t x = cycle(cc[0], _region_size);
 	size_t y = cycle(cc[1], _region_size);
@@ -223,7 +279,7 @@ void ArchiveFile::storeChunk(const Chunk &chunk) {
 }
 
 ChunkArchive::~ChunkArchive() {
-	clearHandles();
+	clean();
 }
 
 ChunkArchive::ChunkArchive(const char *str) :
@@ -261,11 +317,21 @@ void ChunkArchive::storeChunk(const Chunk &chunk) {
 	archive_file->storeChunk(chunk);
 }
 
-void ChunkArchive::clearHandles() {
-	for (auto iter : _file_map) {
-		delete iter.second;
+void ChunkArchive::clean(Time t) {
+	int num_cleaned = 0;
+	Time now = getCurrentTime();
+	auto iter = _file_map.begin();
+	while (iter != _file_map.end()) {
+		bool should_delete = now - iter->second->getLastAccess() > t;
+		if (should_delete) {
+		   iter = _file_map.erase(iter);
+		   ++num_cleaned;
+		} else {
+		   ++iter;
+		}
 	}
-	_file_map.clear();
+	if (num_cleaned)
+		LOG_DEBUG(logger) << "Cleaned " << num_cleaned << " file handles";
 }
 
 ArchiveFile *ChunkArchive::getArchiveFile(vec3i64 cc) {
@@ -276,7 +342,10 @@ ArchiveFile *ChunkArchive::getArchiveFile(vec3i64 cc) {
 	rc[2] = cc[2] / REGION_SIZE - (cc[2] < 0 ? 1 : 0);
 
 	auto iter = _file_map.find(rc);
-	if (iter == _file_map.end()) {
+	if (iter != _file_map.end()) {
+		return iter->second;
+	} else {
+		clean(seconds(10));
 		char buffer[200];
 		sprintf(buffer, "%" PRId64 "_%" PRId64 "_%" PRId64 ".region",
 				rc[0], rc[1], rc[2]);
@@ -284,7 +353,5 @@ ArchiveFile *ChunkArchive::getArchiveFile(vec3i64 cc) {
 		ArchiveFile *archive_file = new ArchiveFile(filename.c_str(), REGION_SIZE);
 		_file_map.insert({rc, archive_file});
 		return archive_file;
-	} else {
-		return iter->second;
 	}
 }

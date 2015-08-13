@@ -16,6 +16,7 @@
     <ClCompile Include="..\src\client\gfx\chunk_renderer.cpp" />
     <ClCompile Include="..\src\client\gfx\font.cpp" />
     <ClCompile Include="..\src\client\gfx\gl2\gl2_chunk_renderer.cpp" />
+    <ClCompile Include="..\src\client\gfx\gl2\gl2_crosshair_renderer.cpp" />
     <ClCompile Include="..\src\client\gfx\gl2\gl2_debug_renderer.cpp" />
     <ClCompile Include="..\src\client\gfx\gl2\gl2_hud_renderer.cpp" />
     <ClCompile Include="..\src\client\gfx\gl2\gl2_menu_renderer.cpp" />
@@ -24,6 +25,7 @@
     <ClCompile Include="..\src\client\gfx\gl2\gl2_target_renderer.cpp" />
     <ClCompile Include="..\src\client\gfx\gl2\gl2_texture_manager.cpp" />
     <ClCompile Include="..\src\client\gfx\gl3\gl3_chunk_renderer.cpp" />
+    <ClCompile Include="..\src\client\gfx\gl3\gl3_crosshair_renderer.cpp" />
     <ClCompile Include="..\src\client\gfx\gl3\gl3_debug_renderer.cpp" />
     <ClCompile Include="..\src\client\gfx\gl3\gl3_font.cpp" />
     <ClCompile Include="..\src\client\gfx\gl3\gl3_hud_renderer.cpp" />
@@ -51,6 +53,7 @@
     <ClInclude Include="..\src\client\gfx\component_renderer.hpp" />
     <ClInclude Include="..\src\client\gfx\font.hpp" />
     <ClInclude Include="..\src\client\gfx\gl2\gl2_chunk_renderer.hpp" />
+    <ClInclude Include="..\src\client\gfx\gl2\gl2_crosshair_renderer.hpp" />
     <ClInclude Include="..\src\client\gfx\gl2\gl2_debug_renderer.hpp" />
     <ClInclude Include="..\src\client\gfx\gl2\gl2_hud_renderer.hpp" />
     <ClInclude Include="..\src\client\gfx\gl2\gl2_menu_renderer.hpp" />
@@ -59,6 +62,7 @@
     <ClInclude Include="..\src\client\gfx\gl2\gl2_target_renderer.hpp" />
     <ClInclude Include="..\src\client\gfx\gl2\gl2_texture_manager.hpp" />
     <ClInclude Include="..\src\client\gfx\gl3\gl3_chunk_renderer.hpp" />
+    <ClInclude Include="..\src\client\gfx\gl3\gl3_crosshair_renderer.hpp" />
     <ClInclude Include="..\src\client\gfx\gl3\gl3_debug_renderer.hpp" />
     <ClInclude Include="..\src\client\gfx\gl3\gl3_font.hpp" />
     <ClInclude Include="..\src\client\gfx\gl3\gl3_hud_renderer.hpp" />

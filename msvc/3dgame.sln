@@ -15,6 +15,13 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "server", "server.vcxproj", 
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shared", "shared.vcxproj", "{FBCF5514-8FC8-47DB-A218-915245EDCF28}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "test", "test.vcxproj", "{53106936-CBBA-4D24-9103-8C39E186D94F}"
+	ProjectSection(ProjectDependencies) = postProject
+		{D11FF606-904C-4694-9D85-C7B70355175D} = {D11FF606-904C-4694-9D85-C7B70355175D}
+		{FBCF5514-8FC8-47DB-A218-915245EDCF28} = {FBCF5514-8FC8-47DB-A218-915245EDCF28}
+		{F829FC7B-DD1F-4805-845E-88D91D2E8BF3} = {F829FC7B-DD1F-4805-845E-88D91D2E8BF3}
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -33,6 +40,10 @@ Global
 		{FBCF5514-8FC8-47DB-A218-915245EDCF28}.Debug|Win32.Build.0 = Debug|Win32
 		{FBCF5514-8FC8-47DB-A218-915245EDCF28}.Release|Win32.ActiveCfg = Release|Win32
 		{FBCF5514-8FC8-47DB-A218-915245EDCF28}.Release|Win32.Build.0 = Release|Win32
+		{53106936-CBBA-4D24-9103-8C39E186D94F}.Debug|Win32.ActiveCfg = Debug|Win32
+		{53106936-CBBA-4D24-9103-8C39E186D94F}.Debug|Win32.Build.0 = Debug|Win32
+		{53106936-CBBA-4D24-9103-8C39E186D94F}.Release|Win32.ActiveCfg = Release|Win32
+		{53106936-CBBA-4D24-9103-8C39E186D94F}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

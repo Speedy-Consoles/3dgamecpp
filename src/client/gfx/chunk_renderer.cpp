@@ -44,6 +44,8 @@ void ChunkRenderer::tick() {
 	if (!player.isValid())
 		return;
 
+	client->getStopwatch()->start(CLOCK_CRT);
+
 	int visibleDiameter = renderDistance * 2 + 1;
 
 	// put chunks into render queue
@@ -105,6 +107,7 @@ void ChunkRenderer::tick() {
 		inBuildQueue.erase(inBuildQueue.find(cc));
 	}
 	client->getStopwatch()->stop(CLOCK_IRQ);
+	client->getStopwatch()->stop(CLOCK_CRT);
 }
 
 void ChunkRenderer::render() {
@@ -112,6 +115,8 @@ void ChunkRenderer::render() {
 	Player &player = client->getLocalPlayer();
 	if (!player.isValid())
 		return;
+
+	client->getStopwatch()->start(CLOCK_CRR);
 
 	beginRender();
 
@@ -136,6 +141,8 @@ void ChunkRenderer::render() {
 	}
 
 	finishRender();
+	
+	client->getStopwatch()->stop(CLOCK_CRR);
 }
 
 void ChunkRenderer::rebuildChunk(vec3i64 chunkCoords) {

@@ -9,14 +9,10 @@
 #include "shared/block_utils.hpp"
 #include "client/client.hpp"
 #include "client/gfx/renderer.hpp"
+#include "client/gfx/component_renderer.hpp"
 
 #include "gl3_shaders.hpp"
-#include "gl3_chunk_renderer.hpp"
-#include "gl3_target_renderer.hpp"
-#include "gl3_sky_renderer.hpp"
-#include "gl3_hud_renderer.hpp"
-#include "gl3_menu_renderer.hpp"
-#include "gl3_debug_renderer.hpp"
+#include "gl3_texture_manager.hpp"
 
 class Graphics;
 class World;
@@ -24,12 +20,13 @@ class Player;
 class Menu;
 class Stopwatch;
 
-namespace gui {
-	class Frame;
-	class Label;
-	class Widget;
-	class Button;
-}
+class GL3ChunkRenderer;
+class GL3TargetRenderer;
+class GL3SkyRenderer;
+class GL3CrosshairRenderer;
+class GL3HudRenderer;
+class GL3MenuRenderer;
+class GL3DebugRenderer;
 
 class GL3Renderer : public Renderer {
 private:
@@ -44,6 +41,7 @@ private:
 	std::unique_ptr<ComponentRenderer> chunkRenderer;
 	std::unique_ptr<ComponentRenderer> targetRenderer;
 	std::unique_ptr<ComponentRenderer> skyRenderer;
+	std::unique_ptr<ComponentRenderer> crosshairRenderer;
 	std::unique_ptr<ComponentRenderer> hudRenderer;
 	std::unique_ptr<ComponentRenderer> menuRenderer;
 	std::unique_ptr<ComponentRenderer> debugRenderer;
@@ -51,10 +49,6 @@ private:
 	// 3D values
 	float ZNEAR = 0.1f;
 	float maxFOV;
-
-    // font
-	BMFont fontTimes;
-	BMFont fontDejavu;
 
 	// fbos
 	GLuint skyFbo = 0;

@@ -11,15 +11,10 @@
 #include "shared/constants.hpp"
 #include "shared/game/chunk.hpp"
 #include "client/gfx/graphics.hpp"
+#include "client/gfx/component_renderer.hpp"
 #include "client/client.hpp"
 #include "client/config.hpp"
 
-#include "gl2_chunk_renderer.hpp"
-#include "gl2_target_renderer.hpp"
-#include "gl2_sky_renderer.hpp"
-#include "gl2_hud_renderer.hpp"
-#include "gl2_menu_renderer.hpp"
-#include "gl2_debug_renderer.hpp"
 #include "gl2_texture_manager.hpp"
 
 class World;
@@ -27,12 +22,13 @@ class Player;
 class Menu;
 class Stopwatch;
 
-namespace gui {
-	class Frame;
-	class Label;
-	class Widget;
-	class Button;
-}
+class GL2ChunkRenderer;
+class GL2TargetRenderer;
+class GL2SkyRenderer;
+class GL2CrosshairRenderer;
+class GL2HudRenderer;
+class GL2MenuRenderer;
+class GL2DebugRenderer;
 
 class GL2Renderer : public Renderer {
 	enum DisplayListStatus {
@@ -49,6 +45,7 @@ class GL2Renderer : public Renderer {
 	std::unique_ptr<ComponentRenderer> chunkRenderer;
 	std::unique_ptr<ComponentRenderer> targetRenderer;
 	std::unique_ptr<ComponentRenderer> skyRenderer;
+	std::unique_ptr<ComponentRenderer> crosshairRenderer;
 	std::unique_ptr<ComponentRenderer> hudRenderer;
 	std::unique_ptr<ComponentRenderer> menuRenderer;
 	std::unique_ptr<ComponentRenderer> debugRenderer;
