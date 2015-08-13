@@ -369,9 +369,6 @@ void ChunkRenderer::visibilitySearch(vec3i64 startChunkCoords) {
 			}
 			chunkGrid[nIndex].vsIns |= (1 << ((d + 3) % 6));
 
-			if (chunkGrid[nIndex].status == NO_CHUNK || chunkGrid[nIndex].content != ncc)
-				continue;
-
 			if (chunkGrid[nIndex].vsInFringe == false) {
 				chunkGrid[nIndex].vsInFringe = true;
 				vsFringe[fringeEnd] = ncc;
