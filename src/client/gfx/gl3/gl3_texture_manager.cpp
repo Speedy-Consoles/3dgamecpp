@@ -109,7 +109,7 @@ void GL3TextureManager::add(SDL_Surface *img, const std::vector<TextureLoadEntry
 	GL(BindTexture(GL_TEXTURE_2D_ARRAY, blockTextures));
 	GL(TexStorage3D(GL_TEXTURE_2D_ARRAY, mipLevelCount, GL_RGBA8, tileW, tileH, layerCount));
 
-	int layerIndex = 0;
+	GLuint layerIndex = 0;
 	for (const auto &loadEntry : entries) {
 		SDL_Rect rect{loadEntry.x, loadEntry.y, tileW, tileH};
 		int ret_code = SDL_BlitSurface(img, &rect, tmp, nullptr);
