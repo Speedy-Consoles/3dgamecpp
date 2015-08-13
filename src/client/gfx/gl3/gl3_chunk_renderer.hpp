@@ -4,6 +4,7 @@
 #include "client/gfx/chunk_renderer.hpp"
 
 #include "gl3_shaders.hpp"
+#include "gl3_texture_manager.hpp"
 
 class GL3Renderer;
 
@@ -25,9 +26,6 @@ private:
 	GLuint *vaos;
 	GLuint *vbos;
 
-	// texture location
-	GLuint blockTextures;
-
 	// chunk construction state
 	size_t bufferSize;
 	glm::mat4 playerTranslationMatrix;
@@ -36,9 +34,6 @@ private:
 public:
 	GL3ChunkRenderer(Client *client, GL3Renderer *renderer);
 	~GL3ChunkRenderer();
-
-private:
-	void loadTextures();
 
 protected:
 	void initRenderDistanceDependent(int renderDistance) override;

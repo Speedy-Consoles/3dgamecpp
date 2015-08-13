@@ -35,20 +35,9 @@ class GL3Renderer : public Renderer {
 private:
 	Client *client = nullptr;
 
-	// 3D values
-	float ZNEAR = 0.1f;
-	float maxFOV;
-
-	// shaders
-	ShaderManager shaderManager;
-
-    // font
-	BMFont fontTimes;
-	BMFont fontDejavu;
-
-	// fbos
-	GLuint skyFbo = 0;
-	GLuint skyTex = 0;
+	// resources
+	GL3ShaderManager shaderManager;
+	GL3TextureManager texManager;
 
 	// chunk renderer
 	GL3ChunkRenderer chunkRenderer;
@@ -57,6 +46,18 @@ private:
 	GL3HudRenderer hudRenderer;
 	GL3MenuRenderer menuRenderer;
 	GL3DebugRenderer debugRenderer;
+
+	// 3D values
+	float ZNEAR = 0.1f;
+	float maxFOV;
+
+    // font
+	BMFont fontTimes;
+	BMFont fontDejavu;
+
+	// fbos
+	GLuint skyFbo = 0;
+	GLuint skyTex = 0;
 
 	// light
 	glm::vec3 ambientColor = glm::vec3(0.4f, 0.4f, 0.35f);
@@ -78,8 +79,10 @@ public:
 
 	void rerenderChunk(vec3i64 chunkCoords) override;
 
-	ShaderManager *getShaderManager() { return &shaderManager; }
+	GL3ShaderManager *getShaderManager() { return &shaderManager; }
+	GL3TextureManager *getTextureManager() { return &texManager; }
 	float getMaxFOV() override { return maxFOV; };
+
 
 private:
 	void makePerspectiveMatrix();

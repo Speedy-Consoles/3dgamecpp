@@ -12,7 +12,7 @@
 
 static logging::Logger logger("gfx");
 
-Shader::Shader(ShaderManager *manager, const char *vert_src, const char *frag_src) :
+Shader::Shader(GL3ShaderManager *manager, const char *vert_src, const char *frag_src) :
 	_manager(manager)
 {
 	GLuint VertexShaderLoc = glCreateShader(GL_VERTEX_SHADER);
@@ -93,7 +93,7 @@ void Shader::buildProgram(GLuint programLoc, GLuint *shaders, int numShaders) {
 		LOG_ERROR(logger) << &programErrorMessage[0];
 }
 
-DefaultShader::DefaultShader(ShaderManager *manager) :
+DefaultShader::DefaultShader(GL3ShaderManager *manager) :
 	Shader(manager, "shaders/default.vert", "shaders/default.frag")
 {
 	_lightEnabledLoc = getUniformLocation("lightEnabled");
@@ -232,7 +232,7 @@ void DefaultShader::setEndFogDistance(float distance) {
 	}
 }
 
-BlockShader::BlockShader(ShaderManager *manager) :
+BlockShader::BlockShader(GL3ShaderManager *manager) :
 	Shader(manager, "shaders/block.vert", "shaders/block.frag")
 {
 	_lightEnabledLoc = getUniformLocation("lightEnabled");
@@ -371,7 +371,7 @@ void BlockShader::setEndFogDistance(float distance) {
 	}
 }
 
-HudShader::HudShader(ShaderManager *manager) :
+HudShader::HudShader(GL3ShaderManager *manager) :
 	Shader(manager, "shaders/hud.vert", "shaders/hud.frag")
 {
 	_mvpMatrixLoc = getUniformLocation("projectionMatrix");
@@ -402,7 +402,7 @@ void HudShader::setModelMatrix(const glm::mat4 &matrix) {
 	}
 }
 
-FontShader::FontShader(ShaderManager *manager) :
+FontShader::FontShader(GL3ShaderManager *manager) :
 	Shader(manager, "shaders/font.vert", "shaders/font.frag")
 {
 	_mvpMatrixLoc = getUniformLocation("mvpMatrix");
@@ -520,7 +520,7 @@ void FontShader::setMode(FontRenderMode m) {
 	}
 }
 
-ShaderManager::ShaderManager()
+GL3ShaderManager::GL3ShaderManager()
 {
 	_programs.resize(NUM_PROGRAMS);
 	_programs[DEFAULT_PROGRAM] = std::unique_ptr<DefaultShader>(new DefaultShader(this));
@@ -529,23 +529,23 @@ ShaderManager::ShaderManager()
 	_programs[FONT_PROGRAM] = std::unique_ptr<FontShader>(new FontShader(this));
 }
 
-DefaultShader &ShaderManager::getDefaultShader() {
+DefaultShader &GL3ShaderManager::getDefaultShader() {
 	return static_cast<DefaultShader &>(*_programs[DEFAULT_PROGRAM]);
 }
 
-BlockShader &ShaderManager::getBlockShader() {
+BlockShader &GL3ShaderManager::getBlockShader() {
 	return static_cast<BlockShader &>(*_programs[BLOCK_PROGRAM]);
 }
 
-HudShader &ShaderManager::getHudShader() {
+HudShader &GL3ShaderManager::getHudShader() {
 	return static_cast<HudShader &>(*_programs[HUD_PROGRAM]);
 }
 
-FontShader &ShaderManager::getFontShader() {
+FontShader &GL3ShaderManager::getFontShader() {
 	return static_cast<FontShader &>(*_programs[FONT_PROGRAM]);
 }
 
-void ShaderManager::useProgram(GLuint program) {
+void GL3ShaderManager::useProgram(GLuint program) {
 	if (_activeProgram != program) {
 		glUseProgram(program);
 		_activeProgram = program;

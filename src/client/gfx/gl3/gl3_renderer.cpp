@@ -19,14 +19,15 @@ static logging::Logger logger("render");
 GL3Renderer::GL3Renderer(Client *client) :
 	client(client),
 	shaderManager(),
-	fontTimes(&shaderManager.getFontShader()),
-	fontDejavu(&shaderManager.getFontShader()),
+	texManager(client),
 	chunkRenderer(client, this),
 	targetRenderer(client, this),
 	skyRenderer(client, this),
 	hudRenderer(client, this),
 	menuRenderer(client, this),
-	debugRenderer(client, this, &chunkRenderer)
+	debugRenderer(client, this, &chunkRenderer),
+	fontTimes(&shaderManager.getFontShader()),
+	fontDejavu(&shaderManager.getFontShader())
 {
 	chunkRenderer.init();
 
@@ -66,6 +67,13 @@ GL3Renderer::GL3Renderer(Client *client) :
 	fontTimes.setEncoding(Font::Encoding::UTF8);
 	fontDejavu.load("fonts/dejavusansmono16.fnt");
 	fontDejavu.setEncoding(Font::Encoding::UTF8);
+
+	// textures
+	LOG_DEBUG(logger) << "Loading textures";
+	const char *block_textures_file = client->getConf().textures_file.c_str();
+	if (texManager.load(block_textures_file)) {
+		LOG_WARNING(logger) << "There was a problem loading '" << block_textures_file << "'";
+	}
 
 	// gl stuff
 	GL(Enable(GL_BLEND));
