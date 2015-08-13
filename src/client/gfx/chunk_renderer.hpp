@@ -18,7 +18,7 @@ struct ChunkRendererDebugInfo {
 	int totalFaces = 0;
 	int visibleChunks = 0;
 	int visibleFaces = 0;
-	int renderQueueSize = 0;
+	int buildQueueSize = 0;
 };
 
 class ChunkRenderer {
@@ -42,20 +42,24 @@ private:
 		uint16 passThroughs;
 
 		// visibility search
-		bool vsVisited;
-		uint8 vsExits;
+		uint8 vsIns;
+		uint8 vsOuts;
+		uint vsInsVersion;
+		uint vsOutsVersion;
+		bool vsInFringe;
 	};
 
 	// visibility search
 	int vsFringeCapacity = 0;
 	vec3i64 *vsFringe = nullptr;
 	int *vsIndices = nullptr;
+	uint vsCounter = 0;
 
 	// chunk requesting
 	vec3i64 oldPlayerChunk;
 	int checkChunkIndex = 0;
-	std::unordered_set<vec3i64, size_t(*)(vec3i64)> inRenderQueue;
-	std::deque<vec3i64> renderQueue;
+	std::unordered_set<vec3i64, size_t(*)(vec3i64)> inBuildQueue;
+	std::deque<vec3i64> buildQueue;
 
 	// performance info
 	int newFaces = 0;
@@ -84,12 +88,15 @@ public:
 	void tick();
 	void render();
 
-	void rerenderChunk(vec3i64 chunkCoords);
+	void rebuildChunk(vec3i64 chunkCoords);
 
 	ChunkRendererDebugInfo getDebugInfo();
 
 private:
 	void buildChunk(const Chunk *chunks[27]);
+	void visibilitySearch(vec3i64 startChunk);
+	int updateVsChunk(size_t index, vec3i64 chunkCoords);
+	int getOuts(int ins, int passThroughs);
 
 	bool inFrustum(vec3i64 cc, vec3i64 pos, vec3d lookDir);
 

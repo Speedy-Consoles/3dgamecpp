@@ -76,7 +76,7 @@ public:
 	void resize() override;
 	void setConf(const GraphicsConf &, const GraphicsConf &) override;
 
-	void rerenderChunk(vec3i64 chunkCoords) override;
+	void rebuildChunk(vec3i64 chunkCoords) override;
 
 	ShaderManager *getShaderManager() { return &shaderManager; }
 	float getMaxFOV() override { return maxFOV; };

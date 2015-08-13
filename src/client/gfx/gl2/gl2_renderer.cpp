@@ -121,8 +121,8 @@ void GL2Renderer::setConf(const GraphicsConf &conf, const GraphicsConf &old) {
 	chunkRenderer.setConf(conf, old);
 }
 
-void GL2Renderer::rerenderChunk(vec3i64 chunkCoords) {
-	chunkRenderer.rerenderChunk(chunkCoords);
+void GL2Renderer::rebuildChunk(vec3i64 chunkCoords) {
+	chunkRenderer.rebuildChunk(chunkCoords);
 }
 
 TextureManager *GL2Renderer::getTextureManager() {

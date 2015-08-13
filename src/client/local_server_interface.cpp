@@ -72,7 +72,7 @@ void LocalServerInterface::placeBlock(vec3i64 blockCoords, uint8 blockType) {
 	// TODO maybe move this to graphics or something
 	vec3i64 cc = bc2cc(blockCoords);
 	vec3ui8 icc = bc2icc(blockCoords);
-	client->getGraphics()->getRenderer()->rerenderChunk(cc);
+	client->getGraphics()->getRenderer()->rebuildChunk(cc);
 	for (size_t i = 0; i < 27; i++) {
 		if (i == BIG_CUBE_CYCLE_BASE_INDEX)
 			continue;
@@ -95,7 +95,7 @@ void LocalServerInterface::placeBlock(vec3i64 blockCoords, uint8 blockType) {
 			}
 		}
 		if (rerender)
-			client->getGraphics()->getRenderer()->rerenderChunk(cc + BIG_CUBE_CYCLE[i].cast<int64>());
+			client->getGraphics()->getRenderer()->rebuildChunk(cc + BIG_CUBE_CYCLE[i].cast<int64>());
 	}
 }
 

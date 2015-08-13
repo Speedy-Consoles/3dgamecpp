@@ -115,8 +115,8 @@ void GL3Renderer::setConf(const GraphicsConf &conf, const GraphicsConf &old) {
 	chunkRenderer.setConf(conf, old);
 }
 
-void GL3Renderer::rerenderChunk(vec3i64 chunkCoords) {
-	chunkRenderer.rerenderChunk(chunkCoords);
+void GL3Renderer::rebuildChunk(vec3i64 chunkCoords) {
+	chunkRenderer.rebuildChunk(chunkCoords);
 }
 
 void GL3Renderer::makePerspectiveMatrix() {
