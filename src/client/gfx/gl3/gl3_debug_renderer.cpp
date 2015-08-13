@@ -48,6 +48,10 @@ GL3DebugRenderer::GL3DebugRenderer(Client *client, GL3Renderer *renderer, GL3Chu
 
 	font.load("fonts/dejavusansmono20.fnt");
 	font.setEncoding(Font::Encoding::UTF8);
+
+	for (int i = 0; i < 20; i++) {
+		prevFPS[i] = 0;
+	}
 }
 
 GL3DebugRenderer::~GL3DebugRenderer() {
