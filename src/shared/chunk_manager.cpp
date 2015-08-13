@@ -123,11 +123,15 @@ void ChunkManager::storeChunks() {
 	}
 }
 
-void ChunkManager::placeBlock(vec3i64 blockCoords, uint8 blockType) {
-	vec3i64 cc = bc2cc(blockCoords);
-	auto it = chunks.find(cc);
-	if (it != chunks.end())
-		it->second->setBlock(bc2icc(blockCoords), blockType);
+void ChunkManager::placeBlock(vec3i64 chunkCoords, size_t intraChunkIndex,
+		uint blockType, uint32 revision) {
+	auto it = chunks.find(chunkCoords);
+	if (it != chunks.end()) {
+		if (it->second->getRevision() == revision)
+			it->second->setBlock(intraChunkIndex, blockType);
+		else
+			LOG_WARNING(logger) << "couldn't apply chunk patch";
+	}
 	// TODO operate on cache if chunk is not loaded
 }
 

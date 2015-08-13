@@ -82,18 +82,19 @@ void Chunk::reset() {
 	initialized = false;
 	airBlocks = 0;
 	passThroughs = 0;
+	revision = 0;
 }
 
-void Chunk::setBlock(vec3ui8 icc, uint8 type) {
-	int blockIndex = getBlockIndex(icc);
-	if (blocks[blockIndex] == type)
+void Chunk::setBlock(size_t index, uint8 type) {
+	if (blocks[index] == type)
 		return;
 
-	blocks[blockIndex] = type;
+	blocks[index] = type;
 	if (type == 0)
 		airBlocks++;
 	else
 		airBlocks--;
+	revision++;
 }
 
 uint8 Chunk::getBlock(vec3ui8 icc) const {

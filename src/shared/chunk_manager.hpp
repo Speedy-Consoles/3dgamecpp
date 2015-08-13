@@ -53,7 +53,8 @@ public:
 	virtual void onStop() override;
 	void storeChunks();
 
-	void placeBlock(vec3i64 blockCoords, uint8 blockType);
+	void placeBlock(vec3i64 chunkCoords, size_t intraChunkIndex,
+			uint blockType, uint32 revision);
 
 	const Chunk *getChunk(vec3i64 chunkCoords) const;
 	void requestChunk(vec3i64 chunkCoords);

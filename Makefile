@@ -14,6 +14,7 @@ CLIENT_OBJECT_FILES = \
 	client/gfx/gl2/gl2_renderer.cpp.o\
 	client/gfx/gl2/gl2_chunk_renderer.cpp.o\
 	client/gfx/gl2/gl2_target_renderer.cpp.o\
+	client/gfx/gl2/gl2_crosshair_renderer.cpp.o\
 	client/gfx/gl2/gl2_sky_renderer.cpp.o\
 	client/gfx/gl2/gl2_hud_renderer.cpp.o\
 	client/gfx/gl2/gl2_debug_renderer.cpp.o\
@@ -23,6 +24,7 @@ CLIENT_OBJECT_FILES = \
 	client/gfx/gl3/gl3_chunk_renderer.cpp.o\
 	client/gfx/gl3/gl3_sky_renderer.cpp.o\
 	client/gfx/gl3/gl3_target_renderer.cpp.o\
+	client/gfx/gl3/gl3_crosshair_renderer.cpp.o\
 	client/gfx/gl3/gl3_hud_renderer.cpp.o\
 	client/gfx/gl3/gl3_debug_renderer.cpp.o\
 	client/gfx/gl3/gl3_menu_renderer.cpp.o\
@@ -86,6 +88,7 @@ CLIENT_LIBS_LD_FLAGS = $(LIBS_LD_FLAGS)
 SERVER_LIBS_LD_FLAGS = $(LIBS_LD_FLAGS)
 TEST_LIBS_LD_FLAGS = $(LIBS_LD_FLAGS)
 
+TEST_LIBS_LD_FLAGS += -lgtest -lgtest_main
 CLIENT_LIBS_LD_FLAGS += -lGL -lGLU -lGLEW -lftgl -lSDL2 -lSDL2_image
 
 # target specific flags
@@ -103,7 +106,7 @@ endif
 # assembling some file paths
 CLIENT_OBJECTS = $(addprefix $(OBJ_DIR)/,$(CLIENT_OBJECT_FILES))
 SERVER_OBJECTS = $(addprefix $(OBJ_DIR)/,$(SERVER_OBJECT_FILES))
-TEST_OBJECTS = $(addprefix $(OBJ_DIR)/,$(TEST_OBJECTS))
+TEST_OBJECTS = $(addprefix $(OBJ_DIR)/,$(TEST_OBJECT_FILES))
 SHARED_OBJECTS = $(addprefix $(OBJ_DIR)/,$(SHARED_OBJECT_FILES))
 OBJECTS = $(CLIENT_OBJECTS) $(SERVER_OBJECTS) $(SHARED_OBJECTS) $(TEST_OBJECTS)
 

@@ -67,11 +67,20 @@ void LocalServerInterface::setSelectedBlock(uint8 block) {
 }
 
 void LocalServerInterface::placeBlock(vec3i64 blockCoords, uint8 blockType) {
-	client->getChunkManager()->placeBlock(blockCoords, blockType);
-	// TODO tell world
-	// TODO maybe move this to graphics or something
 	vec3i64 cc = bc2cc(blockCoords);
 	vec3ui8 icc = bc2icc(blockCoords);
+	const Chunk *chunk = client->getChunkManager()->getChunk(cc);
+	if (chunk) {
+		size_t blockIndex = Chunk::getBlockIndex(icc);
+		client->getChunkManager()->placeBlock(
+			cc,
+			blockIndex,
+			blockType,
+			chunk->getRevision()
+		);
+	}
+	// TODO tell world
+	// TODO maybe move this to graphics or something
 	client->getGraphics()->getRenderer()->rebuildChunk(cc);
 	for (size_t i = 0; i < 27; i++) {
 		if (i == BIG_CUBE_CYCLE_BASE_INDEX)
