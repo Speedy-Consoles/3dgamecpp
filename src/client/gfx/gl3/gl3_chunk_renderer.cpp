@@ -164,5 +164,7 @@ void GL3ChunkRenderer::finishChunkConstruction(size_t index) {
 			GL(DeleteVertexArrays(1, &vaos[index]));
 			GL(DeleteBuffers(1, &vbos[index]));
 		}
+		vaos[index] = 0;
+		vbos[index] = 0;
 	}
 }
