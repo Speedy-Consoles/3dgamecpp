@@ -26,3 +26,5 @@ msvc/**/Release
 msvc/**/*.sdf
 msvc/**/*.opensdf
 msvc/**/*.suo
+
+Guitar*
