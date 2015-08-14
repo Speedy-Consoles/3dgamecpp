@@ -7,12 +7,6 @@ WorldGenerator::WorldGenerator(uint64 seed) : perlin(seed) {
 	surfaceThresholdYScale = 1/s + 1/(s*s*s);
 }
 
-Chunk *WorldGenerator::generateChunk(vec3i64 cc) {
-	Chunk *chunk = new Chunk(cc);
-	generateChunk(*chunk);
-	return chunk;
-}
-
 void WorldGenerator::generateChunk(vec3i64 cc, Chunk &chunk) {
 	chunk.setCC(cc);
 	generateChunk(chunk);
@@ -89,5 +83,5 @@ void WorldGenerator::generateChunk(Chunk &chunk) {
 			}
 		}
 	}
-	chunk.initialized = true;
+	chunk.finishInitialization();
 }

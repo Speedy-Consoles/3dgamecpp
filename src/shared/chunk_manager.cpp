@@ -19,7 +19,7 @@ ChunkManager::ChunkManager(Client *client) :
 	archive("./region/")
 {
 	for (int i = 0; i < CHUNK_POOL_SIZE; i++) {
-		chunkPool[i] = new Chunk();
+		chunkPool[i] = new Chunk(true);
 		unusedChunks.push(chunkPool[i]);
 	}
 }
@@ -67,7 +67,7 @@ void ChunkManager::tick() {
 	while (loadedStoredQueue.pop(op)) {
 		switch(op.type) {
 		case LOAD:
-			if (op.chunk->initialized) {
+			if (op.chunk->isInitialized()) {
 				if (insertLoadedChunk(op.chunk))
 					oldRevisions.insert({op.chunk->getCC(), op.chunk->getRevision()});
 			} else {
@@ -82,7 +82,7 @@ void ChunkManager::tick() {
 
 	Chunk *chunk;
 	while ((chunk = client->getServerInterface()->getNextChunk()) != nullptr) {
-		if (!chunk->initialized)
+		if (!chunk->isInitialized())
 			LOG_WARNING(logger) << "Server interface didn't initialize chunk";
 		insertLoadedChunk(chunk);
 	}
@@ -94,7 +94,6 @@ void ChunkManager::doWork() {
 		switch (op.type) {
 		case LOAD:
 			archive.loadChunk(*op.chunk);
-			op.chunk->makePassThroughs();
 			break;
 		case STORE:
 			archive.storeChunk(*op.chunk);

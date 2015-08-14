@@ -17,7 +17,6 @@ class WorldGenerator {
 public:
 	WorldGenerator(uint64 seed);
 
-	DEPRECATED(Chunk *generateChunk(vec3i64 cc));
 	void generateChunk(vec3i64 cc, Chunk &);
 	void generateChunk(Chunk &);
 

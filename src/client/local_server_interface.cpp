@@ -44,7 +44,6 @@ void LocalServerInterface::doWork() {
 	Chunk *chunk;
 	if (toLoadQueue.pop(chunk)) {
 		worldGenerator.generateChunk(*chunk);
-		chunk->makePassThroughs();
 		while (!loadedQueue.push(chunk)) {
 			sleepFor(millis(50));
 		}

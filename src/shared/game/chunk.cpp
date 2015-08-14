@@ -2,11 +2,11 @@
 
 #include "shared/block_utils.hpp"
 
-Chunk::Chunk(vec3i64 cc) : cc(cc) {
+Chunk::Chunk(bool visual) : visual(visual) {
 	// nothing
 }
 
-void Chunk::makePassThroughs() {
+void Chunk::makePassThroughs() const {
 	const uint size = WIDTH * WIDTH * WIDTH;
 	if (airBlocks > size - WIDTH * WIDTH) {
 		passThroughs = 0x7FFF;
@@ -78,6 +78,12 @@ void Chunk::initBlock(size_t index, uint8 type) {
 		airBlocks++;
 }
 
+void Chunk::finishInitialization() {
+	if (visual)
+		makePassThroughs();
+	initialized = true;
+}
+
 void Chunk::reset() {
 	initialized = false;
 	airBlocks = 0;
@@ -95,6 +101,7 @@ void Chunk::setBlock(size_t index, uint8 type) {
 	else
 		airBlocks--;
 	revision++;
+	makePassThroughs();
 }
 
 uint8 Chunk::getBlock(vec3ui8 icc) const {
