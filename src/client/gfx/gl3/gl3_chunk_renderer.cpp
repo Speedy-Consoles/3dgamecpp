@@ -38,22 +38,10 @@ void GL3ChunkRenderer::initRenderDistanceDependent(int renderDistance) {
 
 	vaos = new GLuint[n];
 	vbos = new GLuint[n];
-	GL(GenVertexArrays(n, vaos));
-	GL(GenBuffers(n, vbos));
 	for (int i = 0; i < n; i++) {
-		GL(BindVertexArray(vaos[i]));
-		GL(BindBuffer(GL_ARRAY_BUFFER, vbos[i]));
-		GL(BufferData(GL_ARRAY_BUFFER, 0, 0, GL_STATIC_DRAW));
-		GL(VertexAttribIPointer(0, 1, GL_UNSIGNED_SHORT, 5, (void *) 0));
-		GL(VertexAttribIPointer(1, 1, GL_UNSIGNED_BYTE, 5, (void *) 2));
-		GL(VertexAttribIPointer(2, 1, GL_UNSIGNED_BYTE, 5, (void *) 3));
-		GL(VertexAttribIPointer(3, 1, GL_UNSIGNED_BYTE, 5, (void *) 4));
-		GL(EnableVertexAttribArray(0));
-		GL(EnableVertexAttribArray(1));
-		GL(EnableVertexAttribArray(2));
-		GL(EnableVertexAttribArray(3));
+		vaos[i] = 0;
+		vbos[i] = 0;
 	}
-	GL(BindVertexArray(0));
 }
 
 void GL3ChunkRenderer::destroyRenderDistanceDependent() {
@@ -62,8 +50,12 @@ void GL3ChunkRenderer::destroyRenderDistanceDependent() {
 	int visibleDiameter = renderDistance * 2 + 1;
 	int n = visibleDiameter * visibleDiameter * visibleDiameter;
 
-	GL(DeleteBuffers(n, vbos));
-	GL(DeleteVertexArrays(n, vaos));
+	for (int i = 0; i < n; i++) {
+		if (vaos[i] != 0) {
+			GL(DeleteVertexArrays(1, &vaos[i]));
+			GL(DeleteBuffers(1, &vbos[i]));
+		}
+	}
 	delete[] vaos;
 	delete[] vbos;
 }
@@ -148,8 +140,29 @@ void GL3ChunkRenderer::emitFace(vec3i64 bc, vec3i64 icc, uint blockType, uint fa
 }
 
 void GL3ChunkRenderer::finishChunkConstruction(size_t index) {
-	GL(BindBuffer(GL_ARRAY_BUFFER, vbos[index]));
-	auto size = sizeof(BlockVertexData) * bufferSize;
-	GL(BufferData(GL_ARRAY_BUFFER, size, blockVertexBuffer, GL_STATIC_DRAW));
-	GL(BindBuffer(GL_ARRAY_BUFFER, 0));
+	if (bufferSize > 0) {
+		if (vaos[index] == 0) {
+			GL(GenVertexArrays(1, &vaos[index]));
+			GL(GenBuffers(1, &vbos[index]));
+			GL(BindVertexArray(vaos[index]));
+			GL(BindBuffer(GL_ARRAY_BUFFER, vbos[index]));
+			GL(VertexAttribIPointer(0, 1, GL_UNSIGNED_SHORT, 5, (void *) 0));
+			GL(VertexAttribIPointer(1, 1, GL_UNSIGNED_BYTE, 5, (void *) 2));
+			GL(VertexAttribIPointer(2, 1, GL_UNSIGNED_BYTE, 5, (void *) 3));
+			GL(VertexAttribIPointer(3, 1, GL_UNSIGNED_BYTE, 5, (void *) 4));
+			GL(EnableVertexAttribArray(0));
+			GL(EnableVertexAttribArray(1));
+			GL(EnableVertexAttribArray(2));
+			GL(EnableVertexAttribArray(3));
+		} else {
+			GL(BindBuffer(GL_ARRAY_BUFFER, vbos[index]));
+		}
+		auto size = sizeof(BlockVertexData) * bufferSize;
+		GL(BufferData(GL_ARRAY_BUFFER, size, blockVertexBuffer, GL_STATIC_DRAW));
+	} else {
+		if (vaos[index] != 0) {
+			GL(DeleteVertexArrays(1, &vaos[index]));
+			GL(DeleteBuffers(1, &vbos[index]));
+		}
+	}
 }
