@@ -58,7 +58,8 @@ TEST(ChunkArchiveTest, UncompressibleChunk) {
 		return index % 2 ? index % 254 : 255;
 	});
 
-	ASSERT_NO_DEATH(store_and_load(supposed, actual););
+	ASSERT_NO_DEATH(store_and_load(supposed, actual);) << "Checkered chunk store and load crashed";
+	store_and_load(supposed, actual);
 	EXPECT_EQ(supposed, actual) << "Checkered chunk did not store and load properly";
 }
 
@@ -75,6 +76,7 @@ TEST(ChunkArchiveTest, RandomChunk) {
 		return distr(rng);
 	});
 
-	ASSERT_NO_DEATH(store_and_load(supposed, actual););
+	ASSERT_NO_DEATH(store_and_load(supposed, actual);) << "Random chunk store and load crashed";
+	store_and_load(supposed, actual);
 	EXPECT_EQ(supposed, actual) << "Random chunk did not store and load properly";
 }
