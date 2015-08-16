@@ -128,7 +128,7 @@ size_t vec3i64HashFunc(vec3i64 v) {
 }
 
 void initUtil() {
-	int range = 32;
+	int range = 64;
 	int length = range * 2 + 1;
 	LOADING_ORDER.resize(length * length * length);
 
