@@ -28,6 +28,7 @@ private:
 	static const int MAX_NEW_FACES = 3000;
 	static const int MAX_NEW_CHUNKS = 100;
 	static const int MAX_RENDER_QUEUE_SIZE= 500;
+	static const int MAX_VS_CHUNKS = 5000;
 
 	enum ChunkStatus {
 		NO_CHUNK = 0,
@@ -47,14 +48,21 @@ private:
 		uint8 vsOuts;
 		uint vsInsVersion;
 		uint vsOutsVersion;
+		vec3i64 vsContent;
 		bool vsInFringe;
 	};
 
 	// visibility search
+	std::deque<vec3i64> vsQueue;
+	vec3i64 vsPlayerChunk;
 	int vsFringeCapacity = 0;
 	vec3i64 *vsFringe = nullptr;
+	int vsFringeSize = 0;
+	int vsFringeStart = 0;
+	int vsFringeEnd = 0;
 	int *vsIndices = nullptr;
-	uint vsCounter = 0;
+	uint vsCurrentVersion = 0;
+	uint vsLastCompleteVersion = 0;
 
 	// chunk requesting
 	vec3i64 oldPlayerChunk;
@@ -93,7 +101,7 @@ public:
 
 private:
 	void buildChunk(const Chunk *chunks[27]);
-	void visibilitySearch(vec3i64 startChunk);
+	void visibilitySearch();
 	int updateVsChunk(size_t index, vec3i64 chunkCoords);
 	int getOuts(int ins, int passThroughs);
 

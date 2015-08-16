@@ -116,7 +116,6 @@ void GL3ChunkRenderer::beginChunkConstruction() {
 }
 
 void GL3ChunkRenderer::emitFace(vec3i64 bc, vec3i64 icc, uint blockType, uint faceDir, int shadowLevels[4]) {
-	
 	ushort posIndices[4];
 	uint8 compactShadowLevels = 0;
 	for (int i = 0; i < 4; i++) {
@@ -136,7 +135,6 @@ void GL3ChunkRenderer::emitFace(vec3i64 bc, vec3i64 icc, uint blockType, uint fa
 		blockVertexBuffer[bufferSize].shadowLevels = compactShadowLevels;
 		bufferSize++;
 	}
-	
 }
 
 void GL3ChunkRenderer::finishChunkConstruction(size_t index) {

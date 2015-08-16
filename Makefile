@@ -44,7 +44,7 @@ SERVER_OBJECT_FILES = \
 # test stuff
 TEST_EXECUTABLE_NAME = test
 TEST_OBJECT_FILES = \
-	test/test.cpp.o
+	test/test_chunk_archive.cpp.o
 
 # stuff needed by both client and server
 SHARED_ARCHIVE_NAME = shared_archive
