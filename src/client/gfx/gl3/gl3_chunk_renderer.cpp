@@ -21,43 +21,14 @@ using namespace std;
 static logging::Logger logger("render");
 
 GL3ChunkRenderer::GL3ChunkRenderer(Client *client, GL3Renderer *renderer) :
-	ChunkRenderer(client, renderer)
+	ChunkRenderer(client, renderer),
+	renderInfos(0, vec3i64HashFunc)
 {
-	initRenderDistanceDependent(client->getConf().render_distance);
+	// nothing
 }
 
 GL3ChunkRenderer::~GL3ChunkRenderer() {
-	destroyRenderDistanceDependent();
-}
-
-void GL3ChunkRenderer::initRenderDistanceDependent(int renderDistance) {
-	ChunkRenderer::initRenderDistanceDependent(renderDistance);
-
-	int visibleDiameter = renderDistance * 2 + 1;
-	int n = visibleDiameter * visibleDiameter * visibleDiameter;
-
-	vaos = new GLuint[n];
-	vbos = new GLuint[n];
-	for (int i = 0; i < n; i++) {
-		vaos[i] = 0;
-		vbos[i] = 0;
-	}
-}
-
-void GL3ChunkRenderer::destroyRenderDistanceDependent() {
-	ChunkRenderer::destroyRenderDistanceDependent();
-
-	int visibleDiameter = renderDistance * 2 + 1;
-	int n = visibleDiameter * visibleDiameter * visibleDiameter;
-
-	for (int i = 0; i < n; i++) {
-		if (vaos[i] != 0) {
-			GL(DeleteVertexArrays(1, &vaos[i]));
-			GL(DeleteBuffers(1, &vbos[i]));
-		}
-	}
-	delete[] vaos;
-	delete[] vbos;
+	// nothing
 }
 
 void GL3ChunkRenderer::beginRender() {
@@ -83,10 +54,14 @@ void GL3ChunkRenderer::beginRender() {
 	shader->setLightEnabled(true);
 }
 
-void GL3ChunkRenderer::renderChunk(size_t index) {
+void GL3ChunkRenderer::renderChunk(vec3i64 chunkCoords) {
+	auto it = renderInfos.find(chunkCoords);
+	if (it == renderInfos.end() || it->second.vao == 0)
+		return;
+
 	Player &player = client->getLocalPlayer();
-	vec3i64 cd = chunkGrid[index].content - player.getChunkPos();
-	
+	vec3i64 cd = chunkCoords - player.getChunkPos();
+
 	glm::mat4 chunkTranslationMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(
 		(float) (cd[0] * Chunk::WIDTH),
 		(float) (cd[1] * Chunk::WIDTH),
@@ -103,8 +78,8 @@ void GL3ChunkRenderer::renderChunk(size_t index) {
 	GL(ActiveTexture(GL_TEXTURE0));
 	GL(BindTexture(GL_TEXTURE_2D_ARRAY, entry.tex));
 
-	GL(BindVertexArray(vaos[index]));
-	GL(DrawArrays(GL_TRIANGLES, 0, chunkGrid[index].numFaces * 3));
+	GL(BindVertexArray(it->second.vao));
+	GL(DrawArrays(GL_TRIANGLES, 0, it->second.numFaces * 3));
 }
 
 void GL3ChunkRenderer::finishRender() {
@@ -137,13 +112,18 @@ void GL3ChunkRenderer::emitFace(vec3i64 bc, vec3i64 icc, uint blockType, uint fa
 	}
 }
 
-void GL3ChunkRenderer::finishChunkConstruction(size_t index) {
+void GL3ChunkRenderer::finishChunkConstruction(vec3i64 chunkCoords) {
+	auto it = renderInfos.find(chunkCoords);
 	if (bufferSize > 0) {
-		if (vaos[index] == 0) {
-			GL(GenVertexArrays(1, &vaos[index]));
-			GL(GenBuffers(1, &vbos[index]));
-			GL(BindVertexArray(vaos[index]));
-			GL(BindBuffer(GL_ARRAY_BUFFER, vbos[index]));
+		if (it == renderInfos.end()) {
+			auto pair = renderInfos.insert({chunkCoords, RenderInfo()});
+			it = pair.first;
+		}
+		if (it->second.vao == 0) {
+			GL(GenVertexArrays(1, &it->second.vao));
+			GL(GenBuffers(1, &it->second.vbo));
+			GL(BindVertexArray(it->second.vao));
+			GL(BindBuffer(GL_ARRAY_BUFFER, it->second.vbo));
 			GL(VertexAttribIPointer(0, 1, GL_UNSIGNED_SHORT, 5, (void *) 0));
 			GL(VertexAttribIPointer(1, 1, GL_UNSIGNED_BYTE, 5, (void *) 2));
 			GL(VertexAttribIPointer(2, 1, GL_UNSIGNED_BYTE, 5, (void *) 3));
@@ -153,16 +133,16 @@ void GL3ChunkRenderer::finishChunkConstruction(size_t index) {
 			GL(EnableVertexAttribArray(2));
 			GL(EnableVertexAttribArray(3));
 		} else {
-			GL(BindBuffer(GL_ARRAY_BUFFER, vbos[index]));
+			GL(BindBuffer(GL_ARRAY_BUFFER, it->second.vbo));
 		}
 		auto size = sizeof(BlockVertexData) * bufferSize;
 		GL(BufferData(GL_ARRAY_BUFFER, size, blockVertexBuffer, GL_STATIC_DRAW));
-	} else {
-		if (vaos[index] != 0) {
-			GL(DeleteVertexArrays(1, &vaos[index]));
-			GL(DeleteBuffers(1, &vbos[index]));
+		it->second.numFaces = bufferSize / 3;
+	} else if (it != renderInfos.end()) {
+		if (it->second.vao != 0) {
+			GL(DeleteVertexArrays(1, &it->second.vao));
+			GL(DeleteBuffers(1, &it->second.vbo));
 		}
-		vaos[index] = 0;
-		vbos[index] = 0;
+		renderInfos.erase(it);
 	}
 }

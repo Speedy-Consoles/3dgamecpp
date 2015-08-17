@@ -9,37 +9,38 @@ static logging::Logger logger("render");
 GL2ChunkRenderer::GL2ChunkRenderer(Client *client, GL2Renderer *renderer) :
 	ChunkRenderer(client, renderer)
 {
-	initRenderDistanceDependent(client->getConf().render_distance);
+	//nothing
 }
 
 GL2ChunkRenderer::~GL2ChunkRenderer() {
-	destroyRenderDistanceDependent();
+	//nothing
 }
 
-void GL2ChunkRenderer::initRenderDistanceDependent(int renderDistance) {
-	ChunkRenderer::initRenderDistanceDependent(renderDistance);
+//void GL2ChunkRenderer::initRenderDistanceDependent(int renderDistance) {
+//	ChunkRenderer::initRenderDistanceDependent(renderDistance);
+//
+//	int visibleDiameter = renderDistance * 2 + 1;
+//	int n = visibleDiameter * visibleDiameter * visibleDiameter;
+//
+//	dlFirstAddress = glGenLists(n);
+//}
+//
+//void GL2ChunkRenderer::destroyRenderDistanceDependent() {
+//	ChunkRenderer::destroyRenderDistanceDependent();
+//
+//	int n = renderDistance * renderDistance * renderDistance;
+//	GL(DeleteLists(dlFirstAddress, n))
+//}
 
-	int visibleDiameter = renderDistance * 2 + 1;
-	int n = visibleDiameter * visibleDiameter * visibleDiameter;
-
-	dlFirstAddress = glGenLists(n);
-}
-
-void GL2ChunkRenderer::destroyRenderDistanceDependent() {
-	ChunkRenderer::destroyRenderDistanceDependent();
-
-	int n = renderDistance * renderDistance * renderDistance;
-	GL(DeleteLists(dlFirstAddress, n))
-}
-
-void GL2ChunkRenderer::renderChunk(size_t index) {
-	Player &player = client->getLocalPlayer();
-	vec3i64 cd = chunkGrid[index].content - player.getChunkPos();
-
-	GL(PushMatrix());
-	GL(Translatef(cd[0] * (float) Chunk::WIDTH, cd[1] * (float) Chunk::WIDTH, cd[2] * (float) Chunk::WIDTH))
-	GL(CallList(dlFirstAddress + index));
-	GL(PopMatrix());
+void GL2ChunkRenderer::renderChunk(vec3i64 chunkCoords) {
+	// TODO
+//	Player &player = client->getLocalPlayer();
+//	vec3i64 cd = chunkCoords - player.getChunkPos();
+//
+//	GL(PushMatrix());
+//	GL(Translatef(cd[0] * (float) Chunk::WIDTH, cd[1] * (float) Chunk::WIDTH, cd[2] * (float) Chunk::WIDTH))
+//	GL(CallList(dlFirstAddress + id));
+//	GL(PopMatrix());
 }
 
 void GL2ChunkRenderer::beginChunkConstruction() {
@@ -72,34 +73,35 @@ void GL2ChunkRenderer::emitFace(vec3i64 bc, vec3i64 icc, uint blockType, uint fa
 	++numQuads;
 }
 
-void GL2ChunkRenderer::finishChunkConstruction(size_t index) {
-	std::sort(&faceIndexBuffer[0], &faceIndexBuffer[numQuads], [](const FaceIndexData &l, const FaceIndexData &r)
-	{
-		return l.tex < r.tex;
-	});
-
-	glNewList(dlFirstAddress + index, GL_COMPILE);
-
-	GLuint lastTex = 0;
-	for (int facei = 0; facei < numQuads; ++facei) {
-		const FaceIndexData *fid = &faceIndexBuffer[facei];
-		const FaceVertexData *fvd = &vb[fid->index];
-		if (fid->tex != lastTex) {
-			glBindTexture(GL_TEXTURE_2D, fid->tex);
-			lastTex = fid->tex;
-		}
-		glBegin(GL_QUADS);
-		glNormal3f(fvd->normal[0], fvd->normal[1], fvd->normal[2]);
-		for (int j = 0; j < 4; j++) {
-			glTexCoord2f(fvd->tex[j][0], fvd->tex[j][1]);
-			glColor3f(fvd->color[j][0], fvd->color[j][1], fvd->color[j][2]);
-			glVertex3f(fvd->vertex[j][0], fvd->vertex[j][1], fvd->vertex[j][2]);
-		}
-		glEnd();
-	}
-
-	glEndList();
-	LOG_OPENGL_ERROR;
+void GL2ChunkRenderer::finishChunkConstruction(vec3i64 chunkCoords) {
+	// TODO
+//	std::sort(&faceIndexBuffer[0], &faceIndexBuffer[numQuads], [](const FaceIndexData &l, const FaceIndexData &r)
+//	{
+//		return l.tex < r.tex;
+//	});
+//
+//	glNewList(dlFirstAddress + id, GL_COMPILE);
+//
+//	GLuint lastTex = 0;
+//	for (int facei = 0; facei < numQuads; ++facei) {
+//		const FaceIndexData *fid = &faceIndexBuffer[facei];
+//		const FaceVertexData *fvd = &vb[fid->index];
+//		if (fid->tex != lastTex) {
+//			glBindTexture(GL_TEXTURE_2D, fid->tex);
+//			lastTex = fid->tex;
+//		}
+//		glBegin(GL_QUADS);
+//		glNormal3f(fvd->normal[0], fvd->normal[1], fvd->normal[2]);
+//		for (int j = 0; j < 4; j++) {
+//			glTexCoord2f(fvd->tex[j][0], fvd->tex[j][1]);
+//			glColor3f(fvd->color[j][0], fvd->color[j][1], fvd->color[j][2]);
+//			glVertex3f(fvd->vertex[j][0], fvd->vertex[j][1], fvd->vertex[j][2]);
+//		}
+//		glEnd();
+//	}
+//
+//	glEndList();
+//	LOG_OPENGL_ERROR;
 }
 
 //void GL2ChunkRenderer::renderTarget() {

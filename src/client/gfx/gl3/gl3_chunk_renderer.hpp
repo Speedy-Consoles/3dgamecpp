@@ -22,12 +22,16 @@ private:
 	};
 #pragma pack(pop)
 
-	// vao, vbo locations
-	GLuint *vaos;
-	GLuint *vbos;
+	struct RenderInfo {
+		GLuint vao = 0;
+		GLuint vbo = 0;
+		int numFaces = 0;
+	};
+
+	std::unordered_map<vec3i64, RenderInfo, size_t(*)(vec3i64)> renderInfos;
 
 	// chunk construction state
-	size_t bufferSize;
+	size_t bufferSize = 0;
 	glm::mat4 playerTranslationMatrix;
 	BlockVertexData blockVertexBuffer[Chunk::WIDTH * Chunk::WIDTH * (Chunk::WIDTH + 1) * 3 * 2 * 3];
 
@@ -36,15 +40,12 @@ public:
 	~GL3ChunkRenderer();
 
 protected:
-	void initRenderDistanceDependent(int renderDistance) override;
-	void destroyRenderDistanceDependent() override;
-
 	void beginRender() override;
-	void renderChunk(size_t index) override;
+	void renderChunk(vec3i64 chunkCoords) override;
 	void finishRender() override;
 	void beginChunkConstruction() override;
 	void emitFace(vec3i64 bc, vec3i64 icc, uint blockType, uint faceDir, int shadowLevels[4]) override;
-	void finishChunkConstruction(size_t index) override;
+	void finishChunkConstruction(vec3i64 chunkCoords) override;
 };
 
 #endif // GL3_CHUNK_RENDERER_HPP_

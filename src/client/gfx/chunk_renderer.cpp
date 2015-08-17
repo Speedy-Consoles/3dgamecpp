@@ -17,9 +17,14 @@ static logging::Logger logger("render");
 
 ChunkRenderer::ChunkRenderer(Client *client, Renderer *renderer) :
 		inBuildQueue(0, vec3i64HashFunc),
+		builtChunks(0, vec3i64HashFunc),
+		vsChunks(0, vec3i64HashFunc),
+		vsInFringe(0, vec3i64HashFunc),
 		client(client),
 		renderer(renderer) {
-	// nothing
+	renderChunks[0] = std::map<vec3i64, vec3i64, bool(*)(vec3i64, vec3i64)>(vec3i64CompFunc);
+	renderChunks[1] = std::map<vec3i64, vec3i64, bool(*)(vec3i64, vec3i64)>(vec3i64CompFunc);
+	renderDistance = client->getConf().render_distance;
 }
 
 ChunkRenderer::~ChunkRenderer() {
@@ -28,15 +33,8 @@ ChunkRenderer::~ChunkRenderer() {
 
 void ChunkRenderer::setConf(const GraphicsConf &conf, const GraphicsConf &old) {
 	if (conf.render_distance != old.render_distance) {
-		destroyRenderDistanceDependent();
-		initRenderDistanceDependent(conf.render_distance);
-		checkChunkIndex = 0;
-		faces = 0;
-		vsCurrentVersion = 0;
-		vsLastCompleteVersion = 0;
-		vsFringeSize = 0;
-		vsFringeStart = 0;
-		vsFringeEnd = 0;
+		checkChunkIndex = 0; // TODO make smarter
+		this->renderDistance = conf.render_distance;
 	}
 }
 
@@ -46,8 +44,6 @@ void ChunkRenderer::tick() {
 		return;
 
 	client->getStopwatch()->start(CLOCK_CRT);
-
-	int visibleDiameter = renderDistance * 2 + 1;
 
 	// put chunks into render queue
 	vec3i64 pc = player.getChunkPos();
@@ -60,11 +56,11 @@ void ChunkRenderer::tick() {
 			checkChunkIndex = LOADING_ORDER_DISTANCE_INDICES[(int) newRadius];
 		oldPlayerChunk = pc;
 	}
-	while (LOADING_ORDER[checkChunkIndex].norm() <= client->getConf().render_distance
+	while (LOADING_ORDER[checkChunkIndex].norm() <= renderDistance
 			&& buildQueue.size() < MAX_RENDER_QUEUE_SIZE) {
 		vec3i64 cc = pc + LOADING_ORDER[checkChunkIndex].cast<int64>();
-		int64 index = gridCycleIndex(cc, visibleDiameter);
-		if (chunkGrid[index].status != OK || chunkGrid[index].content != cc) {
+		auto it = builtChunks.find(cc);
+		if (it == builtChunks.end()) {
 			auto it = inBuildQueue.find(cc);
 			if (it == inBuildQueue.end()) {
 				inBuildQueue.insert(cc);
@@ -97,7 +93,7 @@ void ChunkRenderer::tick() {
 		client->getStopwatch()->start(CLOCK_BCH);
 		buildChunk(chunks);
 		client->getStopwatch()->stop(CLOCK_BCH);
-		vsQueue.push_back(cc);
+		changedChunksQueue.push_back(cc);
 		for (int i = 0; i < 27; ++i) {
 			client->getChunkManager()->releaseChunk(chunks[i]->getCC());
 		}
@@ -106,7 +102,11 @@ void ChunkRenderer::tick() {
 	}
 	client->getStopwatch()->stop(CLOCK_IRQ);
 
+	// TODO remove chunks from builtChunks
+
 	visibilitySearch();
+
+	// TODO remove chunks from vsChunks
 
 	client->getStopwatch()->stop(CLOCK_CRT);
 }
@@ -121,44 +121,22 @@ void ChunkRenderer::render() {
 
 	beginRender();
 
-	int visibleDiameter = renderDistance * 2 + 1;
 	vec3d lookDir = getVectorFromAngles(player.getYaw(), player.getPitch());
-	vec3i64 pc = player.getChunkPos();
 
 	visibleChunks = 0;
 	visibleFaces = 0;
 
-	// TODO order near to far
-	for (int i = 0; i < visibleDiameter * visibleDiameter * visibleDiameter; i++) {
-		if (chunkGrid[i].status != NO_CHUNK
-				&& (chunkGrid[i].content - pc).norm() <= client->getConf().render_distance
-				&& chunkGrid[i].vsContent == chunkGrid[i].content
-				&& chunkGrid[i].vsInsVersion >= vsLastCompleteVersion
-				&& chunkGrid[i].vsIns > 0
-				&& chunkGrid[i].numFaces > 0
-				&& inFrustum(chunkGrid[i].content, player.getPos(), lookDir)) {
-			renderChunk(i);
+	for (auto renderIt = renderChunks[renderChunksPage].begin(); renderIt != renderChunks[renderChunksPage].end(); ++renderIt) {
+		vec3i64 cc = renderIt->second;
+		auto builtIt = builtChunks.find(cc);
+		if (builtIt != builtChunks.end()
+				&& (cc - player.getChunkPos()).norm() <= renderDistance
+				&& inFrustum(cc, player.getPos(), lookDir)){
+			renderChunk(cc);
 			visibleChunks++;
-			visibleFaces += chunkGrid[i].numFaces;
+			visibleFaces += builtIt->second.numFaces;
 		}
 	}
-
-//	size_t renderChunkIndex = 0;
-//	while (LOADING_ORDER[renderChunkIndex].norm() <= client->getConf().render_distance) {
-//		vec3i64 cc = pc + LOADING_ORDER[renderChunkIndex].cast<int64>();
-//		int index = gridCycleIndex(cc, visibleDiameter);
-//		if (chunkGrid[index].status != NO_CHUNK
-//				&& chunkGrid[index].numFaces > 0
-//				&& chunkGrid[index].vsInsVersion == vsCounter
-//				&& chunkGrid[index].content == cc
-//				&& chunkGrid[index].vsIns > 0
-//				&& inFrustum(cc, player.getPos(), lookDir)) {
-//			renderChunk(index);
-//			visibleChunks++;
-//			visibleFaces += chunkGrid[index].numFaces;
-//		}
-//		renderChunkIndex++;
-//	}
 
 	finishRender();
 	
@@ -166,11 +144,10 @@ void ChunkRenderer::render() {
 }
 
 void ChunkRenderer::rebuildChunk(vec3i64 chunkCoords) {
-	int visibleDiameter = renderDistance * 2 + 1;
-	int64 index = gridCycleIndex(chunkCoords, visibleDiameter);
-	if (chunkGrid[index].status != OK || chunkGrid[index].content != chunkCoords)
+	auto it = builtChunks.find(chunkCoords);
+	if (it == builtChunks.end() || it->second.outDated)
 		return;
-	chunkGrid[index].status = OUTDATED;
+	it->second.outDated = true;
 	inBuildQueue.insert(chunkCoords);
 	buildQueue.push_front(chunkCoords);
 	for (size_t i = 0; i < 27; ++i) {
@@ -197,16 +174,18 @@ void ChunkRenderer::buildChunk(Chunk const *chunks[27]) {
 	const Chunk &chunk = *(chunks[BIG_CUBE_CYCLE_BASE_INDEX]);
 	vec3i64 cc = chunk.getCC();
 
-	int visibleDiameter = renderDistance * 2 + 1;
-	size_t index = gridCycleIndex(cc, visibleDiameter);
+	auto it = builtChunks.find(cc);
 
-	if (chunkGrid[index].status != NO_CHUNK)
-		faces -= chunkGrid[index].numFaces;
+	if (it == builtChunks.end()) {
+		auto pair = builtChunks.insert({cc, ChunkBuildInfo()});
+		it = pair.first;
+	} else {
+		faces -= it->second.numFaces;
+	}
 
-	chunkGrid[index].numFaces = 0;
-	chunkGrid[index].content = cc;
-	chunkGrid[index].status = OK;
-	chunkGrid[index].passThroughs = chunk.getPassThroughs();
+	it->second.numFaces = 0;
+	it->second.outDated = false;
+	it->second.passThroughs = chunk.getPassThroughs();
 
 	// skip air chunks and earth chunks
 	bool skip = false;
@@ -223,7 +202,7 @@ void ChunkRenderer::buildChunk(Chunk const *chunks[27]) {
 	}
 
 	if (skip) {
-		finishChunkConstruction(index);
+		finishChunkConstruction(cc);
 		return;
 	}
 
@@ -321,16 +300,16 @@ void ChunkRenderer::buildChunk(Chunk const *chunks[27]) {
 						}
 
 						emitFace(bc, faceBlock, faceType, faceDir, shadowLevels);
-						chunkGrid[index].numFaces += 2;
+						it->second.numFaces += 2;
 					}
 				}
 			}
 		}
 	}
 
-	finishChunkConstruction(index);
-	newFaces += chunkGrid[index].numFaces;
-	faces += chunkGrid[index].numFaces;
+	finishChunkConstruction(cc);
+	newFaces += it->second.numFaces;
+	faces += it->second.numFaces;
 }
 
 void ChunkRenderer::visibilitySearch() {
@@ -339,68 +318,83 @@ void ChunkRenderer::visibilitySearch() {
 		return;
 
 	vec3i64 pc = player.getChunkPos();
-	if (vsPlayerChunk != pc) {
-		vsQueue.clear();
-	}
-
-	int visibleDiameter = renderDistance * 2 + 1;
 
 	int traversedChunks = 0;
 	while ((
-				vsFringeSize > 0
+				!vsFringe.empty()
 				|| pc != vsPlayerChunk
-				|| !vsQueue.empty()
+				|| vsRenderDistance != renderDistance
+				|| !changedChunksQueue.empty()
 				|| vsCurrentVersion == 0)
 			&& traversedChunks < MAX_VS_CHUNKS) {
 		vec3i64 startChunkCoords;
-		int startIndex;
-		if (vsFringeSize == 0) {
-			if (pc != vsPlayerChunk || vsCurrentVersion == 0) {
+		if (vsFringe.empty()) {
+			if (pc != vsPlayerChunk
+					|| vsCurrentVersion == 0
+					|| vsRenderDistance != renderDistance) {
 				vsPlayerChunk = pc;
+				vsRenderDistance = renderDistance;
 				startChunkCoords = pc;
 				vsCurrentVersion++;
-			} else if (!vsQueue.empty()) {
-				startChunkCoords = vsQueue.front();
-				vsQueue.pop_front();
+				newVs = true;
+				changedChunksQueue.clear();
+			} else if (!changedChunksQueue.empty()) {
+				startChunkCoords = changedChunksQueue.front();
+				changedChunksQueue.pop_front();
 			}
-			startIndex = (int) gridCycleIndex(startChunkCoords, visibleDiameter);
+
+			auto startIt = vsChunks.find(startChunkCoords);
+			if (startIt == vsChunks.end()) {
+				auto pair = vsChunks.insert({startChunkCoords, ChunkVSInfo()});
+				startIt = pair.first;
+			}
 
 			if (startChunkCoords == vsPlayerChunk) {
-				chunkGrid[startIndex].vsOuts = 0x3F;
-				chunkGrid[startIndex].vsOutsVersion = vsCurrentVersion;
-				chunkGrid[startIndex].vsIns = 0x3F;
-				chunkGrid[startIndex].vsInsVersion = vsCurrentVersion;
+				startIt->second.outs = 0x3F;
+				startIt->second.outsVersion = vsCurrentVersion;
+				startIt->second.ins = 0x3F;
+				startIt->second.insVersion = vsCurrentVersion;
+
+				renderChunks[1 - renderChunksPage].insert({{0, 0, 0}, startChunkCoords});
 
 				for (int d = 0; d < 6; d++) {
 					vec3i64 ncc = startChunkCoords + DIRS[d].cast<int64>();
-					int nIndex = gridCycleIndex(ncc, visibleDiameter);
-					vsFringe[vsFringeEnd] = ncc;
-					vsIndices[vsFringeEnd] = nIndex;
-					chunkGrid[nIndex].vsIns = (1 << ((d + 3) % 6));
-					chunkGrid[nIndex].vsInsVersion = vsCurrentVersion;
-					chunkGrid[nIndex].vsInFringe = true;
-					vsFringeEnd = (vsFringeEnd + 1) % vsFringeCapacity;
-					vsFringeSize++;
+					auto nit = vsChunks.find(ncc);
+					if (nit == vsChunks.end()) {
+							auto pair = vsChunks.insert({ncc, ChunkVSInfo()});
+							nit = pair.first;
+					}
+					vsFringe.push(ncc);
+					nit->second.ins = (1 << ((d + 3) % 6));
+					nit->second.insVersion = vsCurrentVersion;
+					vsInFringe.insert(ncc);
 				}
-			} else if (chunkGrid[startIndex].vsIns > 0 && chunkGrid[startIndex].vsInsVersion == vsCurrentVersion) {
-				vsFringe[vsFringeEnd] = startChunkCoords;
-				vsIndices[vsFringeEnd] = startIndex;
-				chunkGrid[startIndex].vsInFringe = true;
-				vsFringeEnd = (vsFringeEnd + 1) % vsFringeCapacity;
-				vsFringeSize++;
+			} else if (startIt->second.ins > 0 && startIt->second.insVersion == vsCurrentVersion) {
+				vsFringe.push(startChunkCoords);
+				vsInFringe.insert(startChunkCoords);
 			} else {
 				return;
 			}
 		}
 
-		while (vsFringeSize > 0 && traversedChunks < MAX_VS_CHUNKS) {
+		while (!vsFringe.empty() && traversedChunks < MAX_VS_CHUNKS) {
 			traversedChunks++;
-			vec3i64 cc = vsFringe[vsFringeStart];
-			int index = vsIndices[vsFringeStart];
-			vsFringeStart = (vsFringeStart + 1) % vsFringeCapacity;
-			vsFringeSize--;
-			chunkGrid[index].vsInFringe = false;
-			int changedOuts = updateVsChunk(index, cc);
+			vec3i64 cc = vsFringe.front();
+			vsFringe.pop();
+			vsInFringe.erase(cc);
+
+			auto builtIt = builtChunks.find(cc);
+			auto vsIt = vsChunks.find(cc);
+
+			int changedOuts = updateVsChunk(cc);
+
+			int page = newVs ? 1 - renderChunksPage : renderChunksPage;
+			if (builtIt != builtChunks.end()
+					&& builtIt->second.numFaces > 0
+					&& vsIt->second.ins > 0)
+				renderChunks[page].insert({cc - vsPlayerChunk, cc});
+			else
+				renderChunks[page].erase(cc - vsPlayerChunk);
 
 			for (int d = 0; d < 6; d++) {
 				if (((changedOuts >> d) & 1) == 0)
@@ -408,37 +402,44 @@ void ChunkRenderer::visibilitySearch() {
 
 				vec3i64 ncc = cc + DIRS[d].cast<int64>();
 
-				if ((ncc - vsPlayerChunk).norm() > client->getConf().render_distance)
+				if ((ncc - vsPlayerChunk).norm() > vsRenderDistance)
 					continue;
 
-				int nIndex = gridCycleIndex(ncc, visibleDiameter);
-
-				if (chunkGrid[nIndex].vsInsVersion != vsCurrentVersion) {
-					chunkGrid[nIndex].vsIns = 0;
-					chunkGrid[nIndex].vsInsVersion = vsCurrentVersion;
+				auto nVsIt = vsChunks.find(ncc);
+				if (nVsIt == vsChunks.end()) {
+						auto pair = vsChunks.insert({ncc, ChunkVSInfo()});
+						nVsIt = pair.first;
 				}
-				chunkGrid[nIndex].vsIns |= (1 << ((d + 3) % 6));
 
-				if (chunkGrid[nIndex].vsInFringe == false) {
-					chunkGrid[nIndex].vsInFringe = true;
-					vsFringe[vsFringeEnd] = ncc;
-					vsIndices[vsFringeEnd] = nIndex;
-					vsFringeEnd = (vsFringeEnd + 1) % vsFringeCapacity;
-					vsFringeSize++;
+				if (nVsIt->second.insVersion != vsCurrentVersion) {
+					nVsIt->second.ins = 0;
+					nVsIt->second.insVersion = vsCurrentVersion;
+				}
+				nVsIt->second.ins |= (1 << ((d + 3) % 6));
+
+				if (vsInFringe.find(ncc) == vsInFringe.end()) {
+					vsFringe.push(ncc);
+					vsInFringe.insert(ncc);
 				}
 			}
 		}
-		if (vsFringeSize == 0)
-			vsLastCompleteVersion = vsCurrentVersion;
+		if (vsFringe.empty() && newVs) {
+			newVs = false;
+			renderChunks[renderChunksPage].clear();
+			renderChunksPage = 1 - renderChunksPage;
+		}
 	}
 }
 
-int ChunkRenderer::updateVsChunk(size_t index, vec3i64 chunkCoords) {
-	int passThroughs = 0x3FFF;
-	if (chunkGrid[index].status != NO_CHUNK && chunkGrid[index].content == chunkCoords)
-		passThroughs = chunkGrid[index].passThroughs;
+int ChunkRenderer::updateVsChunk(vec3i64 chunkCoords) {
+	auto builtIt = builtChunks.find(chunkCoords);
+	auto vsIt = vsChunks.find(chunkCoords);
 
-	vec3i64 cd = chunkCoords - client->getLocalPlayer().getChunkPos();
+	int passThroughs = 0x3FFF;
+	if (builtIt != builtChunks.end())
+		passThroughs = builtIt->second.passThroughs;
+
+	vec3i64 cd = chunkCoords - vsPlayerChunk;
 	int dirMask = 0;
 	for (int dim = 0; dim < 3; dim++) {
 		if (cd[dim] >= -1)
@@ -447,15 +448,13 @@ int ChunkRenderer::updateVsChunk(size_t index, vec3i64 chunkCoords) {
 			dirMask |= 8 << dim;
 	}
 
-	int oldOuts = chunkGrid[index].vsOuts;
-	if (chunkGrid[index].vsOutsVersion != vsCurrentVersion)
+	int oldOuts = vsIt->second.outs;
+	if (vsIt->second.outsVersion != vsCurrentVersion)
 		oldOuts = 0;
-	chunkGrid[index].vsOuts = getOuts(chunkGrid[index].vsIns, passThroughs) & dirMask;
-	chunkGrid[index].vsOutsVersion = vsCurrentVersion;
+	vsIt->second.outs = getOuts(vsIt->second.ins, passThroughs) & dirMask;
+	vsIt->second.outsVersion = vsCurrentVersion;
 
-	chunkGrid[index].vsContent = chunkCoords;
-
-	return oldOuts ^ chunkGrid[index].vsOuts;
+	return oldOuts ^ vsIt->second.outs;
 }
 
 int ChunkRenderer::getOuts(int ins, int passThroughs) {
@@ -484,29 +483,4 @@ bool ChunkRenderer::inFrustum(vec3i64 cc, vec3i64 pos, vec3d lookDir) {
 	vec3d orthoChunkPos = cp - lookDir * chunkLookDist;
 	double orthoChunkDist = max(0.0, orthoChunkPos.norm() - chunkDia);
 	return atan(orthoChunkDist / chunkLookDist) <= renderer->getMaxFOV() / 2;
-}
-
-void ChunkRenderer::initRenderDistanceDependent(int renderDistance) {
-	int visibleDiameter = renderDistance * 2 + 1;
-	int n = visibleDiameter * visibleDiameter * visibleDiameter;
-	chunkGrid = new GridInfo[n];
-	vsFringeCapacity = visibleDiameter * visibleDiameter * 6;
-	vsFringe = new vec3i64[vsFringeCapacity];
-	vsIndices = new int[vsFringeCapacity];
-	for (int i = 0; i < n; i++) {
-		chunkGrid[i].status = NO_CHUNK;
-		chunkGrid[i].numFaces = 0;
-		chunkGrid[i].passThroughs = 0;
-		chunkGrid[i].vsInsVersion = 0;
-		chunkGrid[i].vsOutsVersion = 0;
-		chunkGrid[i].vsInFringe = false;
-	}
-
-	this->renderDistance = renderDistance;
-}
-
-void ChunkRenderer::destroyRenderDistanceDependent() {
-	delete[] chunkGrid;
-	delete[] vsFringe;
-	delete[] vsIndices;
 }

@@ -43,15 +43,12 @@ public:
 	~GL2ChunkRenderer();
 
 protected:
-	void initRenderDistanceDependent(int renderDistance) override;
-	void destroyRenderDistanceDependent() override;
-
 	void beginRender() override {}
-	void renderChunk(size_t index) override;
+	void renderChunk(vec3i64 chunkCoords) override;
 	void finishRender() override {}
 	void beginChunkConstruction() override;
 	void emitFace(vec3i64 bc, vec3i64 icc, uint blockType, uint faceDir, int shadowLevels[4]) override;
-	void finishChunkConstruction(size_t index) override;
+	void finishChunkConstruction(vec3i64 chunkCoords) override;
 
 //	void renderTarget();
 //	void renderPlayers();

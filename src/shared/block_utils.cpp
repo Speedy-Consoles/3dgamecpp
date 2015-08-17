@@ -127,6 +127,24 @@ size_t vec3i64HashFunc(vec3i64 v) {
 	return result;
 }
 
+bool vec3i64CompFunc(vec3i64 v1, vec3i64 v2) {
+	int n1 = v1.norm2();
+	int n2 = v2.norm2();
+	if (n1 > n2)
+		return false;
+	if (n1 < n2)
+		return true;
+	if (v1[2] > v2[2])
+		return false;
+	if (v1[2] < v2[2])
+		return true;
+	if (v1[1] > v2[1])
+		return false;
+	if (v1[1] < v2[1])
+		return true;
+	return v1[0] < v2[0];
+}
+
 void initUtil() {
 	int range = 64;
 	int length = range * 2 + 1;

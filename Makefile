@@ -116,7 +116,7 @@ TEST_EXECUTABLE = $(BIN_DIR)/$(TEST_EXECUTABLE_NAME)
 SHARED_ARCHIVE = $(OBJ_DIR)/$(SHARED_ARCHIVE_NAME).a
 
 # targets
-all: client server test
+all: client server #test
 
 client: $(CLIENT_EXECUTABLE)
 server: $(SERVER_EXECUTABLE)
