@@ -7,7 +7,8 @@
 static logging::Logger logger("render");
 
 GL2ChunkRenderer::GL2ChunkRenderer(Client *client, GL2Renderer *renderer) :
-	ChunkRenderer(client, renderer)
+	ChunkRenderer(client, renderer),
+	renderInfos(0, vec3i64HashFunc)
 {
 	//nothing
 }
@@ -16,31 +17,18 @@ GL2ChunkRenderer::~GL2ChunkRenderer() {
 	//nothing
 }
 
-//void GL2ChunkRenderer::initRenderDistanceDependent(int renderDistance) {
-//	ChunkRenderer::initRenderDistanceDependent(renderDistance);
-//
-//	int visibleDiameter = renderDistance * 2 + 1;
-//	int n = visibleDiameter * visibleDiameter * visibleDiameter;
-//
-//	dlFirstAddress = glGenLists(n);
-//}
-//
-//void GL2ChunkRenderer::destroyRenderDistanceDependent() {
-//	ChunkRenderer::destroyRenderDistanceDependent();
-//
-//	int n = renderDistance * renderDistance * renderDistance;
-//	GL(DeleteLists(dlFirstAddress, n))
-//}
-
 void GL2ChunkRenderer::renderChunk(vec3i64 chunkCoords) {
-	// TODO
-//	Player &player = client->getLocalPlayer();
-//	vec3i64 cd = chunkCoords - player.getChunkPos();
-//
-//	GL(PushMatrix());
-//	GL(Translatef(cd[0] * (float) Chunk::WIDTH, cd[1] * (float) Chunk::WIDTH, cd[2] * (float) Chunk::WIDTH))
-//	GL(CallList(dlFirstAddress + id));
-//	GL(PopMatrix());
+	auto it = renderInfos.find(chunkCoords);
+	if (it == renderInfos.end() || it->second.dl == 0)
+		return;
+
+	Player &player = client->getLocalPlayer();
+	vec3i64 cd = chunkCoords - player.getChunkPos();
+
+	GL(PushMatrix());
+	GL(Translatef(cd[0] * (float) Chunk::WIDTH, cd[1] * (float) Chunk::WIDTH, cd[2] * (float) Chunk::WIDTH))
+	GL(CallList(it->second.dl));
+	GL(PopMatrix());
 }
 
 void GL2ChunkRenderer::beginChunkConstruction() {
@@ -74,86 +62,50 @@ void GL2ChunkRenderer::emitFace(vec3i64 bc, vec3i64 icc, uint blockType, uint fa
 }
 
 void GL2ChunkRenderer::finishChunkConstruction(vec3i64 chunkCoords) {
-	// TODO
-//	std::sort(&faceIndexBuffer[0], &faceIndexBuffer[numQuads], [](const FaceIndexData &l, const FaceIndexData &r)
-//	{
-//		return l.tex < r.tex;
-//	});
-//
-//	glNewList(dlFirstAddress + id, GL_COMPILE);
-//
-//	GLuint lastTex = 0;
-//	for (int facei = 0; facei < numQuads; ++facei) {
-//		const FaceIndexData *fid = &faceIndexBuffer[facei];
-//		const FaceVertexData *fvd = &vb[fid->index];
-//		if (fid->tex != lastTex) {
-//			glBindTexture(GL_TEXTURE_2D, fid->tex);
-//			lastTex = fid->tex;
-//		}
-//		glBegin(GL_QUADS);
-//		glNormal3f(fvd->normal[0], fvd->normal[1], fvd->normal[2]);
-//		for (int j = 0; j < 4; j++) {
-//			glTexCoord2f(fvd->tex[j][0], fvd->tex[j][1]);
-//			glColor3f(fvd->color[j][0], fvd->color[j][1], fvd->color[j][2]);
-//			glVertex3f(fvd->vertex[j][0], fvd->vertex[j][1], fvd->vertex[j][2]);
-//		}
-//		glEnd();
-//	}
-//
-//	glEndList();
-//	LOG_OPENGL_ERROR;
+	auto it = renderInfos.find(chunkCoords);
+	if (numQuads > 0) {
+		if (it == renderInfos.end()) {
+			auto pair = renderInfos.insert({chunkCoords, RenderInfo()});
+			it = pair.first;
+		}
+		if (it->second.dl == 0) {
+			it->second.dl = glGenLists(1);
+		}
+		std::sort(&faceIndexBuffer[0], &faceIndexBuffer[numQuads], [](const FaceIndexData &l, const FaceIndexData &r)
+		{
+			return l.tex < r.tex;
+		});
+
+		glNewList(it->second.dl, GL_COMPILE);
+
+		GLuint lastTex = 0;
+		for (int facei = 0; facei < numQuads; ++facei) {
+			const FaceIndexData *fid = &faceIndexBuffer[facei];
+			const FaceVertexData *fvd = &vb[fid->index];
+			if (fid->tex != lastTex) {
+				glBindTexture(GL_TEXTURE_2D, fid->tex);
+				lastTex = fid->tex;
+			}
+			glBegin(GL_QUADS);
+			glNormal3f(fvd->normal[0], fvd->normal[1], fvd->normal[2]);
+			for (int j = 0; j < 4; j++) {
+				glTexCoord2f(fvd->tex[j][0], fvd->tex[j][1]);
+				glColor3f(fvd->color[j][0], fvd->color[j][1], fvd->color[j][2]);
+				glVertex3f(fvd->vertex[j][0], fvd->vertex[j][1], fvd->vertex[j][2]);
+			}
+			glEnd();
+		}
+
+		glEndList();
+		LOG_OPENGL_ERROR;
+	} else if (it != renderInfos.end()) {
+		if (it->second.dl != 0) {
+			GL(DeleteLists(it->second.dl, 1))
+		}
+		renderInfos.erase(it);
+	}
 }
 
-//void GL2ChunkRenderer::renderTarget() {
-//	Player &player = client->getLocalPlayer();
-//	vec3i64 pc = player.getChunkPos();
-//
-//	vec3i64 tbc;
-//	vec3i64 tcc;
-//	vec3ui8 ticc;
-//	int td;
-//	bool target = player.getTargetedFace(&tbc, &td);
-//	if (target) {
-//		tcc = bc2cc(tbc);
-//		ticc = bc2icc(tbc);
-//	}
-//
-//	if (target) {
-//		GL(Disable(GL_TEXTURE_2D));
-//		glBegin(GL_QUADS);
-//		glColor4d(0.0, 0.0, 0.0, 1.0);
-//		vec3d pointFive(0.5, 0.5, 0.5);
-//		for (int d = 0; d < 6; d++) {
-//			glNormal3d(DIRS[d][0], DIRS[d][1], DIRS[d][2]);
-//			for (int j = 0; j < 4; j++) {
-//				vec3d dirOff = DIRS[d].cast<double>() * 0.0005;
-//				vec3d vOff[4];
-//				vOff[0] = DIR_QUAD_CORNER_CYCLES_3D[d][j].cast<double>() - pointFive;
-//				vOff[0][OTHER_DIR_DIMS[d][0]] *= 1.001;
-//				vOff[0][OTHER_DIR_DIMS[d][1]] *= 1.001;
-//				vOff[1] = DIR_QUAD_CORNER_CYCLES_3D[d][j].cast<double>() - pointFive;
-//				vOff[1][OTHER_DIR_DIMS[d][0]] *= 0.97;
-//				vOff[1][OTHER_DIR_DIMS[d][1]] *= 0.97;
-//				vOff[2] = DIR_QUAD_CORNER_CYCLES_3D[d][(j + 3) % 4].cast<double>() - pointFive;
-//				vOff[2][OTHER_DIR_DIMS[d][0]] *= 0.97;
-//				vOff[2][OTHER_DIR_DIMS[d][1]] *= 0.97;
-//				vOff[3] = DIR_QUAD_CORNER_CYCLES_3D[d][(j + 3) % 4].cast<double>() - pointFive;
-//				vOff[3][OTHER_DIR_DIMS[d][0]] *= 1.001;
-//				vOff[3][OTHER_DIR_DIMS[d][1]] *= 1.001;
-//
-//				for (int k = 0; k < 4; k++) {
-//					vec3d vertex = (tbc - pc * Chunk::WIDTH).cast<double>() + dirOff + vOff[k] + pointFive;
-//					glVertex3d(vertex[0], vertex[1], vertex[2]);
-//				}
-//			}
-//		}
-//		glEnd();
-//		LOG_OPENGL_ERROR;
-//
-//		GL(Enable(GL_TEXTURE_2D));
-//	}
-//}
-//
 //void GL2ChunkRenderer::renderPlayers() {
 //	GL(BindTexture(GL_TEXTURE_2D, 0));
 //	glBegin(GL_QUADS);

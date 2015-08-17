@@ -28,10 +28,11 @@ class GL2ChunkRenderer : public ChunkRenderer {
 		int index;
 	};
 
-	// display lists
-	GLuint dlFirstAddress = 0;
-	vec3i64 *dlChunks = nullptr;
-	uint8 *dlStatus = nullptr;
+	struct RenderInfo {
+		GLuint dl = 0;
+	};
+
+	std::unordered_map<vec3i64, RenderInfo, size_t(*)(vec3i64)> renderInfos;
 
 	// chunk construction state
 	int numQuads = 0;
