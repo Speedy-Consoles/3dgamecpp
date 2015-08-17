@@ -218,7 +218,8 @@ void GL3DebugRenderer::renderPerformance() {
 		"CRT", // chunk renderer tick
 		"BCH", // build chunk
 		"CRR", // chunk renderer render
-		"IRQ", // iterate render queue
+		"IBQ", // iterate render queue
+		"VS", // visibility search
 		"FSH", // glFinish
 		"FLP", // flip
 		"SYN", // synchronize

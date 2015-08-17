@@ -81,7 +81,8 @@ enum ClockId {
 	CLOCK_CRT, // chunk renderer tick
 	CLOCK_BCH, // build chunk
 	CLOCK_CRR, // chunk renderer render
-	CLOCK_IRQ, // iterate render queue
+	CLOCK_IBQ, // iterate render queue
+	CLOCK_VS, // visibility search
 	CLOCK_FSH, // glFinish
 	CLOCK_FLP, // flip
 	CLOCK_SYN, // synchronize

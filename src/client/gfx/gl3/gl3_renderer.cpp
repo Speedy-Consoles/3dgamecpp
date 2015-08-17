@@ -219,5 +219,11 @@ void GL3Renderer::render() {
 	debugRenderer->render();
 	menuRenderer->render();
 
+	client->getStopwatch()->start(CLOCK_FSH);
+	//glFinish();
+	client->getStopwatch()->stop(CLOCK_FSH);
+
+	client->getStopwatch()->start(CLOCK_FLP);
 	client->getGraphics()->flip();
+	client->getStopwatch()->stop(CLOCK_FLP);
 }

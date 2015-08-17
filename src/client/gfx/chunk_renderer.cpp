@@ -82,7 +82,7 @@ void ChunkRenderer::tick() {
 		checkChunkIndex++;
 	}
 
-	client->getStopwatch()->start(CLOCK_IRQ);
+	client->getStopwatch()->start(CLOCK_IBQ);
 	// build chunks in render queue
 	newFaces = 0;
 	newChunks = 0;
@@ -109,11 +109,11 @@ void ChunkRenderer::tick() {
 		buildQueue.pop_front();
 		inBuildQueue.erase(inBuildQueue.find(cc));
 	}
-	client->getStopwatch()->stop(CLOCK_IRQ);
+	client->getStopwatch()->stop(CLOCK_IBQ);
 
+	client->getStopwatch()->start(CLOCK_VS);
 	visibilitySearch();
-
-	// TODO remove chunks from vsChunks
+	client->getStopwatch()->stop(CLOCK_VS);
 
 	client->getStopwatch()->stop(CLOCK_CRT);
 }
@@ -319,6 +319,7 @@ void ChunkRenderer::buildChunk(Chunk const *chunks[27]) {
 	faces += it->second.numFaces;
 }
 
+// TODO less map find calls
 void ChunkRenderer::visibilitySearch() {
 	Player &player = client->getLocalPlayer();
 	if (!player.isValid())
