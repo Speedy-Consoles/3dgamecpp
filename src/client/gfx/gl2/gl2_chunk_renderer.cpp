@@ -106,6 +106,16 @@ void GL2ChunkRenderer::finishChunkConstruction(vec3i64 chunkCoords) {
 	}
 }
 
+void GL2ChunkRenderer::destroyChunkData(vec3i64 chunkCoords) {
+	auto it = renderInfos.find(chunkCoords);
+	if (it != renderInfos.end()) {
+		if (it->second.dl != 0) {
+			GL(DeleteLists(it->second.dl, 1))
+		}
+		renderInfos.erase(it);
+	}
+}
+
 //void GL2ChunkRenderer::renderPlayers() {
 //	GL(BindTexture(GL_TEXTURE_2D, 0));
 //	glBegin(GL_QUADS);

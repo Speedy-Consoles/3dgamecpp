@@ -55,6 +55,15 @@ void ChunkRenderer::tick() {
 		else
 			checkChunkIndex = LOADING_ORDER_DISTANCE_INDICES[(int) newRadius];
 		oldPlayerChunk = pc;
+
+		for (auto it = builtChunks.begin(); it != builtChunks.end();) {
+			if ((it->first - pc).norm() > renderDistance) {
+				destroyChunkData(it->first);
+				it = builtChunks.erase(it);
+			} else {
+				++it;
+			}
+		}
 	}
 	while (LOADING_ORDER[checkChunkIndex].norm() <= renderDistance
 			&& buildQueue.size() < MAX_RENDER_QUEUE_SIZE) {
@@ -101,8 +110,6 @@ void ChunkRenderer::tick() {
 		inBuildQueue.erase(inBuildQueue.find(cc));
 	}
 	client->getStopwatch()->stop(CLOCK_IRQ);
-
-	// TODO remove chunks from builtChunks
 
 	visibilitySearch();
 
@@ -332,6 +339,13 @@ void ChunkRenderer::visibilitySearch() {
 			if (pc != vsPlayerChunk
 					|| vsCurrentVersion == 0
 					|| vsRenderDistance != renderDistance) {
+				for (auto it = vsChunks.begin(); it != vsChunks.end();) {
+					if ((it->first - vsPlayerChunk).norm() > renderDistance) {
+						it = vsChunks.erase(it);
+					} else {
+						++it;
+					}
+				}
 				vsPlayerChunk = pc;
 				vsRenderDistance = renderDistance;
 				startChunkCoords = pc;

@@ -113,6 +113,7 @@ protected:
 	virtual void beginChunkConstruction() = 0;
 	virtual void emitFace(vec3i64 bc, vec3i64 icc, uint blockType, uint faceDir, int shadowLevels[4]) = 0;
 	virtual void finishChunkConstruction(vec3i64 chunkCoords) = 0;
+	virtual void destroyChunkData(vec3i64 chunkCoords) = 0;
 };
 
 #endif // CHUNK_RENDERER_HPP

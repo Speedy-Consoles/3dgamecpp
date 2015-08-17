@@ -146,3 +146,14 @@ void GL3ChunkRenderer::finishChunkConstruction(vec3i64 chunkCoords) {
 		renderInfos.erase(it);
 	}
 }
+
+void GL3ChunkRenderer::destroyChunkData(vec3i64 chunkCoords) {
+	auto it = renderInfos.find(chunkCoords);
+	if (it != renderInfos.end()) {
+		if (it->second.vao != 0) {
+			GL(DeleteVertexArrays(1, &it->second.vao));
+			GL(DeleteBuffers(1, &it->second.vbo));
+		}
+		renderInfos.erase(it);
+	}
+}
