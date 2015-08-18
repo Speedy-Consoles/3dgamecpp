@@ -31,7 +31,7 @@ private:
 	static const int MAX_NEW_FACES = 3000;
 	static const int MAX_NEW_CHUNKS = 100;
 	static const int MAX_RENDER_QUEUE_SIZE= 500;
-	static const int MAX_VS_CHUNKS = 5000;
+	static const int MAX_VS_CHUNKS = 3000;
 
 	struct ChunkBuildInfo {
 		bool outDated = false;
@@ -63,7 +63,7 @@ private:
 	std::unordered_map<vec3i64, ChunkVSInfo, size_t(*)(vec3i64)> vsChunks;
 	std::unordered_set<vec3i64, size_t(*)(vec3i64)> vsInFringe;
 	int vsFringeCapacity = 0;
-	std::queue<vec3i64> vsFringe;
+	std::queue<std::unordered_map<vec3i64, ChunkVSInfo, size_t (*)(vec3i64)>::iterator> vsFringe;
 	uint vsCurrentVersion = 0;
 	int vsRenderDistance = 0;
 	bool newVs = false;
@@ -101,7 +101,7 @@ public:
 private:
 	void buildChunk(const Chunk *chunks[27]);
 	void visibilitySearch();
-	int updateVsChunk(vec3i64 chunkCoords);
+	int updateVsChunk(vec3i64 chunkCoords, ChunkVSInfo *vsInfo, int passThroughs);
 	int getOuts(int ins, int passThroughs);
 
 	bool inFrustum(vec3i64 cc, vec3i64 pos, vec3d lookDir);

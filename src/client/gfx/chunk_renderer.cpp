@@ -379,13 +379,13 @@ void ChunkRenderer::visibilitySearch() {
 							auto pair = vsChunks.insert({ncc, ChunkVSInfo()});
 							nit = pair.first;
 					}
-					vsFringe.push(ncc);
 					nit->second.ins = (1 << ((d + 3) % 6));
 					nit->second.insVersion = vsCurrentVersion;
+					vsFringe.push(nit);
 					vsInFringe.insert(ncc);
 				}
 			} else if (startIt->second.ins > 0 && startIt->second.insVersion == vsCurrentVersion) {
-				vsFringe.push(startChunkCoords);
+				vsFringe.push(startIt);
 				vsInFringe.insert(startChunkCoords);
 			} else {
 				return;
@@ -394,14 +394,17 @@ void ChunkRenderer::visibilitySearch() {
 
 		while (!vsFringe.empty() && traversedChunks < MAX_VS_CHUNKS) {
 			traversedChunks++;
-			vec3i64 cc = vsFringe.front();
+			auto vsIt = vsFringe.front();
+			vec3i64 cc = vsIt->first;
 			vsFringe.pop();
 			vsInFringe.erase(cc);
-
+			//std::unordered_map<vec3i64, ChunkBuildInfo, size_t (*)(vec3i64)>::iterator
 			auto builtIt = builtChunks.find(cc);
-			auto vsIt = vsChunks.find(cc);
 
-			int changedOuts = updateVsChunk(cc);
+			int passThroughs = 0x3FFF;
+			if (builtIt != builtChunks.end())
+				passThroughs = builtIt->second.passThroughs;
+			int changedOuts = updateVsChunk(cc, &vsIt->second, passThroughs);
 
 			int page = newVs ? 1 - renderChunksPage : renderChunksPage;
 			if (builtIt != builtChunks.end()
@@ -433,7 +436,7 @@ void ChunkRenderer::visibilitySearch() {
 				nVsIt->second.ins |= (1 << ((d + 3) % 6));
 
 				if (vsInFringe.find(ncc) == vsInFringe.end()) {
-					vsFringe.push(ncc);
+					vsFringe.push(nVsIt);
 					vsInFringe.insert(ncc);
 				}
 			}
@@ -446,14 +449,7 @@ void ChunkRenderer::visibilitySearch() {
 	}
 }
 
-int ChunkRenderer::updateVsChunk(vec3i64 chunkCoords) {
-	auto builtIt = builtChunks.find(chunkCoords);
-	auto vsIt = vsChunks.find(chunkCoords);
-
-	int passThroughs = 0x3FFF;
-	if (builtIt != builtChunks.end())
-		passThroughs = builtIt->second.passThroughs;
-
+int ChunkRenderer::updateVsChunk(vec3i64 chunkCoords, ChunkVSInfo *vsInfo, int passThroughs) {
 	vec3i64 cd = chunkCoords - vsPlayerChunk;
 	int dirMask = 0;
 	for (int dim = 0; dim < 3; dim++) {
@@ -463,13 +459,13 @@ int ChunkRenderer::updateVsChunk(vec3i64 chunkCoords) {
 			dirMask |= 8 << dim;
 	}
 
-	int oldOuts = vsIt->second.outs;
-	if (vsIt->second.outsVersion != vsCurrentVersion)
+	int oldOuts = vsInfo->outs;
+	if (vsInfo->outsVersion != vsCurrentVersion)
 		oldOuts = 0;
-	vsIt->second.outs = getOuts(vsIt->second.ins, passThroughs) & dirMask;
-	vsIt->second.outsVersion = vsCurrentVersion;
+	vsInfo->outs = getOuts(vsInfo->ins, passThroughs) & dirMask;
+	vsInfo->outsVersion = vsCurrentVersion;
 
-	return oldOuts ^ vsIt->second.outs;
+	return oldOuts ^ vsInfo->outs;
 }
 
 int ChunkRenderer::getOuts(int ins, int passThroughs) {
