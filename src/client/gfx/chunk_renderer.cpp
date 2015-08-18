@@ -364,7 +364,7 @@ void ChunkRenderer::visibilitySearch() {
 				startIt = pair.first;
 			}
 
-			if (startChunkCoords == vsPlayerChunk) {
+			if (newVs) {
 				startIt->second.outs = 0x3F;
 				startIt->second.outsVersion = vsCurrentVersion;
 				startIt->second.ins = 0x3F;

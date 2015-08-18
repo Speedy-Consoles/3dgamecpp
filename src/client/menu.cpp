@@ -76,6 +76,7 @@ Menu::Menu(Client *client) :
 	rdButton->add(16, "16");
 	rdButton->add(24, "24");
 	rdButton->add(32, "32");
+	rdButton->add(48, "48");
 	rdButton->add(64, "64");
 	rdButton->setOnDataChange([this](int d){
 		this->setRenderDistance(d);
