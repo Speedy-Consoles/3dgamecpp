@@ -66,6 +66,10 @@ GL3Renderer::GL3Renderer(Client *client) :
 	// sky
 	makeSkyFbo();
 
+	// make framebuffer object
+	if (client->getConf().aa != AntiAliasing::NONE)
+		createFBO();
+
 	// textures
 	LOG_DEBUG(logger) << "Loading textures";
 	const char *block_textures_file = client->getConf().textures_file.c_str();
@@ -90,6 +94,12 @@ void GL3Renderer::resize() {
 	makePerspectiveMatrix();
 	makeOrthogonalMatrix();
 	makeSkyFbo();
+
+	// update framebuffer object
+	if (fbo)
+		destroyFBO();
+	if (client->getConf().aa != AntiAliasing::NONE)
+		createFBO();
 }
 
 void GL3Renderer::setConf(const GraphicsConf &conf, const GraphicsConf &old) {
@@ -114,6 +124,13 @@ void GL3Renderer::setConf(const GraphicsConf &conf, const GraphicsConf &old) {
 		makeMaxFOV();
 	}
 
+	if (conf.aa != old.aa) {
+		if (fbo)
+			destroyFBO();
+		if (conf.aa != AntiAliasing::NONE)
+			createFBO();
+	}
+
 	bool fog = conf.fog == Fog::FANCY || conf.fog == Fog::FAST;
 	defaultShader.setFogEnabled(fog);
 	blockShader.setFogEnabled(fog);
@@ -123,6 +140,82 @@ void GL3Renderer::setConf(const GraphicsConf &conf, const GraphicsConf &old) {
 
 void GL3Renderer::rebuildChunk(vec3i64 chunkCoords) {
 	p_chunkRenderer->rebuildChunk(chunkCoords);
+}
+
+static uint getMSLevelFromAA(AntiAliasing aa) {
+	switch (aa) {
+		case AntiAliasing::NONE:    return 0;
+		case AntiAliasing::MSAA_2:  return 2;
+		case AntiAliasing::MSAA_4:  return 4;
+		case AntiAliasing::MSAA_8:  return 8;
+		case AntiAliasing::MSAA_16: return 16;
+		default:                    return 0;
+	}
+}
+
+void GL3Renderer::createFBO() {
+	uint msLevel = getMSLevelFromAA(client->getConf().aa);
+	GL(GenRenderbuffers(1, &fbo_color_buffer));
+	GL(BindRenderbuffer(GL_RENDERBUFFER, fbo_color_buffer));
+	GL(RenderbufferStorageMultisample(
+			GL_RENDERBUFFER, msLevel, GL_RGB, client->getGraphics()->getWidth(), client->getGraphics()->getHeight()
+	));
+
+	// Depth buffer
+	GL(GenRenderbuffers(1, &fbo_depth_buffer));
+	GL(BindRenderbuffer(GL_RENDERBUFFER, fbo_depth_buffer));
+	if (client->getConf().aa != AntiAliasing::NONE) {
+		GL(RenderbufferStorageMultisample(
+				GL_RENDERBUFFER, msLevel, GL_DEPTH_COMPONENT24, client->getGraphics()->getWidth(), client->getGraphics()->getHeight()
+		));
+	} else {
+		GL(RenderbufferStorage(
+				GL_RENDERBUFFER, GL_DEPTH_COMPONENT24,
+				client->getGraphics()->getWidth(), client->getGraphics()->getHeight()
+		));
+	}
+
+	GL(GenFramebuffers(1, &fbo));
+	GL(BindFramebuffer(GL_FRAMEBUFFER, fbo));
+	GL(FramebufferRenderbuffer(
+			GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
+			GL_RENDERBUFFER, fbo_color_buffer
+	));
+	GL(FramebufferRenderbuffer(
+			GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,
+			GL_RENDERBUFFER, fbo_depth_buffer
+	));
+
+	GLuint status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+	if (status != GL_FRAMEBUFFER_COMPLETE) {
+		const char *msg = 0;
+		switch (status) {
+		case GL_FRAMEBUFFER_UNDEFINED:
+			msg = "framebuffer undefined"; break;
+		case GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT:
+			msg = "incomplete attachment"; break;
+		case GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT:
+			msg = "missind attachment"; break;
+		case GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER:
+			msg = "incomplete draw buffer"; break;
+		case GL_FRAMEBUFFER_INCOMPLETE_READ_BUFFER:
+			msg = "incomplete read buffer"; break;
+		case GL_FRAMEBUFFER_UNSUPPORTED:
+			msg = "unsupported"; break;
+		case GL_FRAMEBUFFER_INCOMPLETE_MULTISAMPLE:
+			msg = "incomplete multisampling"; break;
+		case GL_FRAMEBUFFER_INCOMPLETE_LAYER_TARGETS:
+			msg = "incomplete layer targets"; break;
+		}
+		LOG_ERROR(logger) << "Framebuffer creation failed: " << msg;
+	}
+}
+
+void GL3Renderer::destroyFBO() {
+	glDeleteRenderbuffers(1, &fbo_color_buffer);
+	glDeleteRenderbuffers(1, &fbo_depth_buffer);
+	glDeleteFramebuffers(1, &fbo);
+	fbo = fbo_color_buffer = fbo_depth_buffer = 0;
 }
 
 void GL3Renderer::makePerspectiveMatrix() {
@@ -191,6 +284,14 @@ void GL3Renderer::tick() {
 }
 
 void GL3Renderer::render() {
+	// bind fbo
+	if (fbo) {
+		GL(BindFramebuffer(GL_FRAMEBUFFER, fbo));
+	} else {
+		GL(BindFramebuffer(GL_FRAMEBUFFER, 0));
+		GL(DrawBuffer(GL_BACK));
+	}
+
 	// render sky
 	GL(Disable(GL_DEPTH_TEST));
 	GL(DepthMask(false));
@@ -209,6 +310,22 @@ void GL3Renderer::render() {
 	GL(Clear(GL_DEPTH_BUFFER_BIT));
 	chunkRenderer->render();
 	targetRenderer->render();
+
+	// copy framebuffer to screen
+	if (fbo) {
+		GL(BindFramebuffer(GL_DRAW_FRAMEBUFFER, 0));
+		GL(BindFramebuffer(GL_READ_FRAMEBUFFER, fbo));
+		GL(DrawBuffer(GL_BACK));
+		GL(BlitFramebuffer(
+				0, 0, client->getGraphics()->getWidth(), client->getGraphics()->getHeight(),
+				0, 0, client->getGraphics()->getWidth(), client->getGraphics()->getHeight(),
+				GL_COLOR_BUFFER_BIT,
+				GL_NEAREST
+		));
+
+		GL(BindFramebuffer(GL_FRAMEBUFFER, 0));
+		GL(DrawBuffer(GL_BACK));
+	}
 
 	// render overlay
 	GL(Disable(GL_DEPTH_TEST));

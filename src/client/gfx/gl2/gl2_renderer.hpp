@@ -81,7 +81,6 @@ class GL2Renderer : public Renderer {
 	vec3f skyColor{ 0.15f, 0.15f, 0.9f };
 	vec4f sunLightPosition{ 3.0f, 2.0f, 9.0f, 0.0f };
 
-
 	// frame buffers for anti-aliasing
 	GLuint fbo = 0;
 	GLuint fbo_color_buffer = 0;

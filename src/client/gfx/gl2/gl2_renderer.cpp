@@ -42,7 +42,7 @@ GL2Renderer::GL2Renderer(Client *client) :
 	makePerspective();
 	makeOrthogonal();
 
-	// update framebuffer object
+	// make framebuffer object
 	if (client->getConf().aa != AntiAliasing::NONE)
 		createFBO();
 

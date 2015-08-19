@@ -63,6 +63,11 @@ private:
 	vec3f fogColor{ 0.6f, 0.6f, 0.8f };
 	vec3f skyColor{ 0.15f, 0.15f, 0.9f };
 
+	// frame buffers for anti-aliasing
+	GLuint fbo = 0;
+	GLuint fbo_color_buffer = 0;
+	GLuint fbo_depth_buffer = 0;
+
 public:
 	GL3Renderer(Client *client);
 	~GL3Renderer();
@@ -80,6 +85,9 @@ public:
 
 
 private:
+	void createFBO();
+	void destroyFBO();
+
 	void makePerspectiveMatrix();
 	void makeOrthogonalMatrix();
 	void makeSkyFbo();
