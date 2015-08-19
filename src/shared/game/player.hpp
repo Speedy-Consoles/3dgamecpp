@@ -86,8 +86,6 @@ private:
 	PlayerSnapshot snapshot;
 	bool hasSnapshot = false;
 
-	Monitor validPosMonitor;
-
 	// currently selected building block
 	uint8 block = 1;
 
@@ -117,8 +115,6 @@ public:
 
 	void setSnapshot(const PlayerSnapshot &snapshot);
 	PlayerSnapshot makeSnapshot(int tick) const;
-
-	Monitor &getValidPosMonitor();
 
 private:
 	void calcVel();

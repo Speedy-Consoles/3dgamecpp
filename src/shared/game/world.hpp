@@ -65,7 +65,7 @@ public:
 	void tick(int tick, uint localPlayerID);
 
 	int shootRay(vec3i64 start, vec3d ray, double maxDist,
-			vec3i boxCorner, vec3d *outHit, vec3i64 outHitBlock[3],
+			vec3i boxCorner, vec3i64 *outHit, vec3i64 outHitBlock[3],
 			int outFaceDir[3]) const;
 
 	bool hasCollision(vec3i64 wc) const;

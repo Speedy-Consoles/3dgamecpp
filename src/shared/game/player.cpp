@@ -26,9 +26,7 @@ void Player::tick(int tick, bool isLocalPlayer) {
 
 	// TODO predict
 	if (hasSnapshot) {
-		validPosMonitor.startWrite();
 		pos = snapshot.pos;
-		validPosMonitor.finishWrite();
 		vel = snapshot.vel;
 		if (!isLocalPlayer) {
 			yaw = snapshot.yaw;
@@ -53,7 +51,7 @@ void Player::collide() {
 	vec3d remVel = vel;
 	double remDist = remVel.norm();
 	while (remDist >= 0.5) {
-		vec3d firstHitPos;
+		vec3i64 firstHitPos;
 		int firstHitFaceDirs[3];
 		int numFirstHitFaces = 0;
 		double lowestDist = std::numeric_limits<double>::infinity();
@@ -69,49 +67,45 @@ void Player::collide() {
 				HEIGHT / 2 * (i / 4) - EYE_HEIGHT
 			);
 			vec3i64 start = newPos + off.cast<int64>();
-			vec3d hitPos;
+			vec3i64 hitPos;
 			int faceDirs[3];
 			int numHitFaces = world->shootRay(start, remVel, remDist,
 					corner, &hitPos, nullptr, faceDirs);
 			if (numHitFaces > 0) {
-				double dist = (hitPos - start.cast<double>()).norm();
+				double dist = (hitPos - start).norm();
 				if (dist < lowestDist) {
 					lowestDist = dist;
-					firstHitPos = hitPos - off.cast<double>();
+					firstHitPos = hitPos - off.cast<int64>();
 					memcpy(firstHitFaceDirs, faceDirs, 3 * sizeof(int));
 					numFirstHitFaces = numHitFaces;
 				}
 			}
 		}
 		if (numFirstHitFaces == 0) {
-			newPos[0] = newPos[0] + (int64) floor(remVel[0] + 0.5);
-			newPos[1] = newPos[1] + (int64) floor(remVel[1] + 0.5);
-			newPos[2] = newPos[2] + (int64) floor(remVel[2] + 0.5);
+			newPos[0] = newPos[0] + round(remVel[0]);
+			newPos[1] = newPos[1] + round(remVel[1]);
+			newPos[2] = newPos[2] + round(remVel[2]);
 			break;
 		}
 
-		remVel -= firstHitPos - newPos.cast<double>();
+		remVel -= (firstHitPos - newPos).cast<double>();
 
 		for (int i = 0; i < numFirstHitFaces; i++) {
 			remVel[DIR_DIMS[firstHitFaceDirs[i]]] = 0;
 			vel[DIR_DIMS[firstHitFaceDirs[i]]] = 0;
 		}
 
-		newPos[0] = (int64) floor(firstHitPos[0] + 0.5);
-		newPos[1] = (int64) floor(firstHitPos[1] + 0.5);
-		newPos[2] = (int64) floor(firstHitPos[2] + 0.5);
+		newPos = firstHitPos;
 
 		remDist = remVel.norm();
 	}
-	validPosMonitor.startWrite();
 	pos = newPos;
-	validPosMonitor.finishWrite();
 }
 
 void Player::ghost() {
-	pos[0] += (int64) floor(vel[0] + 0.5);
-	pos[1] += (int64) floor(vel[1] + 0.5);
-	pos[2] += (int64) floor(vel[2] + 0.5);
+	pos[0] += round(vel[0]);
+	pos[1] += round(vel[1]);
+	pos[2] += round(vel[2]);
 }
 
 void Player::setOrientation(float yaw, float pitch) {
@@ -164,17 +158,13 @@ void Player::create(World *world) {
 	isFlying = false;
 	moveInput = 0;
 
-	validPosMonitor.startWrite();
 	pos = vec3i64(0, 0, 30 * RESOLUTION);
 	valid = true;
-	validPosMonitor.finishWrite();
 }
 
 void Player::destroy() {
 	world = nullptr;
-	validPosMonitor.startWrite();
 	valid = false;
-	validPosMonitor.finishWrite();
 }
 
 bool Player::isValid() const {
@@ -204,10 +194,6 @@ void Player::setSnapshot(const PlayerSnapshot &snapshot) {
 
 PlayerSnapshot Player::makeSnapshot(int tick) const {
 	return PlayerSnapshot{tick, pos, vel, (uint16) round(yaw * 100), (int16) round(pitch * 100), moveInput, isFlying};
-}
-
-Monitor &Player::getValidPosMonitor() {
-	return validPosMonitor;
 }
 
 void Player::calcVel() {

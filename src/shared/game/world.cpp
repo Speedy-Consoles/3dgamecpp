@@ -82,9 +82,8 @@ void World::releaseChunks() {
 	}
 }
 
-// TODO make precision position-independent
 int World::shootRay(vec3i64 start, vec3d ray, double maxDist,
-		vec3i boxCorner, vec3d *outHit, vec3i64 outHitBlock[3],
+		vec3i boxCorner, vec3i64 *outHit, vec3i64 outHitBlock[3],
 		int outFaceDir[3]) const {
 	int dirs[3];
 	for (int i = 0; i < 3; i++) {
@@ -111,33 +110,31 @@ int World::shootRay(vec3i64 start, vec3d ray, double maxDist,
 			int dirDim = DIR_DIMS[d];
 			const int *otherDims = OTHER_DIR_DIMS[d];
 			int sign = DIRS[d][dirDim];
-			int64 facePlane = (block[dirDim] + (sign + 1) / 2) * RESOLUTION;
-			int64 planeDist = facePlane - start[dirDim];
+			int64 planeDist = (block[dirDim] + (sign + 1) / 2) * RESOLUTION - start[dirDim];
 			double factor = planeDist / ray[dirDim];
 			vec3d hit;
-			hit[dirDim] = (double) facePlane;
-			hit[otherDims[0]] = start[otherDims[0]] + ray[otherDims[0]]
-					* factor;
-			hit[otherDims[1]] = start[otherDims[1]] + ray[otherDims[1]]
-					* factor;
+			hit[dirDim] = planeDist;
+			hit[otherDims[0]] = ray[otherDims[0]] * factor;
+			hit[otherDims[1]] = ray[otherDims[1]] * factor;
 
 			double diff[2] = {
-				hit[otherDims[0]] - block[otherDims[0]] * RESOLUTION,
-				hit[otherDims[1]] - block[otherDims[1]] * RESOLUTION
+				hit[otherDims[0]]
+					- (block[otherDims[0]] * RESOLUTION - start[otherDims[0]]),
+				hit[otherDims[1]]
+					- (block[otherDims[1]] * RESOLUTION - start[otherDims[1]])
 			};
 			if (diff[0] >= 0
 					&& diff[0] <= RESOLUTION
 					&& diff[1] >= 0
 					&& diff[1] <= RESOLUTION) {
-				double dist = (start.cast<double>() - hit).norm();
-				if (dist > maxDist)
+				if (hit.norm() > maxDist)
 					return 0;
 
 				vec3i8 dir = DIRS[d];
 				vec3i64 nextBlock = block + dir.cast<int64>();
 				if (getBlock(nextBlock)) {
 					if (outHit != nullptr)
-						*outHit = hit;
+						*outHit = start + vec3i64(round(hit[0]), round(hit[1]), round(hit[2]));
 					if (outFaceDir != nullptr)
 						outFaceDir[blockHitCounter] = (d + 3) % 6;
 					if (outHitBlock != nullptr)
