@@ -284,7 +284,6 @@ void GL3Renderer::tick() {
 }
 
 void GL3Renderer::render() {
-	// bind fbo
 	if (fbo) {
 		GL(BindFramebuffer(GL_FRAMEBUFFER, fbo));
 	} else {
@@ -299,7 +298,12 @@ void GL3Renderer::render() {
 	if (client->getConf().fog == Fog::FANCY || client->getConf().fog == Fog::FAST) {
 		GL(BindFramebuffer(GL_FRAMEBUFFER, skyFbo));
 		skyRenderer->render();
-		GL(BindFramebuffer(GL_FRAMEBUFFER, 0));
+		if (fbo) {
+			GL(BindFramebuffer(GL_FRAMEBUFFER, fbo));
+		} else {
+			GL(BindFramebuffer(GL_FRAMEBUFFER, 0));
+			GL(DrawBuffer(GL_BACK));
+		}
 		GL(ActiveTexture(GL_TEXTURE1));
 		GL(BindTexture(GL_TEXTURE_2D, skyTex));
 	}
