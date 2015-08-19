@@ -225,9 +225,9 @@ double vec<T, N, Derived>::norm() const {
 
 template <typename T, size_t N, template <typename T> class Derived>
 T vec<T, N, Derived>::maxAbs() const {
-	auto result = abs(_t[0]);
+	auto result = std::abs(_t[0]);
 	for (size_t i = 1; i < N; i++) {
-		result = std::max(result, abs(_t[i]));
+		result = std::max(result, std::abs(_t[i]));
 	}
 	return result;
 }

@@ -48,12 +48,17 @@ void ChunkRenderer::tick() {
 	// put chunks into render queue
 	vec3i64 pc = player.getChunkPos();
 	if (pc != oldPlayerChunk) {
-		double pcDist = (pc - oldPlayerChunk).norm();
-		double newRadius = LOADING_ORDER[checkChunkIndex].norm() - pcDist;
-		if (newRadius < 0)
+		vec3i64 diff = pc - oldPlayerChunk;
+		if (diff.maxAbs() > LOADING_ORDER[checkChunkIndex].norm()) {
 			checkChunkIndex = 0;
-		else
-			checkChunkIndex = LOADING_ORDER_DISTANCE_INDICES[(int) newRadius];
+		} else {
+			double pcDist = diff.norm();
+			double newRadius = LOADING_ORDER[checkChunkIndex].norm() - pcDist;
+			if (newRadius < 0)
+				checkChunkIndex = 0;
+			else
+				checkChunkIndex = LOADING_ORDER_DISTANCE_INDICES[(int) newRadius];
+		}
 		oldPlayerChunk = pc;
 
 		for (auto it = builtChunks.begin(); it != builtChunks.end();) {
