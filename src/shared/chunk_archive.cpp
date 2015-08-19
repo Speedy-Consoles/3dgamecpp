@@ -39,14 +39,21 @@ public:
 	ArchiveFile &operator = (ArchiveFile &&) = delete;
 
 	Time getLastAccess() const { return _last_access; }
-
+	
+	void loadDirectory();
+	void updateFormat();
 	void initialize();
 
 	bool hasChunk(vec3i64);
 
-	bool loadChunk(Chunk &);
-	bool loadChunk(vec3i64, Chunk &);
+	bool loadChunk(vec3i64 cc, Chunk &c) { c.setCC(cc); return loadChunk(c); }
+	bool loadChunk(Chunk &c);
+	void decodeChunk(Chunk &c);
+	void decodeChunk_LEGACY_RLE(Chunk &c);
+	
 	void storeChunk(const Chunk &);
+	int encodeChunk(const Chunk &, uint8 *, size_t);
+	int encodeChunk_LEGACY_RLE(const Chunk &, uint8 *, size_t);
 
 private:
 	std::fstream _file;
@@ -105,12 +112,16 @@ ArchiveFile::ArchiveFile(const char *filename, uint region_size) :
 	}
 
 	if (all_ok) {
-		_file.seekg(_header.directory_offset);
-		_dir.resize(_header.num_chunks);
-		_file.read((char *)(_dir.data()), _header.num_chunks * sizeof (DirectoryEntry));
+		loadDirectory();
 	} else {
 		initialize();
 	}
+}
+
+void ArchiveFile::loadDirectory() {
+	_file.seekg(_header.directory_offset);
+	_dir.resize(_header.num_chunks);
+	_file.read((char *)(_dir.data()), _header.num_chunks * sizeof (DirectoryEntry));
 }
 
 void ArchiveFile::initialize() {
@@ -146,13 +157,10 @@ bool ArchiveFile::hasChunk(vec3i64 cc) {
 }
 
 bool ArchiveFile::loadChunk(Chunk &chunk) {
-	return loadChunk(chunk.getCC(), chunk);
-}
-
-bool ArchiveFile::loadChunk(vec3i64 cc, Chunk &chunk) {
 	_last_access = getCurrentTime();
 
 	// read directory entry
+	vec3i64 cc = chunk.getCC();
 	size_t x = cycle(cc[0], _region_size);
 	size_t y = cycle(cc[1], _region_size);
 	size_t z = cycle(cc[2], _region_size);
@@ -167,6 +175,30 @@ bool ArchiveFile::loadChunk(vec3i64 cc, Chunk &chunk) {
 	}
 
 	// load and decode the chunk
+	decodeChunk(chunk);
+
+	if (!_file.good()) {
+		LOG_ERROR(logger) << "Bad in-stream";
+		return false;
+	}
+
+	chunk.finishInitialization();
+
+	return true;
+}
+
+void ArchiveFile::decodeChunk(Chunk &chunk) {
+	switch (_header.version) {
+	case 1:
+		decodeChunk_LEGACY_RLE(chunk);
+		break;
+	default:
+		LOG_ERROR(logger) << "ArchiveFile version " << _header.version << "not supported";
+		break;
+	}
+}
+
+void ArchiveFile::decodeChunk_LEGACY_RLE(Chunk &chunk) {
 	size_t index = 0;
 	const size_t chunk_size = Chunk::WIDTH * Chunk::WIDTH * Chunk::WIDTH;
 
@@ -189,15 +221,6 @@ bool ArchiveFile::loadChunk(vec3i64 cc, Chunk &chunk) {
 			chunk.initBlock(index++, next_block);
 		}
 	}
-
-	if (!_file.good()) {
-		LOG_ERROR(logger) << "Bad in-stream";
-		return false;
-	}
-
-	chunk.finishInitialization();
-
-	return true;
 }
 
 void ArchiveFile::storeChunk(const Chunk &chunk) {
@@ -210,73 +233,96 @@ void ArchiveFile::storeChunk(const Chunk &chunk) {
 	size_t id = x + (_region_size * (y + (_region_size * z)));
 
 	// encode the chunk
-	const uint8 *blocks = chunk.getBlocks();
 	// TODO fix extremely rare possibility of buffer overflow
 	const size_t chunk_size = Chunk::WIDTH * Chunk::WIDTH * Chunk::WIDTH;
 	uint8 *const buffer = new uint8[chunk_size];
-	uint8 cur_run_type = blocks[0];
-	size_t cur_run_length = 1;
-	uint8 *head = buffer;
-	for (size_t i = 1; i < chunk_size; ++i) {
-		uint8 next_block = blocks[i];
-		if (cur_run_type == next_block && cur_run_length < 0xFF) {
-			cur_run_length++;
-			continue;
-		}
-		if (cur_run_length > 3 || cur_run_type == ESCAPE_CHAR) {
-			*head++ = ESCAPE_CHAR;
-			*head++ = cur_run_length;
-			*head++ = cur_run_type;
-		} else {
-			for (size_t j = 0; j < cur_run_length; ++j)
-				*head++ = cur_run_type;
-		}
-		cur_run_type = next_block;
-		cur_run_length = 1;
-	}
-
-	if (cur_run_length > 3 || cur_run_type == ESCAPE_CHAR) {
-		*head++ = ESCAPE_CHAR;
-		*head++ = cur_run_length;
-		*head++ = cur_run_type;
-	} else {
-		for (size_t j = 0; j < cur_run_length; ++j)
-			*head++ = cur_run_type;
+	int bytes_written = encodeChunk(chunk, buffer, chunk_size);
+	if (bytes_written < 0) {
+		LOG_ERROR(logger) << "Chunk (" << cc << ") could not be written";
+		return;
 	}
 
 	// store the chunk
 	DirectoryEntry &dir_entry = _dir[id];
-	size_t store_size = (size_t) (head - buffer) * sizeof (uint8);
-	if (dir_entry.offset != 0 && store_size <= dir_entry.size) {
-		// chunk already existed, but the new one fits the old space
-		_file.seekp(dir_entry.offset);
-		//dir_entry.size = store_size
-		/* We do not reset the size of the chunk, because a later write to this
-		 * chunk might be bigger again and wants to reuse the space.  The
-		 * reading code should be aware, that the chunk ends after a fixed
-		 * number of blocks.  No marker or actual size is saved.
-		 */
-	} else {
-		// chunk did not already exist or is now too big for the old space
-		_file.seekg(0, ios_base::end);
-		dir_entry.offset = (uint32) (_file.tellg());
-		dir_entry.size = store_size;
-		_file.seekp(_header.directory_offset + id * sizeof (DirectoryEntry));
-		_file.write((char *)(&dir_entry), sizeof (DirectoryEntry));
-		_file.seekp(0, ios_base::end);
+	size_t store_size = (size_t) bytes_written * sizeof (uint8);
+
+	if (_header.version == 1) {
+		if (dir_entry.offset != 0 && store_size <= dir_entry.size) {
+			// chunk already existed, but the new one fits the old space
+			_file.seekp(dir_entry.offset);
+			//dir_entry.size = store_size
+		} else {
+			// chunk did not already exist or is now too big for the old space
+			_file.seekg(0, ios_base::end);
+			dir_entry.offset = (uint32) (_file.tellg());
+			dir_entry.size = store_size;
+			_file.seekp(_header.directory_offset + id * sizeof (DirectoryEntry));
+			_file.write((char *)(&dir_entry), sizeof (DirectoryEntry));
+			_file.seekp(0, ios_base::end);
+		}
+		_file.write((char *) buffer, store_size);
+		_file.flush();
 	}
-	_file.write((char *) buffer, store_size);
-	_file.flush();
+
 	delete[] buffer;
 
 	if (!_file.good()) {
 		LOG_ERROR(logger) << "Safe operation failed for chunk "
 				<< cc[0] << " " << cc[1] << " "<< cc[2];
-	} else {
-		/*LOG_TRACE(logger) << "Safe operation successful for chunk "
-				<< cc[0] << " " << cc[1] << " "<< cc[2]);*/
 	}
 }
+
+int ArchiveFile::encodeChunk(const Chunk &chunk, uint8 *buffer, size_t size) {
+	switch (_header.version) {
+	case 1:
+		return encodeChunk_LEGACY_RLE(chunk, buffer, size);
+	default:
+		LOG_ERROR(logger) << "ArchiveFile version " << _header.version << " not supported";
+		return -1;
+	}
+}
+
+int ArchiveFile::encodeChunk_LEGACY_RLE(const Chunk &chunk, uint8 *buffer, size_t size) {
+	const uint8 *blocks = chunk.getBlocks();
+	uint8 cur_run_type = blocks[0];
+	size_t cur_run_length = 1;
+	uint8 *head = buffer;
+
+	auto finishRun = [&]() -> int {
+		if (cur_run_length > 3 || cur_run_type == ESCAPE_CHAR) {
+			if ((size_t) (head - buffer + 3) <= size) {
+				*head++ = ESCAPE_CHAR;
+				*head++ = cur_run_length;
+				*head++ = cur_run_type;
+			} else {
+				return -1;
+			}
+		} else {
+			if (head - buffer + cur_run_length <= size) {
+				for (size_t j = 0; j < cur_run_length; ++j)
+					*head++ = cur_run_type;
+			} else {
+				return -1;
+			}
+		}
+		return 0;
+	};
+
+	for (size_t i = 1; i < size; ++i) {
+		uint8 next_block = blocks[i];
+		if (cur_run_type == next_block && cur_run_length < 0xFF) {
+			cur_run_length++;
+			continue;
+		}
+		if (finishRun() != 0) return -1;
+		cur_run_type = next_block;
+		cur_run_length = 1;
+	}
+
+	if (finishRun() != 0) return -1;
+	return head - buffer;
+}
+
 
 ChunkArchive::~ChunkArchive() {
 	clean();

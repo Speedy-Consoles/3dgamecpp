@@ -5,6 +5,8 @@
 #include <fstream>
 #include <memory>
 
+#include "vmath.hpp"
+
 #undef ERROR
 
 namespace logging {
@@ -91,6 +93,11 @@ template <typename T>
 std::unique_ptr<logging::Log> &&operator << (std::unique_ptr<logging::Log> &&log, T t) {
 	log->msg << t;
 	return std::move(log);
+}
+
+inline static std::ostream &operator << (std::ostream &os, vec3i64 v) {
+	os << v[0] << "," << v[1] << "," << v[2];
+	return os;
 }
 
 #define LOG_ENV \

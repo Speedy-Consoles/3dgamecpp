@@ -10,12 +10,19 @@
 
 using namespace testing;
 
-bool operator == (const Chunk &lhs, const Chunk &rhs) {
-	const char *plhs = (const char *)lhs.getBlocks();
-	const char *prhs = (const char *)rhs.getBlocks();
-	size_t width = Chunk::WIDTH;
-	size_t size = width * width * width * sizeof(uint8);
-	return 0 == memcmp(plhs, prhs, size);
+float getRelativeChunkDifference(const Chunk &lhs, const Chunk &rhs) {
+	size_t size = Chunk::WIDTH * Chunk::WIDTH * Chunk::WIDTH;
+	size_t failed = 0;
+
+	for (size_t i = 0; i < size; ++i) {
+		if (lhs.getBlocks()[i] != rhs.getBlocks()[i])
+			++failed;
+	}
+
+	if (failed == 0)
+		return 0.0;
+	else
+		return (float) failed / size;
 }
 
 void store_and_load(const Chunk &supposed, Chunk &actual) {
@@ -46,7 +53,7 @@ TEST(ChunkArchiveTest, AirChunk) {
 		return 0;
 	});
 	store_and_load(supposed, actual);
-	EXPECT_EQ(supposed, actual) << "Air chunk did not store and load properly";
+	EXPECT_EQ(0, getRelativeChunkDifference(supposed, actual)) << "Air chunk did not store and load properly";
 }
 
 TEST(ChunkArchiveTest, UncompressibleChunk) {
@@ -60,7 +67,7 @@ TEST(ChunkArchiveTest, UncompressibleChunk) {
 
 	ASSERT_NO_DEATH(store_and_load(supposed, actual);) << "Checkered chunk store and load crashed";
 	store_and_load(supposed, actual);
-	EXPECT_EQ(supposed, actual) << "Checkered chunk did not store and load properly";
+	EXPECT_EQ(0, getRelativeChunkDifference(supposed, actual)) << "Checkered chunk did not store and load properly";
 }
 
 TEST(ChunkArchiveTest, RandomChunk) {
@@ -78,5 +85,5 @@ TEST(ChunkArchiveTest, RandomChunk) {
 
 	ASSERT_NO_DEATH(store_and_load(supposed, actual);) << "Random chunk store and load crashed";
 	store_and_load(supposed, actual);
-	EXPECT_EQ(supposed, actual) << "Random chunk did not store and load properly";
+	EXPECT_EQ(0, getRelativeChunkDifference(supposed, actual)) << "Random chunk did not store and load properly";
 }
