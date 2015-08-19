@@ -254,6 +254,7 @@ void BMFont::beginRender() {
 	GL(BindBuffer(GL_ARRAY_BUFFER, vbo));
 	GL(EnableVertexAttribArray(0)); // coord
 	GL(EnableVertexAttribArray(1)); // texCoord
+	GL(ActiveTexture(GL_TEXTURE0));
 	GL(BindTexture(GL_TEXTURE_2D_ARRAY, tex));
 	shader->setIsPacked(isPacked);
 	shader->setHasOutline(hasOutline);
