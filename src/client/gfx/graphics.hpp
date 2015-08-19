@@ -31,7 +31,7 @@ private:
 	std::unique_ptr<Renderer> renderer;
 
 	const Client::State &state;
-	Client::State oldState;
+	Client::State oldState = Client::State::IN_MENU;
 
 	int width;
 	int height;

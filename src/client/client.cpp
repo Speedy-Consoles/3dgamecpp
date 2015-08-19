@@ -110,7 +110,7 @@ void Client::run() {
 		chunkManager->tick();
 
 		if (state == State::CONNECTING && serverInterface->getStatus() == ServerInterface::CONNECTED) {
-			state = State::PLAYING;
+			state = State::IN_MENU;
 			localClientId = serverInterface->getLocalClientId();
 		}
 
