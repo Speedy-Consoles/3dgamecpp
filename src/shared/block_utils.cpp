@@ -88,19 +88,19 @@ vec3d getVectorFromAngles(double yaw, double pitch) {
 }
 
 vec3i64 wc2bc(vec3i64 wc) {
-	return vec3i64(
-		(int64) floor(wc[0] / (float) RESOLUTION),
-		(int64) floor(wc[1] / (float) RESOLUTION),
-		(int64) floor(wc[2] / (float) RESOLUTION)
-	);
+	vec3i64 result;
+	for (int dim = 0; dim < 3; dim++) {
+		result[dim] = wc[dim] >> RESOLUTION_EXPONENT;
+	}
+	return result;
 }
 
 vec3i64 bc2cc(vec3i64 bc) {
-	return vec3i64(
-		(int64) floor(bc[0] / (float) Chunk::WIDTH),
-		(int64) floor(bc[1] / (float) Chunk::WIDTH),
-		(int64) floor(bc[2] / (float) Chunk::WIDTH)
-	);
+	vec3i64 result;
+	for (int dim = 0; dim < 3; dim++) {
+			result[dim] = bc[dim] >> Chunk::WIDTH_EXPONENT;
+	}
+	return result;
 }
 
 vec3ui8 bc2icc(vec3i64 bc) {

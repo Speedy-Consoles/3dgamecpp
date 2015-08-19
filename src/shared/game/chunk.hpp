@@ -5,7 +5,8 @@
 
 class Chunk {
 public:
-	static const uint WIDTH = 32;
+	static const uint WIDTH_EXPONENT = 5;
+	static const uint WIDTH = 1 << WIDTH_EXPONENT;
 
 private:
 	bool visual = false;
