@@ -116,7 +116,7 @@ TEST_EXECUTABLE = $(BIN_DIR)/$(TEST_EXECUTABLE_NAME)
 SHARED_ARCHIVE = $(OBJ_DIR)/$(SHARED_ARCHIVE_NAME).a
 
 # targets
-all: client server #test
+all: client server test
 
 client: $(CLIENT_EXECUTABLE)
 server: $(SERVER_EXECUTABLE)
@@ -128,7 +128,7 @@ clean:
 	rm -Rf $(OBJ_DIR)
 	rm -Rf $(BIN_DIR)
 
-.PHONY: clean all
+.PHONY: clean all client server test
 
 # creates directories a file is on
 dir_guard=@mkdir -p $(@D)
@@ -158,7 +158,7 @@ $(SERVER_EXECUTABLE): $(SERVER_OBJECTS) $(SHARED_ARCHIVE)
 	$(dir_guard)
 	$(LD) $(SERVER_LDFLAGS) -o $@ $^ $(SERVER_LIBS_LD_FLAGS)
 
-$(TEST_EXECUTABLE): $(TEST_OBJECTS) $(TEST_ARCHIVE)
+$(TEST_EXECUTABLE): $(TEST_OBJECTS) $(SHARED_ARCHIVE)
 	$(dir_guard)
 	$(LD) $(TEST_LDFLAGS) -o $@ $^ $(TEST_LIBS_LD_FLAGS)
 
