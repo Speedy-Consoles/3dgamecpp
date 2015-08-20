@@ -55,10 +55,16 @@ public:
 	int encodeChunk(const Chunk &, uint8 *, size_t);
 	int encodeChunk_LEGACY_RLE(const Chunk &, uint8 *, size_t);
 
+	int getFileSize();
+	int getUsedChunkBytes();
+	int getTotalChunkBytes();
+	float getChunkFragmentation();
+
 private:
 	std::fstream _file;
 	const uint _region_size;
 	Time _last_access;
+	std::string _filename;
 
 	PACKED(
 	struct Header {
@@ -84,7 +90,7 @@ ArchiveFile::~ArchiveFile() {
 }
 
 ArchiveFile::ArchiveFile(const char *filename, uint region_size) :
-	_region_size(region_size), _last_access(getCurrentTime())
+	_region_size(region_size), _last_access(getCurrentTime()), _filename(filename)
 {
 	_file.open(filename, ios_base::in | ios_base::out | ios_base::binary);
 	if (_file.fail()) {
@@ -323,6 +329,34 @@ int ArchiveFile::encodeChunk_LEGACY_RLE(const Chunk &chunk, uint8 *buffer, size_
 	return head - buffer;
 }
 
+int ArchiveFile::getFileSize() {
+	using namespace boost::filesystem;
+	return file_size(path(_filename));
+}
+
+int ArchiveFile::getUsedChunkBytes() {
+	size_t bytes = 0;
+	for (auto entry : _dir) {
+		if (entry.offset > 0)
+			bytes += entry.size;
+	}
+	return (int) bytes;
+}
+
+int ArchiveFile::getTotalChunkBytes() {
+	size_t bytes = 0;
+	for (auto entry : _dir) {
+		if (entry.offset > 0)
+			bytes = std::max(bytes, entry.size + entry.offset);
+	}
+	return (int) bytes;
+}
+
+float ArchiveFile::getChunkFragmentation() {
+	size_t used = getUsedChunkBytes();
+	size_t total = getTotalChunkBytes();
+	return total > 0 ? (float) (total - used) / total : 0.0f;
+}
 
 ChunkArchive::~ChunkArchive() {
 	clean();
@@ -340,8 +374,32 @@ ChunkArchive::ChunkArchive(const char *str) :
 	} else {
 		if (!is_directory(p)) {
 			LOG_ERROR(logger) << "World path is not a directory";
+			return;
 		}
 	}
+
+	size_t bytes = 0;
+	size_t used_bytes = 0;
+	size_t total_bytes = 0;
+
+	directory_iterator iter(str);
+	directory_iterator end;
+	while (iter != end) {
+		if (exists(iter->path()) && is_regular_file(iter->path())) {
+			ArchiveFile af(iter->path().string().c_str());
+			bytes += af.getFileSize();
+			used_bytes += af.getUsedChunkBytes();
+			total_bytes += af.getTotalChunkBytes();
+		}
+		++iter;
+	}
+
+	size_t megabytes = bytes / 1024 / 1024;
+	LOG_INFO(logger) << "Chunk archive '" << str << "' has " << megabytes << " MB";
+	
+	float frag_mean = (float) (total_bytes - used_bytes) / total_bytes;
+	LOG_INFO(logger) << "Chunk archive '" << str << "' uses "
+			<< used_bytes / 1024 / 1024 << " MB of " << total_bytes / 1024 / 1024 << " MB of space";
 }
 
 bool ChunkArchive::hasChunk(vec3i64 cc) {
