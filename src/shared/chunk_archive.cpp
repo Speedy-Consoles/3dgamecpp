@@ -46,10 +46,10 @@ public:
 
 	bool hasChunk(vec3i64);
 
-	bool loadChunk(vec3i64 cc, Chunk &c) { c.setCC(cc); return loadChunk(c); }
-	bool loadChunk(Chunk &c);
-	void decodeChunk(Chunk &c);
-	void decodeChunk_LEGACY_RLE(Chunk &c);
+	bool loadChunk(vec3i64 cc, Chunk &chunk) { chunk.setCC(cc); return loadChunk(chunk); }
+	bool loadChunk(Chunk &);
+	void decodeChunk(Chunk &);
+	void decodeChunk_LEGACY_RLE(Chunk &);
 	
 	void storeChunk(const Chunk &);
 	int encodeChunk(const Chunk &, uint8 *, size_t);
@@ -65,6 +65,7 @@ private:
 	const uint _region_size;
 	Time _last_access;
 	std::string _filename;
+	bool _good = true;
 
 	PACKED(
 	struct Header {
@@ -93,35 +94,74 @@ ArchiveFile::ArchiveFile(const char *filename, uint region_size) :
 	_region_size(region_size), _last_access(getCurrentTime()), _filename(filename)
 {
 	_file.open(filename, ios_base::in | ios_base::out | ios_base::binary);
-	if (_file.fail()) {
+	if (!_file.is_open()) {
+		// file might have not existed, try to create it
+		_file.clear();
 		_file.open(filename, ios_base::out);
-		_file.close();
+		if (_file.is_open()) {
+			_file.close();
+		}
+		// try again
+		_file.clear();
 		_file.open(filename, ios_base::in | ios_base::out | ios_base::binary);
-		if (!_file.good()) {
+		if (!_file.is_open()) {
 			LOG_ERROR(logger) << "Could not open Archive file '" << filename << "'";
+			goto EXIT_WITH_ERROR;
+		} else {
+			int c = _file.get();
+			if (c == EOF) {
+				// file was empty, we can safely nuke it (we probably created it)
+				initialize();
+			} else {
+				LOG_ERROR(logger) << "Archive file '" << filename << "' had content after creation";
+				goto EXIT_WITH_ERROR;
+			}
 		}
 	}
-
-	bool all_ok;
-
+	
+	_file.clear();
+	_file.seekg(0);
 	_file.read((char *)(&_header), sizeof (Header));
 	if (_file.eof()) {
-		_file.clear();
-		all_ok = false;
-	} else {
-		bool is_magic_ok = memcmp(_header.magic, MAGIC, 4 * sizeof (char)) == 0;
-		bool is_endianess_ok = _header.endianess_bytes == ENDIANESS_BYTES;
-		bool is_version_ok = _header.version == 1;
-		bool is_size_ok = _header.num_chunks == _region_size * _region_size * _region_size;
-
-		all_ok = is_magic_ok && is_endianess_ok && is_version_ok && is_size_ok;
+		LOG_ERROR(logger) << "Archive file '" << filename << "' ended abruptly";
+		goto EXIT_WITH_ERROR;
 	}
 
-	if (all_ok) {
+	if (memcmp(_header.magic, MAGIC, 4 * sizeof(char)) != 0) {
+		LOG_ERROR(logger) << "Archive file '" << filename << "' had wrong magic ("
+				<< std::hex << _header.magic << " instead of " << std::hex << MAGIC;
+		goto EXIT_WITH_ERROR;
+	}
+
+	if (_header.endianess_bytes != ENDIANESS_BYTES) {
+		LOG_ERROR(logger) << "Archive file '" << filename << "' had wrong endianess";
+		goto EXIT_WITH_ERROR;
+	}
+
+	if (_header.num_chunks != _region_size * _region_size * _region_size) {
+		LOG_ERROR(logger) << "Archive file '" << filename << "' had wrong size ("
+				<< _header.num_chunks << " instead of "
+				<< _region_size * _region_size * _region_size << ")";
+		goto EXIT_WITH_ERROR;
+	}
+
+	switch (_header.version) {
+	case 1:
 		loadDirectory();
-	} else {
-		initialize();
+		break;
+	default:
+		LOG_ERROR(logger) << "ArchiveFile '" << _filename << "' has incorrect version ("
+				<< _header.version << ")";
+		goto EXIT_WITH_ERROR;
 	}
+
+	return;
+
+EXIT_WITH_ERROR:
+	if (_file.is_open())
+		_file.close();
+	_good = false;
+	return;
 }
 
 void ArchiveFile::loadDirectory() {
@@ -131,30 +171,32 @@ void ArchiveFile::loadDirectory() {
 }
 
 void ArchiveFile::initialize() {
+	_file.clear();
+	_file.seekp(0);
+
 	memcpy(_header.magic, MAGIC, 4 * sizeof (char));
 	_header.endianess_bytes = ENDIANESS_BYTES;
-	_header.version = 0x0001;
+	_header.version = 1;
 	uint num_chunks = _region_size * _region_size * _region_size;
 	_header.num_chunks = num_chunks;
 	_header.directory_offset = sizeof (Header);
 
-	// write header
-	_file.seekp(0);
+	// write header and empty directory
 	_file.write((char *)(&_header), sizeof (Header));
-
-	// zero the directory
-	_dir.clear();
-	_dir.resize(num_chunks);
-	memset(_dir.data(), 0, num_chunks * sizeof(DirectoryEntry));
-
 	const size_t total_directory_bytes = num_chunks * sizeof(DirectoryEntry);
 	for (uint i = 0; i < total_directory_bytes; ++i) {
 		_file.put(0);
 	}
 	_file.flush();
+
+	if (!_file.good()) {
+		LOG_ERROR(logger) << "Could not initialize ArchiveFile '" << _filename << "'";
+		return;
+	}
 }
 
 bool ArchiveFile::hasChunk(vec3i64 cc) {
+	if (!_good) return false;
 	size_t x = cycle(cc[0], _region_size);
 	size_t y = cycle(cc[1], _region_size);
 	size_t z = cycle(cc[2], _region_size);
@@ -163,9 +205,11 @@ bool ArchiveFile::hasChunk(vec3i64 cc) {
 }
 
 bool ArchiveFile::loadChunk(Chunk &chunk) {
+	if (!_good) return false;
+
 	_last_access = getCurrentTime();
 
-	// read directory entry
+	// get entry from directory
 	vec3i64 cc = chunk.getCC();
 	size_t x = cycle(cc[0], _region_size);
 	size_t y = cycle(cc[1], _region_size);
@@ -230,6 +274,8 @@ void ArchiveFile::decodeChunk_LEGACY_RLE(Chunk &chunk) {
 }
 
 void ArchiveFile::storeChunk(const Chunk &chunk) {
+	if (!_good) return;
+
 	_last_access = getCurrentTime();
 
 	vec3i64 cc = chunk.getCC();
