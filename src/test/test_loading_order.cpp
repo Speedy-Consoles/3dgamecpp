@@ -53,8 +53,6 @@ TEST_F(LoadingOrderTest, Correctness) {
 
 	for (int i = 0; i < length * length * length; ++i) {
 		vec3i8 cd = LOADING_ORDER[i];
-		if (cd.norm() > MAX_RENDER_DISTANCE)
-			continue;
 		ASSERT_GE(cd.norm(), loadedDistance) << "chunk " << i << " is behind loaded distance";
 		ASSERT_GE(LOADING_ORDER_INDEX_DISTANCES[i], loadedDistance) << "Loaded distance decreased";
 		loadedDistance = LOADING_ORDER_INDEX_DISTANCES[i];
@@ -62,11 +60,16 @@ TEST_F(LoadingOrderTest, Correctness) {
 
 	loadedDistance = -1;
 	for (int i = 0; i < length * length * length; ++i) {
-		vec3i8 cd = LOADING_ORDER[i];
 		if (LOADING_ORDER_INDEX_DISTANCES[i] > loadedDistance) {
 			loadedDistance = LOADING_ORDER_INDEX_DISTANCES[i];
+			if (i > 0) {
+				vec3i8 cd = LOADING_ORDER[i - 1];
+				ASSERT_LT(cd.norm(), loadedDistance)
+					<< "Loaded distance is behind";
+			}
 			ASSERT_EQ(i, LOADING_ORDER_DISTANCE_INDICES[loadedDistance])
-					<< "Loaded distance index wrong (" << loadedDistance << ")";
+					<< "Loaded distance index wrong, loaded distance: "
+					<< loadedDistance;
 		}
 	}
 }
