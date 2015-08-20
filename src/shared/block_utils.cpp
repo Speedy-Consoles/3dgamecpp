@@ -69,6 +69,7 @@ const size_t BIG_CUBE_CYCLE_BASE_INDEX = 13;
 
 std::vector<vec3i8> LOADING_ORDER;
 std::vector<int> LOADING_ORDER_DISTANCE_INDICES;
+std::vector<int> LOADING_ORDER_INDEX_DISTANCES;
 
 int getDir(int dim, int sign) {
 	return dim - 3 * ((sign - 1) / 2);
@@ -146,7 +147,7 @@ bool vec3i64CompFunc(vec3i64 v1, vec3i64 v2) {
 }
 
 void initUtil() {
-	int range = 64;
+	int range = MAX_RENDER_DISTANCE;
 	int length = range * 2 + 1;
 	LOADING_ORDER.resize(length * length * length);
 
@@ -159,15 +160,31 @@ void initUtil() {
 		}
 	}
 
-	auto comp = [](vec3i8 v1, vec3i8 v2){return v1.norm2() < v2.norm2();};
+	auto comp = [](vec3i8 v1, vec3i8 v2) { return v1.norm2() < v2.norm2(); };
 	std::sort(LOADING_ORDER.begin(), LOADING_ORDER.end(), comp);
 
-	LOADING_ORDER_DISTANCE_INDICES.resize(range + 1);
-	int distance = 0;
-	for (int i = 0; i < length * length * length && distance <= range; ++i) {
-	    vec3i8 coords = LOADING_ORDER[i];
-	    if (coords.norm() >= distance) {
-	    	LOADING_ORDER_DISTANCE_INDICES[distance++] = i;
+	LOADING_ORDER_DISTANCE_INDICES.resize(range + 1, -1);
+	LOADING_ORDER_INDEX_DISTANCES.resize(length * length * length, -1);
+	LOADING_ORDER_DISTANCE_INDICES[0] = 0;
+	for (int i = 0; i < length * length * length; ++i) {
+		double dist = LOADING_ORDER[i].norm();
+		if (dist > range)
+			continue;
+	for (int j = std::floor(dist) + 1; j <= range; j++) {
+		if (i >= LOADING_ORDER_DISTANCE_INDICES[j])
+			LOADING_ORDER_DISTANCE_INDICES[j] = i + 1;
 	    }
+	}
+
+	for (int i = 0; i <= range; i++) {
+		LOADING_ORDER_INDEX_DISTANCES[LOADING_ORDER_DISTANCE_INDICES[i]] = i;
+	}
+
+	int currentDistance = 0;
+	for (int i = 0; i <= length * length * length; i++) {
+		if (LOADING_ORDER_INDEX_DISTANCES[i] == -1)
+			LOADING_ORDER_INDEX_DISTANCES[i] = currentDistance;
+		else
+			currentDistance = LOADING_ORDER_INDEX_DISTANCES[i];
 	}
 }
