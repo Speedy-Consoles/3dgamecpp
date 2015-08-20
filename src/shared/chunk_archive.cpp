@@ -347,7 +347,7 @@ int ArchiveFile::getTotalChunkBytes() {
 	size_t bytes = 0;
 	for (auto entry : _dir) {
 		if (entry.offset > 0)
-			bytes = std::max(bytes, entry.size + entry.offset);
+			bytes = std::max(bytes, (size_t) entry.size + entry.offset);
 	}
 	return (int) bytes;
 }
