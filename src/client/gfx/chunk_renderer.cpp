@@ -70,17 +70,20 @@ void ChunkRenderer::tick() {
 			}
 		}
 	}
-	while (LOADING_ORDER[checkChunkIndex].norm() <= renderDistance
+	while (checkChunkIndex <= (int) LOADING_ORDER.size()
 			&& buildQueue.size() < MAX_RENDER_QUEUE_SIZE) {
-		vec3i64 cc = pc + LOADING_ORDER[checkChunkIndex].cast<int64>();
-		auto it = builtChunks.find(cc);
-		if (it == builtChunks.end()) {
-			auto it = inBuildQueue.find(cc);
-			if (it == inBuildQueue.end()) {
-				inBuildQueue.insert(cc);
-				buildQueue.push_back(cc);
-				for (size_t i = 0; i < 27; ++i) {
-					client->getChunkManager()->requestChunk(cc + BIG_CUBE_CYCLE[i].cast<int64>());
+		vec3i64 cd = LOADING_ORDER[checkChunkIndex].cast<int64>();
+		if (cd.norm() <= renderDistance) {
+			vec3i64 cc = pc + cd;
+			auto it = builtChunks.find(cc);
+			if (it == builtChunks.end()) {
+				auto it = inBuildQueue.find(cc);
+				if (it == inBuildQueue.end()) {
+					inBuildQueue.insert(cc);
+					buildQueue.push_back(cc);
+					for (size_t i = 0; i < 27; ++i) {
+						client->getChunkManager()->requestChunk(cc + BIG_CUBE_CYCLE[i].cast<int64>());
+					}
 				}
 			}
 		}
@@ -169,7 +172,7 @@ void ChunkRenderer::rebuildChunk(vec3i64 chunkCoords) {
 
 ChunkRendererDebugInfo ChunkRenderer::getDebugInfo() {
 	ChunkRendererDebugInfo info;
-	info.checkedDistance = (int) LOADING_ORDER[checkChunkIndex].norm();
+	info.checkedDistance = LOADING_ORDER_INDEX_DISTANCES[checkChunkIndex];
 	info.newFaces = newFaces;
 	info.newChunks = newChunks;
 	info.totalFaces = faces;
