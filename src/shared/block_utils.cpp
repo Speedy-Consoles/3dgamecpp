@@ -181,7 +181,7 @@ void initUtil() {
 	}
 
 	int currentDistance = 0;
-	for (int i = 0; i <= length * length * length; i++) {
+	for (int i = 0; i < length * length * length; i++) {
 		if (LOADING_ORDER_INDEX_DISTANCES[i] == -1)
 			LOADING_ORDER_INDEX_DISTANCES[i] = currentDistance;
 		else
