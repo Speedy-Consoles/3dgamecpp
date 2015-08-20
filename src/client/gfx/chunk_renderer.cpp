@@ -48,16 +48,17 @@ void ChunkRenderer::tick() {
 	vec3i64 pc = player.getChunkPos();
 	if (pc != oldPlayerChunk) {
 		// determine new checkChunkIndex
-		vec3i64 diff = pc - oldPlayerChunk;
-		if (diff.maxAbs() > LOADING_ORDER_INDEX_DISTANCES[checkChunkIndex]) {
+		// TODO fix this
+//		vec3i64 diff = pc - oldPlayerChunk;
+//		if (diff.maxAbs() > LOADING_ORDER_INDEX_DISTANCES[checkChunkIndex]) {
 			checkChunkIndex = 0;
-		} else {
-			double newRadius = LOADING_ORDER_INDEX_DISTANCES[checkChunkIndex] - diff.norm();
-			if (newRadius < 0)
-				checkChunkIndex = 0;
-			else
-				checkChunkIndex = LOADING_ORDER_DISTANCE_INDICES[(int) newRadius];
-		}
+//		} else if (checkChunkIndex > 0) {
+//			double newRadius = LOADING_ORDER_INDEX_DISTANCES[checkChunkIndex - 1] - diff.norm();
+//			if (newRadius < 0)
+//				checkChunkIndex = 0;
+//			else
+//				checkChunkIndex = LOADING_ORDER_DISTANCE_INDICES[(int) newRadius];
+//		}
 		oldPlayerChunk = pc;
 
 		// delete chunk info of chunks out of range
