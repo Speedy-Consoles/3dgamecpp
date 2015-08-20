@@ -48,10 +48,6 @@ GL3DebugRenderer::GL3DebugRenderer(Client *client, GL3Renderer *renderer, GL3Chu
 
 	font.load("fonts/dejavusansmono20.fnt");
 	font.setEncoding(Font::Encoding::UTF8);
-
-	for (int i = 0; i < 20; i++) {
-		prevFPS[i] = 0;
-	}
 }
 
 GL3DebugRenderer::~GL3DebugRenderer() {
@@ -136,16 +132,26 @@ void GL3DebugRenderer::render() {
 	}
 }
 
+float GL3DebugRenderer::smooth(float p, float d, float oldValue, int newValue) {
+	return oldValue * p + newValue * (1.0f - p) + (newValue - oldValue) * d;
+}
+
 void GL3DebugRenderer::renderDebug() {
-	while (getCurrentTime() - lastFPSUpdate > millis(50)) {
-		lastFPSUpdate += millis(50);
-		fpsSum -= prevFPS[fpsIndex];
-		fpsSum += fpsCounter;
-		prevFPS[fpsIndex] = fpsCounter;
-		fpsCounter = 0;
-		fpsIndex = (fpsIndex + 1) % 20;
-	}
+	ChunkRendererDebugInfo crdi = chunkRenderer->getDebugInfo();
 	fpsCounter++;
+	newChunkCounter += crdi.newChunks;
+	newFaceCounter += crdi.newFaces;
+	while (getCurrentTime() - lastDataUpdate > millis(DATA_UPDATE_INTERVAL)) {
+		lastDataUpdate += millis(DATA_UPDATE_INTERVAL);
+		fpsValue = smooth(0.99f, 0.1f, fpsValue, fpsCounter);
+		newChunkValue = smooth(0.999f, 0.01f, newChunkValue, newChunkCounter);
+		newFaceValue = smooth(0.999f, 0.01f, newFaceValue, newFaceCounter);
+		fpsCounter = 0;
+		newChunkCounter = 0;
+		newFaceCounter = 0;
+	}
+
+	float frequency =  (1000.0f / DATA_UPDATE_INTERVAL);
 
 	font.setColor(glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
 
@@ -157,7 +163,7 @@ void GL3DebugRenderer::renderDebug() {
 			font.write(x, y, 0.0f, buffer, 0);\
 			y -= font.getLineHeight()
 
-	RENDER_LINE("FPS: %d", fpsSum);
+	RENDER_LINE("FPS: %.0f", fpsValue * frequency);
 
 	const Player &player = client->getLocalPlayer();
 	RENDER_LINE(" ");
@@ -179,12 +185,11 @@ void GL3DebugRenderer::renderDebug() {
 	RENDER_LINE("WORLD INFO:");
 	RENDER_LINE("needed chunks: %lu", (unsigned long) world->getNumNeededChunks());
 
-	ChunkRendererDebugInfo crdi = chunkRenderer->getDebugInfo();
 	RENDER_LINE(" ");
 	RENDER_LINE("CHUNK RENDERER INFO:");
 	RENDER_LINE("checked distance: %d", crdi.checkedDistance);
-	RENDER_LINE("new faces: %d", crdi.newFaces);
-	RENDER_LINE("new chunks: %d", crdi.newChunks);
+	RENDER_LINE("new chunks/s: %.0f", newChunkValue * frequency);
+	RENDER_LINE("new faces/s: %.0f", newFaceValue * frequency);
 	RENDER_LINE("total faces: %d", crdi.totalFaces);
 	RENDER_LINE("visible chunks: %d", crdi.visibleChunks);
 	RENDER_LINE("visible faces: %d", crdi.visibleFaces);
