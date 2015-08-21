@@ -185,6 +185,7 @@ void Client::handleInput() {
 					event.window.data1,
 					event.window.data2
 				);
+				menu->getFrame()->move(-graphics->getDrawWidth() / 2 + 10, -graphics->getDrawHeight() / 2 + 10);
 				break;
 			default:
 				break;
