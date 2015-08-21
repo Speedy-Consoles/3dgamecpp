@@ -85,13 +85,13 @@ public:
 
 
 private:
-	void createFBO();
+	void createFBO(AntiAliasing antiAliasing);
 	void destroyFBO();
 
-	void makePerspectiveMatrix();
+	void makePerspectiveMatrix(int renderDistance, float fieldOfView);
 	void makeOrthogonalMatrix();
 	void makeSkyFbo();
-	void makeMaxFOV();
+	void makeMaxFOV(float fieldOfView);
 };
 
 #endif // GL_3_RENDERER_HPP

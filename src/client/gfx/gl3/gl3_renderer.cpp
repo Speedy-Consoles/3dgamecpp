@@ -35,8 +35,8 @@ GL3Renderer::GL3Renderer(Client *client) :
 	menuRenderer = std::unique_ptr<ComponentRenderer>(new GL3MenuRenderer(client, this));
 	debugRenderer = std::unique_ptr<ComponentRenderer>(new GL3DebugRenderer(client, this, p_chunkRenderer));
 
-	makeMaxFOV();
-	makePerspectiveMatrix();
+	makeMaxFOV(client->getConf().fov);
+	makePerspectiveMatrix(client->getConf().render_distance, client->getConf().fov);
 	makeOrthogonalMatrix();
 
 	// light
@@ -68,7 +68,7 @@ GL3Renderer::GL3Renderer(Client *client) :
 
 	// make framebuffer object
 	if (client->getConf().aa != AntiAliasing::NONE)
-		createFBO();
+		createFBO(client->getConf().aa);
 
 	// textures
 	LOG_DEBUG(logger) << "Loading textures";
@@ -91,7 +91,7 @@ GL3Renderer::~GL3Renderer() {
 }
 
 void GL3Renderer::resize() {
-	makePerspectiveMatrix();
+	makePerspectiveMatrix(client->getConf().render_distance, client->getConf().fov);
 	makeOrthogonalMatrix();
 	makeSkyFbo();
 
@@ -99,15 +99,18 @@ void GL3Renderer::resize() {
 	if (fbo)
 		destroyFBO();
 	if (client->getConf().aa != AntiAliasing::NONE)
-		createFBO();
+		createFBO(client->getConf().aa);
 }
 
 void GL3Renderer::setConf(const GraphicsConf &conf, const GraphicsConf &old) {
 	auto &defaultShader = shaderManager.getDefaultShader();
 	auto &blockShader = shaderManager.getBlockShader();
 
+	if (conf.render_distance != old.render_distance || conf.fov != old.fov) {
+		makePerspectiveMatrix(conf.render_distance, conf.fov);
+	}
+
 	if (conf.render_distance != old.render_distance) {
-		makePerspectiveMatrix();
 
 		float endFog = (float) ((conf.render_distance - 1) * Chunk::WIDTH);
 		float startFog = (conf.render_distance - 1) * Chunk::WIDTH * 0.5f;
@@ -120,15 +123,14 @@ void GL3Renderer::setConf(const GraphicsConf &conf, const GraphicsConf &old) {
 	}
 
 	if (conf.fov != old.fov) {
-		makePerspectiveMatrix();
-		makeMaxFOV();
+		makeMaxFOV(conf.fov);
 	}
 
 	if (conf.aa != old.aa) {
 		if (fbo)
 			destroyFBO();
 		if (conf.aa != AntiAliasing::NONE)
-			createFBO();
+			createFBO(conf.aa);
 	}
 
 	bool fog = conf.fog == Fog::FANCY || conf.fog == Fog::FAST;
@@ -153,8 +155,8 @@ static uint getMSLevelFromAA(AntiAliasing aa) {
 	}
 }
 
-void GL3Renderer::createFBO() {
-	uint msLevel = getMSLevelFromAA(client->getConf().aa);
+void GL3Renderer::createFBO(AntiAliasing antiAliasing) {
+	uint msLevel = getMSLevelFromAA(antiAliasing);
 	GL(GenRenderbuffers(1, &fbo_color_buffer));
 	GL(BindRenderbuffer(GL_RENDERBUFFER, fbo_color_buffer));
 	GL(RenderbufferStorageMultisample(
@@ -164,7 +166,7 @@ void GL3Renderer::createFBO() {
 	// Depth buffer
 	GL(GenRenderbuffers(1, &fbo_depth_buffer));
 	GL(BindRenderbuffer(GL_RENDERBUFFER, fbo_depth_buffer));
-	if (client->getConf().aa != AntiAliasing::NONE) {
+	if (antiAliasing != AntiAliasing::NONE) {
 		GL(RenderbufferStorageMultisample(
 				GL_RENDERBUFFER, msLevel, GL_DEPTH_COMPONENT24, client->getGraphics()->getWidth(), client->getGraphics()->getHeight()
 		));
@@ -218,18 +220,18 @@ void GL3Renderer::destroyFBO() {
 	fbo = fbo_color_buffer = fbo_depth_buffer = 0;
 }
 
-void GL3Renderer::makePerspectiveMatrix() {
+void GL3Renderer::makePerspectiveMatrix(int renderDistance, float fieldOfView) {
 	float normalRatio = (float) DEFAULT_WINDOWED_RES[0] / DEFAULT_WINDOWED_RES[1];
 	float currentRatio = (float) client->getGraphics()->getWidth() / client->getGraphics()->getHeight();
 	float angle;
 
-	float yfov = client->getConf().fov / normalRatio * (float) (TAU / 360.0);
+	float yfov = fieldOfView / normalRatio * (float) (TAU / 360.0);
 	if (currentRatio > normalRatio)
 		angle = atan(tan(yfov / 2) * normalRatio / currentRatio) * 2;
 	else
 		angle = yfov;
 
-	float zFar = Chunk::WIDTH * sqrtf(3.0f * (client->getConf().render_distance + 1) * (client->getConf().render_distance + 1));
+	float zFar = Chunk::WIDTH * sqrtf(3.0f * (renderDistance + 1) * (renderDistance + 1));
 	glm::mat4 perspectiveMatrix = glm::perspective((float) angle,
 			(float) currentRatio, ZNEAR, zFar);
 	auto &defaultShader = shaderManager.getDefaultShader();
@@ -253,9 +255,9 @@ void GL3Renderer::makeOrthogonalMatrix() {
     shaderManager.getFontShader().setProjectionMatrix(hudMatrix);
 }
 
-void GL3Renderer::makeMaxFOV() {
+void GL3Renderer::makeMaxFOV(float fieldOfView) {
 	float ratio = (float) DEFAULT_WINDOWED_RES[0] / DEFAULT_WINDOWED_RES[1];
-	float yfov = client->getConf().fov / ratio * (float) (TAU / 360.0);
+	float yfov = fieldOfView / ratio * (float) (TAU / 360.0);
 	if (ratio < 1.0)
 		maxFOV = yfov;
 	else
