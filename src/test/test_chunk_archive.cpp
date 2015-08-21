@@ -87,3 +87,85 @@ TEST(ChunkArchiveTest, RandomChunk) {
 	store_and_load(supposed, actual);
 	EXPECT_EQ(0, getRelativeChunkDifference(supposed, actual)) << "Random chunk did not store and load properly";
 }
+
+TEST(ChunkArchiveTest, FarFromSpawnChunk) {
+	Chunk supposed(false);
+	supposed.setCC({ 9999999, 9999999, 0 });
+	Chunk actual(false);
+
+	std::minstd_rand rng;
+	rng.seed(1);
+	std::uniform_int_distribution<uint> distr(0, 254);
+
+	initChunk(supposed, [&rng, &distr](size_t x, size_t y, size_t z, size_t index) {
+		return distr(rng);
+	});
+
+	ASSERT_NO_DEATH(store_and_load(supposed, actual);) << "Random chunk store and load crashed";
+	store_and_load(supposed, actual);
+	EXPECT_EQ(0, getRelativeChunkDifference(supposed, actual)) << "Far from spawn chunk did not store and load properly";
+}
+
+TEST(ChunkArchiveTest, RegionWrapAround) {
+	Chunk supposed(false);
+	supposed.setCC({ 0, 0, 0 });
+	Chunk actual(false);
+
+	std::minstd_rand rng;
+	rng.seed(1);
+	std::uniform_int_distribution<uint> distr(0, 254);
+
+	initChunk(supposed, [&rng, &distr](size_t x, size_t y, size_t z, size_t index) {
+		return distr(rng);
+	});
+
+	ChunkArchive archive("./test/temp/");
+	archive.storeChunk(supposed);
+
+	Chunk other(false);
+	other.setCC({ 16, 16, 16 });
+	initChunk(other, [&rng, &distr](size_t x, size_t y, size_t z, size_t index) {
+		return distr(rng);
+	});
+	archive.storeChunk(other);
+	
+	actual.setCC(supposed.getCC());
+	archive.loadChunk(actual);
+
+	EXPECT_EQ(0, getRelativeChunkDifference(supposed, actual)) << "Chunks from different regions overlap";
+}
+
+TEST(ChunkArchiveTest, SameRegion) {
+	Chunk c1(false);
+	Chunk c2(false);
+	Chunk c3(false);
+	c1.setCC({ 0, 0, 0 });
+	c2.setCC({ 1, 0, 0 });
+	c3.setCC({ 0, 1, 0 });
+	Chunk actual(false);
+
+	std::minstd_rand rng;
+	rng.seed(1);
+	std::uniform_int_distribution<uint> distr(0, 254);
+	
+	initChunk(c1, [&rng, &distr](size_t x, size_t y, size_t z, size_t index) {return distr(rng);});
+	initChunk(c2, [&rng, &distr](size_t x, size_t y, size_t z, size_t index) {return distr(rng);});
+	initChunk(c3, [&rng, &distr](size_t x, size_t y, size_t z, size_t index) {return distr(rng);});
+
+	ChunkArchive archive("./test/temp/");
+	archive.storeChunk(c1);
+	archive.storeChunk(c2);
+	archive.storeChunk(c3);
+	
+	actual.setCC(c1.getCC());
+	archive.loadChunk(actual);
+	ASSERT_EQ(0, getRelativeChunkDifference(c1, actual)) << "Chunks from same region collide";
+
+	actual.setCC(c2.getCC());
+	archive.loadChunk(actual);
+	ASSERT_EQ(0, getRelativeChunkDifference(c2, actual)) << "Chunks from same region collide";
+
+	actual.setCC(c3.getCC());
+	archive.loadChunk(actual);
+	ASSERT_EQ(0, getRelativeChunkDifference(c3, actual)) << "Chunks from same region collide";
+}
