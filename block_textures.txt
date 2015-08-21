@@ -76,6 +76,11 @@ texture file="img/textures_1.png" width=16 height=16 {
 	block name=bedrock       row=3 col=14
 	block name=sandstone     row=3 col=15
 	
+	block name=leaves.oak     row=4 col=0
+	block name=leaves.birch   row=4 col=1
+	block name=leaves.jungle  row=4 col=2
+	block name=leaves.spruce  row=4 col=3
+	
 	block name=invalid row=15 col=15
 }
 

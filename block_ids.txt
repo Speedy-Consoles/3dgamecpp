@@ -23,6 +23,13 @@ wood
 	jungle 40
 	spruce 41
 }
+leaves
+{
+	oak    58
+	birch  59
+	jungle 60
+	spruce 61
+}
 planks
 {
 	oak     7
