@@ -48,17 +48,16 @@ void ChunkRenderer::tick() {
 	vec3i64 pc = player.getChunkPos();
 	if (pc != oldPlayerChunk) {
 		// determine new checkChunkIndex
-		// TODO fix this
-//		vec3i64 diff = pc - oldPlayerChunk;
-//		if (diff.maxAbs() > LOADING_ORDER_INDEX_DISTANCES[checkChunkIndex]) {
+		vec3i64 diff = pc - oldPlayerChunk;
+		if (diff.maxAbs() > LO_INDEX_FINISHED_RADIUS[checkChunkIndex]) {
 			checkChunkIndex = 0;
-//		} else if (checkChunkIndex > 0) {
-//			double newRadius = LOADING_ORDER_INDEX_DISTANCES[checkChunkIndex - 1] - diff.norm();
-//			if (newRadius < 0)
-//				checkChunkIndex = 0;
-//			else
-//				checkChunkIndex = LOADING_ORDER_DISTANCE_INDICES[(int) newRadius];
-//		}
+		} else if (checkChunkIndex > 0) {
+			double newRadius = LO_INDEX_FINISHED_RADIUS[checkChunkIndex] - diff.norm();
+			if (newRadius < 0)
+				checkChunkIndex = 0;
+			else
+				checkChunkIndex = LO_MAX_RADIUS_INDICES[(int) newRadius];
+		}
 		oldPlayerChunk = pc;
 
 		// delete chunk info of chunks out of range
@@ -73,7 +72,7 @@ void ChunkRenderer::tick() {
 	}
 
 	// put chunks into render queue
-	while (LOADING_ORDER_INDEX_DISTANCES[checkChunkIndex] <= renderDistance
+	while (LO_INDEX_FINISHED_RADIUS[checkChunkIndex] < renderDistance
 			&& buildQueue.size() < MAX_RENDER_QUEUE_SIZE) {
 		vec3i64 cd = LOADING_ORDER[checkChunkIndex].cast<int64>();
 		if (cd.norm() <= renderDistance) {
@@ -175,8 +174,7 @@ void ChunkRenderer::rebuildChunk(vec3i64 chunkCoords) {
 
 ChunkRendererDebugInfo ChunkRenderer::getDebugInfo() {
 	ChunkRendererDebugInfo info;
-	info.checkedDistance = LOADING_ORDER_INDEX_DISTANCES[
-			checkChunkIndex == 0 ? 0 : checkChunkIndex - 1];
+	info.checkedDistance = LO_INDEX_FINISHED_RADIUS[checkChunkIndex];
 	info.newFaces = newFaces;
 	info.newChunks = newChunks;
 	info.totalFaces = faces;
