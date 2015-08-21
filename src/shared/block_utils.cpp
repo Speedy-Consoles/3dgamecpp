@@ -160,23 +160,44 @@ void initUtil() {
 		}
 	}
 
-	auto comp = [](vec3i8 v1, vec3i8 v2) { return v1.norm2() < v2.norm2(); };
+	auto comp = [](vec3i8 v1, vec3i8 v2) {
+		double n1 = v1.norm2();
+		double n2 = v2.norm2();
+//		return n1 < n2;
+		if (n2 == 0)
+			return false;
+		double ratio = std::sqrt(n1/n2);
+		return ratio < 0.7;
+	};
 	std::sort(LOADING_ORDER.begin(), LOADING_ORDER.end(), comp);
 
-	LOADING_ORDER_DISTANCE_INDICES.resize(range + 1, -1);
+//	size_t loadingOrderIndices[length * length * length];
+//	for (int i = 0; i < length * length * length; ++i) {
+//		loadingOrderIndices[i] = i;
+//	}
+
+//	auto comp2 = [](int i1, int i2) {
+//		return LOADING_ORDER[i1].norm2() < LOADING_ORDER[i2].norm2();
+//	};
+//	std::sort(loadingOrderIndices, loadingOrderIndices + length * length * length, comp2);
+
+	int maxDist = std::ceil(std::sqrt(3) * length / 2.0);
+	LOADING_ORDER_DISTANCE_INDICES.resize(maxDist + 1, -1);
 	LOADING_ORDER_INDEX_DISTANCES.resize(length * length * length, -1);
+
+//	size_t maxIndex = 0;
+//	for (int i = 0; i < length * length * length; ++i) {
+//		LOADING_ORDER_DISTANCE_INDICES
+//	}
 	LOADING_ORDER_DISTANCE_INDICES[0] = 0;
 	for (int i = 0; i < length * length * length; ++i) {
 		double dist = LOADING_ORDER[i].norm();
-		if (dist > range)
-			continue;
-	for (int j = std::floor(dist) + 1; j <= range; j++) {
-		if (i >= LOADING_ORDER_DISTANCE_INDICES[j])
+		for (int j = std::floor(dist) + 1; j <= maxDist; j++) {
 			LOADING_ORDER_DISTANCE_INDICES[j] = i + 1;
 	    }
 	}
 
-	for (int i = 0; i <= range; i++) {
+	for (int i = 0; i <= maxDist; i++) {
 		LOADING_ORDER_INDEX_DISTANCES[LOADING_ORDER_DISTANCE_INDICES[i]] = i;
 	}
 
