@@ -56,7 +56,6 @@ void GL2MenuRenderer::renderWidget(const Widget *widget) {
 	glTranslatef(widget->x(), widget->y(), 0);
 
 	const Label *label = nullptr;
-	const Frame *frame = nullptr;
 	const Button *button = nullptr;
 
 	if ((button = dynamic_cast<const Button *>(widget))) {
@@ -67,8 +66,8 @@ void GL2MenuRenderer::renderWidget(const Widget *widget) {
 
 	glPopMatrix();
 
-	for (const Widget *widget : widget->children()) {
-		renderWidget(widget);
+	for (const Widget *child : widget->children()) {
+		renderWidget(child);
 	}
 }
 

@@ -105,13 +105,13 @@ public:
 private:
 	void initGL();
 
-	void createFBO();
+	void createFBO(AntiAliasing antiAliasing);
 	void destroyFBO();
 
-	void makePerspective();
+	void makePerspective(int renderDistance, float fieldOfView);
 	void makeOrthogonal();
-	void makeFog();
-	void makeMaxFOV();
+	void makeFog(int renderDistance);
+	void makeMaxFOV(float fieldOfView);
 
 	void switchToPerspective();
 	void switchToOrthogonal();

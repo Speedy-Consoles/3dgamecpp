@@ -37,13 +37,13 @@ GL2Renderer::GL2Renderer(Client *client) :
 	menuRenderer = std::unique_ptr<ComponentRenderer>(new GL2MenuRenderer(client, this));
 	debugRenderer = std::unique_ptr<ComponentRenderer>(new GL2DebugRenderer(client, this));
 
-	makeMaxFOV();
-	makePerspective();
+	makeMaxFOV(client->getConf().fov);
+	makePerspective(client->getConf().render_distance, client->getConf().fov);
 	makeOrthogonal();
 
 	// make framebuffer object
 	if (client->getConf().aa != AntiAliasing::NONE)
-		createFBO();
+		createFBO(client->getConf().aa);
 
 	initGL();
 	for (int i = 0; i < 20; i++) {
@@ -86,22 +86,24 @@ void GL2Renderer::tick() {
 }
 
 void GL2Renderer::resize() {
-	makePerspective();
+	makePerspective(client->getConf().render_distance, client->getConf().fov);
 	makeOrthogonal();
 
 	// update framebuffer object
 	if (fbo)
 		destroyFBO();
 	if (client->getConf().aa != AntiAliasing::NONE)
-		createFBO();
+		createFBO(client->getConf().aa);
 }
 
 void GL2Renderer::setConf(const GraphicsConf &conf, const GraphicsConf &old) {
 	if (conf.fov != old.fov || conf.render_distance != old.render_distance) {
-		makeMaxFOV();
-		makePerspective();
-		makeFog();
+		makeMaxFOV(conf.fov);
+		makePerspective(conf.render_distance, conf.fov);
 	}
+
+	if (conf.render_distance != old.render_distance)
+		makeFog(conf.render_distance);
 
 	if (GLEW_NV_fog_distance) {
 		switch (conf.fog) {
@@ -120,7 +122,7 @@ void GL2Renderer::setConf(const GraphicsConf &conf, const GraphicsConf &old) {
 		if (fbo)
 			destroyFBO();
 		if (conf.aa != AntiAliasing::NONE)
-			createFBO();
+			createFBO(conf.aa);
 	}
 
 	texManager.setConfig(conf, old);
@@ -192,7 +194,7 @@ void GL2Renderer::initGL() {
 
 	glFogfv(GL_FOG_COLOR, fogColor.ptr());
 	glFogi(GL_FOG_MODE, GL_LINEAR);
-	makeFog();
+	makeFog(client->getConf().render_distance);
 }
 
 static uint getMSLevelFromAA(AntiAliasing aa) {
@@ -206,8 +208,8 @@ static uint getMSLevelFromAA(AntiAliasing aa) {
 	}
 }
 
-void GL2Renderer::createFBO() {
-	uint msLevel = getMSLevelFromAA(client->getConf().aa);
+void GL2Renderer::createFBO(AntiAliasing antiAliasing) {
+	uint msLevel = getMSLevelFromAA(antiAliasing);
 	GL(GenRenderbuffers(1, &fbo_color_buffer));
 	GL(BindRenderbuffer(GL_RENDERBUFFER, fbo_color_buffer));
 	GL(RenderbufferStorageMultisample(
@@ -217,7 +219,7 @@ void GL2Renderer::createFBO() {
 	// Depth buffer
 	GL(GenRenderbuffers(1, &fbo_depth_buffer));
 	GL(BindRenderbuffer(GL_RENDERBUFFER, fbo_depth_buffer));
-	if (client->getConf().aa != AntiAliasing::NONE) {
+	if (antiAliasing != AntiAliasing::NONE) {
 		GL(RenderbufferStorageMultisample(
 				GL_RENDERBUFFER, msLevel, GL_DEPTH_COMPONENT24, client->getGraphics()->getWidth(), client->getGraphics()->getHeight()
 		));
@@ -271,12 +273,12 @@ void GL2Renderer::destroyFBO() {
 	fbo = fbo_color_buffer = fbo_depth_buffer = 0;
 }
 
-void GL2Renderer::makePerspective() {
+void GL2Renderer::makePerspective(int renderDistance, float fieldOfView) {
 	float normalRatio = DEFAULT_WINDOWED_RES[0] / (float) DEFAULT_WINDOWED_RES[1];
 	float currentRatio = client->getGraphics()->getWidth() / (float) client->getGraphics()->getHeight();
 	float angle;
 
-	float yfov = client->getConf().fov / normalRatio * (float) (TAU / 360.0);
+	float yfov = fieldOfView / normalRatio * (float) (TAU / 360.0);
 	if (currentRatio > normalRatio)
 		angle = atan(tan(yfov / 2) * normalRatio / currentRatio) * 2;
 	else
@@ -284,7 +286,7 @@ void GL2Renderer::makePerspective() {
 
 	GL(MatrixMode(GL_PROJECTION));
 	GL(LoadIdentity());
-	double zFar = Chunk::WIDTH * sqrt(3 * (client->getConf().render_distance + 1) * (client->getConf().render_distance + 1));
+	double zFar = Chunk::WIDTH * sqrt(3 * (renderDistance + 1) * (renderDistance + 1));
 	GL(uPerspective((float) (angle * 360.0 / TAU),
 			(float) currentRatio, ZNEAR, zFar));
 	GL(GetDoublev(GL_PROJECTION_MATRIX, perspectiveMatrix));
@@ -309,15 +311,15 @@ void GL2Renderer::makeOrthogonal() {
 	GL(MatrixMode(GL_MODELVIEW));
 }
 
-void GL2Renderer::makeFog() {
-	float fogEnd = std::max(0.0f, Chunk::WIDTH * (client->getConf().render_distance - 1.0f));
+void GL2Renderer::makeFog(int renderDistance) {
+	float fogEnd = std::max(0.0f, Chunk::WIDTH * (renderDistance - 1.0f));
 	GL(Fogf(GL_FOG_START, fogEnd - ZNEAR - fogEnd / 3.0f));
 	GL(Fogf(GL_FOG_END, fogEnd - ZNEAR));
 }
 
-void GL2Renderer::makeMaxFOV() {
+void GL2Renderer::makeMaxFOV(float fieldOfView) {
 	float ratio = (float) DEFAULT_WINDOWED_RES[0] / DEFAULT_WINDOWED_RES[1];
-	float yfov = client->getConf().fov / ratio * (float) (TAU / 360.0);
+	float yfov = fieldOfView / ratio * (float) (TAU / 360.0);
 	if (ratio < 1.0)
 		maxFOV = yfov;
 	else

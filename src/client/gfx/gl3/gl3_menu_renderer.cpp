@@ -98,7 +98,6 @@ void GL3MenuRendererImpl::render() {
 
 void GL3MenuRendererImpl::renderWidget(const Widget *widget) {
 	const Label *label = nullptr;
-	const Frame *frame = nullptr;
 	const Button *button = nullptr;
 
 	HudShader &hud_shader = renderer->getShaderManager()->getHudShader();
