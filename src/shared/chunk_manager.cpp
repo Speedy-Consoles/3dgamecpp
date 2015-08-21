@@ -73,6 +73,7 @@ void ChunkManager::tick() {
 			} else {
 				notInCacheQueue.push(op.chunk);
 			}
+			numSessionChunkLoads++;
 			break;
 		case STORE:
 			recycleChunk(op.chunk);

@@ -41,6 +41,8 @@ class ChunkManager : public Thread {
 	std::unordered_map<vec3i64, uint32, size_t(*)(vec3i64)> oldRevisions;
 	std::unordered_map<vec3i64, int, size_t(*)(vec3i64)> needCounter;
 
+	int numSessionChunkLoads = 0;
+
 	Client *client = nullptr;
 
 	ChunkArchive archive;
@@ -67,6 +69,8 @@ public:
 
 	int getRequestedQueueSize() const;
 	int getNotInCacheQueueSize() const;
+
+	int getNumSessionChunkLoads() const { return numSessionChunkLoads; }
 
 private:
 	bool insertLoadedChunk(Chunk *chunk);

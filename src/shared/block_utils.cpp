@@ -1,6 +1,8 @@
 #include "block_utils.hpp"
 
 #include <algorithm>
+#include <cstring>
+#include <unordered_set>
 
 #include "engine/math.hpp"
 #include "game/chunk.hpp"
@@ -149,26 +151,40 @@ bool vec3i64CompFunc(vec3i64 v1, vec3i64 v2) {
 void initUtil() {
 	int range = MAX_RENDER_DISTANCE;
 	int length = range * 2 + 1;
-	LOADING_ORDER.resize(length * length * length);
+	vec3i8 strictOrder[length * length * length];
+	std::unordered_set<vec3i64, size_t(*)(vec3i64)> inserted(0, vec3i64HashFunc);
 
 	int i = 0;
 	for (int z = -range; z <= range; z++) {
 		for (int y = -range; y <= range; y++) {
 			for (int x = -range; x <= range; x++) {
-				LOADING_ORDER[i++] = vec3i8(x, y, z);
+				strictOrder[i++] = vec3i8(x, y, z);
 			}
 		}
 	}
 
 	auto comp = [](vec3i8 v1, vec3i8 v2) {
-		double n1 = v1.norm2();
-		double n2 = v2.norm2();
-		if (n2 == 0)
-			return false;
-		double ratio = std::sqrt(n1/n2);
-		return ratio < 0.7;
+		return v1.norm2() < v2.norm2();
 	};
-	std::sort(LOADING_ORDER.begin(), LOADING_ORDER.end(), comp);
+	std::sort(strictOrder, strictOrder + length * length * length, comp);
+
+	LOADING_ORDER.reserve(length * length * length);
+	int bubbleRadius = 6;
+	for (int i = 0; i < length * length * length; i++) {
+		if (inserted.find(strictOrder[i].cast<int64>()) != inserted.end())
+			continue;
+		for (int j = 0; j < length * length * length; j++) {
+			if (strictOrder[j].norm() > bubbleRadius)
+				break;
+			vec3i8 newVec = strictOrder[i] + strictOrder[j];
+			if (newVec.maxAbs() > range)
+				continue;
+			if (inserted.find(newVec.cast<int64>()) != inserted.end())
+				continue;
+			LOADING_ORDER.push_back(newVec);
+			inserted.insert(newVec.cast<int64>());
+		}
+	}
 
 	int biggestRadius = std::ceil(std::sqrt(3) * length / 2.0);
 	LO_MAX_RADIUS_INDICES.resize(biggestRadius + 1, -1);
