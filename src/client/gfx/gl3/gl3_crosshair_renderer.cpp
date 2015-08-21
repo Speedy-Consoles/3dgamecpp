@@ -51,6 +51,7 @@ void GL3CrosshairRenderer::render() {
 	if (client->getState() == Client::State::PLAYING) {
 		HudShader &shader = ((GL3Renderer *) renderer)->getShaderManager()->getHudShader();
 		shader.setModelMatrix(glm::mat4(1.0f));
+		shader.setColor(glm::vec4{ 1, 1, 1, 1 });
 		shader.useProgram();
 		GL(BindVertexArray(vao));
 		GL(DrawArrays(GL_TRIANGLES, 0, 12));

@@ -215,6 +215,7 @@ void GL3DebugRenderer::renderPerformance() {
 	modelMatrix = glm::scale(modelMatrix, glm::vec3(width, height, 1.0f));
 	modelMatrix = glm::translate(modelMatrix, glm::vec3(0.0f, -0.5f, 0.0f));
 	hudShader->setModelMatrix(modelMatrix);
+	hudShader->setColor(glm::vec4{ 1, 1, 1, 1 });
 	hudShader->useProgram();
 	GL(BindVertexArray(vao));
 	GL(DrawArrays(GL_TRIANGLES, 0, numFaces * 3));
