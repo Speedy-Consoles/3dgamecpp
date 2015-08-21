@@ -397,7 +397,7 @@ void ChunkRenderer::visibilitySearch() {
 				vsFringe.push(startIt);
 				vsInFringe.insert(startChunkCoords);
 			} else {
-				return;
+				continue;
 			}
 		}
 

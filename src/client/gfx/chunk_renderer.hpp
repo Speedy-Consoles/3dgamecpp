@@ -28,8 +28,8 @@ struct ChunkRendererDebugInfo {
 class ChunkRenderer : public ComponentRenderer {
 private:
 	// performance limits
-	static const int MAX_NEW_FACES = 30000;
-	static const int MAX_NEW_CHUNKS = 1000;
+	static const int MAX_NEW_FACES = 3000;
+	static const int MAX_NEW_CHUNKS = 100;
 	static const int MAX_RENDER_QUEUE_SIZE= 500;
 	static const int MAX_VS_CHUNKS = 3000;
 
