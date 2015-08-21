@@ -22,8 +22,12 @@ extern const uint8 QUAD_CORNER_MASK[4][3];
 const uint8 TEST_CORNERS[6] { 0x07, 0xC1, 0x00, 0xC1, 0x07, 0x00 };
 
 extern std::vector<vec3i8> LOADING_ORDER;
-extern std::vector<int> LOADING_ORDER_DISTANCE_INDICES;
-extern std::vector<int> LOADING_ORDER_INDEX_DISTANCES;
+// LO_MAX_RADIUS_INDICES[r] is the biggest i,
+// so that there exists no j < i with LOADING_ORDER[j].norm() > r
+extern std::vector<int> LO_MAX_RADIUS_INDICES;
+// LO_INDEX_FINISHED_RADIUS[i] is the biggest r,
+// so that there exists no j >= i with LOADING_ORDER[j].norm() <= r
+extern std::vector<int> LO_INDEX_FINISHED_RADIUS;
 
 template <typename T> int sgn(T val) {return (T(0) < val) - (val < T(0));}
 

@@ -68,8 +68,8 @@ const size_t DIR_TO_BIG_CUBE_CYCLE_INDEX[6] = { 14, 16, 22, 12, 10, 4 };
 const size_t BIG_CUBE_CYCLE_BASE_INDEX = 13;
 
 std::vector<vec3i8> LOADING_ORDER;
-std::vector<int> LOADING_ORDER_DISTANCE_INDICES;
-std::vector<int> LOADING_ORDER_INDEX_DISTANCES;
+std::vector<int> LO_MAX_RADIUS_INDICES;
+std::vector<int> LO_INDEX_FINISHED_RADIUS;
 
 int getDir(int dim, int sign) {
 	return dim - 3 * ((sign - 1) / 2);
@@ -163,7 +163,6 @@ void initUtil() {
 	auto comp = [](vec3i8 v1, vec3i8 v2) {
 		double n1 = v1.norm2();
 		double n2 = v2.norm2();
-//		return n1 < n2;
 		if (n2 == 0)
 			return false;
 		double ratio = std::sqrt(n1/n2);
@@ -171,41 +170,24 @@ void initUtil() {
 	};
 	std::sort(LOADING_ORDER.begin(), LOADING_ORDER.end(), comp);
 
-//	size_t loadingOrderIndices[length * length * length];
-//	for (int i = 0; i < length * length * length; ++i) {
-//		loadingOrderIndices[i] = i;
-//	}
+	int biggestRadius = std::ceil(std::sqrt(3) * length / 2.0);
+	LO_MAX_RADIUS_INDICES.resize(biggestRadius + 1, -1);
+	LO_INDEX_FINISHED_RADIUS.resize(length * length * length, -1);
 
-//	auto comp2 = [](int i1, int i2) {
-//		return LOADING_ORDER[i1].norm2() < LOADING_ORDER[i2].norm2();
-//	};
-//	std::sort(loadingOrderIndices, loadingOrderIndices + length * length * length, comp2);
-
-	int maxDist = std::ceil(std::sqrt(3) * length / 2.0);
-	LOADING_ORDER_DISTANCE_INDICES.resize(maxDist + 1, -1);
-	LOADING_ORDER_INDEX_DISTANCES.resize(length * length * length, -1);
-
-//	size_t maxIndex = 0;
-//	for (int i = 0; i < length * length * length; ++i) {
-//		LOADING_ORDER_DISTANCE_INDICES
-//	}
-	LOADING_ORDER_DISTANCE_INDICES[0] = 0;
+	int maxRadius = 0;
 	for (int i = 0; i < length * length * length; ++i) {
 		double dist = LOADING_ORDER[i].norm();
-		for (int j = std::floor(dist) + 1; j <= maxDist; j++) {
-			LOADING_ORDER_DISTANCE_INDICES[j] = i + 1;
-	    }
+		while (dist > maxRadius) {
+			LO_MAX_RADIUS_INDICES[maxRadius] = i;
+			maxRadius++;
+		}
 	}
-
-	for (int i = 0; i <= maxDist; i++) {
-		LOADING_ORDER_INDEX_DISTANCES[LOADING_ORDER_DISTANCE_INDICES[i]] = i;
-	}
-
-	int currentDistance = 0;
-	for (int i = 0; i < length * length * length; i++) {
-		if (LOADING_ORDER_INDEX_DISTANCES[i] == -1)
-			LOADING_ORDER_INDEX_DISTANCES[i] = currentDistance;
-		else
-			currentDistance = LOADING_ORDER_INDEX_DISTANCES[i];
+	int finishedRadius = biggestRadius;
+	for (int i = length * length * length - 1; i >= 0; --i) {
+		double dist = LOADING_ORDER[i].norm();
+		if (dist <= finishedRadius) {
+			finishedRadius = std::ceil(dist) - 1;
+		}
+		LO_INDEX_FINISHED_RADIUS[i] = finishedRadius;
 	}
 }
