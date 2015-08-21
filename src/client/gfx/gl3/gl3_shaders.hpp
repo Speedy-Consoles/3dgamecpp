@@ -149,12 +149,15 @@ public:
 
 class HudShader : public Shader {
 	GLint _mvpMatrixLoc;
+	GLint _colorLoc;
 	
 	bool _projectionMatrixDirty = true;
 	bool _modelMatrixDirty = true;
+	bool _colorDirty = true;
 	
 	glm::mat4 _projectionMatrix = glm::mat4();
 	glm::mat4 _modelMatrix = glm::mat4();
+	glm::vec4 _color = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
 
 public:
 	HudShader(GL3ShaderManager *);
@@ -164,6 +167,7 @@ public:
 	
     void setModelMatrix(const glm::mat4 &matrix);
     void setProjectionMatrix(const glm::mat4 &matrix);
+    void setColor(const glm::vec4 &color);
 };
 
 class FontShader : public Shader {

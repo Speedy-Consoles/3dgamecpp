@@ -39,7 +39,6 @@
     <ClCompile Include="..\src\client\gfx\texture_loader.cpp" />
     <ClCompile Include="..\src\client\gfx\texture_manager.cpp" />
     <ClCompile Include="..\src\client\gui\button.cpp" />
-    <ClCompile Include="..\src\client\gui\frame.cpp" />
     <ClCompile Include="..\src\client\gui\label.cpp" />
     <ClCompile Include="..\src\client\gui\widget.cpp" />
     <ClCompile Include="..\src\client\local_server_interface.cpp" />
@@ -78,7 +77,6 @@
     <ClInclude Include="..\src\client\gfx\texture_manager.hpp" />
     <ClInclude Include="..\src\client\gui\button.hpp" />
     <ClInclude Include="..\src\client\gui\cycle_button.hpp" />
-    <ClInclude Include="..\src\client\gui\frame.hpp" />
     <ClInclude Include="..\src\client\gui\label.hpp" />
     <ClInclude Include="..\src\client\gui\widget.hpp" />
     <ClInclude Include="..\src\client\local_server_interface.hpp" />

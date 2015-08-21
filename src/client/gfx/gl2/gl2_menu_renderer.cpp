@@ -2,7 +2,6 @@
 
 #include "shared/engine/logging.hpp"
 
-#include "client/gui/frame.hpp"
 #include "client/gui/label.hpp"
 #include "client/gui/button.hpp"
 #include "client/gui/cycle_button.hpp"
@@ -39,8 +38,6 @@ void GL2MenuRenderer::render() {
 	glPushMatrix();
 	glLoadIdentity();
 	glTranslatef(-w / 2.0f, -h / 2.0f, 0.0f);
-
-	glPushMatrix();
 	glTranslatef(0.0f, (float) h, 0.0f);
 	glColor4f(0.0f, 0.0f, 0.0f, 0.4f);
 	glBegin(GL_QUADS);
@@ -52,8 +49,6 @@ void GL2MenuRenderer::render() {
 	glPopMatrix();
 
 	renderWidget((const Widget *) client->getMenu()->getFrame());
-
-	glPopMatrix();
 }
 
 void GL2MenuRenderer::renderWidget(const Widget *widget) {
@@ -68,15 +63,11 @@ void GL2MenuRenderer::renderWidget(const Widget *widget) {
 		renderButton(button);
 	} else if ((label = dynamic_cast<const Label *>(widget))) {
 		renderLabel(label);
-	} else if ((frame = dynamic_cast<const Frame *>(widget))) {
-		renderFrame(frame);
 	}
 
 	glPopMatrix();
-}
 
-void GL2MenuRenderer::renderFrame(const Frame *frame) {
-	for (const Widget *widget : frame->widgets()) {
+	for (const Widget *widget : widget->children()) {
 		renderWidget(widget);
 	}
 }

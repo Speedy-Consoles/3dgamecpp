@@ -11,7 +11,6 @@
 #include "shared/constants.hpp"
 #include "shared/block_utils.hpp"
 #include "client/menu.hpp"
-#include "client/gui/frame.hpp"
 
 #include "gl2_chunk_renderer.hpp"
 #include "gl2_target_renderer.hpp"
