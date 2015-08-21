@@ -70,12 +70,16 @@ texture file="img/lbpr-128.png" width=16 height=16 {
 	block name=planks.spruce      row=3 col=11
 	
 	block name=test.orient        row=4 col=0
-	block name=test.sides         row=4 col=1 faces=e
-	block name=test.sides         row=4 col=2 faces=w
-	block name=test.sides         row=4 col=3 faces=n
-	block name=test.sides         row=4 col=4 faces=s
-	block name=test.sides         row=4 col=5 faces=t
-	block name=test.sides         row=4 col=6 faces=b
+	block name=test.sides         row=4 col=1  faces=e
+	block name=test.sides         row=4 col=2  faces=w
+	block name=test.sides         row=4 col=3  faces=n
+	block name=test.sides         row=4 col=4  faces=s
+	block name=test.sides         row=4 col=5  faces=t
+	block name=test.sides         row=4 col=6  faces=b
+	block name=leaves.oak         row=4 col=7
+	block name=leaves.birch       row=4 col=8
+	block name=leaves.jungle      row=4 col=9
+	block name=leaves.spruce      row=4 col=10
 	
 	block name=invalid row=15 col=15
 }

@@ -2,18 +2,36 @@
 
 using namespace gui;
 
-Widget::Widget(float x, float y, float w, float h) :
-	_x(x), _y(y), _w(w), _h(h)
-{
-	// nothing
+float Widget::x() const {
+	if (_parent)
+		return _x + _parent->_x;
+	else
+		return _x;
+}
+float Widget::y() const {
+	if (_parent)
+		return _y + _parent->_y;
+	else
+		return _y;
+}
+
+void Widget::add(Widget *widget) {
+	_children.push_back(widget);
+	widget->_parent = this;
 }
 
 void Widget::updateMousePosition(float x, float y) {
 	_hover = isInside(x, y);
+
+	for (Widget *widget : _children) {
+		widget->updateMousePosition(x - _x, y - _y);
+	}
 }
 
 void Widget::handleMouseClick(float x, float y) {
-	// nothing
+	for (Widget *widget : _children) {
+		widget->handleMouseClick(x - _x, y - _y);
+	}
 }
 
 bool Widget::isInside(float x, float y) {

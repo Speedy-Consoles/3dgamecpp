@@ -39,7 +39,9 @@ Shader::~Shader() {
 }
 
 GLuint Shader::getUniformLocation(const char *name) const {
-	return glGetUniformLocation(_programLocation, name);
+	GLuint loc = glGetUniformLocation(_programLocation, name);
+	LOG_OPENGL_ERROR;
+	return loc;
 }
 
 void Shader::useProgram() {
@@ -375,16 +377,23 @@ HudShader::HudShader(GL3ShaderManager *manager) :
 	Shader(manager, "shaders/hud.vert", "shaders/hud.frag")
 {
 	_mvpMatrixLoc = getUniformLocation("projectionMatrix");
+	_colorLoc = getUniformLocation("diffuseColor");
+	LOG_OPENGL_ERROR;
 }
 
 void HudShader::useProgram() {
 	Shader::useProgram();
-
+	
 	if (_projectionMatrixDirty || _modelMatrixDirty) {
 		glm::mat4 mvpMatrix = _projectionMatrix * _modelMatrix;
-		glUniformMatrix4fv(_mvpMatrixLoc, 1, GL_FALSE, glm::value_ptr(mvpMatrix));
+		GL(UniformMatrix4fv(_mvpMatrixLoc, 1, GL_FALSE, glm::value_ptr(mvpMatrix)));
 		_projectionMatrixDirty = false;
 		_modelMatrixDirty = false;
+	}
+
+	if (_colorDirty) {
+		GL(Uniform4fv(_colorLoc, 1, glm::value_ptr(_color)));
+		_colorDirty = false;
 	}
 }
 
@@ -399,6 +408,13 @@ void HudShader::setModelMatrix(const glm::mat4 &matrix) {
 	if (_modelMatrix != matrix) {
 		_modelMatrix = matrix;
 		_modelMatrixDirty = true;
+	}
+}
+
+void HudShader::setColor(const glm::vec4 &color) {
+	if (_color != color) {
+		_color = color;
+		_colorDirty = true;
 	}
 }
 

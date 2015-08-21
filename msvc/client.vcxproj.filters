@@ -98,9 +98,6 @@
     <ClCompile Include="..\src\client\gui\button.cpp">
       <Filter>Source Files\gui</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\client\gui\frame.cpp">
-      <Filter>Source Files\gui</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\client\gui\label.cpp">
       <Filter>Source Files\gui</Filter>
     </ClCompile>
@@ -206,9 +203,6 @@
       <Filter>Header Files\gui</Filter>
     </ClInclude>
     <ClInclude Include="..\src\client\gui\cycle_button.hpp">
-      <Filter>Header Files\gui</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\client\gui\frame.hpp">
       <Filter>Header Files\gui</Filter>
     </ClInclude>
     <ClInclude Include="..\src\client\gui\label.hpp">

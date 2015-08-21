@@ -5,6 +5,7 @@
 #include <cmath>
 #include <cstdio>
 #include <cstring>
+#include <clocale>
 
 #include "shared/engine/logging.hpp"
 #include "shared/engine/socket.hpp"
@@ -14,7 +15,7 @@
 #include "shared/block_manager.hpp"
 #include "shared/block_utils.hpp"
 #include "shared/constants.hpp"
-#include "gui/frame.hpp"
+#include "gui/widget.hpp"
 #include "gfx/graphics.hpp"
 
 #include "config.hpp"
@@ -69,11 +70,11 @@ Client::Client(const char *worldId, const char *serverAdress) {
 	}
 	LOG_INFO(logger) << blockManager->getNumberOfBlocks() << " blocks were loaded from '" << block_ids_file << "'";
 
+	graphics = std::unique_ptr<Graphics>(new Graphics(this, &state));
+	graphics->createContext();
 	chunkManager = std::unique_ptr<ChunkManager>(new ChunkManager(this));
 	world = std::unique_ptr<World>(new World(worldId, chunkManager.get()));
 	menu = std::unique_ptr<Menu>(new Menu(this));
-	graphics = std::unique_ptr<Graphics>(new Graphics(this, &state));
-	graphics->createContext();
 
 	if (serverAdress) {
 		LOG_INFO(logger) << "Connecting to remote server '" << serverAdress << "'";
@@ -307,8 +308,8 @@ void Client::handleInput() {
 				pitch = std::min(pitch, 90.0f);
 				serverInterface->setPlayerOrientation(yaw, pitch);
 			} else if (state == State::IN_MENU) {
-				int x = event.motion.x;
-				int y = graphics->getHeight() - event.motion.y;
+				int x = event.motion.x - graphics->getWidth() / 2;
+				int y = graphics->getHeight() / 2 - event.motion.y;
 				float factor = graphics->getScalingFactor();
 				menu->getFrame()->updateMousePosition(x * factor, y * factor);
 			}
@@ -328,8 +329,8 @@ void Client::handleInput() {
 				}
 			} else if (state == State::IN_MENU){
 				if (event.button.button == SDL_BUTTON_LEFT) {
-					int x = event.button.x;
-					int y = graphics->getHeight() - event.button.y;
+					int x = event.button.x - graphics->getWidth() / 2;
+					int y = graphics->getHeight() / 2 - event.button.y;
 					float factor = graphics->getScalingFactor();
 					menu->getFrame()->handleMouseClick(x * factor, y * factor);
 				}

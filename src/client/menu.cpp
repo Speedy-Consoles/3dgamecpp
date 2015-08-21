@@ -3,7 +3,7 @@
 #include "shared/block_utils.hpp"
 #include "client/gfx/graphics.hpp"
 
-#include "gui/frame.hpp"
+#include "gui/widget.hpp"
 #include "gui/label.hpp"
 #include "gui/button.hpp"
 #include "gui/cycle_button.hpp"
@@ -26,7 +26,8 @@ Menu::Menu(Client *client) :
 	int yIncr = 20;
 	int y = yIncr;
 
-	frame = new Frame(10, 10, 0, 0);
+	frame = new Widget(-client->getGraphics()->getDrawWidth() / 2 + 10,
+			-client->getGraphics()->getDrawHeight() / 2 + 10, 0, 0);
 
 	auto *applyButton = new Button(0, (float) y, 100, 20);
 	applyButton->text() = string("Apply");

@@ -5,7 +5,7 @@
 #include "config.hpp"
 
 namespace gui {
-	class Frame;
+	class Widget;
 	class Label;
 	template <typename T> class CycleButton;
 }
@@ -17,7 +17,7 @@ class Menu {
 	GraphicsConf bufferConf;
 	bool _dirty = false;
 
-	gui::Frame *frame = nullptr;
+	gui::Widget *frame = nullptr;
 
 	gui::CycleButton<bool> *fsButton = nullptr;
 	gui::CycleButton<AntiAliasing> *aaButton = nullptr;
@@ -30,8 +30,8 @@ public:
 	~Menu();
 	Menu(Client *);
 
-	gui::Frame *getFrame() { return frame; }
-	const gui::Frame *getFrame() const { return frame; }
+	gui::Widget *getFrame() { return frame; }
+	const gui::Widget *getFrame() const { return frame; }
 
 	void update();
 	void apply();

@@ -32,7 +32,6 @@ CLIENT_OBJECT_FILES = \
 	client/gfx/gl3/gl3_shaders.cpp.o\
 	client/gfx/gl3/gl3_font.cpp.o\
 	client/gui/button.cpp.o\
-	client/gui/frame.cpp.o\
 	client/gui/label.cpp.o\
 	client/gui/widget.cpp.o
 
