@@ -143,11 +143,23 @@ void ChunkRenderer::render() {
 	visibleChunks = 0;
 	visibleFaces = 0;
 
+	vec3i64 pc = player.getChunkPos();
+	for (int i = 0; i < 27; i++) {
+		vec3i64 cc = BIG_CUBE_CYCLE[i].cast<int64>() + pc;
+		auto builtIt = builtChunks.find(cc);
+		if (builtIt != builtChunks.end()){
+			renderChunk(cc);
+			visibleChunks++;
+			visibleFaces += builtIt->second.numFaces;
+		}
+	}
+
 	for (auto renderIt = renderChunks[renderChunksPage].begin(); renderIt != renderChunks[renderChunksPage].end(); ++renderIt) {
 		vec3i64 cc = renderIt->second;
 		auto builtIt = builtChunks.find(cc);
 		if (builtIt != builtChunks.end()
-				&& (cc - player.getChunkPos()).norm() <= renderDistance
+				&& (cc - pc).norm() >= 2
+				&& (cc - pc).norm() <= renderDistance
 				&& inFrustum(cc, player.getPos(), lookDir)){
 			renderChunk(cc);
 			visibleChunks++;
