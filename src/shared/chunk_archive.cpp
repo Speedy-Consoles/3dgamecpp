@@ -441,12 +441,12 @@ int ArchiveFile::encodeChunk_RLE(const Chunk &chunk, uint8 *buffer, size_t size)
 			cur_run_length++;
 			continue;
 		}
-		if (finishRun() != 0) return -1;
+		if (finishRun() != 0) return head - buffer;
 		cur_run_type = next_block;
 		cur_run_length = 1;
 	}
 
-	if (finishRun() != 0) return -1;
+	if (finishRun() != 0) return head - buffer;
 	return head - buffer;
 }
 
