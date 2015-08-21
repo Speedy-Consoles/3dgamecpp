@@ -21,7 +21,9 @@ public:
 
 	bool hover() const { return _hover; }
 
-	const std::list<Widget *> &children() const { return _children; };
+	void move(float x, float y) { _x = x; _y = y; }
+
+	const std::list<Widget *> &children() const { return _children; }
 
 	void add(Widget *widget);
 
