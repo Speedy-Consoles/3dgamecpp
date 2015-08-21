@@ -151,11 +151,11 @@ bool vec3i64CompFunc(vec3i64 v1, vec3i64 v2) {
 void initUtil() {
 	int range = MAX_RENDER_DISTANCE;
 	int length = range * 2 + 1;
-	vec3i8 strictOrder[length * length * length];
+	std::vector<vec3i8> strictOrder;
+	strictOrder.resize(length * length * length);
 	std::unordered_set<vec3i64, size_t(*)(vec3i64)> inserted(0, vec3i64HashFunc);
 
-	int i = 0;
-	for (int z = -range; z <= range; z++) {
+	for (int i = 0, z = -range; z <= range; z++) {
 		for (int y = -range; y <= range; y++) {
 			for (int x = -range; x <= range; x++) {
 				strictOrder[i++] = vec3i8(x, y, z);
@@ -166,11 +166,11 @@ void initUtil() {
 	auto comp = [](vec3i8 v1, vec3i8 v2) {
 		return v1.norm2() < v2.norm2();
 	};
-	std::sort(strictOrder, strictOrder + length * length * length, comp);
+	std::sort(strictOrder.begin(), strictOrder.end(), comp);
 
 	LOADING_ORDER.reserve(length * length * length);
 	int bubbleRadius = 6;
-	for (int i = 0; i < length * length * length; i++) {
+	for (int k = 0, i = 0; i < length * length * length; i++) {
 		if (inserted.find(strictOrder[i].cast<int64>()) != inserted.end())
 			continue;
 		for (int j = 0; j < length * length * length; j++) {
@@ -181,7 +181,7 @@ void initUtil() {
 				continue;
 			if (inserted.find(newVec.cast<int64>()) != inserted.end())
 				continue;
-			LOADING_ORDER.push_back(newVec);
+			LOADING_ORDER[k++] = newVec;
 			inserted.insert(newVec.cast<int64>());
 		}
 	}
