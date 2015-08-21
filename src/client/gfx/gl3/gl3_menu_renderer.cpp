@@ -118,8 +118,8 @@ void GL3MenuRendererImpl::renderWidget(const Widget *widget) {
 		renderLabel(label);
 	}
 
-	for (const Widget *widget : widget->children()) {
-		renderWidget(widget);
+	for (const Widget *child : widget->children()) {
+		renderWidget(child);
 	}
 }
 
