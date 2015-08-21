@@ -5,9 +5,12 @@
 #include <unordered_set>
 
 #include "engine/math.hpp"
+#include "engine/logging.hpp"
 #include "game/chunk.hpp"
 
 #include "constants.hpp"
+
+static logging::Logger logger("util");
 
 const vec3i8 DIRS[6] = {
 	{ 1, 0, 0 }, { 0, 1, 0 }, { 0, 0, 1 },
@@ -149,6 +152,7 @@ bool vec3i64CompFunc(vec3i64 v1, vec3i64 v2) {
 }
 
 void initUtil() {
+	LOG_INFO(logger) << "Initializing loading order";
 	int range = MAX_RENDER_DISTANCE;
 	int length = range * 2 + 1;
 	std::vector<vec3i8> strictOrder;
