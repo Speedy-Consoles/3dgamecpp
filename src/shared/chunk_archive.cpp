@@ -294,6 +294,8 @@ bool ArchiveFile::loadChunk(Chunk &chunk) {
 		LOG_ERROR(logger) << "Bad in-stream";
 		return false;
 	}
+	
+	chunk.setRevision(dir_entry.revision);
 
 	chunk.finishInitialization();
 
@@ -313,6 +315,8 @@ void ArchiveFile::storeChunk(const Chunk &chunk) {
 	DirectoryEntry &dir_entry = _dir[id];
 
 	const size_t chunk_size = Chunk::WIDTH * Chunk::WIDTH * Chunk::WIDTH;
+
+	dir_entry.revision = chunk.getRevision();
 
 	if (chunk.getAirBlocks() == chunk_size) {
 		dir_entry.offset = 0;
