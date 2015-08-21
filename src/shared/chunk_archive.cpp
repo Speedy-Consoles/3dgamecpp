@@ -13,7 +13,7 @@ using namespace std;
 
 static logging::Logger logger("io");
 
-static const uint8 MAGIC[4] = {89, -105, 34, -33};
+static const uint8 MAGIC[4] = { 0x59, 0x97, 0x22, 0xDF };
 
 static const int32 ENDIANESS_BYTES = 0x01020304;
 static const int32 ENDIANESS_BYTES_FLIPPED = 0x04030201;
@@ -187,8 +187,17 @@ void ArchiveFile::loadHeader() {
 	}
 
 	if (memcmp(_header.magic, MAGIC, sizeof(MAGIC)) != 0) {
-		LOG_ERROR(logger) << "Archive file '" << _filename << "' had wrong magic ("
-				<< std::hex << _header.magic << " instead of " << std::hex << MAGIC;
+		LOG_ERROR(logger) << "Archive file '" << _filename << "' had wrong magic (0x"
+				<< std::hex << std::uppercase << (uint) _header.magic[0]
+				<< (uint) _header.magic[1]
+				<< (uint) _header.magic[2]
+				<< (uint) _header.magic[3]
+				<< " instead of 0x"
+				<< std::hex << std::uppercase << (uint) MAGIC[0]
+				<< (uint) MAGIC[1]
+				<< (uint) MAGIC[2]
+				<< (uint) MAGIC[3]
+				<< ")";
 		_good = false;
 		return;
 	}
@@ -324,7 +333,7 @@ void ArchiveFile::storeChunk(const Chunk &chunk) {
 		dir_entry.flags = LAYOUT_AIR;
 	} else {
 		uint8 *const buffer = new uint8[chunk_size];
-		uint bytes_written;
+		int bytes_written;
 
 		// try RLE encoding
 		bytes_written = encodeChunk_RLE(chunk, buffer, chunk_size);
@@ -335,7 +344,7 @@ void ArchiveFile::storeChunk(const Chunk &chunk) {
 		dir_entry.flags = LAYOUT_RLE;
 
 		// use plain encoding if we didn't compress the chunk enough
-		if (bytes_written / _header.heap_block_size >= chunk_size / _header.heap_block_size) {
+		if ((int) bytes_written / _header.heap_block_size >= chunk_size / _header.heap_block_size) {
 			bytes_written = encodeChunk_PLAIN(chunk, buffer, chunk_size);
 			if (bytes_written < 0) {
 				LOG_ERROR(logger) << "Chunk (" << cc << ") could not be written";
