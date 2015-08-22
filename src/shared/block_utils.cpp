@@ -174,7 +174,7 @@ void initUtil() {
 
 	LOADING_ORDER.reserve(length * length * length);
 	int bubbleRadius = 6;
-	for (int k = 0, i = 0; i < length * length * length; i++) {
+	for (int i = 0; i < length * length * length; i++) {
 		if (inserted.find(strictOrder[i].cast<int64>()) != inserted.end())
 			continue;
 		for (int j = 0; j < length * length * length; j++) {
@@ -185,7 +185,7 @@ void initUtil() {
 				continue;
 			if (inserted.find(newVec.cast<int64>()) != inserted.end())
 				continue;
-			LOADING_ORDER[k++] = newVec;
+			LOADING_ORDER.push_back(newVec);
 			inserted.insert(newVec.cast<int64>());
 		}
 	}
