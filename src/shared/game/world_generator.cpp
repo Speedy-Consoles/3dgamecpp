@@ -41,7 +41,6 @@ void WorldGenerator::generateChunk(Chunk &chunk) {
 			bool solid = false;
 			int realDepth = 0;
 			for (int iz = Chunk::WIDTH + 4; iz >= 0; iz--) {
-				int index = Chunk::getBlockIndex(vec3ui8(ix, iy, iz));
 				int64 z = iz + cc[2] * Chunk::WIDTH;
 				double depth = h - z;
 				/*if (perlin.octavePerlin((double)x/400, (double)y/400, (double)z/400, 4, 0.5) > 0.5)
@@ -70,15 +69,16 @@ void WorldGenerator::generateChunk(Chunk &chunk) {
 				else
 					realDepth = 0;
 
+				vec3ui8 icc(ix, iy, iz);
 				if (iz < (int) Chunk::WIDTH) {
 					if (realDepth == 1)
-						chunk.initBlock(index, 2);
+						chunk.initBlock(icc, 2);
 					else if(realDepth >= 5)
-						chunk.initBlock(index, 3);
+						chunk.initBlock(icc, 3);
 					else if(solid)
-						chunk.initBlock(index, 1);
+						chunk.initBlock(icc, 1);
 					else
-						chunk.initBlock(index, 0);
+						chunk.initBlock(icc, 0);
 				}
 			}
 		}

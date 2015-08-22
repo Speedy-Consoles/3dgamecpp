@@ -37,8 +37,10 @@ void initChunk(Chunk &chunk, Func func) {
 	for (size_t z = 0; z < Chunk::WIDTH; ++z) {
 		for (size_t y = 0; y < Chunk::WIDTH; ++y) {
 			for (size_t x = 0; x < Chunk::WIDTH; ++x) {
-				size_t index = x + Chunk::WIDTH * (y + Chunk::WIDTH * z);
-				chunk.initBlock(index, func(x, y, z, index));
+				chunk.initBlock(
+					vec3ui8(x, y, z),
+					func(x, y, z, Chunk::getBlockIndex(vec3ui8(x, y, z)))
+				);
 			}
 		}
 	}

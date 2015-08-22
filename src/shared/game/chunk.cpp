@@ -1,36 +1,56 @@
 #include "chunk.hpp"
 
+#include "shared/engine/logging.hpp"
 #include "shared/block_utils.hpp"
 
-Chunk::Chunk(bool visual) : visual(visual) {
-	// nothing
+static logging::Logger logger("chunk");
+
+Chunk::Chunk(int flags) {
+	this->flags = flags & VISUAL;
+}
+
+void Chunk::initCC(vec3i64 chunkCoords) {
+	this->cc = chunkCoords;
+	flags |= COORDS_INITIALIZED;
+}
+
+void Chunk::initNumAirBlocks(int numAirBlocks) {
+	this->numAirBlocks = numAirBlocks;
+	flags |= NUM_AIR_BLOCKS_INITIALIZED;
+}
+
+void Chunk::initPassThroughs(uint16 passThroughs) {
+	this->passThroughs = passThroughs;
+	flags |= PASSTHROUGHS_INITIALIZED;
+}
+
+void Chunk::initBlock(vec3ui8 intraChunkCoords, uint8 type) {
+	blocks[getBlockIndex(intraChunkCoords)] = type;
 }
 
 void Chunk::initBlock(size_t index, uint8 type) {
 	blocks[index] = type;
 }
 
-void Chunk::initPassThroughs(uint16 passThroughs) {
-	this->passThroughs = passThroughs;
-	passThroughsInitialized = true;
-}
-
 void Chunk::finishInitialization() {
-	for (size_t i = 0; i < WIDTH * WIDTH * WIDTH; i++) {
-		if (blocks[i] == 0)
-			numAirBlocks++;
+	if (!(flags & COORDS_INITIALIZED))
+		LOG_ERROR(logger) << "Chunk coordinates not initialized";
+	if (!(flags & NUM_AIR_BLOCKS_INITIALIZED)) {
+		for (size_t i = 0; i < WIDTH * WIDTH * WIDTH; i++) {
+			if (blocks[i] == 0)
+				numAirBlocks++;
+		}
 	}
 
-	if (visual && !passThroughsInitialized) {
+	if (!(flags & (VISUAL | PASSTHROUGHS_INITIALIZED))) {
 		makePassThroughs();
-		passThroughsInitialized = true;
+		flags |= PASSTHROUGHS_INITIALIZED;
 	}
-	initialized = true;
+	flags |= INITIALIZED;
 }
 
 void Chunk::reset() {
-	initialized = false;
-	passThroughsInitialized = false;
+	flags = flags & VISUAL;
 	numAirBlocks = 0;
 	passThroughs = 0;
 	revision = 0;
@@ -46,7 +66,8 @@ void Chunk::setBlock(size_t index, uint8 type) {
 	else
 		numAirBlocks--;
 	revision++;
-	makePassThroughs();
+	if (flags & VISUAL)
+		makePassThroughs();
 }
 
 uint8 Chunk::getBlock(vec3ui8 icc) const {
@@ -57,7 +78,7 @@ size_t Chunk::getBlockIndex(vec3ui8 icc) {
 	return (icc[2] * WIDTH + icc[1]) * WIDTH + icc[0];
 }
 
-void Chunk::makePassThroughs() const {
+void Chunk::makePassThroughs() {
 	const uint size = WIDTH * WIDTH * WIDTH;
 	if (numAirBlocks > size - WIDTH * WIDTH) {
 		passThroughs = 0x7FFF;

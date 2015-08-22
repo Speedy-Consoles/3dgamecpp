@@ -284,8 +284,8 @@ bool ArchiveFile::loadChunk(Chunk &chunk) {
 	if (dir_entry.size == 0 && dir_entry.flags == 0) {
 		return false;
 	} else if (dir_entry.flags == LAYOUT_AIR) {
-		for (uint i = 0; i < Chunk::WIDTH * Chunk::WIDTH * Chunk::WIDTH; ++i)
-			chunk.initBlock(i, 0);
+		uint8 *blocks = chunk.getBlocksForInit();
+		memset(chunk.getBlocksForInit(), 0, Chunk::SIZE * sizeof(uint8));
 	} else {
 		_file.seekg(getChunkHeapStart() + dir_entry.offset * _header.heap_block_size);
 
@@ -386,9 +386,7 @@ void ArchiveFile::storeChunk(const Chunk &chunk) {
 
 void ArchiveFile::decodeChunk_RLE(Chunk &chunk) {
 	size_t index = 0;
-	const size_t chunk_size = Chunk::WIDTH * Chunk::WIDTH * Chunk::WIDTH;
-
-	while (index < chunk_size) {
+	while (index < Chunk::SIZE) {
 		uint8 next_block;
 		_file.read((char *) &next_block, sizeof (uint8));
 
@@ -397,7 +395,7 @@ void ArchiveFile::decodeChunk_RLE(Chunk &chunk) {
 			_file.read((char *) &run_length, sizeof (uint8));
 			_file.read((char *) &block_type, sizeof (uint8));
 			for (size_t i = 0; i < run_length; ++i) {
-				if (index >= chunk_size) {
+				if (index >= Chunk::SIZE) {
 					LOG_ERROR(logger) << "Block data exceeded Chunk size";
 					break;
 				}
@@ -451,8 +449,7 @@ int ArchiveFile::encodeChunk_RLE(const Chunk &chunk, uint8 *buffer, size_t size)
 }
 
 void ArchiveFile::decodeChunk_PLAIN(Chunk &chunk) {
-	const size_t chunk_size = Chunk::WIDTH * Chunk::WIDTH * Chunk::WIDTH;
-	for (size_t i = 0; i < chunk_size; ++i) {
+	for (size_t i = 0; i < Chunk::SIZE; ++i) {
 		uint8 next_block;
 		_file.read((char *) &next_block, sizeof (uint8));
 		chunk.initBlock(i, next_block);
