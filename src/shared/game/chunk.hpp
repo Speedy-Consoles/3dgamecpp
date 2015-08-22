@@ -12,8 +12,9 @@ private:
 	bool visual = false;
 
 	vec3i64 cc;
-	uint airBlocks = 0;
+	uint numAirBlocks = 0;
 	uint32 revision = 0;
+	bool passThroughsInitialized = false;
 	bool initialized = false;
 
 	uint8 blocks[WIDTH * WIDTH * WIDTH];
@@ -23,19 +24,22 @@ private:
 public:
 	Chunk(bool visual);
 
-	void setCC(vec3i64 cc) { this->cc = cc; }
-	void setRevision(uint32 revision) { this->revision = revision; }
+	void initCC(vec3i64 cc) { this->cc = cc; }
+	void initRevision(uint32 revision) { this->revision = revision; }
 	void initBlock(size_t index, uint8 type);
+	void initPassThroughs(uint16 passThroughs);
+	uint8 *getBlocksForInit() { return blocks; }
 	void finishInitialization();
 	void reset();
-	vec3i64 getCC() const { return cc; }
+
 	void setBlock(size_t index, uint8 type);
 	uint8 getBlock(vec3ui8 icc) const;
 
-	const uint8 *getBlocks() const { return blocks; }
-	uint16 getPassThroughs() const { return passThroughs; }
-	uint getAirBlocks() const { return airBlocks; }
+	vec3i64 getCC() const { return cc; }
 	uint32 getRevision() const {return revision; }
+	uint16 getPassThroughs() const { return passThroughs; }
+	uint getNumAirBlocks() const { return numAirBlocks; }
+	const uint8 *getBlocks() const { return blocks; }
 	bool isInitialized() const { return initialized; }
 
 /*

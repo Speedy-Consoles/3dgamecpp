@@ -34,7 +34,7 @@ void ChunkManager::tick() {
 	while (!requestedQueue.empty() && !unusedChunks.empty()) {
 		vec3i64 cc = requestedQueue.front();
 		Chunk *chunk = unusedChunks.top();
-		chunk->setCC(cc);
+		chunk->initCC(cc);
 		if (!chunk)
 			LOG_ERROR(logger) << "Chunk allocation failed";
 		ArchiveOperation op = {chunk, LOAD};

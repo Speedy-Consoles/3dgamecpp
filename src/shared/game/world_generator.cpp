@@ -8,7 +8,7 @@ WorldGenerator::WorldGenerator(uint64 seed) : perlin(seed) {
 }
 
 void WorldGenerator::generateChunk(vec3i64 cc, Chunk &chunk) {
-	chunk.setCC(cc);
+	chunk.initCC(cc);
 	generateChunk(chunk);
 }
 

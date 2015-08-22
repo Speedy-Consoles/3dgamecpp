@@ -28,7 +28,7 @@ float getRelativeChunkDifference(const Chunk &lhs, const Chunk &rhs) {
 void store_and_load(const Chunk &supposed, Chunk &actual) {
 	ChunkArchive archive("./test/temp/");
 	archive.storeChunk(supposed);
-	actual.setCC(supposed.getCC());
+	actual.initCC(supposed.getCC());
 	archive.loadChunk(actual);
 }
 
@@ -46,7 +46,7 @@ void initChunk(Chunk &chunk, Func func) {
 
 TEST(ChunkArchiveTest, AirChunk) {
 	Chunk supposed(false);
-	supposed.setCC({ 0, 0, 0 });
+	supposed.initCC({ 0, 0, 0 });
 	Chunk actual(false);
 
 	initChunk(supposed, [](size_t x, size_t y, size_t z, size_t index) {
@@ -58,7 +58,7 @@ TEST(ChunkArchiveTest, AirChunk) {
 
 TEST(ChunkArchiveTest, UncompressibleChunk) {
 	Chunk supposed(false);
-	supposed.setCC({ 0, 0, 0 });
+	supposed.initCC({ 0, 0, 0 });
 	Chunk actual(false);
 
 	initChunk(supposed, [](size_t x, size_t y, size_t z, size_t index) {
@@ -72,7 +72,7 @@ TEST(ChunkArchiveTest, UncompressibleChunk) {
 
 TEST(ChunkArchiveTest, RandomChunk) {
 	Chunk supposed(false);
-	supposed.setCC({ 0, 0, 0 });
+	supposed.initCC({ 0, 0, 0 });
 	Chunk actual(false);
 
 	std::minstd_rand rng;
@@ -90,7 +90,7 @@ TEST(ChunkArchiveTest, RandomChunk) {
 
 TEST(ChunkArchiveTest, FarFromSpawnChunk) {
 	Chunk supposed(false);
-	supposed.setCC({ 9999999, 9999999, 0 });
+	supposed.initCC({ 9999999, 9999999, 0 });
 	Chunk actual(false);
 
 	std::minstd_rand rng;
@@ -108,7 +108,7 @@ TEST(ChunkArchiveTest, FarFromSpawnChunk) {
 
 TEST(ChunkArchiveTest, RegionWrapAround) {
 	Chunk supposed(false);
-	supposed.setCC({ 0, 0, 0 });
+	supposed.initCC({ 0, 0, 0 });
 	Chunk actual(false);
 
 	std::minstd_rand rng;
@@ -123,13 +123,13 @@ TEST(ChunkArchiveTest, RegionWrapAround) {
 	archive.storeChunk(supposed);
 
 	Chunk other(false);
-	other.setCC({ 16, 16, 16 });
+	other.initCC({ 16, 16, 16 });
 	initChunk(other, [&rng, &distr](size_t x, size_t y, size_t z, size_t index) {
 		return distr(rng);
 	});
 	archive.storeChunk(other);
 	
-	actual.setCC(supposed.getCC());
+	actual.initCC(supposed.getCC());
 	archive.loadChunk(actual);
 
 	EXPECT_EQ(0, getRelativeChunkDifference(supposed, actual)) << "Chunks from different regions overlap";
@@ -139,9 +139,9 @@ TEST(ChunkArchiveTest, SameRegion) {
 	Chunk c1(false);
 	Chunk c2(false);
 	Chunk c3(false);
-	c1.setCC({ 0, 0, 0 });
-	c2.setCC({ 1, 0, 0 });
-	c3.setCC({ 0, 1, 0 });
+	c1.initCC({ 0, 0, 0 });
+	c2.initCC({ 1, 0, 0 });
+	c3.initCC({ 0, 1, 0 });
 	Chunk actual(false);
 
 	std::minstd_rand rng;
@@ -157,15 +157,15 @@ TEST(ChunkArchiveTest, SameRegion) {
 	archive.storeChunk(c2);
 	archive.storeChunk(c3);
 	
-	actual.setCC(c1.getCC());
+	actual.initCC(c1.getCC());
 	archive.loadChunk(actual);
 	ASSERT_EQ(0, getRelativeChunkDifference(c1, actual)) << "Chunks from same region collide";
 
-	actual.setCC(c2.getCC());
+	actual.initCC(c2.getCC());
 	archive.loadChunk(actual);
 	ASSERT_EQ(0, getRelativeChunkDifference(c2, actual)) << "Chunks from same region collide";
 
-	actual.setCC(c3.getCC());
+	actual.initCC(c3.getCC());
 	archive.loadChunk(actual);
 	ASSERT_EQ(0, getRelativeChunkDifference(c3, actual)) << "Chunks from same region collide";
 }

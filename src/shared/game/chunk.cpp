@@ -6,9 +6,60 @@ Chunk::Chunk(bool visual) : visual(visual) {
 	// nothing
 }
 
+void Chunk::initBlock(size_t index, uint8 type) {
+	blocks[index] = type;
+}
+
+void Chunk::initPassThroughs(uint16 passThroughs) {
+	this->passThroughs = passThroughs;
+	passThroughsInitialized = true;
+}
+
+void Chunk::finishInitialization() {
+	for (size_t i = 0; i < WIDTH * WIDTH * WIDTH; i++) {
+		if (blocks[i] == 0)
+			numAirBlocks++;
+	}
+
+	if (visual && !passThroughsInitialized) {
+		makePassThroughs();
+		passThroughsInitialized = true;
+	}
+	initialized = true;
+}
+
+void Chunk::reset() {
+	initialized = false;
+	passThroughsInitialized = false;
+	numAirBlocks = 0;
+	passThroughs = 0;
+	revision = 0;
+}
+
+void Chunk::setBlock(size_t index, uint8 type) {
+	if (blocks[index] == type)
+		return;
+
+	blocks[index] = type;
+	if (type == 0)
+		numAirBlocks++;
+	else
+		numAirBlocks--;
+	revision++;
+	makePassThroughs();
+}
+
+uint8 Chunk::getBlock(vec3ui8 icc) const {
+	return blocks[getBlockIndex(icc)];
+}
+
+size_t Chunk::getBlockIndex(vec3ui8 icc) {
+	return (icc[2] * WIDTH + icc[1]) * WIDTH + icc[0];
+}
+
 void Chunk::makePassThroughs() const {
 	const uint size = WIDTH * WIDTH * WIDTH;
-	if (airBlocks > size - WIDTH * WIDTH) {
+	if (numAirBlocks > size - WIDTH * WIDTH) {
 		passThroughs = 0x7FFF;
 		return;
 	}
@@ -63,51 +114,11 @@ void Chunk::makePassThroughs() const {
 						shift += 5 - d1;
 				}
 
-				if (foundAirBlocks >= airBlocks)
+				if (foundAirBlocks >= numAirBlocks)
 					return;
 
 				index++;
 			}
 		}
 	}
-}
-
-void Chunk::initBlock(size_t index, uint8 type) {
-	blocks[index] = type;
-	if (type == 0)
-		airBlocks++;
-}
-
-void Chunk::finishInitialization() {
-	if (visual)
-		makePassThroughs();
-	initialized = true;
-}
-
-void Chunk::reset() {
-	initialized = false;
-	airBlocks = 0;
-	passThroughs = 0;
-	revision = 0;
-}
-
-void Chunk::setBlock(size_t index, uint8 type) {
-	if (blocks[index] == type)
-		return;
-
-	blocks[index] = type;
-	if (type == 0)
-		airBlocks++;
-	else
-		airBlocks--;
-	revision++;
-	makePassThroughs();
-}
-
-uint8 Chunk::getBlock(vec3ui8 icc) const {
-	return blocks[getBlockIndex(icc)];
-}
-
-size_t Chunk::getBlockIndex(vec3ui8 icc) {
-	return (icc[2] * WIDTH + icc[1]) * WIDTH + icc[0];
 }

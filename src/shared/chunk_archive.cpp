@@ -76,7 +76,7 @@ public:
 
 	bool hasChunk(vec3i64);
 
-	bool loadChunk(vec3i64 cc, Chunk &chunk) { chunk.setCC(cc); return loadChunk(chunk); }
+	bool loadChunk(vec3i64 cc, Chunk &chunk) { chunk.initCC(cc); return loadChunk(chunk); }
 	
 	bool loadChunk(Chunk &);
 	void storeChunk(const Chunk &);
@@ -304,7 +304,7 @@ bool ArchiveFile::loadChunk(Chunk &chunk) {
 		return false;
 	}
 	
-	chunk.setRevision(dir_entry.revision);
+	chunk.initRevision(dir_entry.revision);
 
 	chunk.finishInitialization();
 
@@ -327,7 +327,7 @@ void ArchiveFile::storeChunk(const Chunk &chunk) {
 
 	dir_entry.revision = chunk.getRevision();
 
-	if (chunk.getAirBlocks() == chunk_size) {
+	if (chunk.getNumAirBlocks() == chunk_size) {
 		dir_entry.offset = 0;
 		dir_entry.size = 0;
 		dir_entry.flags = LAYOUT_AIR;
@@ -498,9 +498,9 @@ void ArchiveFile::convert() {
 			int x = i % _region_size;
 			int y = (i / _region_size) % _region_size;
 			int z = (i / _region_size / _region_size) % _region_size;
-			chunk_data[i].setCC(vec3i64(x, y, z));
+			chunk_data[i].initCC(vec3i64(x, y, z));
 			decodeChunk_RLE(chunk_data[i]);
-			chunk_data[i].setRevision(1);
+			chunk_data[i].initRevision(1);
 		}
 	}
 
