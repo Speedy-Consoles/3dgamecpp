@@ -1,5 +1,7 @@
 #include "gl3_target_renderer.hpp"
 
+#define GLM_FORCE_RADIANS
+
 #include <glm/gtc/matrix_transform.hpp>
 
 #include "shared/engine/logging.hpp"

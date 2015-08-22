@@ -41,6 +41,8 @@
 
 #include "gl3_font.hpp"
 
+#define GLM_FORCE_RADIANS
+
 #include <fstream>
 
 #include <SDL2/SDL_image.h>

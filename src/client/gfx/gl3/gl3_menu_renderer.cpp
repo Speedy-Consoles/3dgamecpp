@@ -1,5 +1,7 @@
 #include "gl3_menu_renderer.hpp"
 
+#define GLM_FORCE_RADIANS
+
 #include <glm/mat4x4.hpp>
 #include <glm/vec3.hpp>
 #include <glm/gtc/matrix_transform.hpp>

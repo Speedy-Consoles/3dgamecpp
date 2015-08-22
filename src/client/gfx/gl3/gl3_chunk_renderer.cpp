@@ -1,5 +1,7 @@
 #include "gl3_chunk_renderer.hpp"
 
+#define GLM_FORCE_RADIANS
+
 #include <memory>
 
 #include <SDL2/SDL_image.h>
