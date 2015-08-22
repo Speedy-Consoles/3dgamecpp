@@ -287,6 +287,8 @@ bool ArchiveFile::loadChunk(Chunk *chunk) {
 		uint8 *blocks = chunk->getBlocksForInit();
 		memset((char *)blocks, 0, Chunk::SIZE * sizeof(uint8));
 		chunk->initNumAirBlocks(Chunk::SIZE);
+		chunk->initPassThroughs(0x7FFF);
+		chunk->finishInitialization();
 		return true;
 	}
 
