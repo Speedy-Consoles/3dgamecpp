@@ -19,7 +19,7 @@ ChunkManager::ChunkManager(Client *client) :
 	archive("./region/")
 {
 	for (int i = 0; i < CHUNK_POOL_SIZE; i++) {
-		chunkPool[i] = new Chunk(true);
+		chunkPool[i] = new Chunk(Chunk::ChunkFlags::VISUAL);
 		unusedChunks.push(chunkPool[i]);
 	}
 }
@@ -94,7 +94,7 @@ void ChunkManager::doWork() {
 	if (toLoadStoreQueue.pop(op)) {
 		switch (op.type) {
 		case LOAD:
-			archive.loadChunk(*op.chunk);
+			archive.loadChunk(op.chunk);
 			break;
 		case STORE:
 			archive.storeChunk(*op.chunk);

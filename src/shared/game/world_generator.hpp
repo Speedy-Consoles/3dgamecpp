@@ -17,8 +17,7 @@ class WorldGenerator {
 public:
 	WorldGenerator(uint64 seed);
 
-	void generateChunk(vec3i64 cc, Chunk &);
-	void generateChunk(Chunk &);
+	void generateChunk(Chunk *);
 
 private:
 	Perlin perlin;

@@ -27,8 +27,7 @@ public:
 
 	bool hasChunk(vec3i64);
 
-	bool loadChunk(Chunk &);
-	bool loadChunk(vec3i64, Chunk &);
+	bool loadChunk(Chunk *);
 	void storeChunk(const Chunk &);
 
 	/// clears all file handles that were not used recently

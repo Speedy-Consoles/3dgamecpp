@@ -25,57 +25,54 @@ float getRelativeChunkDifference(const Chunk &lhs, const Chunk &rhs) {
 		return (float) failed / size;
 }
 
-void store_and_load(const Chunk &supposed, Chunk &actual) {
+void store_and_load(const Chunk &supposed, Chunk *actual) {
 	ChunkArchive archive("./test/temp/");
 	archive.storeChunk(supposed);
-	actual.initCC(supposed.getCC());
+	actual->initCC(supposed.getCC());
 	archive.loadChunk(actual);
 }
 
 template <class Func>
 void initChunk(Chunk &chunk, Func func) {
-	for (size_t z = 0; z < Chunk::WIDTH; ++z) {
+	for (size_t index = 0, z = 0; z < Chunk::WIDTH; ++z) {
 		for (size_t y = 0; y < Chunk::WIDTH; ++y) {
-			for (size_t x = 0; x < Chunk::WIDTH; ++x) {
-				chunk.initBlock(
-					vec3ui8(x, y, z),
-					func(x, y, z, Chunk::getBlockIndex(vec3ui8(x, y, z)))
-				);
+			for (size_t x = 0; x < Chunk::WIDTH; ++x, index++) {
+				chunk.initBlock(index, func(x, y, z, index));
 			}
 		}
 	}
 }
 
 TEST(ChunkArchiveTest, AirChunk) {
-	Chunk supposed(false);
+	Chunk supposed;
 	supposed.initCC({ 0, 0, 0 });
-	Chunk actual(false);
+	Chunk actual;
 
 	initChunk(supposed, [](size_t x, size_t y, size_t z, size_t index) {
 		return 0;
 	});
-	store_and_load(supposed, actual);
+	store_and_load(supposed, &actual);
 	EXPECT_EQ(0, getRelativeChunkDifference(supposed, actual)) << "Air chunk did not store and load properly";
 }
 
 TEST(ChunkArchiveTest, UncompressibleChunk) {
-	Chunk supposed(false);
+	Chunk supposed;
 	supposed.initCC({ 0, 0, 0 });
-	Chunk actual(false);
+	Chunk actual;
 
 	initChunk(supposed, [](size_t x, size_t y, size_t z, size_t index) {
 		return index % 2 ? index % 254 : 255;
 	});
 
-	ASSERT_NO_DEATH(store_and_load(supposed, actual);) << "Checkered chunk store and load crashed";
-	store_and_load(supposed, actual);
+	ASSERT_NO_DEATH(store_and_load(supposed, &actual);) << "Checkered chunk store and load crashed";
+	store_and_load(supposed, &actual);
 	EXPECT_EQ(0, getRelativeChunkDifference(supposed, actual)) << "Checkered chunk did not store and load properly";
 }
 
 TEST(ChunkArchiveTest, RandomChunk) {
-	Chunk supposed(false);
+	Chunk supposed;
 	supposed.initCC({ 0, 0, 0 });
-	Chunk actual(false);
+	Chunk actual;
 
 	std::minstd_rand rng;
 	rng.seed(1);
@@ -85,15 +82,15 @@ TEST(ChunkArchiveTest, RandomChunk) {
 		return distr(rng);
 	});
 
-	ASSERT_NO_DEATH(store_and_load(supposed, actual);) << "Random chunk store and load crashed";
-	store_and_load(supposed, actual);
+	ASSERT_NO_DEATH(store_and_load(supposed, &actual);) << "Random chunk store and load crashed";
+	store_and_load(supposed, &actual);
 	EXPECT_EQ(0, getRelativeChunkDifference(supposed, actual)) << "Random chunk did not store and load properly";
 }
 
 TEST(ChunkArchiveTest, FarFromSpawnChunk) {
-	Chunk supposed(false);
+	Chunk supposed;
 	supposed.initCC({ 9999999, 9999999, 0 });
-	Chunk actual(false);
+	Chunk actual;
 
 	std::minstd_rand rng;
 	rng.seed(1);
@@ -103,15 +100,15 @@ TEST(ChunkArchiveTest, FarFromSpawnChunk) {
 		return distr(rng);
 	});
 
-	ASSERT_NO_DEATH(store_and_load(supposed, actual);) << "Random chunk store and load crashed";
-	store_and_load(supposed, actual);
+	ASSERT_NO_DEATH(store_and_load(supposed, &actual);) << "Random chunk store and load crashed";
+	store_and_load(supposed, &actual);
 	EXPECT_EQ(0, getRelativeChunkDifference(supposed, actual)) << "Far from spawn chunk did not store and load properly";
 }
 
 TEST(ChunkArchiveTest, RegionWrapAround) {
-	Chunk supposed(false);
+	Chunk supposed;
 	supposed.initCC({ 0, 0, 0 });
-	Chunk actual(false);
+	Chunk actual;
 
 	std::minstd_rand rng;
 	rng.seed(1);
@@ -124,7 +121,7 @@ TEST(ChunkArchiveTest, RegionWrapAround) {
 	ChunkArchive archive("./test/temp/");
 	archive.storeChunk(supposed);
 
-	Chunk other(false);
+	Chunk other;
 	other.initCC({ 16, 16, 16 });
 	initChunk(other, [&rng, &distr](size_t x, size_t y, size_t z, size_t index) {
 		return distr(rng);
@@ -132,19 +129,19 @@ TEST(ChunkArchiveTest, RegionWrapAround) {
 	archive.storeChunk(other);
 	
 	actual.initCC(supposed.getCC());
-	archive.loadChunk(actual);
+	archive.loadChunk(&actual);
 
 	EXPECT_EQ(0, getRelativeChunkDifference(supposed, actual)) << "Chunks from different regions overlap";
 }
 
 TEST(ChunkArchiveTest, SameRegion) {
-	Chunk c1(false);
-	Chunk c2(false);
-	Chunk c3(false);
+	Chunk c1;
+	Chunk c2;
+	Chunk c3;
 	c1.initCC({ 0, 0, 0 });
 	c2.initCC({ 1, 0, 0 });
 	c3.initCC({ 0, 1, 0 });
-	Chunk actual(false);
+	Chunk actual;
 
 	std::minstd_rand rng;
 	rng.seed(1);
@@ -160,14 +157,14 @@ TEST(ChunkArchiveTest, SameRegion) {
 	archive.storeChunk(c3);
 	
 	actual.initCC(c1.getCC());
-	archive.loadChunk(actual);
+	archive.loadChunk(&actual);
 	ASSERT_EQ(0, getRelativeChunkDifference(c1, actual)) << "Chunks from same region collide";
 
 	actual.initCC(c2.getCC());
-	archive.loadChunk(actual);
+	archive.loadChunk(&actual);
 	ASSERT_EQ(0, getRelativeChunkDifference(c2, actual)) << "Chunks from same region collide";
 
 	actual.initCC(c3.getCC());
-	archive.loadChunk(actual);
+	archive.loadChunk(&actual);
 	ASSERT_EQ(0, getRelativeChunkDifference(c3, actual)) << "Chunks from same region collide";
 }

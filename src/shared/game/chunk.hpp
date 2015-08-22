@@ -47,6 +47,8 @@ public:
 	uint16 getPassThroughs() const { return passThroughs; }
 	uint getNumAirBlocks() const { return numAirBlocks; }
 	const uint8 *getBlocks() const { return blocks; }
+	bool isEmpty() const { return numAirBlocks == SIZE; }
+	bool isVisual() const { return (flags & VISUAL) != 0; }
 	bool isInitialized() const { return flags & INITIALIZED; }
 
 /*
