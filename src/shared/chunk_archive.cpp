@@ -339,56 +339,56 @@ void ArchiveFile::storeChunk(const Chunk &chunk) {
 		dir_entry.size = 0;
 		dir_entry.visibility = 0;
 		dir_entry.flags = LAYOUT_EMPTY;
-		return;
-	}
+	} else {
 
-	uint8 *const buffer = new uint8[Chunk::SIZE];
-	int bytes_written;
+		uint8 *const buffer = new uint8[Chunk::SIZE];
+		int bytes_written;
 
-	// try RLE encoding
-	bytes_written = encodeBlocks_RLE(chunk.getBlocks(), buffer, Chunk::SIZE);
-	if (bytes_written < 0) {
-		LOG_ERROR(logger) << "Chunk (" << cc << ") could not be written";
-		return;
-	}
-	dir_entry.flags = LAYOUT_RLE;
-
-	// use plain encoding if we didn't compress the chunk enough
-	if ((uint) bytes_written / _header.heap_block_size >= Chunk::SIZE / _header.heap_block_size) {
-		bytes_written = encodeBlocks_PLAIN(chunk.getBlocks(), buffer, Chunk::SIZE);
+		// try RLE encoding
+		bytes_written = encodeBlocks_RLE(chunk.getBlocks(), buffer, Chunk::SIZE);
 		if (bytes_written < 0) {
 			LOG_ERROR(logger) << "Chunk (" << cc << ") could not be written";
 			return;
 		}
-		dir_entry.flags = LAYOUT_PLAIN;
-	}
+		dir_entry.flags = LAYOUT_RLE;
 
-	uint8 num_blocks = (bytes_written - 1) / _header.heap_block_size + 1;
-	if (num_blocks > dir_entry.size) {
-		//LOG_DEBUG(logger) << "Resized Chunk (" << cc << ")";
-		_file.seekp(0, ios_base::end);
-		size_t file_end = (size_t) _file.tellp();
-		size_t chunk_heap_size = file_end - getChunkHeapStart();
-		size_t start;
-		if (chunk_heap_size > 0)
-			start = (chunk_heap_size - 1) / _header.heap_block_size + 1;
-		else
-			start = 0;
-		dir_entry.offset = (uint32) start;
-		dir_entry.size = num_blocks;
-	}
+		// use plain encoding if we didn't compress the chunk enough
+		if ((uint) bytes_written / _header.heap_block_size >= Chunk::SIZE / _header.heap_block_size) {
+			bytes_written = encodeBlocks_PLAIN(chunk.getBlocks(), buffer, Chunk::SIZE);
+			if (bytes_written < 0) {
+				LOG_ERROR(logger) << "Chunk (" << cc << ") could not be written";
+				return;
+			}
+			dir_entry.flags = LAYOUT_PLAIN;
+		}
 
-	_file.seekp(getChunkHeapStart() + dir_entry.offset * _header.heap_block_size);
-	_file.write((char *) buffer, bytes_written);
-	_file.flush();
+		uint8 num_blocks = (bytes_written - 1) / _header.heap_block_size + 1;
+		if (num_blocks > dir_entry.size) {
+			//LOG_DEBUG(logger) << "Resized Chunk (" << cc << ")";
+			_file.seekp(0, ios_base::end);
+			size_t file_end = (size_t) _file.tellp();
+			size_t chunk_heap_size = file_end - getChunkHeapStart();
+			size_t start;
+			if (chunk_heap_size > 0)
+				start = (chunk_heap_size - 1) / _header.heap_block_size + 1;
+			else
+				start = 0;
+			dir_entry.offset = (uint32) start;
+			dir_entry.size = num_blocks;
+		}
 
-	delete[] buffer;
+		_file.seekp(getChunkHeapStart() + dir_entry.offset * _header.heap_block_size);
+		_file.write((char *) buffer, bytes_written);
+		_file.flush();
 
-	if (chunk.isVisual()) {
-		dir_entry.flags |= LAYOUT_VISIBILITY;
-		dir_entry.visibility = chunk.getPassThroughs();
-	} else {
-		dir_entry.visibility = 0;
+		delete[] buffer;
+
+		if (chunk.isVisual()) {
+			dir_entry.flags |= LAYOUT_VISIBILITY;
+			dir_entry.visibility = chunk.getPassThroughs();
+		} else {
+			dir_entry.visibility = 0;
+		}
 	}
 
 	_file.seekp(_header.directory_offset + id * sizeof (DirectoryEntry));
