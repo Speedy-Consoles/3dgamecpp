@@ -9,7 +9,7 @@ datasrc
 SDL*
 build_windows.sh
 3dgame*.zip
-region
+saves
 *.profile
 *.log
 *.log.*

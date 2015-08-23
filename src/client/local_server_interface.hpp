@@ -1,6 +1,8 @@
 #ifndef LOCAL_SERVER_INTERFACE_HPP
 #define LOCAL_SERVER_INTERFACE_HPP
 
+#include <memory>
+
 #include "server_interface.hpp"
 
 #include "shared/game/world.hpp"
@@ -12,7 +14,7 @@ class LocalServerInterface : public ServerInterface {
 	Client *client;
 	Player *player;
 
-	WorldGenerator worldGenerator;
+	std::unique_ptr<WorldGenerator> worldGenerator;
 
 	ProducerQueue<Chunk *> loadedQueue;
 	ProducerQueue<Chunk *> toLoadQueue;

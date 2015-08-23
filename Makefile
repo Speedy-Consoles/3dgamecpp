@@ -66,7 +66,8 @@ SHARED_OBJECT_FILES = \
 	shared/block_utils.cpp.o\
 	shared/chunk_archive.cpp.o\
 	shared/chunk_manager.cpp.o\
-	shared/net.cpp.o
+	shared/net.cpp.o\
+	shared/saves.cpp.o
 
 # what programs to use
 CXX = g++

@@ -15,6 +15,7 @@ struct GraphicsConf;
 class Stopwatch;
 class BlockManager;
 class ChunkManager;
+class Save;
 
 class Client {
 public:
@@ -33,6 +34,7 @@ public:
 	uint8 getLocalClientId() const;
 	
 	const GraphicsConf &getConf() const { return *_conf.get(); }
+	Save *getSave() { return save.get(); }
 	BlockManager *getBlockManager() { return blockManager.get(); }
 	ChunkManager *getChunkManager() { return chunkManager.get(); }
 	World *getWorld() { return world.get(); }
@@ -50,6 +52,7 @@ public:
 
 private:
 	std::unique_ptr<GraphicsConf> _conf;
+	std::unique_ptr<Save> save;
 	std::unique_ptr<BlockManager> blockManager;
 	std::unique_ptr<ChunkManager> chunkManager;
 	std::unique_ptr<World> world;

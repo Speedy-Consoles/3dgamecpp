@@ -4,7 +4,7 @@
 #include <atomic>
 
 #include "shared/engine/logging.hpp"
-
+#include "shared/saves.hpp"
 #include "client/gfx/graphics.hpp"
 
 using namespace std;
@@ -13,7 +13,7 @@ static logging::Logger logger("local");
 
 LocalServerInterface::LocalServerInterface(Client *client, uint64 seed) :
 	client(client),
-	worldGenerator(seed),
+	worldGenerator(client->getSave()->getWorldGenerator()),
 	loadedQueue(1024),
 	toLoadQueue(1024)
 {
@@ -43,7 +43,7 @@ void LocalServerInterface::tick() {
 void LocalServerInterface::doWork() {
 	Chunk *chunk;
 	if (toLoadQueue.pop(chunk)) {
-		worldGenerator.generateChunk(chunk);
+		worldGenerator->generateChunk(chunk);
 		while (!loadedQueue.push(chunk)) {
 			sleepFor(millis(50));
 		}

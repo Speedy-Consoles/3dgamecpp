@@ -12,6 +12,7 @@ using namespace boost::property_tree;
 static logging::Logger logger("conf");
 
 // Default values for all customizable options
+std::string   DEFAULT_LAST_WORLD_ID   = "New World";
 RenderBackend DEFAULT_RENDER_BACKEND  = RenderBackend::OGL_2;
 bool          DEFAULT_FULLSCREEN      = false;
 vec2i         DEFAULT_WINDOWED_RES    = vec2i{1600, 900};
@@ -150,6 +151,7 @@ struct translator_between<string, TexFiltering> {
 void store(const char *filename, const GraphicsConf &conf) {
 	ptree pt;
 
+	pt.put("last_world_id", conf.last_world_id);
 	pt.put("graphics.render_backend", conf.render_backend);
 	pt.put("graphics.windowed_res.w", conf.windowed_res[0]);
 	pt.put("graphics.windowed_res.h", conf.windowed_res[1]);
@@ -175,6 +177,8 @@ void load(const char *filename, GraphicsConf &conf) {
 		LOG_WARNING(logger) << "'" << filename << "' could not be opened";
 	}
 
+	conf.last_world_id = pt.get("last_world_id",
+			DEFAULT_LAST_WORLD_ID);
 	conf.render_backend = pt.get("graphics.render_backend",
 			DEFAULT_RENDER_BACKEND);
 	conf.fullscreen = pt.get("graphics.is_fullscreen",

@@ -557,9 +557,7 @@ ChunkArchive::ChunkArchive(const char *str) :
 	using namespace boost::filesystem;
 	path p(str);
 	if (!exists(status(p))) {
-		if (!create_directories(p)) {
-			LOG_ERROR(logger) << "Could not create world directory";
-		}
+		create_directories(p);
 	} else {
 		if (!is_directory(p)) {
 			LOG_ERROR(logger) << "World path is not a directory";

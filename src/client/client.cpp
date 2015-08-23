@@ -6,6 +6,9 @@
 #include <cstdio>
 #include <cstring>
 #include <clocale>
+#include <random>
+
+#include <boost/filesystem.hpp>
 
 #include "shared/engine/logging.hpp"
 #include "shared/engine/socket.hpp"
@@ -15,6 +18,7 @@
 #include "shared/block_manager.hpp"
 #include "shared/block_utils.hpp"
 #include "shared/constants.hpp"
+#include "shared/saves.hpp"
 #include "gui/widget.hpp"
 #include "gfx/graphics.hpp"
 
@@ -62,6 +66,17 @@ Client::Client(const char *worldId, const char *serverAdress) {
 
 	_conf = std::unique_ptr<GraphicsConf>(new GraphicsConf());
 	load("graphics-default.profile", *_conf);
+
+	save = std::unique_ptr<Save>(new Save(_conf->last_world_id.c_str()));
+	boost::filesystem::path path(save->getPath());
+	if (!boost::filesystem::exists(path)) {
+		boost::filesystem::create_directories(path);
+		std::random_device rng;
+		std::uniform_int_distribution<uint64> distr;
+		uint64 seed = distr(rng);
+		save->initialize(_conf->last_world_id, seed);
+		save->store();
+	}
 
 	blockManager = std::unique_ptr<BlockManager>(new BlockManager());
 	const char *block_ids_file = "block_ids.txt";

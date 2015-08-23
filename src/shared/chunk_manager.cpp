@@ -4,6 +4,7 @@
 #include "client/client.hpp"
 #include "client/server_interface.hpp"
 #include "game/world.hpp"
+#include "saves.hpp"
 
 using namespace std;
 
@@ -16,7 +17,7 @@ ChunkManager::ChunkManager(Client *client) :
 	oldRevisions(0, vec3i64HashFunc),
 	needCounter(0, vec3i64HashFunc),
 	client(client),
-	archive("./region/")
+	archive(client->getSave()->getChunkArchive())
 {
 	for (int i = 0; i < CHUNK_POOL_SIZE; i++) {
 		chunkPool[i] = new Chunk(Chunk::ChunkFlags::VISUAL);
@@ -95,10 +96,10 @@ void ChunkManager::doWork() {
 	if (toLoadStoreQueue.pop(op)) {
 		switch (op.type) {
 		case LOAD:
-			archive.loadChunk(op.chunk);
+			archive->loadChunk(op.chunk);
 			break;
 		case STORE:
-			archive.storeChunk(*op.chunk);
+			archive->storeChunk(*op.chunk);
 			break;
 		}
 		while (!loadedStoredQueue.push(op)) {
@@ -113,7 +114,7 @@ void ChunkManager::onStop() {
 	ArchiveOperation op;
 	while (toLoadStoreQueue.pop(op)) {
 		if (op.type == STORE) {
-			archive.storeChunk(*op.chunk);
+			archive->storeChunk(*op.chunk);
 		}
 	}
 }
@@ -121,7 +122,7 @@ void ChunkManager::onStop() {
 void ChunkManager::storeChunks() {
 	wait();
 	for (auto it = chunks.begin(); it != chunks.end(); ++it) {
-		archive.storeChunk(*it->second);
+		archive->storeChunk(*it->second);
 	}
 }
 

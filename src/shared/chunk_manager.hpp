@@ -46,7 +46,7 @@ class ChunkManager : public Thread {
 
 	Client *client = nullptr;
 
-	ChunkArchive archive;
+	std::unique_ptr<ChunkArchive> archive;
 
 public:
 	ChunkManager(Client *client);

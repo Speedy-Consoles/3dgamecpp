@@ -30,6 +30,7 @@ enum class TexFiltering {
 	LINEAR,
 };
 
+extern std::string   DEFAULT_LAST_WORLD_ID;
 extern RenderBackend DEFAULT_RENDER_BACKEND;
 extern bool          DEFAULT_FULLSCREEN;
 extern vec2i         DEFAULT_WINDOWED_RES;
@@ -44,6 +45,8 @@ extern bool          DEFAULT_TEX_ATLAS;
 extern std::string   DEFAUKT_TEXTURES_FILE;
 
 struct GraphicsConf {
+	std::string last_world_id;
+
 	RenderBackend render_backend;
 	bool fullscreen;
 	vec2i windowed_res;
