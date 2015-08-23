@@ -198,7 +198,8 @@ bool loadLoadingOrder() {
 		LOG_INFO(logger) << "Could not open loading order file";
 		return false;
 	}
-
+	
+	LOADING_ORDER.resize(MAX_RENDER_CUBE_SIZE);
 	for (uint i = 0; i < MAX_RENDER_CUBE_SIZE; i++) {
 		file.read((char *)(&LOADING_ORDER[i][0]), sizeof(int8));
 		file.read((char *)(&LOADING_ORDER[i][1]), sizeof(int8));
