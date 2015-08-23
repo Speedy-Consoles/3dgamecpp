@@ -22,6 +22,8 @@ static const uint8 ESCAPE_CHAR = (uint8) (-1);
 
 static const uint HEAP_BLOCK_SIZE = 2048;
 
+static const int32 RECENT_HEADER_VERSION = 2;
+
 class ArchiveFile {
 private:
 
@@ -87,8 +89,6 @@ public:
 	void decodeBlocks_PLAIN(uint8 *blocks);
 	int encodeBlocks_PLAIN(const uint8 *blocks, uint8 *, size_t);
 
-	void convert();
-
 	int getFileSize();
 	int getUsedChunkBytes();
 	int getTotalChunkBytes();
@@ -151,12 +151,7 @@ ArchiveFile::ArchiveFile(const char *filename, uint region_size) :
 		return;
 	}
 
-	if (_header.version == 1) {
-		convert();
-		loadHeader();
-	}
-
-	if (_header.version != 2) {
+	if (_header.version != RECENT_HEADER_VERSION) {
 		LOG_ERROR(logger) << "Archive file '" << _filename << "' had unknown version ("
 				<< _header.version << ")";
 		_file.close();
@@ -235,7 +230,7 @@ void ArchiveFile::initialize() {
 	memset((char *)&_header, 0, sizeof(Header));
 	memcpy(_header.magic, MAGIC, sizeof (MAGIC));
 	_header.endianess_bytes = ENDIANESS_BYTES;
-	_header.version = 2;
+	_header.version = RECENT_HEADER_VERSION;
 	uint num_chunks = _region_size * _region_size * _region_size;
 	_header.dir_size = num_chunks;
 	_header.directory_offset = sizeof (Header);
@@ -473,49 +468,6 @@ int ArchiveFile::encodeBlocks_PLAIN(const uint8 *blocks, uint8 *buffer, size_t s
 	size_t actual_size = std::min(Chunk::SIZE * sizeof(uint8), size);
 	memcpy(buffer, blocks, actual_size);
 	return (int) actual_size;
-}
-
-void ArchiveFile::convert() {
-	LOG_INFO(logger) << "Converting ArchiveFile '" << _filename << "'...";
-
-	PACKED(
-	struct DirectoryEntry_v1 {
-		uint32 offset;
-		uint32 size;
-	});
-	
-
-	std::vector<DirectoryEntry_v1> dir;
-	dir.resize(_header.dir_size);
-	_file.seekg(_header.directory_offset);
-	_file.read((char *)(dir.data()), _header.dir_size * sizeof(DirectoryEntry_v1));
-
-	std::vector<bool> is_present;
-	is_present.resize(_header.dir_size);
-
-	std::vector<Chunk> chunk_data;
-	chunk_data.resize(_header.dir_size, Chunk());
-
-	for (uint i = 0; i < _header.dir_size; ++i) {
-		if (is_present[i] = dir[i].offset != 0 && dir[i].size != 0) {
-			chunk_data[i].initRevision(1);
-			int x = i % _region_size;
-			int y = (i / _region_size) % _region_size;
-			int z = (i / _region_size / _region_size) % _region_size;
-			chunk_data[i].initCC(vec3i64(x, y, z));
-
-			_file.seekg(dir[i].offset);
-			decodeBlocks_RLE(chunk_data[i].getBlocksForInit());
-			chunk_data[i].finishInitialization();
-		}
-	}
-
-	initialize();
-
-	for (uint i = 0; i < _header.dir_size; ++i) {
-		if (is_present[i])
-			storeChunk(chunk_data[i]);
-	}
 }
 
 int ArchiveFile::getFileSize() {
