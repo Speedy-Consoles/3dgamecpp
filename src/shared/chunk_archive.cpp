@@ -402,9 +402,7 @@ void ArchiveFile::storeChunk(const Chunk &chunk) {
 
 void ArchiveFile::decodeBlocks_RLE(uint8 *blocks) {
 	size_t index = 0;
-	const size_t chunk_size = Chunk::WIDTH * Chunk::WIDTH * Chunk::WIDTH;
-
-	while (index < chunk_size) {
+	while (index < Chunk::SIZE) {
 		uint8 next_block;
 		_file.read((char *) &next_block, sizeof (uint8));
 
@@ -413,7 +411,7 @@ void ArchiveFile::decodeBlocks_RLE(uint8 *blocks) {
 			_file.read((char *) &run_length, sizeof (uint8));
 			_file.read((char *) &block_type, sizeof (uint8));
 			for (size_t i = 0; i < run_length; ++i) {
-				if (index >= chunk_size) {
+				if (index >= Chunk::SIZE) {
 					LOG_ERROR(logger) << "Block data exceeded Chunk size";
 					break;
 				}

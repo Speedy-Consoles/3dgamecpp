@@ -11,10 +11,9 @@
 using namespace testing;
 
 float getRelativeChunkDifference(const Chunk &lhs, const Chunk &rhs) {
-	size_t size = Chunk::WIDTH * Chunk::WIDTH * Chunk::WIDTH;
 	size_t failed = 0;
 
-	for (size_t i = 0; i < size; ++i) {
+	for (size_t i = 0; i < Chunk::SIZE; ++i) {
 		if (lhs.getBlocks()[i] != rhs.getBlocks()[i])
 			++failed;
 	}
@@ -22,7 +21,7 @@ float getRelativeChunkDifference(const Chunk &lhs, const Chunk &rhs) {
 	if (failed == 0)
 		return 0.0;
 	else
-		return (float) failed / size;
+		return (float) failed / Chunk::SIZE;
 }
 
 void store_and_load(const Chunk &supposed, Chunk *actual) {

@@ -36,7 +36,7 @@ void Chunk::finishInitialization() {
 	if (!(flags & COORDS_INITIALIZED))
 		LOG_ERROR(logger) << "Chunk coordinates not initialized";
 	if (!(flags & NUM_AIR_BLOCKS_INITIALIZED)) {
-		for (size_t i = 0; i < WIDTH * WIDTH * WIDTH; i++) {
+		for (size_t i = 0; i < SIZE; i++) {
 			if (blocks[i] == 0)
 				numAirBlocks++;
 		}
