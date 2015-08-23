@@ -41,6 +41,7 @@ private:
 		LAYOUT_RLE        = 0x0001,
 		LAYOUT_DIFF       = 0x0002,
 		LAYOUT_ZLIB       = 0x0004,
+		LAYOUT_ENC_MASK   = 0x0007,
 		LAYOUT_VISIBILITY = 0x0008,
 		LAYOUT_EMPTY      = 0x8000,
 	};
@@ -298,9 +299,9 @@ bool ArchiveFile::loadChunk(Chunk *chunk) {
 
 	_file.seekg(getChunkHeapStart() + dir_entry.offset * _header.heap_block_size);
 
-	if (dir_entry.flags & LAYOUT_RLE) {
+	if ((dir_entry.flags & LAYOUT_ENC_MASK) == LAYOUT_RLE) {
 		decodeBlocks_RLE(chunk->getBlocksForInit());
-	} else if (dir_entry.flags & LAYOUT_PLAIN) {
+	} else if ((dir_entry.flags & LAYOUT_ENC_MASK) == LAYOUT_PLAIN) {
 		decodeBlocks_PLAIN(chunk->getBlocksForInit());
 	} else {
 		LOG_ERROR(logger) << "Chunk Layout " << dir_entry.flags << " unsupported";

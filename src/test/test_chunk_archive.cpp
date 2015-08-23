@@ -40,6 +40,7 @@ void initChunk(Chunk &chunk, Func func) {
 			}
 		}
 	}
+	chunk.finishInitialization();
 }
 
 TEST(ChunkArchiveTest, AirChunk) {
