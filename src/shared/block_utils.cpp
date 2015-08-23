@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cstring>
 #include <unordered_set>
+#include <fstream>
 
 #include "engine/math.hpp"
 #include "engine/logging.hpp"
@@ -151,12 +152,11 @@ bool vec3i64CompFunc(vec3i64 v1, vec3i64 v2) {
 	return v1[0] < v2[0];
 }
 
-void initUtil() {
-	LOG_INFO(logger) << "Initializing loading order";
+void makeLoadingOrder() {
+	LOG_INFO(logger) << "Building loading order...";
 	int range = MAX_RENDER_DISTANCE;
-	int length = range * 2 + 1;
 	std::vector<vec3i8> strictOrder;
-	strictOrder.resize(length * length * length);
+	strictOrder.resize(MAX_RENDER_CUBE_SIZE);
 	std::unordered_set<vec3i64, size_t(*)(vec3i64)> inserted(0, vec3i64HashFunc);
 
 	for (int i = 0, z = -range; z <= range; z++) {
@@ -172,12 +172,11 @@ void initUtil() {
 	};
 	std::sort(strictOrder.begin(), strictOrder.end(), comp);
 
-	LOADING_ORDER.reserve(length * length * length);
 	int bubbleRadius = 6;
-	for (int i = 0; i < length * length * length; i++) {
+	for (uint i = 0; i < MAX_RENDER_CUBE_SIZE; i++) {
 		if (inserted.find(strictOrder[i].cast<int64>()) != inserted.end())
 			continue;
-		for (int j = 0; j < length * length * length; j++) {
+		for (uint j = 0; j < MAX_RENDER_CUBE_SIZE; j++) {
 			if (strictOrder[j].norm() > bubbleRadius)
 				break;
 			vec3i8 newVec = strictOrder[i] + strictOrder[j];
@@ -189,21 +188,75 @@ void initUtil() {
 			inserted.insert(newVec.cast<int64>());
 		}
 	}
+	LOG_INFO(logger) << "Done with building loading order";
+}
 
-	int biggestRadius = std::ceil(std::sqrt(3) * length / 2.0);
-	LO_MAX_RADIUS_INDICES.resize(biggestRadius + 1, -1);
-	LO_INDEX_FINISHED_RADIUS.resize(length * length * length, -1);
+bool loadLoadingOrder() {
+	std::fstream file;
+	file.open("loading_order.dat", std::ios_base::in | std::ios_base::binary);
+	if (!file.is_open()) {
+		LOG_INFO(logger) << "Could not open loading order file";
+		return false;
+	}
+
+	for (uint i = 0; i < MAX_RENDER_CUBE_SIZE; i++) {
+		file.read((char *)(&LOADING_ORDER[i][0]), sizeof(int8));
+		file.read((char *)(&LOADING_ORDER[i][1]), sizeof(int8));
+		file.read((char *)(&LOADING_ORDER[i][2]), sizeof(int8));
+	}
+
+	if (file.eof()) {
+		LOG_ERROR(logger) << "Loading order file ended abruptly";
+		return false;
+	}
+
+	if (file.is_open())
+		file.close();
+
+	return true;
+}
+
+void saveLoadingOrder() {
+	std::fstream file;
+	file.open("loading_order.dat", std::ios_base::out | std::ios_base::binary);
+	if (!file.is_open()) {
+		LOG_ERROR(logger) << "Could not initialize loading order file";
+		return;
+	}
+
+	for (uint i = 0; i < MAX_RENDER_CUBE_SIZE; i++) {
+		file.write((char *)(&LOADING_ORDER[i][0]), sizeof(int8));
+		file.write((char *)(&LOADING_ORDER[i][1]), sizeof(int8));
+		file.write((char *)(&LOADING_ORDER[i][2]), sizeof(int8));
+	}
+
+	if (!file.good())
+		LOG_ERROR(logger) << "Could not initialize loading order file";
+
+	if (file.is_open())
+		file.close();
+}
+
+void initUtil() {
+	LOADING_ORDER.reserve(MAX_RENDER_CUBE_SIZE);
+	LO_MAX_RADIUS_INDICES.resize(MAX_RENDER_CUBE_DIAMETER + 1, -1);
+	LO_INDEX_FINISHED_RADIUS.resize(MAX_RENDER_CUBE_SIZE, -1);
+
+	if (!loadLoadingOrder()) {
+		makeLoadingOrder();
+		saveLoadingOrder();
+	}
 
 	int maxRadius = 0;
-	for (int i = 0; i < length * length * length; ++i) {
+	for (uint i = 0; i < MAX_RENDER_CUBE_SIZE; ++i) {
 		double dist = LOADING_ORDER[i].norm();
 		while (dist > maxRadius) {
 			LO_MAX_RADIUS_INDICES[maxRadius] = i;
 			maxRadius++;
 		}
 	}
-	int finishedRadius = biggestRadius;
-	for (int i = length * length * length - 1; i >= 0; --i) {
+	int finishedRadius = MAX_RENDER_CUBE_DIAMETER;
+	for (int i = MAX_RENDER_CUBE_SIZE - 1; i >= 0; --i) {
 		double dist = LOADING_ORDER[i].norm();
 		if (dist <= finishedRadius) {
 			finishedRadius = std::ceil(dist) - 1;
