@@ -159,36 +159,31 @@ static uint getMSLevelFromAA(AntiAliasing aa) {
 
 void GL3Renderer::createFBO(AntiAliasing antiAliasing) {
 	uint msLevel = getMSLevelFromAA(antiAliasing);
-	GL(GenRenderbuffers(1, &fbo_color_buffer));
-	GL(BindRenderbuffer(GL_RENDERBUFFER, fbo_color_buffer));
-	GL(RenderbufferStorageMultisample(
-			GL_RENDERBUFFER, msLevel, GL_RGB, client->getGraphics()->getWidth(), client->getGraphics()->getHeight()
-	));
 
-	// Depth buffer
+	int w = client->getGraphics()->getWidth();
+	int h = client->getGraphics()->getHeight();
+
+	GL(GenRenderbuffers(1, &fbo_color_buffer));
 	GL(GenRenderbuffers(1, &fbo_depth_buffer));
+
+	GL(BindRenderbuffer(GL_RENDERBUFFER, fbo_color_buffer));
+	if (antiAliasing != AntiAliasing::NONE) {
+		GL(RenderbufferStorageMultisample(GL_RENDERBUFFER, msLevel, GL_RGB, w, h));
+	} else {
+		GL(RenderbufferStorage(GL_RENDERBUFFER, GL_RGB, w, h));
+	}
+
 	GL(BindRenderbuffer(GL_RENDERBUFFER, fbo_depth_buffer));
 	if (antiAliasing != AntiAliasing::NONE) {
-		GL(RenderbufferStorageMultisample(
-				GL_RENDERBUFFER, msLevel, GL_DEPTH_COMPONENT24, client->getGraphics()->getWidth(), client->getGraphics()->getHeight()
-		));
+		GL(RenderbufferStorageMultisample(GL_RENDERBUFFER, msLevel, GL_DEPTH_COMPONENT24, w, h));
 	} else {
-		GL(RenderbufferStorage(
-				GL_RENDERBUFFER, GL_DEPTH_COMPONENT24,
-				client->getGraphics()->getWidth(), client->getGraphics()->getHeight()
-		));
+		GL(RenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, w, h));
 	}
 
 	GL(GenFramebuffers(1, &fbo));
 	GL(BindFramebuffer(GL_FRAMEBUFFER, fbo));
-	GL(FramebufferRenderbuffer(
-			GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
-			GL_RENDERBUFFER, fbo_color_buffer
-	));
-	GL(FramebufferRenderbuffer(
-			GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,
-			GL_RENDERBUFFER, fbo_depth_buffer
-	));
+	GL(FramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, fbo_color_buffer));
+	GL(FramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, fbo_depth_buffer));
 
 	GLuint status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
 	if (status != GL_FRAMEBUFFER_COMPLETE) {
@@ -289,8 +284,10 @@ void GL3Renderer::tick() {
 
 void GL3Renderer::render() {
 	if (fbo) {
+		GL(Enable(GL_MULTISAMPLE));
 		GL(BindFramebuffer(GL_FRAMEBUFFER, fbo));
 	} else {
+		GL(Disable(GL_MULTISAMPLE));
 		GL(BindFramebuffer(GL_FRAMEBUFFER, 0));
 		GL(DrawBuffer(GL_BACK));
 	}
@@ -321,18 +318,18 @@ void GL3Renderer::render() {
 
 	// copy framebuffer to screen
 	if (fbo) {
+		GL(Enable(GL_MULTISAMPLE));
 		GL(BindFramebuffer(GL_DRAW_FRAMEBUFFER, 0));
 		GL(BindFramebuffer(GL_READ_FRAMEBUFFER, fbo));
 		GL(DrawBuffer(GL_BACK));
 		GL(BlitFramebuffer(
 				0, 0, client->getGraphics()->getWidth(), client->getGraphics()->getHeight(),
 				0, 0, client->getGraphics()->getWidth(), client->getGraphics()->getHeight(),
-				GL_COLOR_BUFFER_BIT,
+				GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT,
 				GL_NEAREST
 		));
 
 		GL(BindFramebuffer(GL_FRAMEBUFFER, 0));
-		GL(DrawBuffer(GL_BACK));
 	}
 
 	// render overlay
