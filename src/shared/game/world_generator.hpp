@@ -20,29 +20,18 @@ public:
 	void generateChunk(Chunk *);
 
 private:
+	Perlin elevation_perlin;
+	Perlin vegetation_perlin;
+	Perlin temperature_perlin;
+
+	Perlin mountain_perlin;
+	Perlin flatland_perlin;
+	Perlin ocean_perlin;
+	
+	Perlin hollowness_perlin;
+	Perlin cave_perlin;
+
 	Perlin perlin;
-
-	double overAllScale = 1;
-
-	double areaXYScale = 6000;
-	double areaMountainThreshold = 0.7;
-	double areaSharpness = 20;
-
-	double mountainXYScale = 500;
-	double mountainMaxHeight = 800;
-	int mountainOctaves = 8;
-	double mountainExp = 0.5;
-
-	double flatlandXYScale = 800;
-	double flatLandMaxHeight = 40;
-	int flatlandOctaves = 6;
-	double flatlandExp = 0.8;
-
-	double surfaceScale = 70;
-	double surfaceRelDepth = 0.3;
-	double surfaceExp = 0.4;
-	double surfaceThresholdXScale = 1;
-	double surfaceThresholdYScale;
 };
 
 #endif // WORLD_GENERATOR_HPP_
