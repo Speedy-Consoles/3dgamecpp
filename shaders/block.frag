@@ -35,10 +35,11 @@ flat in uint vfTextureIndex;
 out vec4 fColor;
  
 void main() {
-	float shadowLevel = vfShadowLevels[0] * (1 - vfCornerPosition.x) * (1 - vfCornerPosition.y)
-						+ vfShadowLevels[1] * vfCornerPosition.x * (1 - vfCornerPosition.y)
-						+ vfShadowLevels[3] * (1 - vfCornerPosition.x) * vfCornerPosition.y
-						+ vfShadowLevels[2] * vfCornerPosition.x * vfCornerPosition.y;
+	vec2 cp = clamp(vfCornerPosition, 0.0, 1.0);
+	float shadowLevel = vfShadowLevels[0] * (1 - cp.x) * (1 - cp.y)
+						+ vfShadowLevels[1] * cp.x * (1 - cp.y)
+						+ vfShadowLevels[3] * (1 - cp.x) * cp.y
+						+ vfShadowLevels[2] * cp.x * cp.y;
 	vec4 texColor = texture(textureSampler, vec3(vfTexturePosition, vfTextureIndex));
 
 	vec4 sceneColor = texColor * vec4(vec3(1.0 - shadowLevel / 2.0), 1.0);
