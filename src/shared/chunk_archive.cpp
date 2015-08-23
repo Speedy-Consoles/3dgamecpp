@@ -394,6 +394,7 @@ void ArchiveFile::storeChunk(const Chunk &chunk) {
 
 	_file.seekp(_header.directory_offset + id * sizeof (DirectoryEntry));
 	_file.write((char *)(&dir_entry), sizeof (DirectoryEntry));
+	_file.flush();
 
 	if (!_file.good()) {
 		LOG_ERROR(logger) << "Safe operation failed for chunk "
