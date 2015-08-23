@@ -86,6 +86,7 @@ void ChunkManager::tick() {
 		if (!chunk->isInitialized())
 			LOG_WARNING(logger) << "Server interface didn't initialize chunk";
 		insertLoadedChunk(chunk);
+		numSessionChunkGens++;
 	}
 }
 

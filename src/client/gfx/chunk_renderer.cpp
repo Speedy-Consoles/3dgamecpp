@@ -73,7 +73,7 @@ void ChunkRenderer::tick() {
 
 	// put chunks into render queue
 	while (LO_INDEX_FINISHED_RADIUS[checkChunkIndex] < renderDistance
-			&& buildQueue.size() < MAX_RENDER_QUEUE_SIZE) {
+			&& buildQueue.size() < MAX_BUILD_QUEUE_SIZE) {
 		vec3i64 cd = LOADING_ORDER[checkChunkIndex].cast<int64>();
 		if (cd.norm() <= renderDistance) {
 			vec3i64 cc = pc + cd;

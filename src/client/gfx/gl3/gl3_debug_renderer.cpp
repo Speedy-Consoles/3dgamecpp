@@ -153,7 +153,7 @@ void GL3DebugRenderer::renderDebug() {
 		newFaceCounter = 0;
 	}
 
-	float frequency =  (1000.0f / DATA_UPDATE_INTERVAL);
+	float frequency =  1000.0f / DATA_UPDATE_INTERVAL;
 
 	font.setColor(glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
 
@@ -190,8 +190,8 @@ void GL3DebugRenderer::renderDebug() {
 	RENDER_LINE(" ");
 	RENDER_LINE("CHUNK RENDERER INFO:");
 	RENDER_LINE("checked distance: %d", crdi.checkedDistance);
-	RENDER_LINE("new chunks/s: %.0f", newChunkValue * frequency);
-	RENDER_LINE("new faces/s: %.0f", newFaceValue * frequency);
+	RENDER_LINE("new chunks/t: %.0f", newChunkValue * frequency / TICK_SPEED);
+	RENDER_LINE("new faces/t: %.0f", newFaceValue * frequency / TICK_SPEED);
 	RENDER_LINE("total faces: %d", crdi.totalFaces);
 	RENDER_LINE("visible chunks: %d", crdi.visibleChunks);
 	RENDER_LINE("visible faces: %d", crdi.visibleFaces);
@@ -206,6 +206,7 @@ void GL3DebugRenderer::renderDebug() {
 	RENDER_LINE("requested queue size: %d", chunkManager->getRequestedQueueSize());
 	RENDER_LINE("not-in-cache queue size: %d", chunkManager->getNotInCacheQueueSize());
 	RENDER_LINE("total chunk loads this session: %d", chunkManager->getNumSessionChunkLoads());
+	RENDER_LINE("total chunk gens this session: %d", chunkManager->getNumSessionChunkGens());
 }
 
 void GL3DebugRenderer::renderPerformance() {
