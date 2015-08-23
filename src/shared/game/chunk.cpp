@@ -40,10 +40,12 @@ void Chunk::finishInitialization() {
 			if (blocks[i] == 0)
 				numAirBlocks++;
 		}
+		flags |= NUM_AIR_BLOCKS_INITIALIZED;
 	}
 
 	if ((flags & VISUAL) && !(flags & PASSTHROUGHS_INITIALIZED)) {
 		makePassThroughs();
+		flags |= PASSTHROUGHS_INITIALIZED;
 	}
 	flags |= INITIALIZED;
 }
@@ -78,8 +80,6 @@ size_t Chunk::getBlockIndex(vec3ui8 icc) {
 }
 
 void Chunk::makePassThroughs() {
-	flags |= PASSTHROUGHS_INITIALIZED;
-
 	if (numAirBlocks > SIZE - WIDTH * WIDTH) {
 		passThroughs = 0x7FFF;
 		return;
