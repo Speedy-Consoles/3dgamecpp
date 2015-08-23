@@ -37,9 +37,12 @@ private:
 	});
 
 	enum Layout {
-		LAYOUT_PLAIN = 0x0000,
-		LAYOUT_RLE   = 0x0001,
-		LAYOUT_AIR   = 0x8000,
+		LAYOUT_PLAIN      = 0x0000,
+		LAYOUT_RLE        = 0x0001,
+		LAYOUT_DIFF       = 0x0002,
+		LAYOUT_ZLIB       = 0x0004,
+		LAYOUT_VISIBILITY = 0x0008,
+		LAYOUT_EMPTY      = 0x8000,
 	};
 
 	PACKED(
@@ -48,7 +51,8 @@ private:
 		uint16 size;
 		uint16 flags;
 		uint32 revision;
-		uint8  reserved[4];
+		uint16 visibility;
+		uint8  reserved[2];
 	});
 
 public:
@@ -283,7 +287,7 @@ bool ArchiveFile::loadChunk(Chunk *chunk) {
 	}
 	
 	chunk->initRevision(dir_entry.revision);
-	if (dir_entry.flags == LAYOUT_AIR) {
+	if (dir_entry.flags == LAYOUT_EMPTY) {
 		uint8 *blocks = chunk->getBlocksForInit();
 		memset((char *)blocks, 0, Chunk::SIZE * sizeof(uint8));
 		chunk->initNumAirBlocks(Chunk::SIZE);
@@ -294,9 +298,9 @@ bool ArchiveFile::loadChunk(Chunk *chunk) {
 
 	_file.seekg(getChunkHeapStart() + dir_entry.offset * _header.heap_block_size);
 
-	if (dir_entry.flags == LAYOUT_RLE) {
+	if (dir_entry.flags & LAYOUT_RLE) {
 		decodeBlocks_RLE(chunk->getBlocksForInit());
-	} else if (dir_entry.flags == LAYOUT_PLAIN) {
+	} else if (dir_entry.flags & LAYOUT_PLAIN) {
 		decodeBlocks_PLAIN(chunk->getBlocksForInit());
 	} else {
 		LOG_ERROR(logger) << "Chunk Layout " << dir_entry.flags << " unsupported";
@@ -307,6 +311,9 @@ bool ArchiveFile::loadChunk(Chunk *chunk) {
 		LOG_ERROR(logger) << "Bad in-stream";
 		return false;
 	}
+
+	if (dir_entry.flags & LAYOUT_VISIBILITY)
+		chunk->initPassThroughs(dir_entry.visibility);
 
 	chunk->finishInitialization();
 
@@ -330,49 +337,58 @@ void ArchiveFile::storeChunk(const Chunk &chunk) {
 	if (chunk.isEmpty()) {
 		dir_entry.offset = 0;
 		dir_entry.size = 0;
-		dir_entry.flags = LAYOUT_AIR;
-	} else {
-		uint8 *const buffer = new uint8[Chunk::SIZE];
-		int bytes_written;
+		dir_entry.visibility = 0;
+		dir_entry.flags = LAYOUT_EMPTY;
+		return;
+	}
 
-		// try RLE encoding
-		bytes_written = encodeBlocks_RLE(chunk.getBlocks(), buffer, Chunk::SIZE);
+	uint8 *const buffer = new uint8[Chunk::SIZE];
+	int bytes_written;
+
+	// try RLE encoding
+	bytes_written = encodeBlocks_RLE(chunk.getBlocks(), buffer, Chunk::SIZE);
+	if (bytes_written < 0) {
+		LOG_ERROR(logger) << "Chunk (" << cc << ") could not be written";
+		return;
+	}
+	dir_entry.flags = LAYOUT_RLE;
+
+	// use plain encoding if we didn't compress the chunk enough
+	if ((uint) bytes_written / _header.heap_block_size >= Chunk::SIZE / _header.heap_block_size) {
+		bytes_written = encodeBlocks_PLAIN(chunk.getBlocks(), buffer, Chunk::SIZE);
 		if (bytes_written < 0) {
 			LOG_ERROR(logger) << "Chunk (" << cc << ") could not be written";
 			return;
 		}
-		dir_entry.flags = LAYOUT_RLE;
+		dir_entry.flags = LAYOUT_PLAIN;
+	}
 
-		// use plain encoding if we didn't compress the chunk enough
-		if ((uint) bytes_written / _header.heap_block_size >= Chunk::SIZE / _header.heap_block_size) {
-			bytes_written = encodeBlocks_PLAIN(chunk.getBlocks(), buffer, Chunk::SIZE);
-			if (bytes_written < 0) {
-				LOG_ERROR(logger) << "Chunk (" << cc << ") could not be written";
-				return;
-			}
-			dir_entry.flags = LAYOUT_PLAIN;
-		}
+	uint8 num_blocks = (bytes_written - 1) / _header.heap_block_size + 1;
+	if (num_blocks > dir_entry.size) {
+		//LOG_DEBUG(logger) << "Resized Chunk (" << cc << ")";
+		_file.seekp(0, ios_base::end);
+		size_t file_end = (size_t) _file.tellp();
+		size_t chunk_heap_size = file_end - getChunkHeapStart();
+		size_t start;
+		if (chunk_heap_size > 0)
+			start = (chunk_heap_size - 1) / _header.heap_block_size + 1;
+		else
+			start = 0;
+		dir_entry.offset = (uint32) start;
+		dir_entry.size = num_blocks;
+	}
 
-		uint8 num_blocks = (bytes_written - 1) / _header.heap_block_size + 1;
-		if (num_blocks > dir_entry.size) {
-			//LOG_DEBUG(logger) << "Resized Chunk (" << cc << ")";
-			_file.seekp(0, ios_base::end);
-			size_t file_end = (size_t) _file.tellp();
-			size_t chunk_heap_size = file_end - getChunkHeapStart();
-			size_t start;
-			if (chunk_heap_size > 0)
-				start = (chunk_heap_size - 1) / _header.heap_block_size + 1;
-			else
-				start = 0;
-			dir_entry.offset = (uint32) start;
-			dir_entry.size = num_blocks;
-		}
+	_file.seekp(getChunkHeapStart() + dir_entry.offset * _header.heap_block_size);
+	_file.write((char *) buffer, bytes_written);
+	_file.flush();
 
-		_file.seekp(getChunkHeapStart() + dir_entry.offset * _header.heap_block_size);
-		_file.write((char *) buffer, bytes_written);
-		_file.flush();
+	delete[] buffer;
 
-		delete[] buffer;
+	if (chunk.isVisual()) {
+		dir_entry.flags |= LAYOUT_VISIBILITY;
+		dir_entry.visibility = chunk.getPassThroughs();
+	} else {
+		dir_entry.visibility = 0;
 	}
 
 	_file.seekp(_header.directory_offset + id * sizeof (DirectoryEntry));

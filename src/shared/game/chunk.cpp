@@ -42,9 +42,8 @@ void Chunk::finishInitialization() {
 		}
 	}
 
-	if (!(flags & (VISUAL | PASSTHROUGHS_INITIALIZED))) {
+	if ((flags & VISUAL) && !(flags & PASSTHROUGHS_INITIALIZED)) {
 		makePassThroughs();
-		flags |= PASSTHROUGHS_INITIALIZED;
 	}
 	flags |= INITIALIZED;
 }
@@ -79,15 +78,19 @@ size_t Chunk::getBlockIndex(vec3ui8 icc) {
 }
 
 void Chunk::makePassThroughs() {
-	const uint size = WIDTH * WIDTH * WIDTH;
-	if (numAirBlocks > size - WIDTH * WIDTH) {
+	flags |= PASSTHROUGHS_INITIALIZED;
+
+	if (numAirBlocks > SIZE - WIDTH * WIDTH) {
 		passThroughs = 0x7FFF;
+		return;
+	} else if (numAirBlocks == 0) {
+		passThroughs = 0x0000;
 		return;
 	}
 	passThroughs = 0;
-	bool visited[size];
+	bool visited[SIZE];
 
-	for (uint i = 0; i < size; i++) {
+	for (uint i = 0; i < SIZE; i++) {
 		visited[i] = false;
 	}
 
@@ -102,7 +105,7 @@ void Chunk::makePassThroughs() {
 					continue;
 				}
 
-				vec3ui8 fringe[size];
+				vec3ui8 fringe[SIZE];
 				fringe[0] = vec3ui8(x, y, z);
 				int fringeSize = 1;
 				int borderSet = 0;

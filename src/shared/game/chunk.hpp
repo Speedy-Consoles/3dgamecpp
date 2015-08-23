@@ -10,11 +10,11 @@ public:
 	static const uint SIZE = WIDTH * WIDTH * WIDTH;
 
 	enum ChunkFlags {
-		VISUAL = 0,
-		INITIALIZED = 1,
-		COORDS_INITIALIZED = 2,
-		NUM_AIR_BLOCKS_INITIALIZED = 4,
-		PASSTHROUGHS_INITIALIZED = 8,
+		VISUAL = 1,
+		INITIALIZED = 2,
+		COORDS_INITIALIZED = 4,
+		NUM_AIR_BLOCKS_INITIALIZED = 8,
+		PASSTHROUGHS_INITIALIZED = 16,
 	};
 
 private:
@@ -49,7 +49,7 @@ public:
 	const uint8 *getBlocks() const { return blocks; }
 	bool isEmpty() const { return numAirBlocks == SIZE; }
 	bool isVisual() const { return (flags & VISUAL) != 0; }
-	bool isInitialized() const { return flags & INITIALIZED; }
+	bool isInitialized() const { return (flags & INITIALIZED) != 0; }
 
 /*
 	void write(ByteBuffer buffer) const;
