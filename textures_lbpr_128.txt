@@ -80,6 +80,7 @@ texture file="img/lbpr-128.png" width=16 height=16 {
 	block name=leaves.birch       row=4 col=8
 	block name=leaves.jungle      row=4 col=9
 	block name=leaves.spruce      row=4 col=10
+	block name=water              row=4 col=11
 	
 	block name=invalid row=15 col=15
 }

@@ -80,6 +80,7 @@ texture file="img/textures_1.png" width=16 height=16 {
 	block name=leaves.birch   row=4 col=1
 	block name=leaves.jungle  row=4 col=2
 	block name=leaves.spruce  row=4 col=3
+	block name=water          row=4 col=4
 	
 	block name=invalid row=15 col=15
 }

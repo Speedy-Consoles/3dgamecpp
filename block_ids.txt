@@ -97,3 +97,5 @@ block
 	lapis   56
 	emerald 57
 }
+
+water 62
