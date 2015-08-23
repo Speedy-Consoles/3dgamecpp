@@ -218,7 +218,7 @@ void ChunkRenderer::buildChunk(Chunk const *chunks[27]) {
 
 	// skip air chunks and earth chunks
 	bool skip = false;
-	if (chunk.getNumAirBlocks() == Chunk::WIDTH * Chunk::WIDTH * Chunk::WIDTH) {
+	if (chunk.isEmpty()) {
 		skip = true;
 	} else if (chunk.getNumAirBlocks() == 0) {
 		skip = true;
