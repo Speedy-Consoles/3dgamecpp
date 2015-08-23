@@ -55,6 +55,18 @@ TEST(ChunkArchiveTest, AirChunk) {
 	EXPECT_EQ(0, getRelativeChunkDifference(supposed, actual)) << "Air chunk did not store and load properly";
 }
 
+TEST(ChunkArchiveTest, StoneChunk) {
+	Chunk supposed;
+	supposed.initCC({ 0, 0, 0 });
+	Chunk actual;
+
+	initChunk(supposed, [](size_t x, size_t y, size_t z, size_t index) {
+		return 1;
+	});
+	store_and_load(supposed, &actual);
+	EXPECT_EQ(0, getRelativeChunkDifference(supposed, actual)) << "Stone chunk did not store and load properly";
+}
+
 TEST(ChunkArchiveTest, UncompressibleChunk) {
 	Chunk supposed;
 	supposed.initCC({ 0, 0, 0 });
