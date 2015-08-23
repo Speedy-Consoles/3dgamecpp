@@ -610,10 +610,11 @@ void ChunkArchive::clean(Time t) {
 	while (iter != _file_map.end()) {
 		bool should_delete = now - iter->second->getLastAccess() > t;
 		if (should_delete) {
-		   iter = _file_map.erase(iter);
-		   ++num_cleaned;
+			delete iter->second;
+			iter = _file_map.erase(iter);
+			++num_cleaned;
 		} else {
-		   ++iter;
+			++iter;
 		}
 	}
 	if (num_cleaned)
