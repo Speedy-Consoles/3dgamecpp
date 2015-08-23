@@ -121,8 +121,15 @@ void ChunkManager::onStop() {
 
 void ChunkManager::storeChunks() {
 	wait();
-	for (auto it = chunks.begin(); it != chunks.end(); ++it) {
-		archive->storeChunk(*it->second);
+	while (!preToStoreQueue.empty()) {
+		Chunk *chunk = preToStoreQueue.front();
+		preToStoreQueue.pop();
+		archive->storeChunk(*chunk);
+	}
+	for (auto it1 = chunks.begin(); it1 != chunks.end(); ++it1) {
+		auto it2 = oldRevisions.find(it1->first);
+		if (it2 == oldRevisions.end() || it1->second->getRevision() != it2->second)
+			archive->storeChunk(*it1->second);
 	}
 }
 
