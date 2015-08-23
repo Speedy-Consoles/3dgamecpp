@@ -20,9 +20,9 @@ static const int32 ENDIANESS_BYTES_FLIPPED = 0x04030201;
 
 static const uint8 ESCAPE_CHAR = (uint8) (-1);
 
-static const uint HEAP_BLOCK_SIZE = 2048;
+static const uint HEAP_BLOCK_SIZE = 256;
 
-static const int32 RECENT_HEADER_VERSION = 2;
+static const int32 RECENT_HEADER_VERSION = 3;
 
 class ArchiveFile {
 private:
@@ -40,8 +40,8 @@ private:
 
 	enum Layout {
 		LAYOUT_PLAIN      = 0x0000,
-		LAYOUT_RLE        = 0x0001,
-		LAYOUT_DIFF       = 0x0002,
+		LAYOUT_DIFF       = 0x0001,
+		LAYOUT_RLE        = 0x0002,
 		LAYOUT_ZLIB       = 0x0004,
 		LAYOUT_ENC_MASK   = 0x0007,
 		LAYOUT_VISIBILITY = 0x0008,
@@ -126,7 +126,7 @@ ArchiveFile::ArchiveFile(const char *filename, uint region_size) :
 		_file.clear();
 		_file.open(_filename, ios_base::in | ios_base::out | ios_base::binary);
 		if (!_file.is_open()) {
-			LOG_ERROR(logger) << "Could not open Archive file '" << _filename << "'";
+			LOG_ERROR(logger) << "Could not open ArchiveFile '" << _filename << "'";
 			_good = false;
 			return;
 		} else {
@@ -135,7 +135,7 @@ ArchiveFile::ArchiveFile(const char *filename, uint region_size) :
 				// file was empty, we can safely nuke it (we probably created it)
 				initialize();
 			} else {
-				LOG_ERROR(logger) << "Archive file '" << _filename << "' had content after creation";
+				LOG_ERROR(logger) << "ArchiveFile '" << _filename << "' had content after creation";
 				_file.close();
 				_good = false;
 				return;
@@ -145,14 +145,14 @@ ArchiveFile::ArchiveFile(const char *filename, uint region_size) :
 
 	loadHeader();
 	if (!_good) {
-		LOG_ERROR(logger) << "Archive file '" << _filename << "' had bad header";
+		LOG_ERROR(logger) << "ArchiveFile '" << _filename << "' had bad header";
 		_file.close();
 		_good = false;
 		return;
 	}
 
 	if (_header.version != RECENT_HEADER_VERSION) {
-		LOG_ERROR(logger) << "Archive file '" << _filename << "' had unknown version ("
+		LOG_ERROR(logger) << "ArchiveFile '" << _filename << "' had unknown version ("
 				<< _header.version << ")";
 		_file.close();
 		_good = false;
@@ -163,24 +163,13 @@ ArchiveFile::ArchiveFile(const char *filename, uint region_size) :
 }
 
 void ArchiveFile::loadHeader() {
-	size_t bytes_to_read = offsetof(Header, heap_block_size);
-
 	_file.clear();
 	_file.seekg(0);
-	_file.read((char *)(&_header), bytes_to_read);
+	_file.read((char *)(&_header), sizeof(Header));
 	if (_file.eof()) {
 		LOG_ERROR(logger) << "Archive file '" << _filename << "' ended abruptly";
 		_good = false;
 		return;
-	}
-
-	if (_header.version > 1) {
-		_file.read((char *)(&_header.heap_block_size), sizeof(Header) - bytes_to_read);
-		if (_file.eof()) {
-			LOG_ERROR(logger) << "Archive file '" << _filename << "' ended abruptly";
-			_good = false;
-			return;
-		}
 	}
 
 	if (memcmp(_header.magic, MAGIC, sizeof(MAGIC)) != 0) {
@@ -200,13 +189,13 @@ void ArchiveFile::loadHeader() {
 	}
 
 	if (_header.endianess_bytes != ENDIANESS_BYTES) {
-		LOG_ERROR(logger) << "Archive file '" << _filename << "' had wrong endianess";
+		LOG_ERROR(logger) << "ArchiveFile '" << _filename << "' had wrong endianess";
 		_good = false;
 		return;
 	}
 
 	if (_header.dir_size != _region_size * _region_size * _region_size) {
-		LOG_ERROR(logger) << "Archive file '" << _filename << "' had wrong size ("
+		LOG_ERROR(logger) << "ArchiveFile '" << _filename << "' had wrong size ("
 				<< _header.dir_size << " instead of "
 				<< _region_size * _region_size * _region_size << ")";
 		_good = false;
@@ -358,7 +347,7 @@ void ArchiveFile::storeChunk(const Chunk &chunk) {
 			dir_entry.flags = LAYOUT_PLAIN;
 		}
 
-		uint8 num_blocks = (bytes_written - 1) / _header.heap_block_size + 1;
+		uint num_blocks = (bytes_written - 1) / _header.heap_block_size + 1;
 		if (num_blocks > dir_entry.size) {
 			//LOG_DEBUG(logger) << "Resized Chunk (" << cc << ")";
 			_file.seekp(0, ios_base::end);
@@ -404,10 +393,25 @@ void ArchiveFile::decodeBlocks_RLE(uint8 *blocks) {
 		_file.read((char *) &next_block, sizeof (uint8));
 
 		if (next_block == ESCAPE_CHAR) {
-			uint8 run_length, block_type;
-			_file.read((char *) &run_length, sizeof (uint8));
+			uint8 next_byte, block_type;
+			uint32 run_length;
+			_file.read((char *) &next_byte, sizeof (uint8));
+
+			// Like UTF8, the first bit signals a multi-byte sequence
+			if ((next_byte & 0x80) == 0) {
+				// This is the only byte
+				run_length = next_byte;
+			} else {
+				// There is exactly one extra byte, the oher 7 bits can be used for the value
+				uint32 encoded_run_length = next_byte & 0x7F;
+				_file.read((char *) &next_byte, sizeof (uint8));
+				encoded_run_length = (encoded_run_length << 8) | next_byte;
+				// we count from 1 and not from 0 to save space
+				run_length = encoded_run_length + 1;
+			}
+
 			_file.read((char *) &block_type, sizeof (uint8));
-			for (size_t i = 0; i < run_length; ++i) {
+			for (uint32 i = 0; i < run_length; ++i) {
 				if (index >= Chunk::SIZE) {
 					LOG_ERROR(logger) << "Block data exceeded Chunk size";
 					break;
@@ -426,13 +430,28 @@ int ArchiveFile::encodeBlocks_RLE(const uint8 *blocks, uint8 *buffer, size_t siz
 	uint8 *head = buffer;
 
 	auto finishRun = [&]() -> int {
+		if (cur_run_length == 0)
+			return 0;
 		if (cur_run_length > 3 || cur_run_type == ESCAPE_CHAR) {
-			if ((size_t) (head - buffer + 3) <= size) {
-				*head++ = ESCAPE_CHAR;
-				*head++ = cur_run_length;
-				*head++ = cur_run_type;
+			if (cur_run_length < 0x80) {
+				if (head - buffer + 3u <= size) {
+					*head++ = ESCAPE_CHAR;
+					*head++ = cur_run_length;
+					*head++ = cur_run_type;
+				} else {
+					return -1;
+				}
 			} else {
-				return -1;
+				// we count from 1 and not from 0 to save space
+				size_t encoded_run_length = cur_run_length - 1;
+				if (head - buffer + 4u <= size) {
+					*head++ = ESCAPE_CHAR;
+					*head++ = 0x80 | (encoded_run_length >> 8);
+					*head++ = encoded_run_length & 0xFF;
+					*head++ = cur_run_type;
+				} else {
+					return -1;
+				}
 			}
 		} else {
 			if (head - buffer + cur_run_length <= size) {
@@ -447,16 +466,22 @@ int ArchiveFile::encodeBlocks_RLE(const uint8 *blocks, uint8 *buffer, size_t siz
 
 	for (size_t i = 1; i < size; ++i) {
 		uint8 next_block = blocks[i];
-		if (cur_run_type == next_block && cur_run_length < 0xFF) {
-			cur_run_length++;
-			continue;
+		if (cur_run_length >= 0x8000) {
+			if (finishRun() != 0)
+				return head - buffer;
+			cur_run_length = 0;
 		}
-		if (finishRun() != 0) return head - buffer;
-		cur_run_type = next_block;
-		cur_run_length = 1;
+		if (cur_run_type == next_block) {
+			cur_run_length++;
+		} else {
+			if (finishRun() != 0)
+				return head - buffer;
+			cur_run_type = next_block;
+			cur_run_length = 1;
+		}
 	}
 
-	if (finishRun() != 0) return head - buffer;
+	finishRun();
 	return head - buffer;
 }
 
