@@ -2,7 +2,8 @@
 saves/
 test/
 loading_order.dat
-client.log
+*.log
+*.log.*
 graphics-default.profile
 
 # linux compiled binary files
