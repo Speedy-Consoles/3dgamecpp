@@ -6,7 +6,7 @@
 
 using namespace std;
 
-Perlin::Perlin(uint64 seed) {
+Hasher::Hasher(uint64 seed) {
     default_random_engine random((uint) seed);
     uniform_int_distribution<> distr(0, 255);
     int permutation[256];
@@ -18,6 +18,13 @@ Perlin::Perlin(uint64 seed) {
         p[x] = permutation[x % 256];
     }
 }
+
+Hasher &operator << (Hasher &hasher, int i) {
+	hasher.feed(i);
+	return hasher;
+}
+
+Perlin::Perlin(uint64 seed) : hasher(seed) {}
 
 double Perlin::octavePerlin(double x, double y, double z, int octaves, double persistence) {
     double total = 0;
@@ -50,14 +57,22 @@ double Perlin::perlin(double x, double y, double z) {
     const double w = fade(zf);
 
 	// calculate pseudorandom hashes for all the corners
-	const int aaa = p[p[p[xi] + yi] + zi];
-	const int aba = p[p[p[xi] + yi + 1] + zi];
-	const int aab = p[p[p[xi] + yi] + zi + 1];
-	const int abb = p[p[p[xi] + yi + 1] + zi + 1];
-	const int baa = p[p[p[xi + 1] + yi] + zi];
-	const int bba = p[p[p[xi + 1] + yi + 1] + zi];
-	const int bab = p[p[p[xi + 1] + yi] + zi + 1];
-	const int bbb = p[p[p[xi + 1] + yi + 1] + zi + 1];
+	hasher.reset() << xi << yi << zi;
+	const int aaa = hasher.get();
+	hasher.reset() << xi << yi + 1 << zi;
+	const int aba = hasher.get();
+	hasher.reset() << xi << yi << zi + 1;
+	const int aab = hasher.get();
+	hasher.reset() << xi << yi + 1 << zi + 1;
+	const int abb = hasher.get();
+	hasher.reset() << xi + 1 << yi << zi;
+	const int baa = hasher.get();
+	hasher.reset() << xi + 1 << yi + 1 << zi;
+	const int bba = hasher.get();
+	hasher.reset() << xi + 1 << yi << zi + 1;
+	const int bab = hasher.get();
+	hasher.reset() << xi + 1 << yi + 1 << zi + 1;
+	const int bbb = hasher.get();
 
 	// multiply the relative coordinate in the cell with the random gradient and lerp it together
     double x1, x2, y1, y2;

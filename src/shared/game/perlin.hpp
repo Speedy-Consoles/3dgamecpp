@@ -6,9 +6,19 @@
 // slightly modified version of
 // https://gist.github.com/Flafla2/f0260a861be0ebdeef76
 
-class Perlin {
-private:
+class Hasher {
 	int p[512];
+	int state;
+
+public:
+	Hasher(uint64 seed);
+	Hasher &reset() { state = 0; return *this; }
+	void feed(int i) { state = p[state + i]; }
+	int get() const { return state; }
+};
+
+class Perlin {
+	Hasher hasher;
 
 public:
 	Perlin(uint64 seed);
