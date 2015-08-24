@@ -1,30 +1,38 @@
-.cproject
-.project
-.settings
-bin
-obj
-bin_win
-obj_win
-datasrc
-SDL*
-build_windows.sh
-3dgame*.zip
-saves
-*.profile
-*.log
-*.log.*
-deps
-3dgame
-*.exe
-*.lib
-*.dll
-*.bmfc
-*.region
+# stuff from the game itself
+saves/
+test/
+loading_order.dat
+client.log
+graphics-default.profile
 
-msvc/**/Debug
-msvc/**/Release
+# linux compiled binary files
+*.o
+*.a
+*.so
+*.so.*
+
+# windows compiled binary files
+*.exe
+*.dll
+*.lib
+*.obj
+
+# linux build system
+bin/
+obj/
+
+# windows build system
+deps/
+msvc/bin/
+msvc/obj/
 msvc/**/*.sdf
 msvc/**/*.opensdf
 msvc/**/*.suo
 
+# windows testing
 Guitar*
+
+# eclipse
+.cproject
+.project
+.settings
