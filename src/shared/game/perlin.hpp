@@ -7,13 +7,13 @@
 // https://gist.github.com/Flafla2/f0260a861be0ebdeef76
 
 class Hasher {
-	int p[512];
+	int p[0x100];
 	int state;
 
 public:
 	Hasher(uint64 seed);
 	Hasher &reset() { state = 0; return *this; }
-	void feed(int i) { state = p[state + i]; }
+	void feed(int i) { state = p[(state + i) & 0xFF]; }
 	int get() const { return state; }
 };
 

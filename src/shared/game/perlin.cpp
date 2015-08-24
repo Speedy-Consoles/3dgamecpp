@@ -8,14 +8,9 @@ using namespace std;
 
 Hasher::Hasher(uint64 seed) {
     default_random_engine random((uint) seed);
-    uniform_int_distribution<> distr(0, 255);
-    int permutation[256];
-    for (int i = 0; i < 256; i++) {
-        permutation[i] = distr(random);
-    }
-
-    for (int x = 0; x < 512; x++) {
-        p[x] = permutation[x % 256];
+    uniform_int_distribution<> distr(0x00, 0xFF);
+    for (int i = 0; i < 0x100; i++) {
+        p[i] = distr(random);
     }
 }
 
@@ -42,9 +37,9 @@ double Perlin::octavePerlin(double x, double y, double z, int octaves, double pe
 
 double Perlin::perlin(double x, double y, double z) {
 	// lowest corner of the cell, opposite corner have xi + 1 etc
-    const int xi = (int) floor(x) & 255;
-    const int yi = (int) floor(y) & 255;
-    const int zi = (int) floor(z) & 255;
+    const int xi = (int) floor(x);
+    const int yi = (int) floor(y);
+    const int zi = (int) floor(z);
 
 	// relative position in the cell
     const double xf = x - floor(x);
