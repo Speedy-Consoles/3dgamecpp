@@ -33,6 +33,15 @@ public:
 		return perlin(r[0], r[1], r[2]);
 	}
 
+	void octavePerlin(
+			double x, double y, double z,
+			double dx, double dy, double dz,
+			double stepSize, int octaves, double persistence, double *buffer);
+	void octavePerlin(
+			double x, double y,
+			double dx, double dy,
+			double stepSize, int octaves, double persistence, double *buffer);
+
 private:
 	static double grad(int hash, double x, double y, double z);
 	static double fade(double t);

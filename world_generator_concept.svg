@@ -614,29 +614,6 @@
            id="tspan4390">expansion</tspan></text>
     </g>
     <g
-       id="g4335"
-       transform="translate(-434.53849,220.56881)"
-       style="stroke-width:3.00000018;stroke-miterlimit:4;stroke-dasharray:none">
-      <ellipse
-         ry="29.068794"
-         rx="100.28831"
-         cy="782.36218"
-         cx="-180"
-         id="path4329"
-         style="opacity:1;fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:#000000;stroke-width:3.00000018;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1" />
-      <text
-         sodipodi:linespacing="125%"
-         id="text4331"
-         y="793.54626"
-         x="-223.38135"
-         style="font-style:normal;font-weight:normal;font-size:30px;line-height:125%;font-family:asdf;-inkscape-font-specification:asdf;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:3.00000018;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
-         xml:space="preserve"><tspan
-           y="793.54626"
-           x="-223.38135"
-           id="tspan4333"
-           sodipodi:role="line">direct</tspan></text>
-    </g>
-    <g
        transform="translate(505.46155,220.56881)"
        id="g4361"
        style="stroke-width:3.00000018;stroke-miterlimit:4;stroke-dasharray:none">
@@ -1163,5 +1140,28 @@
        inkscape:connector-curvature="0"
        inkscape:connection-start="#g4377"
        inkscape:connection-end="#g4274" />
+    <g
+       id="g4335"
+       transform="translate(-434.53849,220.56881)"
+       style="stroke-width:3.00000018;stroke-miterlimit:4;stroke-dasharray:none">
+      <ellipse
+         ry="29.068794"
+         rx="100.28831"
+         cy="782.36218"
+         cx="-180"
+         id="path4329"
+         style="opacity:1;fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:#000000;stroke-width:3.00000018;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1" />
+      <text
+         sodipodi:linespacing="125%"
+         id="text4331"
+         y="793.54626"
+         x="-223.38135"
+         style="font-style:normal;font-weight:normal;font-size:30px;line-height:125%;font-family:asdf;-inkscape-font-specification:asdf;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:3.00000018;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+         xml:space="preserve"><tspan
+           y="793.54626"
+           x="-223.38135"
+           id="tspan4333"
+           sodipodi:role="line">direct</tspan></text>
+    </g>
   </g>
 </svg>

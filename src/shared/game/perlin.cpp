@@ -35,6 +35,46 @@ double Perlin::octavePerlin(double x, double y, double z, int octaves, double pe
     return total / max_value;
 }
 
+void Perlin::octavePerlin(
+		double startX, double startY, double startZ,
+		double lengthX, double lengthY, double lengthZ,
+		double stepSize,
+		int octaves,
+		double persistence,
+		double *buffer) {
+	double endX = startX + lengthX;
+	double endY = startY + lengthY;
+	double endZ = startZ + lengthZ;
+	int index = 0;
+	for (double z = startZ; z < endZ; z += stepSize) {
+		for (double y = startY; y < endY; y += stepSize) {
+			for (double x = startX; x < endX; x += stepSize) {
+				buffer[index] = octavePerlin(x, y, z, octaves, persistence);
+				index++;
+			}
+		}
+	}
+}
+
+void Perlin::octavePerlin(
+		double startX, double startY,
+		double lengthX, double lengthY,
+		double stepSize,
+		int octaves,
+		double persistence,
+		double *buffer) {
+	double endX = startX + lengthX;
+	double endY = startY + lengthY;
+	int index = 0;
+	for (double y = startY; y < endY; y += stepSize) {
+		for (double x = startX; x < endX; x += stepSize) {
+			buffer[index] = octavePerlin(x, y, 0, octaves, persistence);
+			index++;
+		}
+	}
+}
+
+
 double Perlin::perlin(double x, double y, double z) {
 	// lowest corner of the cell, opposite corner have xi + 1 etc
     const int xi = (int) floor(x);
