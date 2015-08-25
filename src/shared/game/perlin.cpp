@@ -36,7 +36,7 @@ void NoiseBase::noise2(
 	double x, y;
 	for (iy = 0, y = sy; iy < ny; iy++, y += dy)
 	for (ix = 0, x = sx; ix < nx; ix++, x += dx) {
-		buffer[index++] = noise3(x, y, 0, octaves, persistence);
+		buffer[index++] = noise2(x, y, octaves, persistence);
 	}
 }
 
@@ -56,7 +56,7 @@ double Perlin::noise3(double x, double y, double z, uint octaves, double persist
     double amplitude = 1;
     double max_value = 0;
     for (uint i = 0; i < octaves; i++) {
-        total += perlin(x * frequency, y * frequency, z * frequency, i) * amplitude;
+        total += perlin3(x * frequency, y * frequency, z * frequency, i) * amplitude;
 		// most implementations want to preserve the values falling in the interval [0, 1] but we
 		// want to instead preserve the statistical properties of the individual octaves, namely
 		// the variance.  This way the distribution of values from the noise function is not
@@ -69,7 +69,26 @@ double Perlin::noise3(double x, double y, double z, uint octaves, double persist
 	return (normalized + 1) * 0.5;
 }
 
-double Perlin::perlin(double x, double y, double z, int which_octave) {
+double Perlin::noise2(double x, double y, uint octaves, double persistence) {
+    double total = 0;
+    double frequency = 1;
+    double amplitude = 1;
+    double max_value = 0;
+    for (uint i = 0; i < octaves; i++) {
+        total += perlin2(x * frequency, y * frequency, i) * amplitude;
+		// most implementations want to preserve the values falling in the interval [0, 1] but we
+		// want to instead preserve the statistical properties of the individual octaves, namely
+		// the variance.  This way the distribution of values from the noise function is not
+		// dependent on the number of octaves used.
+		max_value += amplitude * amplitude;
+        amplitude *= persistence;
+        frequency *= 2;
+    }
+	double normalized = total / sqrt(max_value);
+	return (normalized + 1) * 0.5;
+}
+
+double Perlin::perlin3(double x, double y, double z, int which_octave) {
 	// lowest corner of the cell, opposite corner have xi + 1 etc
     const int xi = (int) floor(x);
     const int yi = (int) floor(y);
@@ -105,16 +124,46 @@ double Perlin::perlin(double x, double y, double z, int which_octave) {
 	const uint8 bbb = hasher.get() & 0xFF;
 
 	// multiply the relative coordinate in the cell with the random gradient and lerp it together
-    const double caa = lerp(grad(aaa, xf, yf, zf), grad(baa, xf - 1, yf, zf), u);
-    const double cba = lerp(grad(aba, xf, yf - 1, zf), grad(bba, xf - 1, yf - 1, zf), u);
-    const double cab = lerp(grad(aab, xf, yf, zf - 1), grad(bab, xf - 1, yf, zf - 1), u);
-    const double cbb = lerp(grad(abb, xf, yf - 1, zf - 1), grad(bbb, xf - 1, yf - 1, zf - 1), u);
+    const double caa = lerp(grad3(aaa, xf, yf, zf), grad3(baa, xf - 1, yf, zf), u);
+    const double cba = lerp(grad3(aba, xf, yf - 1, zf), grad3(bba, xf - 1, yf - 1, zf), u);
+    const double cab = lerp(grad3(aab, xf, yf, zf - 1), grad3(bab, xf - 1, yf, zf - 1), u);
+    const double cbb = lerp(grad3(abb, xf, yf - 1, zf - 1), grad3(bbb, xf - 1, yf - 1, zf - 1), u);
     const double cca = lerp(caa, cba, v);
     const double ccb = lerp(cab, cbb, v);
     return lerp(cca, ccb, w);
 }
 
-double Perlin::grad(uint8 hash, double x, double y, double z) {
+double Perlin::perlin2(double x, double y, int which_octave) {
+	// lowest corner of the cell, opposite corner have xi + 1 etc
+    const int xi = (int) floor(x);
+    const int yi = (int) floor(y);
+
+	// relative position in the cell
+    const double xf = x - floor(x);
+    const double yf = y - floor(y);
+
+	// fade constants to smooth the solution
+    const double u = fade(xf);
+    const double v = fade(yf);
+
+	// calculate pseudorandom hashes for all the corners
+	// we also hash the number of the octave, so the octaves will not be correlated
+	hasher.reset() << which_octave << xi << yi;
+	const uint8 aa = hasher.get() & 0xFF;
+	hasher.reset() << which_octave << xi << yi + 1;
+	const uint8 ab = hasher.get() & 0xFF;
+	hasher.reset() << which_octave << xi + 1 << yi;
+	const uint8 ba = hasher.get() & 0xFF;
+	hasher.reset() << which_octave << xi + 1 << yi + 1;
+	const uint8 bb = hasher.get() & 0xFF;
+
+	// multiply the relative coordinate in the cell with the random gradient and lerp it together
+    const double ca = lerp(grad2(aa, xf, yf), grad2(ba, xf - 1, yf), u);
+    const double cb = lerp(grad2(ab, xf, yf - 1), grad2(bb, xf - 1, yf - 1), u);
+    return lerp(ca, cb, v);
+}
+
+double Perlin::grad3(uint8 hash, double x, double y, double z) {
 	static const double lookup_table[0x100 * 3] = {
 		// 256 pseudo-random vectors that were uniformly distributed on a unit sphere
 		// computed via monte-carlo shooting inside of a volumetric sphere, then repeatedly
@@ -380,6 +429,275 @@ double Perlin::grad(uint8 hash, double x, double y, double z) {
 	const double *gradient = lookup_table + (hash & 0xFF) * 3;
 	return gradient[0] * x + gradient[1] * y + gradient[2] * z;
 }
+
+
+double Perlin::grad2(uint8 hash, double x, double y) {
+	static const double lookup_table[0x100 * 2] = {
+		// 256 pseudo-random vectors that were uniformly distributed on a unit circle
+		// generating uniformly spaced vectors on a unit circle is trivial.  The values were
+		// shuffled to increase appareant randomness, when hashes have low entropy
+		+0.09801714, +0.99518473,
+		-0.21910124, +0.97570213,
+		-0.80320753, +0.59569930,
+		+0.21910124, +0.97570213,
+		-0.70710678, +0.70710678,
+		+0.84485357, +0.53499762,
+		-0.49289819, +0.87008699,
+		+0.97003125, -0.24298018,
+		+0.31368174, -0.94952818,
+		-0.57580819, +0.81758481,
+		+0.63439328, -0.77301045,
+		+0.85772861, +0.51410274,
+		+0.40524131, +0.91420976,
+		-0.42755509, +0.90398929,
+		+0.95694034, -0.29028468,
+		-1.00000000, +0.00000000,
+		+0.92387953, -0.38268343,
+		+0.97570213, -0.21910124,
+		+0.74095113, -0.67155895,
+		-0.61523159, +0.78834643,
+		+0.97003125, +0.24298018,
+		-0.98078528, -0.19509032,
+		-0.94952818, +0.31368174,
+		-0.40524131, +0.91420976,
+		+0.17096189, -0.98527764,
+		-0.78834643, -0.61523159,
+		+0.80320753, +0.59569930,
+		+0.88192126, +0.47139674,
+		+0.02454123, -0.99969882,
+		+0.33688985, -0.94154407,
+		-0.35989504, -0.93299280,
+		-0.65317284, -0.75720885,
+		-0.17096189, +0.98527764,
+		+0.53499762, -0.84485357,
+		-0.35989504, +0.93299280,
+		-0.49289819, -0.87008699,
+		-0.96377607, -0.26671276,
+		+0.61523159, -0.78834643,
+		-0.91420976, -0.40524131,
+		+0.83146961, -0.55557023,
+		+0.94952818, +0.31368174,
+		+0.96377607, -0.26671276,
+		+0.81758481, -0.57580819,
+		+0.68954054, -0.72424708,
+		-0.24298018, -0.97003125,
+		+0.55557023, -0.83146961,
+		+0.74095113, +0.67155895,
+		+0.04906767, +0.99879546,
+		-0.26671276, -0.96377607,
+		+0.00000000, +1.00000000,
+		-0.99969882, +0.02454123,
+		+0.51410274, +0.85772861,
+		-0.74095113, -0.67155895,
+		+0.98917651, +0.14673047,
+		+0.44961133, +0.89322430,
+		-0.89322430, +0.44961133,
+		+0.31368174, +0.94952818,
+		-0.19509032, -0.98078528,
+		+0.17096189, +0.98527764,
+		+0.98078528, +0.19509032,
+		-0.99729046, -0.07356456,
+		-0.96377607, +0.26671276,
+		-0.12241068, +0.99247953,
+		+0.72424708, +0.68954054,
+		-0.98917651, -0.14673047,
+		-0.24298018, +0.97003125,
+		-0.97003125, +0.24298018,
+		-0.67155895, -0.74095113,
+		+0.94952818, -0.31368174,
+		+0.94154407, +0.33688985,
+		-0.57580819, -0.81758481,
+		+0.29028468, -0.95694034,
+		-0.87008699, +0.49289819,
+		+0.99969882, +0.02454123,
+		+0.35989504, +0.93299280,
+		-0.95694034, +0.29028468,
+		-0.98917651, +0.14673047,
+		-0.40524131, -0.91420976,
+		-0.44961133, -0.89322430,
+		-0.65317284, +0.75720885,
+		-0.47139674, +0.88192126,
+		+0.07356456, -0.99729046,
+		+0.98078528, -0.19509032,
+		+0.38268343, -0.92387953,
+		-0.61523159, -0.78834643,
+		+0.89322430, -0.44961133,
+		+0.12241068, +0.99247953,
+		+0.51410274, -0.85772861,
+		-0.90398929, -0.42755509,
+		-0.33688985, -0.94154407,
+		-0.77301045, -0.63439328,
+		+0.90398929, -0.42755509,
+		-0.87008699, -0.49289819,
+		+0.47139674, -0.88192126,
+		-0.92387953, +0.38268343,
+		-0.83146961, +0.55557023,
+		-0.68954054, +0.72424708,
+		+0.42755509, +0.90398929,
+		-0.68954054, -0.72424708,
+		-0.81758481, -0.57580819,
+		-0.72424708, +0.68954054,
+		+0.14673047, +0.98917651,
+		+0.99969882, -0.02454123,
+		+0.57580819, -0.81758481,
+		+0.29028468, +0.95694034,
+		-0.26671276, +0.96377607,
+		+0.67155895, -0.74095113,
+		+0.19509032, -0.98078528,
+		+1.00000000, +0.00000000,
+		-0.98527764, +0.17096189,
+		-0.92387953, -0.38268343,
+		+0.44961133, -0.89322430,
+		-0.93299280, -0.35989504,
+		-0.21910124, -0.97570213,
+		+0.19509032, +0.98078528,
+		+0.91420976, +0.40524131,
+		+0.07356456, +0.99729046,
+		-0.84485357, -0.53499762,
+		+0.99729046, +0.07356456,
+		-0.04906767, -0.99879546,
+		+0.87008699, +0.49289819,
+		-0.33688985, +0.94154407,
+		-0.99518473, +0.09801714,
+		-0.88192126, +0.47139674,
+		+0.99729046, -0.07356456,
+		-0.89322430, -0.44961133,
+		+0.24298018, -0.97003125,
+		-0.02454123, -0.99969882,
+		+0.67155895, +0.74095113,
+		-0.99518473, -0.09801714,
+		-0.09801714, +0.99518473,
+		-0.51410274, +0.85772861,
+		+0.49289819, +0.87008699,
+		+0.94154407, -0.33688985,
+		+0.97570213, +0.21910124,
+		-0.12241068, -0.99247953,
+		-0.29028468, -0.95694034,
+		+0.42755509, -0.90398929,
+		-0.99879546, -0.04906767,
+		-0.81758481, +0.57580819,
+		-0.14673047, +0.98917651,
+		+0.93299280, +0.35989504,
+		+0.68954054, +0.72424708,
+		+0.61523159, +0.78834643,
+		+0.55557023, +0.83146961,
+		+0.85772861, -0.51410274,
+		-0.97003125, -0.24298018,
+		+0.59569930, +0.80320753,
+		-0.53499762, +0.84485357,
+		+0.96377607, +0.26671276,
+		+0.35989504, -0.93299280,
+		+0.99518473, -0.09801714,
+		+0.78834643, +0.61523159,
+		+0.63439328, +0.77301045,
+		+0.99879546, +0.04906767,
+		+0.70710678, +0.70710678,
+		+0.75720885, +0.65317284,
+		-0.55557023, -0.83146961,
+		-0.59569930, -0.80320753,
+		-0.99879546, +0.04906767,
+		+0.98917651, -0.14673047,
+		-0.99247953, +0.12241068,
+		+0.12241068, -0.99247953,
+		-0.19509032, +0.98078528,
+		-0.93299280, +0.35989504,
+		+0.84485357, -0.53499762,
+		-0.83146961, -0.55557023,
+		-0.72424708, -0.68954054,
+		-0.42755509, -0.90398929,
+		+0.78834643, -0.61523159,
+		-0.31368174, -0.94952818,
+		+0.49289819, -0.87008699,
+		-0.44961133, +0.89322430,
+		+0.40524131, -0.91420976,
+		+0.98527764, -0.17096189,
+		-0.91420976, +0.40524131,
+		-0.38268343, +0.92387953,
+		-0.85772861, +0.51410274,
+		+0.21910124, -0.97570213,
+		-0.74095113, +0.67155895,
+		-0.29028468, +0.95694034,
+		+0.26671276, +0.96377607,
+		-0.31368174, +0.94952818,
+		-0.90398929, +0.42755509,
+		+0.91420976, -0.40524131,
+		+0.65317284, -0.75720885,
+		+0.77301045, -0.63439328,
+		+0.92387953, +0.38268343,
+		+0.87008699, -0.49289819,
+		-0.02454123, +0.99969882,
+		-0.84485357, +0.53499762,
+		+0.09801714, -0.99518473,
+		+0.81758481, +0.57580819,
+		-0.53499762, -0.84485357,
+		+0.99247953, -0.12241068,
+		-0.75720885, +0.65317284,
+		-0.07356456, +0.99729046,
+		+0.99247953, +0.12241068,
+		-0.78834643, +0.61523159,
+		+0.59569930, -0.80320753,
+		+0.83146961, +0.55557023,
+		+0.24298018, +0.97003125,
+		-0.94154407, +0.33688985,
+		-0.63439328, +0.77301045,
+		-0.97570213, +0.21910124,
+		+0.53499762, +0.84485357,
+		-0.51410274, -0.85772861,
+		-0.75720885, -0.65317284,
+		+0.26671276, -0.96377607,
+		-0.47139674, -0.88192126,
+		-0.99729046, +0.07356456,
+		+0.38268343, +0.92387953,
+		-0.99247953, -0.12241068,
+		-0.99969882, -0.02454123,
+		+0.72424708, -0.68954054,
+		+0.57580819, +0.81758481,
+		-0.94154407, -0.33688985,
+		+0.14673047, -0.98917651,
+		-0.70710678, -0.70710678,
+		-0.55557023, +0.83146961,
+		-0.00000000, -1.00000000,
+		+0.77301045, +0.63439328,
+		+0.02454123, +0.99969882,
+		-0.80320753, -0.59569930,
+		-0.97570213, -0.21910124,
+		+0.04906767, -0.99879546,
+		-0.09801714, -0.99518473,
+		-0.77301045, +0.63439328,
+		+0.70710678, -0.70710678,
+		-0.98078528, +0.19509032,
+		-0.17096189, -0.98527764,
+		+0.98527764, +0.17096189,
+		+0.89322430, +0.44961133,
+		+0.88192126, -0.47139674,
+		-0.94952818, -0.31368174,
+		-0.88192126, -0.47139674,
+		-0.98527764, -0.17096189,
+		-0.14673047, -0.98917651,
+		+0.65317284, +0.75720885,
+		-0.38268343, -0.92387953,
+		+0.99518473, +0.09801714,
+		-0.63439328, -0.77301045,
+		+0.47139674, +0.88192126,
+		+0.90398929, +0.42755509,
+		-0.95694034, -0.29028468,
+		-0.04906767, +0.99879546,
+		+0.95694034, +0.29028468,
+		+0.80320753, -0.59569930,
+		-0.67155895, +0.74095113,
+		-0.59569930, +0.80320753,
+		-0.07356456, -0.99729046,
+		+0.93299280, -0.35989504,
+		+0.99879546, -0.04906767,
+		-0.85772861, -0.51410274,
+		+0.75720885, -0.65317284,
+		+0.33688985, +0.94154407,
+	};
+	// pick a random vector and multiply the relative location vector with it
+	const double *gradient = lookup_table + (hash & 0xFF) * 2;
+	return gradient[0] * x + gradient[1] * y;
+}
+
 
 double Perlin::fade(double t) {
 	// 6t^5 - 15t^4 + 10t^3

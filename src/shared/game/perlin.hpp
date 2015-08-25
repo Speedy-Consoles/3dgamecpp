@@ -61,14 +61,19 @@ class Perlin : public NoiseBase {
 
 public:
 	Perlin(uint64 seed);
+
+	using NoiseBase::noise3;
+	using NoiseBase::noise2;
 	
 	double noise3(double x, double y, double z, uint octaves, double persistence) override;
-	using NoiseBase::noise3;
+	double noise2(double x, double y, uint octaves, double persistence) override;
 
 private:
-	double perlin(double x, double y, double z, int which_octave);
-
-	static double grad(uint8 hash, double x, double y, double z);
+	double perlin3(double x, double y, double z, int which_octave);
+	double perlin2(double x, double y, int which_octave);
+	
+	static double grad3(uint8 hash, double x, double y, double z);
+	static double grad2(uint8 hash, double x, double y);
 	static double fade(double t);
 	static double lerp(double a, double b, double x);
 };
