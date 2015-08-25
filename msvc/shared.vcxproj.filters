@@ -86,6 +86,9 @@
     <ClCompile Include="..\src\shared\saves.cpp">
       <Filter>Source Files\shared</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\shared\game\elevation_generator.cpp">
+      <Filter>Source Files\game</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\shared\engine\buffer.hpp">
@@ -168,6 +171,9 @@
     </ClInclude>
     <ClInclude Include="..\src\shared\saves.hpp">
       <Filter>Header Files\shared</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\shared\game\elevation_generator.hpp">
+      <Filter>Header Files\game</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

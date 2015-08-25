@@ -24,6 +24,7 @@
     <ClCompile Include="..\src\shared\engine\time.cpp" />
     <ClCompile Include="..\src\shared\engine\unicode_int.cpp" />
     <ClCompile Include="..\src\shared\game\chunk.cpp" />
+    <ClCompile Include="..\src\shared\game\elevation_generator.cpp" />
     <ClCompile Include="..\src\shared\game\perlin.cpp" />
     <ClCompile Include="..\src\shared\game\player.cpp" />
     <ClCompile Include="..\src\shared\game\world.cpp" />
@@ -53,6 +54,7 @@
     <ClInclude Include="..\src\shared\engine\unicode_int.hpp" />
     <ClInclude Include="..\src\shared\engine\vmath.hpp" />
     <ClInclude Include="..\src\shared\game\chunk.hpp" />
+    <ClInclude Include="..\src\shared\game\elevation_generator.hpp" />
     <ClInclude Include="..\src\shared\game\perlin.hpp" />
     <ClInclude Include="..\src\shared\game\player.hpp" />
     <ClInclude Include="..\src\shared\game\world.hpp" />
