@@ -49,7 +49,7 @@ void WorldGenerator::generateChunk(Chunk *chunk) {
 					double px = bcx / wp.surfaceScale;
 					double py = bcy / wp.surfaceScale;
 					double pz = bcz / wp.surfaceScale;
-					double v = perlin.octavePerlin(px, py, pz, 6, wp.surfaceExp);
+					double v = perlin.noise3(px, py, pz, 6, wp.surfaceExp);
 					if (v > threshold)
 						solid = true;
 					else

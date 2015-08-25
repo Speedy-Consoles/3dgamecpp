@@ -41,7 +41,7 @@ const double *ElevationGenerator::getChunk(vec2i64 chunkCoords) {
 
 void ElevationGenerator::generateChunk(vec2i64 chunkCoords, double *chunk) {
 	double base[Chunk::WIDTH * Chunk::WIDTH];
-	basePerlin.octavePerlin(
+	basePerlin.noise2(
 		chunkCoords.cast<double>() * Chunk::WIDTH / wp.elevation_xy_scale,
 		vec2d(1 / wp.elevation_xy_scale),
 		vec2ui(Chunk::WIDTH),
@@ -93,19 +93,19 @@ void ElevationGenerator::generateChunk(vec2i64 chunkCoords, double *chunk) {
 	double flatlandHeight[Chunk::WIDTH * Chunk::WIDTH];
 	double mountainHeight[Chunk::WIDTH * Chunk::WIDTH];
 
-	oceanPerlin.octavePerlin(
+	oceanPerlin.noise2(
 		chunkCoords.cast<double>() * Chunk::WIDTH / wp.ocean_xy_scale,
 		vec2d(1 / wp.ocean_xy_scale),
 		vec2ui(Chunk::WIDTH),
 		wp.ocean_octaves, wp.ocean_exp, oceanHeight
 	);
-	flatlandPerlin.octavePerlin(
+	flatlandPerlin.noise2(
 		chunkCoords.cast<double>() * Chunk::WIDTH / wp.flatland_xy_scale,
 		vec2d(1 / wp.flatland_xy_scale),
 		vec2ui(Chunk::WIDTH),
 		wp.flatland_octaves, wp.flatland_exp, flatlandHeight
 	);
-	mountainPerlin.octavePerlin(
+	mountainPerlin.noise2(
 		chunkCoords.cast<double>() * Chunk::WIDTH / wp.mountain_xy_scale,
 		vec2d(1 / wp.mountain_xy_scale),
 		vec2ui(Chunk::WIDTH),
