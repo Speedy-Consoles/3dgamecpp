@@ -52,40 +52,83 @@ Perlin::Perlin(uint64 seed) : hasher(seed) {}
 
 double Perlin::noise3(double x, double y, double z, uint octaves, double persistence) {
     double total = 0;
-    double frequency = 1;
+    double freq = 1;
     double amplitude = 1;
     double max_value = 0;
     for (uint i = 0; i < octaves; i++) {
-        total += perlin3(x * frequency, y * frequency, z * frequency, i) * amplitude;
+        total += perlin3(x * freq, y * freq, z * freq, i) * amplitude;
 		// most implementations want to preserve the values falling in the interval [0, 1] but we
 		// want to instead preserve the statistical properties of the individual octaves, namely
 		// the variance.  This way the distribution of values from the noise function is not
 		// dependent on the number of octaves used.
 		max_value += amplitude * amplitude;
         amplitude *= persistence;
-        frequency *= 2;
+        freq *= 2;
     }
-	double normalized = total / sqrt(max_value);
-	return (normalized + 1) * 0.5;
+	return (total / sqrt(max_value) + 1) * 0.5;
 }
 
 double Perlin::noise2(double x, double y, uint octaves, double persistence) {
     double total = 0;
-    double frequency = 1;
+    double freq = 1;
     double amplitude = 1;
     double max_value = 0;
     for (uint i = 0; i < octaves; i++) {
-        total += perlin2(x * frequency, y * frequency, i) * amplitude;
-		// most implementations want to preserve the values falling in the interval [0, 1] but we
-		// want to instead preserve the statistical properties of the individual octaves, namely
-		// the variance.  This way the distribution of values from the noise function is not
-		// dependent on the number of octaves used.
+        total += perlin2(x * freq, y * freq, i) * amplitude;
 		max_value += amplitude * amplitude;
         amplitude *= persistence;
-        frequency *= 2;
+        freq *= 2;
     }
-	double normalized = total / sqrt(max_value);
-	return (normalized + 1) * 0.5;
+	return (total / sqrt(max_value) + 1) * 0.5;
+}
+
+void Perlin::noise3(
+	double sx, double sy, double sz,
+	double dx, double dy, double dz,
+	uint nx, uint ny, uint nz,
+	uint octaves, double persistence,
+	double *buffer)
+{
+	memset(buffer, 0, nx * ny * nz * sizeof(double));
+
+    double freq = 1;
+    double amplitude = 1;
+    double max_value = 0;
+    for (uint i = 0; i < octaves; i++) {
+        perlin3(sx * freq, sy * freq, sz * freq, dx * freq, dy * freq, dz * freq,
+				nx, ny, nz, i, amplitude, buffer);
+		max_value += amplitude * amplitude;
+        amplitude *= persistence;
+        freq *= 2;
+    }
+
+	for (uint i = 0; i < nx * ny * nz; ++i) {
+		buffer[i] = (buffer[i] / sqrt(max_value) + 1) * 0.5;
+	}
+}
+
+void Perlin::noise2(
+	double sx, double sy,
+	double dx, double dy,
+	uint nx, uint ny,
+	uint octaves, double persistence,
+	double *buffer)
+{
+	memset(buffer, 0, nx * ny * sizeof(double));
+
+    double freq = 1;
+    double amplitude = 1;
+    double max_value = 0;
+    for (uint i = 0; i < octaves; i++) {
+        perlin2(sx * freq, sy * freq, dx * freq, dy * freq, nx, ny, i, amplitude, buffer);
+		max_value += amplitude * amplitude;
+        amplitude *= persistence;
+        freq *= 2;
+    }
+
+	for (uint i = 0; i < nx * ny; ++i) {
+		buffer[i] = (buffer[i] / sqrt(max_value) + 1) * 0.5;
+	}
 }
 
 double Perlin::perlin3(double x, double y, double z, int which_octave) {
@@ -161,6 +204,98 @@ double Perlin::perlin2(double x, double y, int which_octave) {
     const double ca = lerp(grad2(aa, xf, yf), grad2(ba, xf - 1, yf), u);
     const double cb = lerp(grad2(ab, xf, yf - 1), grad2(bb, xf - 1, yf - 1), u);
     return lerp(ca, cb, v);
+}
+
+void Perlin::perlin3(double sx, double sy, double sz, double dx, double dy, double dz,
+	uint nx, uint ny, uint nz, int which_octave, double amplitude, double *buffer)
+{
+	uint index = 0;
+	uint ix, iy, iz;
+	double x, y, z;
+	for (iz = 0, z = sz; iz < nz; iz++, z += dz)
+	for (iy = 0, y = sy; iy < ny; iy++, y += dy)
+	for (ix = 0, x = sx; ix < nx; ix++, x += dx) {
+		// lowest corner of the cell, opposite corner have xi + 1 etc
+		const int xi = (int) floor(x);
+		const int yi = (int) floor(y);
+		const int zi = (int) floor(z);
+
+		// relative position in the cell
+		const double xf = x - floor(x);
+		const double yf = y - floor(y);
+		const double zf = z - floor(z);
+
+		// fade constants to smooth the solution
+		const double u = fade(xf);
+		const double v = fade(yf);
+		const double w = fade(zf);
+
+		// calculate pseudorandom hashes for all the corners
+		// we also hash the number of the octave, so the octaves will not be correlated
+		hasher.reset() << which_octave << xi << yi << zi;
+		const uint8 aaa = hasher.get() & 0xFF;
+		hasher.reset() << which_octave << xi << yi + 1 << zi;
+		const uint8 aba = hasher.get() & 0xFF;
+		hasher.reset() << which_octave << xi << yi << zi + 1;
+		const uint8 aab = hasher.get() & 0xFF;
+		hasher.reset() << which_octave << xi << yi + 1 << zi + 1;
+		const uint8 abb = hasher.get() & 0xFF;
+		hasher.reset() << which_octave << xi + 1 << yi << zi;
+		const uint8 baa = hasher.get() & 0xFF;
+		hasher.reset() << which_octave << xi + 1 << yi + 1 << zi;
+		const uint8 bba = hasher.get() & 0xFF;
+		hasher.reset() << which_octave << xi + 1 << yi << zi + 1;
+		const uint8 bab = hasher.get() & 0xFF;
+		hasher.reset() << which_octave << xi + 1 << yi + 1 << zi + 1;
+		const uint8 bbb = hasher.get() & 0xFF;
+
+		// multiply the relative coordinate in the cell with the random gradient and lerp it together
+		const double caa = lerp(grad3(aaa, xf, yf, zf), grad3(baa, xf - 1, yf, zf), u);
+		const double cba = lerp(grad3(aba, xf, yf - 1, zf), grad3(bba, xf - 1, yf - 1, zf), u);
+		const double cab = lerp(grad3(aab, xf, yf, zf - 1), grad3(bab, xf - 1, yf, zf - 1), u);
+		const double cbb = lerp(grad3(abb, xf, yf - 1, zf - 1), grad3(bbb, xf - 1, yf - 1, zf - 1), u);
+		const double cca = lerp(caa, cba, v);
+		const double ccb = lerp(cab, cbb, v);
+		buffer[index++] += lerp(cca, ccb, w) * amplitude;
+	}
+}
+
+void Perlin::perlin2(double sx, double sy, double dx, double dy,
+	uint nx, uint ny, int which_octave, double amplitude, double *buffer)
+{
+	uint index = 0;
+	uint ix, iy;
+	double x, y;
+	for (iy = 0, y = sy; iy < ny; iy++, y += dy)
+	for (ix = 0, x = sx; ix < nx; ix++, x += dx) {
+		// lowest corner of the cell, opposite corner have xi + 1 etc
+		const int xi = (int) floor(x);
+		const int yi = (int) floor(y);
+
+		// relative position in the cell
+		const double xf = x - floor(x);
+		const double yf = y - floor(y);
+
+		// fade constants to smooth the solution
+		const double u = fade(xf);
+		const double v = fade(yf);
+
+		// calculate pseudorandom hashes for all the corners
+		// we also hash the number of the octave, so the octaves will not be correlated
+		hasher.reset() << which_octave << xi << yi;
+		const uint8 aa = hasher.get() & 0xFF;
+		hasher.reset() << which_octave << xi << yi + 1;
+		const uint8 ab = hasher.get() & 0xFF;
+		hasher.reset() << which_octave << xi + 1 << yi;
+		const uint8 ba = hasher.get() & 0xFF;
+		hasher.reset() << which_octave << xi + 1 << yi + 1;
+		const uint8 bb = hasher.get() & 0xFF;
+
+		// multiply the relative coordinate in the cell with the random gradient and lerp it together
+		const double ca = lerp(grad2(aa, xf, yf), grad2(ba, xf - 1, yf), u);
+		const double cb = lerp(grad2(ab, xf, yf - 1), grad2(bb, xf - 1, yf - 1), u);
+		buffer[index++] += lerp(ca, cb, v) * amplitude;
+	}
 }
 
 double Perlin::grad3(uint8 hash, double x, double y, double z) {
@@ -430,7 +565,6 @@ double Perlin::grad3(uint8 hash, double x, double y, double z) {
 	return gradient[0] * x + gradient[1] * y + gradient[2] * z;
 }
 
-
 double Perlin::grad2(uint8 hash, double x, double y) {
 	static const double lookup_table[0x100 * 2] = {
 		// 256 pseudo-random vectors that were uniformly distributed on a unit circle
@@ -697,7 +831,6 @@ double Perlin::grad2(uint8 hash, double x, double y) {
 	const double *gradient = lookup_table + (hash & 0xFF) * 2;
 	return gradient[0] * x + gradient[1] * y;
 }
-
 
 double Perlin::fade(double t) {
 	// 6t^5 - 15t^4 + 10t^3
