@@ -2,6 +2,7 @@
 
 #include <random>
 #include <algorithm>
+#include <cstring>
 
 double NoiseBase::noise2(double x, double y, uint octaves, double persistence) {
 	return noise3(x, y, 0, octaves, persistence);
