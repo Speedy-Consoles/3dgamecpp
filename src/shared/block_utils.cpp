@@ -134,6 +134,14 @@ size_t vec3i64HashFunc(vec3i64 v) {
 	return result;
 }
 
+size_t vec2i64HashFunc(vec2i64 v) {
+	static const int prime = 31;
+	size_t result = 1;
+	result = prime * result + (size_t) (v[0] ^ (v[0] >> 32));
+	result = prime * result + (size_t) (v[1] ^ (v[1] >> 32));
+	return result;
+}
+
 bool vec3i64CompFunc(vec3i64 v1, vec3i64 v2) {
 	int n1 = v1.norm2();
 	int n2 = v2.norm2();

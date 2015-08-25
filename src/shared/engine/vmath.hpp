@@ -268,10 +268,13 @@ vec4<T>::vec4(T t1, T t2, T t3, T t4) {
 // abbreviations
 
 using vec2i = vec2<int>;
+using vec2ui = vec2<uint>;
+using vec2i64 = vec2<int64>;
 using vec2f = vec2<float>;
 using vec2d = vec2<double>;
 
 using vec3i = vec3<int>;
+using vec3ui = vec3<uint>;
 using vec3i8 = vec3<int8>;
 using vec3ui8 = vec3<uint8>;
 using vec3i64 = vec3<int64>;

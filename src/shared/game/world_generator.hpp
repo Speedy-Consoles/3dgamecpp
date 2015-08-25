@@ -10,8 +10,11 @@
 
 #include "shared/engine/macros.hpp"
 
+#include "elevation_generator.hpp"
 #include "perlin.hpp"
 #include "chunk.hpp"
+
+class ElevationGenerator;
 
 struct WorldParams {
 	double elevation_xy_scale   = 1000;
@@ -69,13 +72,9 @@ public:
 private:
 	WorldParams wp;
 
-	Perlin elevation_perlin;
+	ElevationGenerator elevationGenerator;
 	Perlin vegetation_perlin;
 	Perlin temperature_perlin;
-
-	Perlin mountain_perlin;
-	Perlin flatland_perlin;
-	Perlin ocean_perlin;
 	
 	Perlin hollowness_perlin;
 	Perlin cave_perlin;
