@@ -3,52 +3,8 @@
 #include "shared/engine/math.hpp"
 #include "shared/engine/vmath.hpp"
 
-static double elevation_xy_scale   = 1000;
-static double vegetation_xy_scale  = 1000;
-static double temperature_xy_scale = 1500;
-static double hollowness_xy_scale  = 800;
-
-static double ocean_threshold = 0.2;
-static double beach_threshold = 0.02;
-static double ocean_stretch   = 0.2;
-static double ocean_xy_scale  = 1000;
-static double ocean_depth     = -200;
-static int    ocean_octaves   = 4;
-static double ocean_exp       = 0.8;
-
-static double mountain_threshold = 0.6;
-static double mountain_stretch   = 0.2;
-static double mountain_xy_scale  = 500;
-static double mountain_height    = 800;
-static int    mountain_octaves   = 8;
-static double mountain_exp       = 0.5;
-
-static double flatland_height   = 25;
-static double flatland_xy_scale = 800;
-static int    flatland_octaves  = 6;
-static double flatland_exp      = 0.8;
-
-static double cave_threshold   = 0.7;
-static double cave_stretch     = 0.2;
-static double cave_start_depth = -100;
-static double cave_end_depth   = -400;
-static int    cave_octaves     = 8;
-static double cave_border      = 100;
-static double cave_xy_scale    = 1000;
-static double cave_z_scale     = 200;
-static double cave_exp         = 0.4;
-
-static double desert_threshold = 0.3;
-static double grasland_threshold = 0.5;
-
-static double surfaceScale    = 70;
-static double surfaceRelDepth = 0.3;
-static double surfaceExp      = 0.4;
-static double surfaceThresholdXScale = 1;
-static double surfaceThresholdYScale = 1 / surfaceThresholdXScale
-		+ 1 / (surfaceThresholdXScale * surfaceThresholdXScale * surfaceThresholdXScale);
-
-WorldGenerator::WorldGenerator(uint64 seed) :
+WorldGenerator::WorldGenerator(uint64 seed, WorldParams params) :
+	wp(params),
 	elevation_perlin(  seed ^ 0x50a9259b7451453e),
 	vegetation_perlin( seed ^ 0xbebf64c4966b75db),
 	temperature_perlin(seed ^ 0x5364424b2aa0fb15),
@@ -72,29 +28,29 @@ void WorldGenerator::generateChunk(Chunk *chunk) {
 
 			vec3d bc_xy(bcx, bcy, 0);
 			
-			double base_elevation = elevation_perlin.perlin(bc_xy * 1 / elevation_xy_scale);
-			double base_vegetation = vegetation_perlin.perlin(bc_xy * 1 / vegetation_xy_scale);
-			double base_temperature = temperature_perlin.perlin(bc_xy * 1 / temperature_xy_scale);
-			double base_hallowness = hollowness_perlin.perlin(bc_xy * 1 / hollowness_xy_scale);
+			double base_elevation = elevation_perlin.perlin(bc_xy * 1 / wp.elevation_xy_scale);
+			double base_vegetation = vegetation_perlin.perlin(bc_xy * 1 / wp.vegetation_xy_scale);
+			double base_temperature = temperature_perlin.perlin(bc_xy * 1 / wp.temperature_xy_scale);
+			double base_hallowness = hollowness_perlin.perlin(bc_xy * 1 / wp.hollowness_xy_scale);
 
 			double rel_ocean, rel_flatland, rel_mountain;
 
-			if (base_elevation < ocean_threshold) {
+			if (base_elevation < wp.ocean_threshold) {
 				rel_ocean = 1;
 				rel_flatland = 0;
 				rel_mountain = 0;
-			} else if (base_elevation < ocean_threshold + ocean_stretch) {
+			} else if (base_elevation < wp.ocean_threshold + wp.ocean_stretch) {
 				rel_mountain = 0;
-				rel_ocean = 1 - (base_elevation - ocean_threshold) / ocean_stretch;
+				rel_ocean = 1 - (base_elevation - wp.ocean_threshold) / wp.ocean_stretch;
 				rel_ocean *= rel_ocean;
 				rel_flatland = 1 - rel_ocean;
-			} else if (base_elevation < mountain_threshold) {
+			} else if (base_elevation < wp.mountain_threshold) {
 				rel_ocean = 0;
 				rel_flatland = 1;
 				rel_mountain = 0;
-			} else if (base_elevation < mountain_threshold + mountain_stretch) {
+			} else if (base_elevation < wp.mountain_threshold + wp.mountain_stretch) {
 				rel_ocean = 0;
-				rel_mountain = (base_elevation - mountain_threshold) / mountain_stretch;
+				rel_mountain = (base_elevation - wp.mountain_threshold) / wp.mountain_stretch;
 				rel_mountain *= rel_mountain;
 				rel_flatland = 1 - rel_mountain;
 			} else {
@@ -107,21 +63,21 @@ void WorldGenerator::generateChunk(Chunk *chunk) {
 
 			if (rel_ocean > 0) {
 				ocean_h = ocean_perlin.octavePerlin(
-					bc_xy * 1 / ocean_xy_scale, ocean_octaves, ocean_exp
+					bc_xy * 1 / wp.ocean_xy_scale, wp.ocean_octaves, wp.ocean_exp
 				);
-				h += rel_ocean * ocean_h * ocean_depth;
+				h += rel_ocean * ocean_h * wp.ocean_depth;
 			}
 			if (rel_flatland > 0) {
 				flatland_h = flatland_perlin.octavePerlin(
-					bc_xy * 1 / flatland_xy_scale, flatland_octaves, flatland_exp
+					bc_xy * 1 / wp.flatland_xy_scale, wp.flatland_octaves, wp.flatland_exp
 				);
-				h += rel_flatland * flatland_h * flatland_height;
+				h += rel_flatland * flatland_h * wp.flatland_height;
 			}
 			if (rel_mountain > 0) {
 				mountain_h = mountain_perlin.octavePerlin(
-					bc_xy * 1 / mountain_xy_scale, mountain_octaves, mountain_exp
+					bc_xy * 1 / wp.mountain_xy_scale, wp.mountain_octaves, wp.mountain_exp
 				);
-				h += rel_mountain * mountain_h * mountain_height;
+				h += rel_mountain * mountain_h * wp.mountain_height;
 			}
 
 			bool solid = false;
@@ -134,15 +90,15 @@ void WorldGenerator::generateChunk(Chunk *chunk) {
 
 				if (depth < 0) {
 					solid = false;
-				} else if (depth > (h * surfaceRelDepth)) {
+				} else if (depth > (h * wp.surfaceRelDepth)) {
 					solid = true;
 				} else {
-					double funPos = (1 - depth / (h * surfaceRelDepth) - 0.5) * 2 / surfaceThresholdXScale;
-					double threshold = (funPos + funPos * funPos * funPos) / surfaceThresholdYScale + 0.5;
-					double px = bcx / surfaceScale;
-					double py = bcy / surfaceScale;
-					double pz = bcz / surfaceScale;
-					double v = perlin.octavePerlin(px, py, pz, 6, surfaceExp);
+					double funPos = (1 - depth / (h * wp.surfaceRelDepth) - 0.5) * 2 / wp.surfaceThresholdXScale;
+					double threshold = (funPos + funPos * funPos * funPos) / wp.surfaceThresholdYScale + 0.5;
+					double px = bcx / wp.surfaceScale;
+					double py = bcy / wp.surfaceScale;
+					double pz = bcz / wp.surfaceScale;
+					double v = perlin.octavePerlin(px, py, pz, 6, wp.surfaceExp);
 					if (v > threshold)
 						solid = true;
 					else
@@ -151,15 +107,15 @@ void WorldGenerator::generateChunk(Chunk *chunk) {
 
 				double caveness = 0;
 				if (solid) {
-					double mod_cave_start_depth = min(h, 0.0) + cave_start_depth;
+					double mod_cave_start_depth = min(h, 0.0) + wp.cave_start_depth;
 					if (bcz > mod_cave_start_depth) {
 						caveness = 0;
-					} else if (bcz > mod_cave_start_depth - cave_border) {
-						caveness = (mod_cave_start_depth - bcz) / cave_border;
-					} else if (bcz > cave_end_depth + cave_border) {
+					} else if (bcz > mod_cave_start_depth - wp.cave_border) {
+						caveness = (mod_cave_start_depth - bcz) / wp.cave_border;
+					} else if (bcz > wp.cave_end_depth + wp.cave_border) {
 						caveness = 1;
-					} else if (bcz > cave_end_depth) {
-						caveness = (bcz - cave_end_depth) / cave_border;
+					} else if (bcz > wp.cave_end_depth) {
+						caveness = (bcz - wp.cave_end_depth) / wp.cave_border;
 					} else {
 						caveness = 0;
 					}
@@ -168,12 +124,12 @@ void WorldGenerator::generateChunk(Chunk *chunk) {
 						caveness *= caveness;
 
 						double cave = cave_perlin.octavePerlin(
-							bcx / cave_xy_scale,
-							bcy / cave_xy_scale,
-							bcz / cave_z_scale, cave_octaves, cave_exp
+							bcx / wp.cave_xy_scale,
+							bcy / wp.cave_xy_scale,
+							bcz / wp.cave_z_scale, wp.cave_octaves, wp.cave_exp
 						);
 
-						if ((cave + base_hallowness * 0.3) * caveness > cave_threshold) {
+						if ((cave + base_hallowness * 0.3) * caveness > wp.cave_threshold) {
 							solid = false;
 						}
 					}
@@ -189,11 +145,11 @@ void WorldGenerator::generateChunk(Chunk *chunk) {
 					if (solid) {
 						if (caveness > 0)
 							chunk->initBlock(icc, 3); // stone
-						else if (rel_ocean > beach_threshold && realDepth < 5)
+						else if (rel_ocean > wp.beach_threshold && realDepth < 5)
 							chunk->initBlock(icc, 4); // sand
-						else if (base_temperature < desert_threshold && realDepth < 5)
+						else if (base_temperature < wp.desert_threshold && realDepth < 5)
 							chunk->initBlock(icc, 4); // sand
-						else if (base_vegetation > grasland_threshold && realDepth == 1)
+						else if (base_vegetation > wp.grasland_threshold && realDepth == 1)
 							chunk->initBlock(icc, 2); // gras
 						else if (realDepth >= 5)
 							chunk->initBlock(icc, 3); // dirt

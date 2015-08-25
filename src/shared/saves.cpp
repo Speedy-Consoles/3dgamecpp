@@ -57,7 +57,7 @@ void Save::store() {
 }
 
 unique_ptr<WorldGenerator> Save::getWorldGenerator() const {
-	WorldGenerator *p_world_gen = new WorldGenerator(_seed);
+	WorldGenerator *p_world_gen = new WorldGenerator(_seed, WorldParams());
 	return unique_ptr<WorldGenerator>(p_world_gen);
 }
 
