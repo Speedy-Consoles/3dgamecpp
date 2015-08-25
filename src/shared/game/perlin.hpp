@@ -68,9 +68,19 @@ public:
 	double noise3(double x, double y, double z, uint octaves, double persistence) override;
 	double noise2(double x, double y, uint octaves, double persistence) override;
 
+	void noise3(double sx, double sy, double sz, double dx, double dy, double dz,
+			uint nx, uint ny, uint nz, uint octaves, double persistence, double *buffer) override;
+	void noise2(double sx, double sy, double dx, double dy,
+			uint nx, uint ny, uint octaves, double persistence, double *buffer) override;
+
 private:
 	double perlin3(double x, double y, double z, int which_octave);
 	double perlin2(double x, double y, int which_octave);
+	
+	void perlin3(double sx, double sy, double sz, double dx, double dy, double dz,
+			uint nx, uint ny, uint nz, int which_octave, double amplitude, double *buffer);
+	void perlin2(double sx, double sy, double dx, double dy,
+			uint nx, uint ny, int which_octave, double amplitude, double *buffer);
 	
 	static double grad3(uint8 hash, double x, double y, double z);
 	static double grad2(uint8 hash, double x, double y);
