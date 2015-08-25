@@ -9,6 +9,7 @@
 
 #include "shared/engine/vmath.hpp"
 #include "shared/game/chunk.hpp"
+#include "shared/chunk_manager.hpp"
 #include "client/client.hpp"
 #include "client/gfx/component_renderer.hpp"
 
@@ -30,7 +31,10 @@ private:
 	// performance limits
 	static const int MAX_NEW_FACES = 3000;
 	static const int MAX_NEW_CHUNKS = 100;
-	static const int MAX_BUILD_QUEUE_SIZE = 2000;
+	// must be smaller than ChunkManager::CHUNK_POOL_SIZE / 27
+	static const int MAX_BUILD_QUEUE_SIZE =
+			ChunkManager::CHUNK_POOL_SIZE / 27 > 1000 ?
+			1000 : ChunkManager::CHUNK_POOL_SIZE / 27;
 	static const int MAX_VS_CHUNKS = 3000;
 
 	struct ChunkBuildInfo {
