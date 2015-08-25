@@ -37,20 +37,17 @@ double Perlin::octavePerlin(double x, double y, double z, int octaves, double pe
 
 void Perlin::octavePerlin(
 		double startX, double startY, double startZ,
-		double lengthX, double lengthY, double lengthZ,
-		double stepSize,
-		int octaves,
-		double persistence,
-		double *buffer) {
-	double endX = startX + lengthX;
-	double endY = startY + lengthY;
-	double endZ = startZ + lengthZ;
+		double stepSizeX, double stepSizeY, double stepSizeZ,
+		uint numStepsX, uint numStepsY, uint numStepsZ,
+		uint octaves, double persistence, double *buffer) {
 	int index = 0;
-	for (double z = startZ; z < endZ; z += stepSize) {
-		for (double y = startY; y < endY; y += stepSize) {
-			for (double x = startX; x < endX; x += stepSize) {
-				buffer[index] = octavePerlin(x, y, z, octaves, persistence);
-				index++;
+	double x, y, z = startZ;
+	for (uint zStep = 0; zStep < numStepsZ; zStep++, z += stepSizeZ) {
+		y = startY;
+		for (uint yStep = 0; yStep < numStepsY; yStep++, y += stepSizeY) {
+			x = startX;
+			for (uint xStep = 0; xStep < numStepsX; xStep++, x += stepSizeX) {
+				buffer[index++] = octavePerlin(x, y, z, octaves, persistence);
 			}
 		}
 	}
@@ -58,18 +55,15 @@ void Perlin::octavePerlin(
 
 void Perlin::octavePerlin(
 		double startX, double startY,
-		double lengthX, double lengthY,
-		double stepSize,
-		int octaves,
-		double persistence,
-		double *buffer) {
-	double endX = startX + lengthX;
-	double endY = startY + lengthY;
+		double stepSizeX, double stepSizeY,
+		uint numStepsX, uint numStepsY,
+		uint octaves, double persistence, double *buffer) {
 	int index = 0;
-	for (double y = startY; y < endY; y += stepSize) {
-		for (double x = startX; x < endX; x += stepSize) {
-			buffer[index] = octavePerlin(x, y, 0, octaves, persistence);
-			index++;
+	double x, y = startY;
+	for (uint yStep = 0; yStep < numStepsY; yStep++, y += stepSizeY) {
+		x = startX;
+		for (uint xStep = 0; xStep < numStepsX; xStep++, x += stepSizeX) {
+			buffer[index++] = octavePerlin(x, y, 0, octaves, persistence);
 		}
 	}
 }
