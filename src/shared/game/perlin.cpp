@@ -210,92 +210,205 @@ double Perlin::perlin2(double x, double y, int which_octave) {
 void Perlin::perlin3(double sx, double sy, double sz, double dx, double dy, double dz,
 	uint nx, uint ny, uint nz, int which_octave, double amplitude, double *buffer)
 {
-	uint index = 0;
 	uint ix, iy, iz;
 	double x, y, z;
-	for (iz = 0, z = sz; iz < nz; iz++, z += dz)
-	for (iy = 0, y = sy; iy < ny; iy++, y += dy)
-	for (ix = 0, x = sx; ix < nx; ix++, x += dx) {
-		// lowest corner of the cell, opposite corner have xi + 1 etc
-		const int xi = (int) floor(x);
-		const int yi = (int) floor(y);
-		const int zi = (int) floor(z);
 
-		// relative position in the cell
-		const double xf = x - floor(x);
-		const double yf = y - floor(y);
-		const double zf = z - floor(z);
+	// if there are at least 4 points in each cell
+	if (dx < 0.5 && dy < 0.5) {
+		int xcelln, ycelln, zcelln;
+		for (iz = 0, z = sz; iz < nz; iz += zcelln, z += zcelln * dz)
+		for (iy = 0, y = sy; iy < ny; iy += ycelln, y += ycelln * dy)
+		for (ix = 0, x = sx; ix < nx; ix += xcelln, x += xcelln * dx) {
+			// lowest corner of the cell, opposite corner have xi + 1 etc
+			const int xcelli = (int) floor(x);
+			const int ycelli = (int) floor(y);
+			const int zcelli = (int) floor(z);
 
-		// fade constants to smooth the solution
-		const double u = fade(xf);
-		const double v = fade(yf);
-		const double w = fade(zf);
+			// calculate pseudorandom hashes for all the corners
+			// we also hash the number of the octave, so the octaves will not be correlated
+			hasher.reset() << which_octave << xcelli << ycelli << zcelli;
+			const uint8 aaa = hasher.get() & 0xFF;
+			hasher.reset() << which_octave << xcelli << ycelli + 1 << zcelli;
+			const uint8 aba = hasher.get() & 0xFF;
+			hasher.reset() << which_octave << xcelli << ycelli << zcelli + 1;
+			const uint8 aab = hasher.get() & 0xFF;
+			hasher.reset() << which_octave << xcelli << ycelli + 1 << zcelli + 1;
+			const uint8 abb = hasher.get() & 0xFF;
+			hasher.reset() << which_octave << xcelli + 1 << ycelli << zcelli;
+			const uint8 baa = hasher.get() & 0xFF;
+			hasher.reset() << which_octave << xcelli + 1 << ycelli + 1 << zcelli;
+			const uint8 bba = hasher.get() & 0xFF;
+			hasher.reset() << which_octave << xcelli + 1 << ycelli << zcelli + 1;
+			const uint8 bab = hasher.get() & 0xFF;
+			hasher.reset() << which_octave << xcelli + 1 << ycelli + 1 << zcelli + 1;
+			const uint8 bbb = hasher.get() & 0xFF;
 
-		// calculate pseudorandom hashes for all the corners
-		// we also hash the number of the octave, so the octaves will not be correlated
-		hasher.reset() << which_octave << xi << yi << zi;
-		const uint8 aaa = hasher.get() & 0xFF;
-		hasher.reset() << which_octave << xi << yi + 1 << zi;
-		const uint8 aba = hasher.get() & 0xFF;
-		hasher.reset() << which_octave << xi << yi << zi + 1;
-		const uint8 aab = hasher.get() & 0xFF;
-		hasher.reset() << which_octave << xi << yi + 1 << zi + 1;
-		const uint8 abb = hasher.get() & 0xFF;
-		hasher.reset() << which_octave << xi + 1 << yi << zi;
-		const uint8 baa = hasher.get() & 0xFF;
-		hasher.reset() << which_octave << xi + 1 << yi + 1 << zi;
-		const uint8 bba = hasher.get() & 0xFF;
-		hasher.reset() << which_octave << xi + 1 << yi << zi + 1;
-		const uint8 bab = hasher.get() & 0xFF;
-		hasher.reset() << which_octave << xi + 1 << yi + 1 << zi + 1;
-		const uint8 bbb = hasher.get() & 0xFF;
+			// relative position in the cell
+			const double xf = x - floor(x);
+			const double yf = y - floor(y);
+			const double zf = z - floor(z);
+			
+			// how many points are in this cell?
+			xcelln = std::min(1 + (int) ((1.0 - xf) / dx), (int) (nx - ix));
+			ycelln = std::min(1 + (int) ((1.0 - yf) / dy), (int) (ny - iy));
+			zcelln = std::min(1 + (int) ((1.0 - zf) / dz), (int) (nz - iz));
 
-		// multiply the relative coordinate in the cell with the random gradient and lerp it together
-		const double caa = lerp(grad3(aaa, xf, yf, zf), grad3(baa, xf - 1, yf, zf), u);
-		const double cba = lerp(grad3(aba, xf, yf - 1, zf), grad3(bba, xf - 1, yf - 1, zf), u);
-		const double cab = lerp(grad3(aab, xf, yf, zf - 1), grad3(bab, xf - 1, yf, zf - 1), u);
-		const double cbb = lerp(grad3(abb, xf, yf - 1, zf - 1), grad3(bbb, xf - 1, yf - 1, zf - 1), u);
-		const double cca = lerp(caa, cba, v);
-		const double ccb = lerp(cab, cbb, v);
-		buffer[index++] += lerp(cca, ccb, w) * amplitude;
+			int ixx, iyy, izz;
+			double xxf, yyf, zzf;
+			for (izz = 0, zzf = zf; izz < zcelln; ++izz, zzf += dz)
+			for (iyy = 0, yyf = yf; iyy < ycelln; ++iyy, yyf += dy)
+			for (ixx = 0, xxf = xf; ixx < xcelln; ++ixx, xxf += dx) {
+				const double u = fade(xxf);
+				const double v = fade(yyf);
+				const double w = fade(zzf);
+				const double caa = lerp(grad3(aaa, xxf, yyf, zzf),
+						grad3(baa, xxf - 1, yyf, zzf), u);
+				const double cba = lerp(grad3(aba, xxf, yyf - 1, zzf),
+						grad3(bba, xxf - 1, yyf - 1, zzf), u);
+				const double cab = lerp(grad3(aab, xxf, yyf, zzf - 1),
+						grad3(bab, xxf - 1, yyf, zzf - 1), u);
+				const double cbb = lerp(grad3(abb, xxf, yyf - 1, zzf - 1),
+						grad3(bbb, xxf - 1, yyf - 1, zzf - 1), u);
+				const double cca = lerp(caa, cba, v);
+				const double ccb = lerp(cab, cbb, v);
+				int index = ((izz + iz) * ny + (iyy + iy)) * nx + (ixx + ix);
+				buffer[index] += lerp(cca, ccb, w) * amplitude;
+			}
+		}
+	} else {
+		int index = 0;
+		for (iz = 0, z = sz; iz < nz; iz++, z += dz)
+		for (iy = 0, y = sy; iy < ny; iy++, y += dy)
+		for (ix = 0, x = sx; ix < nx; ix++, x += dx) {
+			// lowest corner of the cell, opposite corner have xi + 1 etc
+			const int xcelli = (int) floor(x);
+			const int ycelli = (int) floor(y);
+			const int zcelli = (int) floor(z);
+
+			// calculate pseudorandom hashes for all the corners
+			// we also hash the number of the octave, so the octaves will not be correlated
+			hasher.reset() << which_octave << xcelli << ycelli << zcelli;
+			const uint8 aaa = hasher.get() & 0xFF;
+			hasher.reset() << which_octave << xcelli << ycelli + 1 << zcelli;
+			const uint8 aba = hasher.get() & 0xFF;
+			hasher.reset() << which_octave << xcelli << ycelli << zcelli + 1;
+			const uint8 aab = hasher.get() & 0xFF;
+			hasher.reset() << which_octave << xcelli << ycelli + 1 << zcelli + 1;
+			const uint8 abb = hasher.get() & 0xFF;
+			hasher.reset() << which_octave << xcelli + 1 << ycelli << zcelli;
+			const uint8 baa = hasher.get() & 0xFF;
+			hasher.reset() << which_octave << xcelli + 1 << ycelli + 1 << zcelli;
+			const uint8 bba = hasher.get() & 0xFF;
+			hasher.reset() << which_octave << xcelli + 1 << ycelli << zcelli + 1;
+			const uint8 bab = hasher.get() & 0xFF;
+			hasher.reset() << which_octave << xcelli + 1 << ycelli + 1 << zcelli + 1;
+			const uint8 bbb = hasher.get() & 0xFF;
+
+			// relative position in the cell
+			const double xf = x - floor(x);
+			const double yf = y - floor(y);
+			const double zf = z - floor(z);
+
+			// fade constants to smooth the solution
+			const double u = fade(xf);
+			const double v = fade(yf);
+			const double w = fade(zf);
+
+			// multiply the relative coordinate in the cell with the random gradient and lerp it together
+			const double caa = lerp(
+					grad3(aaa, xf, yf, zf), grad3(baa, xf - 1, yf, zf), u);
+			const double cba = lerp(
+					grad3(aba, xf, yf - 1, zf), grad3(bba, xf - 1, yf - 1, zf), u);
+			const double cab = lerp(
+					grad3(aab, xf, yf, zf - 1), grad3(bab, xf - 1, yf, zf - 1), u);
+			const double cbb = lerp(
+					grad3(abb, xf, yf - 1, zf - 1), grad3(bbb, xf - 1, yf - 1, zf - 1), u);
+			const double cca = lerp(caa, cba, v);
+			const double ccb = lerp(cab, cbb, v);
+			buffer[index++] += lerp(cca, ccb, w) * amplitude;
+		}
 	}
 }
 
 void Perlin::perlin2(double sx, double sy, double dx, double dy,
 	uint nx, uint ny, int which_octave, double amplitude, double *buffer)
 {
-	uint index = 0;
 	uint ix, iy;
 	double x, y;
-	for (iy = 0, y = sy; iy < ny; iy++, y += dy)
-	for (ix = 0, x = sx; ix < nx; ix++, x += dx) {
-		// lowest corner of the cell, opposite corner have xi + 1 etc
-		const int xi = (int) floor(x);
-		const int yi = (int) floor(y);
 
-		// relative position in the cell
-		const double xf = x - floor(x);
-		const double yf = y - floor(y);
+	// if there are at least 4 points in each cell
+	if (dx < 0.5 && dy < 0.5) {
+		int xcelln, ycelln;
+		for (iy = 0, y = sy; iy < ny; iy += ycelln, y += ycelln * dy)
+		for (ix = 0, x = sx; ix < nx; ix += xcelln, x += xcelln * dx) {
+			// lowest corner of the cell, opposite corner have xi + 1 etc
+			const int ycelli = (int) floor(y);
+			const int xcelli = (int) floor(x);
 
-		// fade constants to smooth the solution
-		const double u = fade(xf);
-		const double v = fade(yf);
+			// calculate pseudorandom hashes for all the corners
+			// we also hash the number of the octave, so the octaves will not be correlated
+			hasher.reset() << which_octave << xcelli << ycelli;
+			const uint8 aa = hasher.get() & 0xFF;
+			hasher.reset() << which_octave << xcelli << ycelli + 1;
+			const uint8 ab = hasher.get() & 0xFF;
+			hasher.reset() << which_octave << xcelli + 1 << ycelli;
+			const uint8 ba = hasher.get() & 0xFF;
+			hasher.reset() << which_octave << xcelli + 1 << ycelli + 1;
+			const uint8 bb = hasher.get() & 0xFF;
 
-		// calculate pseudorandom hashes for all the corners
-		// we also hash the number of the octave, so the octaves will not be correlated
-		hasher.reset() << which_octave << xi << yi;
-		const uint8 aa = hasher.get() & 0xFF;
-		hasher.reset() << which_octave << xi << yi + 1;
-		const uint8 ab = hasher.get() & 0xFF;
-		hasher.reset() << which_octave << xi + 1 << yi;
-		const uint8 ba = hasher.get() & 0xFF;
-		hasher.reset() << which_octave << xi + 1 << yi + 1;
-		const uint8 bb = hasher.get() & 0xFF;
+			// relative position in the cell
+			const double xf = x - floor(x);
+			const double yf = y - floor(y);
+			
+			// how many points are in this cell?
+			xcelln = std::min(1 + (int) ((1.0 - xf) / dx), (int) (nx - ix));
+			ycelln = std::min(1 + (int) ((1.0 - yf) / dy), (int) (ny - iy));
 
-		// multiply the relative coordinate in the cell with the random gradient and lerp it together
-		const double ca = lerp(grad2(aa, xf, yf), grad2(ba, xf - 1, yf), u);
-		const double cb = lerp(grad2(ab, xf, yf - 1), grad2(bb, xf - 1, yf - 1), u);
-		buffer[index++] += lerp(ca, cb, v) * amplitude;
+			int ixx, iyy;
+			double xxf, yyf;
+			for (iyy = 0, yyf = yf; iyy < ycelln; ++iyy, yyf += dy) {
+				int index = (iyy + iy) * nx + ix;
+				for (ixx = 0, xxf = xf; ixx < xcelln; ++ixx, ++index, xxf += dx) {
+					const double u = fade(xxf);
+					const double v = fade(yyf);
+					const double ca = lerp(grad2(aa, xxf, yyf), grad2(ba, xxf - 1, yyf), u);
+					const double cb = lerp(grad2(ab, xxf, yyf - 1), grad2(bb, xxf - 1, yyf - 1), u);
+					buffer[index] += lerp(ca, cb, v) * amplitude;
+				}
+			}
+		}
+	} else {
+		int index = 0;
+		for (iy = 0, y = sy; iy < ny; iy++, y += dy)
+		for (ix = 0, x = sx; ix < nx; ix++, x += dx) {
+			// lowest corner of the cell, opposite corner have xi + 1 etc
+			const int xi = (int) floor(x);
+			const int yi = (int) floor(y);
+
+			// relative position in the cell
+			const double xf = x - floor(x);
+			const double yf = y - floor(y);
+
+			// fade constants to smooth the solution
+			const double u = fade(xf);
+			const double v = fade(yf);
+
+			// calculate pseudorandom hashes for all the corners
+			// we also hash the number of the octave, so the octaves will not be correlated
+			hasher.reset() << which_octave << xi << yi;
+			const uint8 aa = hasher.get() & 0xFF;
+			hasher.reset() << which_octave << xi << yi + 1;
+			const uint8 ab = hasher.get() & 0xFF;
+			hasher.reset() << which_octave << xi + 1 << yi;
+			const uint8 ba = hasher.get() & 0xFF;
+			hasher.reset() << which_octave << xi + 1 << yi + 1;
+			const uint8 bb = hasher.get() & 0xFF;
+
+			// multiply the relative coordinate in the cell with the random gradient and lerp it together
+			const double ca = lerp(grad2(aa, xf, yf), grad2(ba, xf - 1, yf), u);
+			const double cb = lerp(grad2(ab, xf, yf - 1), grad2(bb, xf - 1, yf - 1), u);
+			buffer[index++] += lerp(ca, cb, v) * amplitude;
+		}
 	}
 }
 
