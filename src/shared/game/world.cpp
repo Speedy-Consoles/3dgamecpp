@@ -27,11 +27,11 @@ World::~World() {
 	LOG_DEBUG(logger) << "Deleting world '" << id << "'";
 }
 
-void World::tick(int tick, uint localPlayerID) {
+void World::tick(uint localPlayerID) {
 	requestChunks();
 	for (uint i = 0; i < MAX_CLIENTS; i++) {
 		if (players[i].isValid())
-			players[i].tick(tick, i == localPlayerID);
+			players[i].tick(i == localPlayerID);
 	}
 	releaseChunks();
 }

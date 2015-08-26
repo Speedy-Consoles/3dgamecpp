@@ -19,8 +19,8 @@ void WorldGenerator::generateChunk(Chunk *chunk) {
 	vec3i64 cc = chunk->getCC();
 
 	const double *elevation = elevationGenerator.getChunk(vec2i64(cc[0], cc[1]));
-	for (int iccx = 0; iccx < Chunk::WIDTH; iccx++) {
-		for (int iccy = 0; iccy < Chunk::WIDTH; iccy++) {
+	for (uint iccx = 0; iccx < Chunk::WIDTH; iccx++) {
+		for (uint iccy = 0; iccy < Chunk::WIDTH; iccy++) {
 			int64 bcx = cc[0] * Chunk::WIDTH + iccx;
 			int64 bcy = cc[1] * Chunk::WIDTH + iccy;
 

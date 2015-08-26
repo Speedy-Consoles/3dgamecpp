@@ -62,7 +62,7 @@ public:
 
 	std::string getId() const { return id; }
 
-	void tick(int tick, uint localPlayerID);
+	void tick(uint localPlayerID);
 
 	int shootRay(vec3i64 start, vec3d ray, double maxDist,
 			vec3i boxCorner, vec3i64 *outHit, vec3i64 outHitBlock[3],

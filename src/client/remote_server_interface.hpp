@@ -55,7 +55,7 @@ public:
 
 	int getLocalClientId() override;
 
-	bool requestChunk(Chunk *chunk) override { return false; }
+	bool requestChunk(Chunk *chunk) override { return chunk?false:false; }
 	Chunk *getNextChunk() override { return nullptr; }
 
 private:

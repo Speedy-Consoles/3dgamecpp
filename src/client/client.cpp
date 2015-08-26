@@ -96,7 +96,7 @@ Client::Client(const char *worldId, const char *serverAdress) {
 		serverInterface = std::unique_ptr<RemoteServerInterface>(new RemoteServerInterface(this, serverAdress));
 	} else {
 		LOG_INFO(logger) << "Connecting to local server";
-		serverInterface = std::unique_ptr<LocalServerInterface>(new LocalServerInterface(this, 42));
+		serverInterface = std::unique_ptr<LocalServerInterface>(new LocalServerInterface(this));
 	}
 }
 
@@ -135,7 +135,7 @@ void Client::run() {
 		if (state == State::PLAYING || state == State::IN_MENU) {
 			stopwatch->start(CLOCK_WOT);
 			if (!_isPaused)
-				world->tick(tick, localClientId);
+				world->tick(localClientId);
 			stopwatch->stop(CLOCK_WOT);
 		}
 

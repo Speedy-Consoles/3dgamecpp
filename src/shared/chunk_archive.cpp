@@ -434,7 +434,7 @@ int ArchiveFile::encodeBlocks_RLE(const uint8 *blocks, uint8 *buffer, size_t siz
 			return 0;
 		if (cur_run_length > 3 || cur_run_type == ESCAPE_CHAR) {
 			if (cur_run_length < 0x80) {
-				if (head - buffer + 3u <= size) {
+				if ((uint) (head - buffer) + 3u <= size) {
 					*head++ = ESCAPE_CHAR;
 					*head++ = cur_run_length;
 					*head++ = cur_run_type;
@@ -444,7 +444,7 @@ int ArchiveFile::encodeBlocks_RLE(const uint8 *blocks, uint8 *buffer, size_t siz
 			} else {
 				// we count from 1 and not from 0 to save space
 				size_t encoded_run_length = cur_run_length - 1;
-				if (head - buffer + 4u <= size) {
+				if ((uint) (head - buffer) + 4u <= size) {
 					*head++ = ESCAPE_CHAR;
 					*head++ = 0x80 | (encoded_run_length >> 8);
 					*head++ = encoded_run_length & 0xFF;

@@ -67,7 +67,7 @@ private:
 	void disconnect(uint8 id);
 };
 
-int main(int argc, char *argv[]) {
+int main() {
 	logging::init("logging_srv.conf");
 
 	LOG_TRACE(logger) << "Trace enabled";
@@ -137,7 +137,7 @@ void Server::run() {
 	socket.acquireReadBuffer(inBuf);
 	int tick = 0;
 	while (!closeRequested) {
-		world->tick(tick, -1);
+		world->tick(-1);
 
 		time += seconds(1) / TICK_SPEED;
 		Time remTime;

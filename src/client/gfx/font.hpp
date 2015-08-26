@@ -64,7 +64,7 @@ protected:
 	virtual void endRender() {}
 	virtual float renderGlyph(float x, float y, float z, int glyph) = 0;
 	virtual float getTextWidth(const char *text, int count) = 0;
-	virtual float getKerning(int first, int second) { return 0.0f; }
+	virtual float getKerning(int, int) { return 0.0f; } // getKerning(int first, int second)
 
 	int getTextLength(const char *text);
 	int getTextChar(const char *text, int pos, int *nextPos = nullptr);

@@ -22,7 +22,7 @@ const double Player::AIR_FRICTION = 0.005;
 const double Player::AIR_ACCELERATION_PENALTY = 0.01;
 const double Player::JUMP_SPEED = 260;
 
-void Player::tick(int tick, bool isLocalPlayer) {
+void Player::tick(bool isLocalPlayer) {
 
 	// TODO predict
 	if (hasSnapshot) {

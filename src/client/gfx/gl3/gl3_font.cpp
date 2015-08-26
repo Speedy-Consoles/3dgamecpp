@@ -265,6 +265,7 @@ void BMFont::beginRender() {
 }
 
 float BMFont::renderGlyph(float x, float y, float z, int glyph) {
+	z++; // to get rid of unused warning
 	y += scale * float(base);
 
 	CharDesc *ch = getChar(glyph);
@@ -419,14 +420,14 @@ void BMFontLoader::AddChar(int id, short x, short y, short w, short h, short xof
 
 	if (id >= 0) {
 		BMFont::CharDesc *ch = new BMFont::CharDesc{
-			x, y, w, h, xoffset, yoffset, xadvance, page, chnl
+			x, y, w, h, xoffset, yoffset, xadvance, page, chnl, 0, std::vector<int>()
 		};
 		font->chars.insert(std::map<int, BMFont::CharDesc*>::value_type(id, ch));
 	}
 
 	if (id == -1) {
 		font->defChar = BMFont::CharDesc{
-			x, y, w, h, xoffset, yoffset, xadvance, page, chnl
+			x, y, w, h, xoffset, yoffset, xadvance, page, chnl, 0, std::vector<int>()
 		};
 	}
 }

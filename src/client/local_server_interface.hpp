@@ -20,7 +20,7 @@ class LocalServerInterface : public ServerInterface {
 	ProducerQueue<Chunk *> toLoadQueue;
 
 public:
-	LocalServerInterface(Client * client, uint64 seed);
+	LocalServerInterface(Client * client);
 	~LocalServerInterface();
 
 	// query

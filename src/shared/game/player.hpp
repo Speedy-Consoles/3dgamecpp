@@ -90,7 +90,7 @@ private:
 	uint8 block = 1;
 
 public:
-	void tick(int tick, bool isLocalPlayer);
+	void tick(bool isLocalPlayer);
 
 	void setOrientation(float yaw, float pitch);
 	void setFly(bool fly);

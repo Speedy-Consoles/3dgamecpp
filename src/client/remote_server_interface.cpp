@@ -146,15 +146,24 @@ void RemoteServerInterface::setPlayerMoveInput(int moveInput) {
 }
 
 void RemoteServerInterface::setPlayerOrientation(float yaw, float pitch) {
-
+	if (yaw == pitch)
+		return;
+	else
+		return;
 }
 
 void RemoteServerInterface::setSelectedBlock(uint8 block) {
-
+	if (block)
+		return;
+	else
+		return;
 }
 
 void RemoteServerInterface::placeBlock(vec3i64 bc, uint8 type) {
-
+	if (bc[0] == (int64) type)
+		return;
+	else
+		return;
 }
 
 void RemoteServerInterface::tick() {

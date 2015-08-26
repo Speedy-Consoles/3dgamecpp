@@ -48,7 +48,7 @@ TEST(ChunkArchiveTest, AirChunk) {
 	supposed.initCC({ 0, 0, 0 });
 	Chunk actual;
 
-	initChunk(supposed, [](size_t x, size_t y, size_t z, size_t index) {
+	initChunk(supposed, [](size_t, size_t, size_t, size_t) {
 		return 0;
 	});
 	store_and_load(supposed, &actual);
@@ -60,7 +60,7 @@ TEST(ChunkArchiveTest, StoneChunk) {
 	supposed.initCC({ 0, 0, 0 });
 	Chunk actual;
 
-	initChunk(supposed, [](size_t x, size_t y, size_t z, size_t index) {
+	initChunk(supposed, [](size_t, size_t, size_t, size_t) {
 		return 1;
 	});
 	store_and_load(supposed, &actual);
@@ -72,7 +72,7 @@ TEST(ChunkArchiveTest, UncompressibleChunk) {
 	supposed.initCC({ 0, 0, 0 });
 	Chunk actual;
 
-	initChunk(supposed, [](size_t x, size_t y, size_t z, size_t index) {
+	initChunk(supposed, [](size_t, size_t, size_t, size_t index) {
 		return index % 2 ? index % 254 : 255;
 	});
 
@@ -90,7 +90,7 @@ TEST(ChunkArchiveTest, RandomChunk) {
 	rng.seed(1);
 	std::uniform_int_distribution<uint> distr(0, 254);
 
-	initChunk(supposed, [&rng, &distr](size_t x, size_t y, size_t z, size_t index) {
+	initChunk(supposed, [&rng, &distr](size_t, size_t, size_t, size_t) {
 		return distr(rng);
 	});
 
@@ -108,7 +108,7 @@ TEST(ChunkArchiveTest, FarFromSpawnChunk) {
 	rng.seed(1);
 	std::uniform_int_distribution<uint> distr(0, 254);
 
-	initChunk(supposed, [&rng, &distr](size_t x, size_t y, size_t z, size_t index) {
+	initChunk(supposed, [&rng, &distr](size_t, size_t, size_t, size_t) {
 		return distr(rng);
 	});
 
@@ -126,7 +126,7 @@ TEST(ChunkArchiveTest, RegionWrapAround) {
 	rng.seed(1);
 	std::uniform_int_distribution<uint> distr(0, 254);
 
-	initChunk(supposed, [&rng, &distr](size_t x, size_t y, size_t z, size_t index) {
+	initChunk(supposed, [&rng, &distr](size_t, size_t, size_t, size_t) {
 		return distr(rng);
 	});
 
@@ -135,7 +135,7 @@ TEST(ChunkArchiveTest, RegionWrapAround) {
 
 	Chunk other;
 	other.initCC({ 16, 16, 16 });
-	initChunk(other, [&rng, &distr](size_t x, size_t y, size_t z, size_t index) {
+	initChunk(other, [&rng, &distr](size_t, size_t, size_t, size_t) {
 		return distr(rng);
 	});
 	archive.storeChunk(other);
@@ -159,9 +159,9 @@ TEST(ChunkArchiveTest, SameRegion) {
 	rng.seed(1);
 	std::uniform_int_distribution<uint> distr(0, 254);
 	
-	initChunk(c1, [&rng, &distr](size_t x, size_t y, size_t z, size_t index) {return distr(rng);});
-	initChunk(c2, [&rng, &distr](size_t x, size_t y, size_t z, size_t index) {return distr(rng);});
-	initChunk(c3, [&rng, &distr](size_t x, size_t y, size_t z, size_t index) {return distr(rng);});
+	initChunk(c1, [&rng, &distr](size_t, size_t, size_t, size_t) {return distr(rng);});
+	initChunk(c2, [&rng, &distr](size_t, size_t, size_t, size_t) {return distr(rng);});
+	initChunk(c3, [&rng, &distr](size_t, size_t, size_t, size_t) {return distr(rng);});
 
 	ChunkArchive archive("./test/temp/");
 	archive.storeChunk(c1);

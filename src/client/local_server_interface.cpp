@@ -11,7 +11,7 @@ using namespace std;
 
 static logging::Logger logger("local");
 
-LocalServerInterface::LocalServerInterface(Client *client, uint64 seed) :
+LocalServerInterface::LocalServerInterface(Client *client) :
 	client(client),
 	worldGenerator(client->getSave()->getWorldGenerator()),
 	loadedQueue(1024),
@@ -34,7 +34,10 @@ int LocalServerInterface::getLocalClientId() {
 }
 
 void LocalServerInterface::setConf(const GraphicsConf &conf, const GraphicsConf &old) {
-	// nothing
+	if (conf.fog == old.fog)
+		return;
+	else
+		return;
 }
 
 void LocalServerInterface::tick() {
