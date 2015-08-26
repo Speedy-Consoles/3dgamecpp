@@ -41,90 +41,23 @@ const double *ElevationGenerator::getChunk(vec2i64 chunkCoords) {
 
 void ElevationGenerator::generateChunk(vec2i64 chunkCoords, double *chunk) {
 	double base[Chunk::WIDTH * Chunk::WIDTH];
+	double mountain[Chunk::WIDTH * Chunk::WIDTH];
 	basePerlin.noise2(
-		chunkCoords.cast<double>() * Chunk::WIDTH / wp.elevation_xy_scale * 50,
-		vec2d(1 / wp.elevation_xy_scale * 50),
+		chunkCoords.cast<double>() * Chunk::WIDTH / wp.elevation_xy_scale / wp.overall_scale,
+		vec2d(1 / wp.elevation_xy_scale / wp.overall_scale),
 		vec2ui(Chunk::WIDTH),
-		2, 0.8, 5.0, base
+		wp.elevation_octaves, wp.elevation_ampl_gain, wp.elevation_freq_gain, base
 	);
 
-	double relOcean[Chunk::WIDTH * Chunk::WIDTH];
-	double relFlatland[Chunk::WIDTH * Chunk::WIDTH];
-	double relMountain[Chunk::WIDTH * Chunk::WIDTH];
-
-	bool needOcean = false;
-	bool needFlatland = false;
-	bool needMountain = false;
-
-	for (uint i = 0; i < Chunk::WIDTH * Chunk::WIDTH; i++) {
-		if (base[i] < wp.ocean_threshold) {
-			relOcean[i] = 1;
-			relFlatland[i] = 0;
-			relMountain[i] = 0;
-			needOcean = true;
-		} else if (base[i] < wp.ocean_threshold + wp.ocean_stretch) {
-			relMountain[i] = 0;
-			relOcean[i] = 1 - (base[i] - wp.ocean_threshold) / wp.ocean_stretch;
-			relOcean[i] *= relOcean[i];
-			relFlatland[i] = 1 - relOcean[i];
-			needOcean = true;
-			needFlatland = true;
-		} else /*if (base[i] < wp.mountain_threshold)*/ {
-			relOcean[i] = 0;
-			relFlatland[i] = 1;
-			relMountain[i] = 0;
-			needFlatland = true;
-		}/* else if (base[i] < wp.mountain_threshold + wp.mountain_stretch) {
-			relOcean[i] = 0;
-			relMountain[i] = (base[i] - wp.mountain_threshold) / wp.mountain_stretch;
-			relMountain[i] *= relMountain[i];
-			relFlatland[i] = 1 - relMountain[i];
-			needFlatland = true;
-			needMountain = true;
-		} else {
-			relOcean[i] = 0;
-			relFlatland[i] = 0;
-			relMountain[i] = 1;
-			needMountain = true;
-		}*/
-	}
-
-	double oceanHeight[Chunk::WIDTH * Chunk::WIDTH];
-	double flatlandHeight[Chunk::WIDTH * Chunk::WIDTH];
-	double mountainHeight[Chunk::WIDTH * Chunk::WIDTH];
-
-//	if (needOcean) {
-//		oceanPerlin.noise2(
-//			chunkCoords.cast<double>() * Chunk::WIDTH / wp.ocean_xy_scale,
-//			vec2d(1 / wp.ocean_xy_scale),
-//			vec2ui(Chunk::WIDTH),
-//			wp.ocean_octaves, wp.ocean_exp, 2.0, oceanHeight
-//		);
-//	}
-//	if (needFlatland) {
-//		flatlandPerlin.noise2(
-//			chunkCoords.cast<double>() * Chunk::WIDTH / wp.flatland_xy_scale,
-//			vec2d(1 / wp.flatland_xy_scale),
-//			vec2ui(Chunk::WIDTH),
-//			wp.flatland_octaves, wp.flatland_exp, 2.0, flatlandHeight
-//		);
-//	}
-//	if (needMountain) {
-//		mountainPerlin.noise2(
-//			chunkCoords.cast<double>() * Chunk::WIDTH / wp.mountain_xy_scale,
-//			vec2d(1 / wp.mountain_xy_scale),
-//			vec2ui(Chunk::WIDTH),
-//			wp.mountain_octaves, wp.mountain_exp, 2.0, mountainHeight
-//		);
-//	}
+	basePerlin.noise2(
+		chunkCoords.cast<double>() * Chunk::WIDTH / wp.mountain_xy_scale / wp.overall_scale,
+		vec2d(1 / wp.mountain_xy_scale / wp.overall_scale),
+		vec2ui(Chunk::WIDTH),
+		wp.mountain_octaves, wp.mountain_ampl_gain, wp.mountain_freq_gain, mountain
+	);
 
 	for (uint i = 0; i < Chunk::WIDTH * Chunk::WIDTH; i++) {
-		chunk[i] = 0.0;
-		if (relOcean[i] > 0)
-			chunk[i] += relOcean[i]/* * oceanHeight[i]*/ * wp.ocean_depth / 10;
-		if (relFlatland[i] > 0)
-			chunk[i] += relFlatland[i]/* * flatlandHeight[i]*/ * wp.flatland_height / 10;
-		if (relMountain[i] > 0)
-			chunk[i] += relMountain[i]/* * mountainHeight[i]*/ * wp.mountain_height;
+		chunk[i] = (base[i] - wp.elevation_shift) * wp.elevation_z_scale * wp.overall_scale;
+		chunk[i] += std::pow(mountain[i], wp.mountain_exp) * wp.mountain_z_scale * wp.overall_scale;
 	}
 }
