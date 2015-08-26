@@ -17,12 +17,12 @@
 class ElevationGenerator;
 
 struct WorldParams {
-	double elevation_xy_scale   = 1000;
+	double elevation_xy_scale   = 5000;
 	double vegetation_xy_scale  = 1000;
 	double temperature_xy_scale = 1500;
 	double hollowness_xy_scale  = 800;
 
-	double ocean_threshold = 0.2;
+	double ocean_threshold = 0.4;
 	double beach_threshold = 0.02;
 	double ocean_stretch   = 0.2;
 	double ocean_xy_scale  = 1000;
@@ -30,7 +30,7 @@ struct WorldParams {
 	int    ocean_octaves   = 4;
 	double ocean_exp       = 0.8;
 
-	double mountain_threshold = 0.6;
+	double mountain_threshold = 0.7;
 	double mountain_stretch   = 0.2;
 	double mountain_xy_scale  = 500;
 	double mountain_height    = 800;

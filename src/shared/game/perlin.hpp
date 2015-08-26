@@ -8,37 +8,37 @@
 
 class NoiseBase {
 public:
-	virtual double noise3(double x, double y, double z, uint octaves, double persistence) = 0;
+	virtual double noise3(double x, double y, double z, uint octaves, double amplGain, double freqGain) = 0;
 
-	virtual double noise2(double x, double y, uint octaves, double persistence);
+	virtual double noise2(double x, double y, uint octaves, double amplGain, double freqGain);
 
 	virtual void noise3(double sx, double sy, double sz, double dx, double dy, double dz,
-			uint nx, uint ny, uint nz, uint octaves, double persistence, double *buffer);
+			uint nx, uint ny, uint nz, uint octaves, double amplGain, double freqGain, double *buffer);
 
 	virtual void noise2(double sx, double sy, double dx, double dy,
-			uint nx, uint ny, uint octaves, double persistence, double *buffer);
+			uint nx, uint ny, uint octaves, double amplGain, double freqGain, double *buffer);
 
-	virtual double noise3(vec3d r, int octaves, double persistence) final {
-		return noise3(r[0], r[1], r[2], octaves, persistence);
+	virtual double noise3(vec3d r, int octaves, double amplGain, double freqGain) final {
+		return noise3(r[0], r[1], r[2], octaves, amplGain, freqGain);
 	}
 
 	virtual void noise3(vec3d pos, vec3d stepSize, vec3ui numSteps,
-			uint octaves, double persistence, double *buffer) final {
+			uint octaves, double amplGain, double freqGain, double *buffer) final {
 		noise3(
 			pos[0], pos[1], pos[2],
 			stepSize[0], stepSize[1], stepSize[2],
 			numSteps[0], numSteps[1], numSteps[2],
-			octaves, persistence, buffer
+			octaves, amplGain, freqGain, buffer
 		);
 	}
 
 	virtual void noise2(vec2d pos, vec2d stepSize, vec2ui numSteps,
-			uint octaves, double persistence, double *buffer) final {
+			uint octaves, double amplGain, double freqGain, double *buffer) final {
 		noise2(
 			pos[0], pos[1],
 			stepSize[0], stepSize[1],
 			numSteps[0], numSteps[1],
-			octaves, persistence, buffer
+			octaves, amplGain, freqGain, buffer
 		);
 	}
 };
@@ -65,13 +65,13 @@ public:
 	using NoiseBase::noise3;
 	using NoiseBase::noise2;
 	
-	double noise3(double x, double y, double z, uint octaves, double persistence) override;
-	double noise2(double x, double y, uint octaves, double persistence) override;
+	double noise3(double x, double y, double z, uint octaves, double amplGain, double freqGain) override;
+	double noise2(double x, double y, uint octaves, double amplGain, double freqGain) override;
 
 	void noise3(double sx, double sy, double sz, double dx, double dy, double dz,
-			uint nx, uint ny, uint nz, uint octaves, double persistence, double *buffer) override;
+			uint nx, uint ny, uint nz, uint octaves, double amplGain, double freqGain, double *buffer) override;
 	void noise2(double sx, double sy, double dx, double dy,
-			uint nx, uint ny, uint octaves, double persistence, double *buffer) override;
+			uint nx, uint ny, uint octaves, double amplGain, double freqGain, double *buffer) override;
 
 private:
 	double perlin3(double x, double y, double z, int which_octave);

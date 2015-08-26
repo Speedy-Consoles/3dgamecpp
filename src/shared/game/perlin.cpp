@@ -4,15 +4,15 @@
 #include <algorithm>
 #include <cstring>
 
-double NoiseBase::noise2(double x, double y, uint octaves, double persistence) {
-	return noise3(x, y, 0, octaves, persistence);
+double NoiseBase::noise2(double x, double y, uint octaves, double amplGain, double freqGain) {
+	return noise3(x, y, 0, octaves, amplGain, freqGain);
 }
 
 void NoiseBase::noise3(
 	double sx, double sy, double sz,
 	double dx, double dy, double dz,
 	uint nx, uint ny, uint nz,
-	uint octaves, double persistence,
+	uint octaves, double amplGain, double freqGain,
 	double *buffer)
 {
 	uint index = 0;
@@ -21,7 +21,7 @@ void NoiseBase::noise3(
 	for (iz = 0, z = sz; iz < nz; iz++, z += dz)
 	for (iy = 0, y = sy; iy < ny; iy++, y += dy)
 	for (ix = 0, x = sx; ix < nx; ix++, x += dx) {
-		buffer[index++] = noise3(x, y, z, octaves, persistence);
+		buffer[index++] = noise3(x, y, z, octaves, amplGain, freqGain);
 	}
 }
 
@@ -29,7 +29,7 @@ void NoiseBase::noise2(
 	double sx, double sy,
 	double dx, double dy,
 	uint nx, uint ny,
-	uint octaves, double persistence,
+	uint octaves, double amplGain, double freqGain,
 	double *buffer)
 {
 	int index = 0;
@@ -37,7 +37,7 @@ void NoiseBase::noise2(
 	double x, y;
 	for (iy = 0, y = sy; iy < ny; iy++, y += dy)
 	for (ix = 0, x = sx; ix < nx; ix++, x += dx) {
-		buffer[index++] = noise2(x, y, octaves, persistence);
+		buffer[index++] = noise2(x, y, octaves, amplGain, freqGain);
 	}
 }
 
@@ -51,7 +51,7 @@ Perlin::Hasher::Hasher(uint64 seed) {
 
 Perlin::Perlin(uint64 seed) : hasher(seed) {}
 
-double Perlin::noise3(double x, double y, double z, uint octaves, double persistence) {
+double Perlin::noise3(double x, double y, double z, uint octaves, double amplGain, double freqGain) {
     double total = 0;
     double freq = 1;
     double amplitude = 1;
@@ -63,13 +63,13 @@ double Perlin::noise3(double x, double y, double z, uint octaves, double persist
 		// the variance.  This way the distribution of values from the noise function is not
 		// dependent on the number of octaves used.
 		max_value += amplitude * amplitude;
-        amplitude *= persistence;
-        freq *= 2;
+        amplitude *= amplGain;
+        freq *= freqGain;
     }
 	return (total / sqrt(max_value) + 1) * 0.5;
 }
 
-double Perlin::noise2(double x, double y, uint octaves, double persistence) {
+double Perlin::noise2(double x, double y, uint octaves, double amplGain, double freqGain) {
     double total = 0;
     double freq = 1;
     double amplitude = 1;
@@ -77,8 +77,8 @@ double Perlin::noise2(double x, double y, uint octaves, double persistence) {
     for (uint i = 0; i < octaves; i++) {
         total += perlin2(x * freq, y * freq, i) * amplitude;
 		max_value += amplitude * amplitude;
-        amplitude *= persistence;
-        freq *= 2;
+        amplitude *= amplGain;
+        freq *= freqGain;
     }
 	return (total / sqrt(max_value) + 1) * 0.5;
 }
@@ -87,7 +87,7 @@ void Perlin::noise3(
 	double sx, double sy, double sz,
 	double dx, double dy, double dz,
 	uint nx, uint ny, uint nz,
-	uint octaves, double persistence,
+	uint octaves, double amplGain, double freqGain,
 	double *buffer)
 {
 	memset(buffer, 0, nx * ny * nz * sizeof(double));
@@ -99,8 +99,8 @@ void Perlin::noise3(
         perlin3(sx * freq, sy * freq, sz * freq, dx * freq, dy * freq, dz * freq,
 				nx, ny, nz, i, amplitude, buffer);
 		max_value += amplitude * amplitude;
-        amplitude *= persistence;
-        freq *= 2;
+        amplitude *= amplGain;
+        freq *= freqGain;
     }
 
 	for (uint i = 0; i < nx * ny * nz; ++i) {
@@ -112,7 +112,7 @@ void Perlin::noise2(
 	double sx, double sy,
 	double dx, double dy,
 	uint nx, uint ny,
-	uint octaves, double persistence,
+	uint octaves, double amplGain, double freqGain,
 	double *buffer)
 {
 	memset(buffer, 0, nx * ny * sizeof(double));
@@ -123,8 +123,8 @@ void Perlin::noise2(
     for (uint i = 0; i < octaves; i++) {
         perlin2(sx * freq, sy * freq, dx * freq, dy * freq, nx, ny, i, amplitude, buffer);
 		max_value += amplitude * amplitude;
-        amplitude *= persistence;
-        freq *= 2;
+        amplitude *= amplGain;
+        freq *= freqGain;
     }
 
 	for (uint i = 0; i < nx * ny; ++i) {

@@ -41,9 +41,9 @@ void WorldGenerator::generateChunk(Chunk *chunk) {
 
 				if (depth < 0) {
 					solid = false;
-				} else if (depth > (h * wp.surfaceRelDepth)) {
+				} else/* if (depth > (h * wp.surfaceRelDepth))*/ {
 					solid = true;
-				} else {
+				}/* else {
 					double funPos = (1 - depth / (h * wp.surfaceRelDepth) - 0.5) * 2 / wp.surfaceThresholdXScale;
 					double threshold = (funPos + funPos * funPos * funPos) / wp.surfaceThresholdYScale + 0.5;
 					double px = bcx / wp.surfaceScale;
@@ -54,7 +54,7 @@ void WorldGenerator::generateChunk(Chunk *chunk) {
 						solid = true;
 					else
 						solid = false;
-				}
+				}*/
 
 				double caveness = 0;
 				if (solid) {
