@@ -33,6 +33,15 @@ struct WorldParams {
 	double mountain_freq_gain = 2.5;
 	double mountain_exp       = 12;
 
+	double surfaceScale           = 70;
+	double surfaceRelDepth        = 0.3;
+	double surfaceOctaves         = 6;
+	double surfaceAmplGain        = 0.4;
+	double surfaceFreqGain        = 2.0;
+	double surfaceThresholdXScale = 1;
+	double surfaceThresholdYScale = 1 / surfaceThresholdXScale
+			+ 1 / (surfaceThresholdXScale * surfaceThresholdXScale * surfaceThresholdXScale);
+
 	double vegetation_xy_scale  = 1000;
 	double temperature_xy_scale = 1500;
 	double hollowness_xy_scale  = 800;
@@ -49,13 +58,6 @@ struct WorldParams {
 
 	double desert_threshold = 0.3;
 	double grasland_threshold = 0.5;
-
-	double surfaceScale    = 70;
-	double surfaceRelDepth = 0.3;
-	double surfaceExp      = 0.4;
-	double surfaceThresholdXScale = 1;
-	double surfaceThresholdYScale = 1 / surfaceThresholdXScale
-			+ 1 / (surfaceThresholdXScale * surfaceThresholdXScale * surfaceThresholdXScale);
 };
 
 class WorldGenerator {
@@ -71,7 +73,7 @@ private:
 	Perlin vegetation_perlin;
 	Perlin temperature_perlin;
 	
-	Perlin hollowness_perlin;
+	Perlin surfacePerlin;
 	Perlin cave_perlin;
 
 	Perlin perlin;

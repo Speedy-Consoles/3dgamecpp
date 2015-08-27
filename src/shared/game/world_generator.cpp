@@ -6,9 +6,9 @@
 WorldGenerator::WorldGenerator(uint64 seed, WorldParams params) :
 	wp(params),
 	elevationGenerator(seed ^ 0x50a9259b7451453e, wp),
+	surfacePerlin( seed ^ 0x2e23350f66cb2335),
 	vegetation_perlin( seed ^ 0xbebf64c4966b75db),
 	temperature_perlin(seed ^ 0x5364424b2aa0fb15),
-	hollowness_perlin( seed ^ 0x2e23350f66cb2335),
 	cave_perlin(       seed ^ 0xca5857b732d93020),
 	perlin(            seed ^ 0x3e02a6291ea49867)
 {
@@ -41,20 +41,23 @@ void WorldGenerator::generateChunk(Chunk *chunk) {
 
 				if (depth < 0) {
 					solid = false;
-				} else/* if (depth > (h * wp.surfaceRelDepth))*/ {
+				} else if (depth > (h * wp.surfaceRelDepth)) {
 					solid = true;
-				}/* else {
+				} else {
 					double funPos = (1 - depth / (h * wp.surfaceRelDepth) - 0.5) * 2 / wp.surfaceThresholdXScale;
 					double threshold = (funPos + funPos * funPos * funPos) / wp.surfaceThresholdYScale + 0.5;
 					double px = bcx / wp.surfaceScale;
 					double py = bcy / wp.surfaceScale;
 					double pz = bcz / wp.surfaceScale;
-					double v = perlin.noise3(px, py, pz, 6, wp.surfaceExp);
+					double v = surfacePerlin.noise3(
+						px, py, pz,
+						wp.surfaceOctaves, wp.surfaceAmplGain, wp.surfaceFreqGain
+					);
 					if (v > threshold)
 						solid = true;
 					else
 						solid = false;
-				}*/
+				}
 
 				double caveness = 0;
 				if (solid) {
