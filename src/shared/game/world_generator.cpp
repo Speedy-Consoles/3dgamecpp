@@ -6,12 +6,17 @@
 WorldGenerator::WorldGenerator(uint64 seed, WorldParams params) :
 	wp(params),
 	elevationGenerator(seed ^ 0x50a9259b7451453e, wp),
-	surfacePerlin(     seed ^ 0x2e23350f66cb2335),
 	vegetation_perlin( seed ^ 0xbebf64c4966b75db),
 	temperature_perlin(seed ^ 0x5364424b2aa0fb15),
-	cave_perlin1(      seed ^ 0xca5857b732d93020),
-	cave_perlin2(      seed ^ 0x3b87a637383534d7),
-	perlin(            seed ^ 0x3e02a6291ea49867)
+	surfacePerlin(     seed ^ 0x2e23350f66cb2335),
+	caveNessPerlin(    seed ^ 0x3e02a6291ea49867),
+	tunnelPerlin1a(    seed ^ 0xca5857b732d93020),
+	tunnelPerlin2a(    seed ^ 0x3b87a637383534d7),
+	tunnelPerlin3a(    seed ^ 0xbc48698ffbf20f79),
+	tunnelPerlin1b(    seed ^ 0x9fa9e48141d4eed8),
+	tunnelPerlin2b(    seed ^ 0x1ddb866bf73756f9),
+	tunnelPerlin3b(    seed ^ 0x649e707a89ae7cda),
+	roomPerlin(        seed ^ 0x2508660216ec5e91)
 {
 	// nothing
 }
@@ -48,11 +53,8 @@ void WorldGenerator::generateChunk(Chunk *chunk) {
 				const double xScale = wp.surfaceThresholdXScale;
 				double funPos = 1.0 - depth / (h * wp.surfaceRelDepth) * 2;
 				double threshold = funPos * (xScale * xScale + funPos * funPos) / (xScale * xScale + 1) * 2.0;
-				double px = bcx / wp.surfaceScale;
-				double py = bcy / wp.surfaceScale;
-				double pz = bcz / wp.surfaceScale;
 				double v = surfacePerlin.noise3(
-					px, py, pz,
+					bc / wp.surfaceScale,
 					wp.surfaceOctaves, wp.surfaceAmplGain, wp.surfaceFreqGain
 				);
 				if (v > threshold)
@@ -84,12 +86,40 @@ void WorldGenerator::generateChunk(Chunk *chunk) {
 						block = 0; // air
 				}
 
+				// TODO cave rooms
+				// TODO height dependent
 				// caves
 				if (block != 0) {
-					const double v1 = std::abs(cave_perlin1.noise3(bc * 0.005, 4, 0.3, 2));
-					const double v2 = std::abs(cave_perlin2.noise3(bc * 0.005, 4, 0.3, 2));
-					if (((v1 + 1) * (v2 + 1) - 1) < 0.02) {
-						block = 0; // air
+					double caveSwitch = caveNessPerlin.noise3(bc * 0.003, 1, 0.3, 2);
+					static double overLap = 0.1;
+					double caveValue1 = 0;
+					double caveValue2 = 0;
+					if (caveSwitch > -overLap) {
+						const double v1 = std::abs(tunnelPerlin1a.noise3(bc * 0.005, 4, 0.3, 2));
+						const double v2 = std::abs(tunnelPerlin2a.noise3(bc * 0.005, 4, 0.3, 2));
+						const double v3 = std::abs(tunnelPerlin3a.noise3(bc * 0.005, 4, 0.3, 2));
+						double v12 = 1 / ((v1 * v1 + 1) * (v2 * v2 + 1) - 1);
+						double v23 = 1 / ((v2 * v2 + 1) * (v3 * v3 + 1) - 1);
+						double v31 = 1 / ((v3 * v3 + 1) * (v1 * v1 + 1) - 1);
+						double ramp = 1;
+						if (caveSwitch < 0)
+							ramp = (overLap + caveSwitch) / overLap;
+						caveValue1 = (v12 + v23 + v31) * ramp;
+					}
+					if (block != 0 && caveSwitch < overLap) {
+						const double v1 = std::abs(tunnelPerlin1b.noise3(bc * 0.005, 4, 0.3, 2));
+						const double v2 = std::abs(tunnelPerlin2b.noise3(bc * 0.005, 4, 0.3, 2));
+						const double v3 = std::abs(tunnelPerlin3b.noise3(bc * 0.005, 4, 0.3, 2));
+						double v12 = 1 / ((v1 * v1 + 1) * (v2 * v2 + 1) - 1);
+						double v23 = 1 / ((v2 * v2 + 1) * (v3 * v3 + 1) - 1);
+						double v31 = 1 / ((v3 * v3 + 1) * (v1 * v1 + 1) - 1);
+						double ramp = 1;
+						if (caveSwitch > 0)
+							ramp = (overLap - caveSwitch) / overLap;
+						caveValue2 = (v12 + v23 + v31) * ramp;
+					}
+					if (caveValue1 + caveValue2 > 5000) {
+						block = 0;
 					}
 				}
 

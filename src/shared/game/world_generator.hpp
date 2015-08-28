@@ -71,10 +71,14 @@ private:
 	Perlin temperature_perlin;
 	
 	Perlin surfacePerlin;
-	Perlin cave_perlin1;
-	Perlin cave_perlin2;
-
-	Perlin perlin;
+	Perlin caveNessPerlin;
+	Perlin tunnelPerlin1a;
+	Perlin tunnelPerlin2a;
+	Perlin tunnelPerlin3a;
+	Perlin tunnelPerlin1b;
+	Perlin tunnelPerlin2b;
+	Perlin tunnelPerlin3b;
+	Perlin roomPerlin;
 };
 
 #endif // WORLD_GENERATOR_HPP_
