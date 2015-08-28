@@ -53,8 +53,8 @@ struct WorldParams {
 	double cave_z_scale     = 200;
 	double cave_exp         = 0.4;
 
-	double desert_threshold = 0.3;
-	double grasland_threshold = 0.5;
+	double desert_threshold = 0.25;
+	double grasland_threshold = -0.2;
 };
 
 class WorldGenerator {
@@ -71,7 +71,8 @@ private:
 	Perlin temperature_perlin;
 	
 	Perlin surfacePerlin;
-	Perlin cave_perlin;
+	Perlin cave_perlin1;
+	Perlin cave_perlin2;
 
 	Perlin perlin;
 };

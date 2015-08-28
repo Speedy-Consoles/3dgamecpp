@@ -9,7 +9,8 @@ WorldGenerator::WorldGenerator(uint64 seed, WorldParams params) :
 	surfacePerlin(     seed ^ 0x2e23350f66cb2335),
 	vegetation_perlin( seed ^ 0xbebf64c4966b75db),
 	temperature_perlin(seed ^ 0x5364424b2aa0fb15),
-	cave_perlin(       seed ^ 0xca5857b732d93020),
+	cave_perlin1(      seed ^ 0xca5857b732d93020),
+	cave_perlin2(      seed ^ 0x3b87a637383534d7),
 	perlin(            seed ^ 0x3e02a6291ea49867)
 {
 	// nothing
@@ -60,62 +61,40 @@ void WorldGenerator::generateChunk(Chunk *chunk) {
 					solid = false;
 			}
 
-			double caveness = 0;
-			if (solid) {
-				double mod_cave_start_depth = min(h, 0.0) + wp.cave_start_depth;
-				if (bcz > mod_cave_start_depth) {
-					caveness = 0;
-				} else if (bcz > mod_cave_start_depth - wp.cave_border) {
-					caveness = (mod_cave_start_depth - bcz) / wp.cave_border;
-				} else if (bcz > wp.cave_end_depth + wp.cave_border) {
-					caveness = 1;
-				} else if (bcz > wp.cave_end_depth) {
-					caveness = (bcz - wp.cave_end_depth) / wp.cave_border;
-				} else {
-					caveness = 0;
-				}
-
-				if (caveness > 0) {
-					caveness *= caveness;
-
-					double cave = 0;/*cave_perlin.octavePerlin(
-						bcx / wp.cave_xy_scale,
-						bcy / wp.cave_xy_scale,
-						bcz / wp.cave_z_scale, wp.cave_octaves, wp.cave_exp
-					);*/
-
-					if ((cave + base_hallowness * 0.3) * caveness > wp.cave_threshold) {
-						solid = false;
-					}
-				}
-			}
-
 			if (solid)
 				realDepth++;
 			else
 				realDepth = 0;
 
-			vec3ui8 icc(iccx, iccy, iccz);
+			uint8 block;
 			if (iccz < (int) Chunk::WIDTH) {
 				if (solid) {
-					if (caveness > 0)
-						chunk->initBlock(icc, 3); // stone
-					else if (base_temperature < wp.desert_threshold && realDepth < 5)
-						chunk->initBlock(icc, 4); // sand
+					if (base_temperature > wp.desert_threshold && realDepth < 5)
+						block = 4; // sand
 					else if (base_vegetation > wp.grasland_threshold && realDepth == 1)
-						chunk->initBlock(icc, 2); // gras
+						block = 2; // gras
 					else if (realDepth >= 5)
-						chunk->initBlock(icc, 3); // dirt
+						block = 3; // dirt
 					else
-						chunk->initBlock(icc, 1); // stone
+						block = 1; // stone
 				} else {
-					if (caveness > 0)
-						chunk->initBlock(icc, 0);
-					else if (realDepth <= 0 && bcz <= 0)
-						chunk->initBlock(icc, 62); // water
+					if (realDepth <= 0 && bcz <= 0)
+						block = 62; // water
 					else
-						chunk->initBlock(icc, 0); // air
+						block = 0; // air
 				}
+
+				// caves
+				if (block != 0) {
+					const double v1 = std::abs(cave_perlin1.noise3(bc * 0.005, 4, 0.3, 2));
+					const double v2 = std::abs(cave_perlin2.noise3(bc * 0.005, 4, 0.3, 2));
+					if (((v1 + 1) * (v2 + 1) - 1) < 0.02) {
+						block = 0; // air
+					}
+				}
+
+				vec3ui8 icc(iccx, iccy, iccz);
+				chunk->initBlock(icc, block);
 			}
 		}
 	}
