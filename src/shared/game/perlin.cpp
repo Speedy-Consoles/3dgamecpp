@@ -1,8 +1,9 @@
 #include "perlin.hpp"
 
-#include <random>
 #include <algorithm>
 #include <cstring>
+
+#include "shared/engine/random.hpp"
 
 double NoiseBase::noise2(double x, double y, uint octaves, double amplGain, double freqGain) {
 	return noise3(x, y, 0, octaves, amplGain, freqGain);
@@ -42,11 +43,11 @@ void NoiseBase::noise2(
 }
 
 Perlin::Hasher::Hasher(uint64 seed) {
-    std::default_random_engine rng((uint) seed);
+    std::mt19937 rng((uint32) (seed ^ (seed >> 32)));
     for (int i = 0; i < 0x400; ++i) {
         p[i] = i;
     }
-	std::shuffle(p, p + 0x400, rng);
+	shuffle(p, p + 0x400, rng);
 }
 
 Perlin::Perlin(uint64 seed) : hasher(seed) {}

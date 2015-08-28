@@ -45,6 +45,7 @@
     <ClInclude Include="..\src\shared\engine\math.hpp" />
     <ClInclude Include="..\src\shared\engine\monitor.hpp" />
     <ClInclude Include="..\src\shared\engine\queue.hpp" />
+    <ClInclude Include="..\src\shared\engine\random.hpp" />
     <ClInclude Include="..\src\shared\engine\socket.hpp" />
     <ClInclude Include="..\src\shared\engine\stack.hpp" />
     <ClInclude Include="..\src\shared\engine\std_types.hpp" />
