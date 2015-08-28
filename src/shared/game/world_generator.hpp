@@ -17,7 +17,7 @@
 class ElevationGenerator;
 
 struct WorldParams {
-	double overall_scale = 0.1;
+	double overall_scale = 1;
 
 	double elevation_xy_scale  = 100000;
 	double elevation_z_scale   = 100;
@@ -38,8 +38,6 @@ struct WorldParams {
 	double surfaceAmplGain        = 0.4;
 	double surfaceFreqGain        = 2.0;
 	double surfaceThresholdXScale = 1;
-	double surfaceThresholdYScale = 1 / surfaceThresholdXScale
-			+ 1 / (surfaceThresholdXScale * surfaceThresholdXScale * surfaceThresholdXScale);
 
 	double vegetation_xy_scale  = 1000;
 	double temperature_xy_scale = 1500;
