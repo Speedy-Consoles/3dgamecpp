@@ -6,7 +6,7 @@
 WorldGenerator::WorldGenerator(uint64 seed, WorldParams params) :
 	wp(params),
 	elevationGenerator(seed ^ 0x50a9259b7451453e, wp),
-	surfacePerlin( seed ^ 0x2e23350f66cb2335),
+	surfacePerlin(     seed ^ 0x2e23350f66cb2335),
 	vegetation_perlin( seed ^ 0xbebf64c4966b75db),
 	temperature_perlin(seed ^ 0x5364424b2aa0fb15),
 	cave_perlin(       seed ^ 0xca5857b732d93020),
@@ -53,7 +53,7 @@ void WorldGenerator::generateChunk(Chunk *chunk) {
 						px, py, pz,
 						wp.surfaceOctaves, wp.surfaceAmplGain, wp.surfaceFreqGain
 					);
-					if (v > threshold)
+					if ((v + 1.0) / 2.0 > threshold)
 						solid = true;
 					else
 						solid = false;

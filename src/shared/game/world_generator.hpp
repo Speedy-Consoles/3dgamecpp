@@ -17,14 +17,13 @@
 class ElevationGenerator;
 
 struct WorldParams {
-	double overall_scale = 1;
+	double overall_scale = 0.1;
 
 	double elevation_xy_scale  = 100000;
-	double elevation_z_scale   = 200;
+	double elevation_z_scale   = 100;
 	double elevation_octaves   = 6;
 	double elevation_ampl_gain = 0.4;
 	double elevation_freq_gain = 5.0;
-	double elevation_shift     = 0.5;
 
 	double mountain_xy_scale  = 5000;
 	double mountain_z_scale   = 6000;

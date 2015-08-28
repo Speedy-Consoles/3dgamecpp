@@ -57,7 +57,7 @@ void ElevationGenerator::generateChunk(vec2i64 chunkCoords, double *chunk) {
 	);
 
 	for (uint i = 0; i < Chunk::WIDTH * Chunk::WIDTH; i++) {
-		chunk[i] = (base[i] - wp.elevation_shift) * wp.elevation_z_scale * wp.overall_scale;
-		chunk[i] += std::pow(mountain[i], wp.mountain_exp) * wp.mountain_z_scale * wp.overall_scale;
+		chunk[i] = base[i] * wp.elevation_z_scale * wp.overall_scale;
+		chunk[i] += std::pow((mountain[i] + 1.0) / 2.0, wp.mountain_exp) * wp.mountain_z_scale * wp.overall_scale;
 	}
 }

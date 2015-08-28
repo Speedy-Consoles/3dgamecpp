@@ -66,7 +66,7 @@ double Perlin::noise3(double x, double y, double z, uint octaves, double amplGai
         amplitude *= amplGain;
         freq *= freqGain;
     }
-	return (total / sqrt(max_value) + 1) * 0.5;
+	return total / sqrt(max_value);
 }
 
 double Perlin::noise2(double x, double y, uint octaves, double amplGain, double freqGain) {
@@ -80,7 +80,7 @@ double Perlin::noise2(double x, double y, uint octaves, double amplGain, double 
         amplitude *= amplGain;
         freq *= freqGain;
     }
-	return (total / sqrt(max_value) + 1) * 0.5;
+	return total / sqrt(max_value);
 }
 
 void Perlin::noise3(
@@ -104,7 +104,7 @@ void Perlin::noise3(
     }
 
 	for (uint i = 0; i < nx * ny * nz; ++i) {
-		buffer[i] = (buffer[i] / sqrt(max_value) + 1) * 0.5;
+		buffer[i] = buffer[i] / sqrt(max_value);
 	}
 }
 
@@ -128,7 +128,7 @@ void Perlin::noise2(
     }
 
 	for (uint i = 0; i < nx * ny; ++i) {
-		buffer[i] = (buffer[i] / sqrt(max_value) + 1) * 0.5;
+		buffer[i] = buffer[i] / sqrt(max_value);
 	}
 }
 
