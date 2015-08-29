@@ -8,6 +8,7 @@
 #include "elevation_generator.hpp"
 
 #include <cmath>
+#include <limits>
 
 #include "world_generator.hpp"
 #include "chunk.hpp"
@@ -24,22 +25,23 @@ ElevationGenerator::ElevationGenerator(uint64 seed, const WorldParams &params) :
 
 ElevationGenerator::~ElevationGenerator() {
 	for (auto pair: chunks) {
-		delete[] pair.second;
+		delete[] pair.second.heights;
 	}
 }
 
-const double *ElevationGenerator::getChunk(vec2i64 chunkCoords) {
+const ElevationChunk ElevationGenerator::getChunk(vec2i64 chunkCoords) {
 	auto it = chunks.find(chunkCoords);
 	if (it == chunks.end()) {
-		double *chunk = new double[Chunk::SIZE];
-		generateChunk(chunkCoords, chunk);
+		ElevationChunk chunk;
+		chunk.heights = new double[Chunk::SIZE];
+		generateChunk(chunkCoords, &chunk);
 		chunks.insert({chunkCoords, chunk});
 		return chunk;
 	}
 	return it->second;
 }
 
-void ElevationGenerator::generateChunk(vec2i64 chunkCoords, double *chunk) {
+void ElevationGenerator::generateChunk(vec2i64 chunkCoords, ElevationChunk *chunk) {
 	double base[Chunk::WIDTH * Chunk::WIDTH];
 	double mountain[Chunk::WIDTH * Chunk::WIDTH];
 	basePerlin.noise2(
@@ -56,8 +58,18 @@ void ElevationGenerator::generateChunk(vec2i64 chunkCoords, double *chunk) {
 		wp.mountain_octaves, wp.mountain_ampl_gain, wp.mountain_freq_gain, mountain
 	);
 
+	double minHeight = std::numeric_limits<double>::max();
+	double maxHeight = std::numeric_limits<double>::min();
 	for (uint i = 0; i < Chunk::WIDTH * Chunk::WIDTH; i++) {
-		chunk[i] = base[i] * wp.elevation_z_scale * wp.overall_scale;
-		chunk[i] += std::pow((mountain[i] + 1.0) / 2.0, wp.mountain_exp) * wp.mountain_z_scale * wp.overall_scale;
+		double height = base[i] * wp.elevation_z_scale * wp.overall_scale;
+		height += std::pow((mountain[i] + 1.0) / 2.0, wp.mountain_exp) * wp.mountain_z_scale * wp.overall_scale;
+
+		if (height < minHeight)
+			minHeight = height;
+		if (height > maxHeight)
+			maxHeight = height;
+		chunk->heights[i] = height;
 	}
+	chunk->max = maxHeight;
+	chunk->min = minHeight;
 }

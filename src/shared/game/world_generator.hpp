@@ -39,6 +39,18 @@ struct WorldParams {
 	double surfaceFreqGain        = 2.0;
 	double surfaceThresholdXScale = 1;
 
+	double caveSwitchOverlap  = 0.1;
+	double caveSwitchScale    = 300;
+	double caveSwitchOctaves  = 1;
+	double caveSwitchAmplGain = 0.3;
+	double caveSwitchFreqGain = 2.0;
+
+	double tunnelScale            = 200;
+	double tunnelOctaves          = 4;
+	double tunnelAmplGain         = 0.3;
+	double tunnelFreqGain         = 2.0;
+	double tunnelSquaredThreshold = 5000;
+
 	double vegetation_xy_scale  = 1000;
 	double temperature_xy_scale = 1500;
 	double hollowness_xy_scale  = 800;
@@ -60,6 +72,7 @@ struct WorldParams {
 class WorldGenerator {
 public:
 	WorldGenerator(uint64 seed, WorldParams params);
+	~WorldGenerator();
 
 	void generateChunk(Chunk *);
 
@@ -71,7 +84,7 @@ private:
 	Perlin temperature_perlin;
 	
 	Perlin surfacePerlin;
-	Perlin caveNessPerlin;
+	Perlin caveSwitchPerlin;
 	Perlin tunnelPerlin1a;
 	Perlin tunnelPerlin2a;
 	Perlin tunnelPerlin3a;
@@ -79,6 +92,8 @@ private:
 	Perlin tunnelPerlin2b;
 	Perlin tunnelPerlin3b;
 	Perlin roomPerlin;
+
+	double *caveSwitchBuffer;
 };
 
 #endif // WORLD_GENERATOR_HPP_
