@@ -2,6 +2,9 @@
 
 #include "shared/engine/math.hpp"
 #include "shared/engine/vmath.hpp"
+#include "shared/engine/logging.hpp"
+
+static logging::Logger logger("gen");
 
 WorldGenerator::WorldGenerator(uint64 seed, WorldParams params) :
 	wp(params),
@@ -9,34 +12,42 @@ WorldGenerator::WorldGenerator(uint64 seed, WorldParams params) :
 	vegetation_perlin( seed ^ 0xbebf64c4966b75db),
 	temperature_perlin(seed ^ 0x5364424b2aa0fb15),
 	surfacePerlin(     seed ^ 0x2e23350f66cb2335),
-	caveSwitchPerlin(  seed ^ 0x3e02a6291ea49867),
+	cavenessPerlin(    seed ^ 0x2508660216ec5e91),
+	tunnelSwitchPerlin(seed ^ 0x3e02a6291ea49867),
 	tunnelPerlin1a(    seed ^ 0xca5857b732d93020),
 	tunnelPerlin2a(    seed ^ 0x3b87a637383534d7),
 	tunnelPerlin3a(    seed ^ 0xbc48698ffbf20f79),
 	tunnelPerlin1b(    seed ^ 0x9fa9e48141d4eed8),
 	tunnelPerlin2b(    seed ^ 0x1ddb866bf73756f9),
-	tunnelPerlin3b(    seed ^ 0x649e707a89ae7cda),
-	roomPerlin(        seed ^ 0x2508660216ec5e91)
+	tunnelPerlin3b(    seed ^ 0x649e707a89ae7cda)
 {
-	caveSwitchBuffer = new double[Chunk::SIZE + 9 * Chunk::WIDTH * Chunk::WIDTH];
+	tunnelSwitchBuffer = new double[Chunk::SIZE + 9 * Chunk::WIDTH * Chunk::WIDTH];
+	cavenessBuffer = new double[Chunk::SIZE + 9 * Chunk::WIDTH * Chunk::WIDTH];
 }
 
 WorldGenerator::~WorldGenerator() {
-	delete[] caveSwitchBuffer;
+	delete[] tunnelSwitchBuffer;
 }
 
 void WorldGenerator::generateChunk(Chunk *chunk) {
 	vec3i64 cc = chunk->getCC();
 
 	const ElevationChunk elevation = elevationGenerator.getChunk(vec2i64(cc[0], cc[1]));
-	bool caveSwitchBuffered = cc[2] * Chunk::WIDTH <= elevation.min;
-	if (caveSwitchBuffered) {
-		caveSwitchPerlin.noise3(
-			cc.cast<double>() * Chunk::WIDTH / wp.caveSwitchScale / wp.overall_scale,
-			vec3d(1 / wp.caveSwitchScale / wp.overall_scale),
+	bool underground = cc[2] * Chunk::WIDTH <= std::ceil(elevation.max);
+	if (underground) {
+		tunnelSwitchPerlin.noise3(
+			cc.cast<double>() * Chunk::WIDTH / wp.tunnelSwitchScale / wp.overall_scale,
+			vec3d(1 / wp.tunnelSwitchScale / wp.overall_scale),
 			vec3ui(Chunk::WIDTH, Chunk::WIDTH, Chunk::WIDTH + 9),
-			wp.caveSwitchOctaves, wp.caveSwitchAmplGain, wp.caveSwitchFreqGain,
-			caveSwitchBuffer
+			wp.tunnelSwitchOctaves, wp.tunnelSwitchAmplGain, wp.tunnelSwitchFreqGain,
+			tunnelSwitchBuffer
+		);
+		cavenessPerlin.noise3(
+			cc.cast<double>() * Chunk::WIDTH / wp.cavenessScale / wp.overall_scale,
+			vec3d(1 / wp.cavenessScale / wp.overall_scale),
+			vec3ui(Chunk::WIDTH, Chunk::WIDTH, Chunk::WIDTH + 9),
+			wp.cavenessOctaves, wp.cavenessAmplGain, wp.cavenessFreqGain,
+			cavenessBuffer
 		);
 	}
 
@@ -104,20 +115,18 @@ void WorldGenerator::generateChunk(Chunk *chunk) {
 				// TODO height dependent
 				// caves
 				if (block != 0) {
-					double caveSwitch;
-					if (caveSwitchBuffered) {
-						uint index = ((iccz * Chunk::WIDTH) + iccy) * Chunk::WIDTH + iccx;
-						caveSwitch = caveSwitchBuffer[index];
-					} else {
-						caveSwitch = caveSwitchPerlin.noise3(
-								dbc / wp.caveSwitchScale / wp.overall_scale, wp.caveSwitchOctaves,
-								wp.caveSwitchAmplGain, wp.caveSwitchFreqGain);
-					}
-					double overLap = wp.caveSwitchOverlap;
-					double caveValue1 = 0;
-					double caveValue2 = 0;
+					if (!underground)
+						LOG_ERROR(logger) << "Trying to generate caves, but not underground";
+					uint index = ((iccz * Chunk::WIDTH) + iccy) * Chunk::WIDTH + iccx;
+					double depthValue1 = wp.cavenessDepthGainFac1 * (1 - 1 / (depth / wp.cavenessDepthGain1 + 1));
+					double depthValue2 = wp.cavenessDepthGainFac2 * (1 - 1 / (depth / wp.cavenessDepthGain2 + 1));
+					double caveness = (cavenessBuffer[index] + 0.5) * (depthValue1 + depthValue2);
+					double tunnelSwitch = tunnelSwitchBuffer[index];
+					double overLap = wp.tunnelSwitchOverlap;
+					double tunnelValue1 = 0;
+					double tunnelValue2 = 0;
 					vec3d tunnelCoords(dbc / wp.tunnelScale);
-					if (caveSwitch > -overLap) {
+					if (tunnelSwitch > -overLap) {
 						const double v1 = std::abs(tunnelPerlin1a.noise3(
 								tunnelCoords, wp.tunnelOctaves, wp.tunnelAmplGain, wp.tunnelFreqGain));
 						const double v2 = std::abs(tunnelPerlin2a.noise3(
@@ -126,13 +135,12 @@ void WorldGenerator::generateChunk(Chunk *chunk) {
 								tunnelCoords, wp.tunnelOctaves, wp.tunnelAmplGain, wp.tunnelFreqGain));
 						double v12 = 1 / ((v1 * v1 + 1) * (v2 * v2 + 1) - 1);
 						double v23 = 1 / ((v2 * v2 + 1) * (v3 * v3 + 1) - 1);
-						double v31 = 1 / ((v3 * v3 + 1) * (v1 * v1 + 1) - 1);
 						double ramp = 1;
-						if (caveSwitch < 0)
-							ramp = (overLap + caveSwitch) / overLap;
-						caveValue1 = (v12 + v23 + v31) * ramp;
+						if (tunnelSwitch < 0)
+							ramp = (overLap + tunnelSwitch) / overLap;
+						tunnelValue1 = (v12 + v23) * ramp;
 					}
-					if (block != 0 && caveSwitch < overLap) {
+					if (block != 0 && tunnelSwitch < overLap) {
 						const double v1 = std::abs(tunnelPerlin1b.noise3(
 								tunnelCoords, wp.tunnelOctaves, wp.tunnelAmplGain, wp.tunnelFreqGain));
 						const double v2 = std::abs(tunnelPerlin2b.noise3(
@@ -141,13 +149,12 @@ void WorldGenerator::generateChunk(Chunk *chunk) {
 								tunnelCoords, wp.tunnelOctaves, wp.tunnelAmplGain, wp.tunnelFreqGain));
 						double v12 = 1 / ((v1 * v1 + 1) * (v2 * v2 + 1) - 1);
 						double v23 = 1 / ((v2 * v2 + 1) * (v3 * v3 + 1) - 1);
-						double v31 = 1 / ((v3 * v3 + 1) * (v1 * v1 + 1) - 1);
 						double ramp = 1;
-						if (caveSwitch > 0)
-							ramp = (overLap - caveSwitch) / overLap;
-						caveValue2 = (v12 + v23 + v31) * ramp;
+						if (tunnelSwitch > 0)
+							ramp = (overLap - tunnelSwitch) / overLap;
+						tunnelValue2 = (v12 + v23) * ramp;
 					}
-					if (caveValue1 + caveValue2 > wp.tunnelSquaredThreshold) {
+					if (caveness * caveness * (wp.caveRoomValue + tunnelValue1 + tunnelValue2) > wp.caveThreshold) {
 						block = 0;
 					}
 				}

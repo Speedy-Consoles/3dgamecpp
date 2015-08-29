@@ -39,31 +39,33 @@ struct WorldParams {
 	double surfaceFreqGain        = 2.0;
 	double surfaceThresholdXScale = 1;
 
-	double caveSwitchOverlap  = 0.1;
-	double caveSwitchScale    = 300;
-	double caveSwitchOctaves  = 1;
-	double caveSwitchAmplGain = 0.3;
-	double caveSwitchFreqGain = 2.0;
+	double cavenessScale     = 50;
+	double cavenessOctaves   = 2;
+	double cavenessAmplGain  = 0.3;
+	double cavenessFreqGain  = 2.0;
+	double cavenessDepthGain1 = 50.0;
+	double cavenessDepthGain2 = 300.0;
+	double cavenessDepthGainFac1 = 0.8;
+	double cavenessDepthGainFac2 = 0.2;
 
-	double tunnelScale            = 100;
-	double tunnelOctaves          = 1;
-	double tunnelAmplGain         = 0.3;
-	double tunnelFreqGain         = 3.0;
-	double tunnelSquaredThreshold = 5000;
+	double tunnelSwitchOverlap  = 0.1;
+	double tunnelSwitchScale    = 300;
+	double tunnelSwitchOctaves  = 1;
+	double tunnelSwitchAmplGain = 0.3;
+	double tunnelSwitchFreqGain = 2.0;
+
+	double tunnelScale    = 100;
+	double tunnelOctaves  = 1;
+	double tunnelAmplGain = 0.3;
+	double tunnelFreqGain = 3.0;
+
+	double caveRoomValue = 600;
+
+	double caveThreshold = 300;
 
 	double vegetation_xy_scale  = 1000;
 	double temperature_xy_scale = 1500;
 	double hollowness_xy_scale  = 800;
-
-	double cave_threshold   = 0.7;
-	double cave_stretch     = 0.2;
-	double cave_start_depth = -100;
-	double cave_end_depth   = -400;
-	int    cave_octaves     = 8;
-	double cave_border      = 100;
-	double cave_xy_scale    = 1000;
-	double cave_z_scale     = 200;
-	double cave_exp         = 0.4;
 
 	double desert_threshold = 0.25;
 	double grasland_threshold = -0.2;
@@ -84,16 +86,17 @@ private:
 	Perlin temperature_perlin;
 	
 	Perlin surfacePerlin;
-	Perlin caveSwitchPerlin;
+	Perlin cavenessPerlin;
+	Perlin tunnelSwitchPerlin;
 	Perlin tunnelPerlin1a;
 	Perlin tunnelPerlin2a;
 	Perlin tunnelPerlin3a;
 	Perlin tunnelPerlin1b;
 	Perlin tunnelPerlin2b;
 	Perlin tunnelPerlin3b;
-	Perlin roomPerlin;
 
-	double *caveSwitchBuffer;
+	double *tunnelSwitchBuffer;
+	double *cavenessBuffer;
 };
 
 #endif // WORLD_GENERATOR_HPP_
