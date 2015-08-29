@@ -45,10 +45,10 @@ struct WorldParams {
 	double caveSwitchAmplGain = 0.3;
 	double caveSwitchFreqGain = 2.0;
 
-	double tunnelScale            = 200;
-	double tunnelOctaves          = 4;
+	double tunnelScale            = 100;
+	double tunnelOctaves          = 1;
 	double tunnelAmplGain         = 0.3;
-	double tunnelFreqGain         = 2.0;
+	double tunnelFreqGain         = 3.0;
 	double tunnelSquaredThreshold = 5000;
 
 	double vegetation_xy_scale  = 1000;
