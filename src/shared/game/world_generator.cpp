@@ -31,7 +31,6 @@ WorldGenerator::~WorldGenerator() {
 
 void WorldGenerator::generateChunk(Chunk *chunk) {
 	vec3i64 cc = chunk->getCC();
-
 	const ElevationChunk elevation = elevationGenerator.getChunk(vec2i64(cc[0], cc[1]));
 	bool underground = cc[2] * Chunk::WIDTH <= std::ceil(elevation.max);
 	if (underground) {

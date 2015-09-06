@@ -106,7 +106,7 @@ private:
 	void buildChunk(const Chunk *chunks[27]);
 	void visibilitySearch();
 	int updateVsChunk(vec3i64 chunkCoords, ChunkVSInfo *vsInfo, int passThroughs);
-	int getOuts(int ins, int passThroughs);
+	int getOuts(int ins, int passThroughs, vec3i64 chunkDiff, int tolerance);
 
 	bool inFrustum(vec3i64 cc, vec3i64 pos, vec3d lookDir);
 

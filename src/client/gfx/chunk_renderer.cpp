@@ -472,35 +472,44 @@ void ChunkRenderer::visibilitySearch() {
 
 int ChunkRenderer::updateVsChunk(vec3i64 chunkCoords, ChunkVSInfo *vsInfo, int passThroughs) {
 	vec3i64 cd = chunkCoords - vsPlayerChunk;
-	int dirMask = 0;
-	for (int dim = 0; dim < 3; dim++) {
-		if (cd[dim] >= -1)
-			dirMask |= 1 << dim;
-		if (cd[dim] <= 1)
-			dirMask |= 8 << dim;
-	}
 
 	int oldOuts = vsInfo->outs;
 	if (vsInfo->outsVersion != vsCurrentVersion)
 		oldOuts = 0;
-	vsInfo->outs = getOuts(vsInfo->ins, passThroughs) & dirMask;
+	vsInfo->outs = getOuts(vsInfo->ins, passThroughs, cd, 1);
 	vsInfo->outsVersion = vsCurrentVersion;
 
 	return oldOuts ^ vsInfo->outs;
 }
 
-int ChunkRenderer::getOuts(int ins, int passThroughs) {
+int ChunkRenderer::getOuts(int ins, int passThroughs, vec3i64 chunkDiff, int tolerance) {
 	int outs = 0;
-	for (int d = 0; d < 6; d++) {
-		if (((ins >> d) & 1) == 0)
+	int dirMask = 0;
+	for (int dim = 0; dim < 3; dim++) {
+		if (chunkDiff[dim] >= -tolerance)
+			dirMask |= 1 << dim;
+		if (chunkDiff[dim] <= tolerance)
+			dirMask |= 8 << dim;
+	}
+
+	for (int d1 = 0; d1 < 6; d1++) {
+		if (((ins >> d1) & 1) == 0)
 			continue;
+		int dimDiff = std::abs(chunkDiff[d1 % 3]);
+		int otherDimDiff1 = std::abs(chunkDiff[OTHER_DIR_DIMS[d1][0]]);
+		int otherDimDiff2 = std::abs(chunkDiff[OTHER_DIR_DIMS[d1][1]]);
+		bool oppositeVisible = otherDimDiff1 - tolerance <= dimDiff
+				&& otherDimDiff2 - tolerance <= dimDiff;
+
 		int shift = 0;
-		for (int d1 = 0; d1 < d; d1++) {
-			outs |= ((passThroughs & (1 << (shift + d - d1 - 1))) > 0) << d1;
-			shift += 5 - d1;
+		for (int d2 = 0; d2 < d1; d2++) {
+			if (((dirMask >> d2) & 1) != 0 && (oppositeVisible || d1 % 3 != d2 %3))
+				outs |= ((passThroughs & (1 << (shift + d1 - d2 - 1))) > 0) << d2;
+			shift += 5 - d2;
 		}
-		for (int d2 = d + 1; d2 < 6; d2++) {
-			outs |= ((passThroughs & (1 << (shift + d2 - d - 1))) > 0) << d2;
+		for (int d2 = d1 + 1; d2 < 6; d2++) {
+			if (((dirMask >> d2) & 1) != 0 && (oppositeVisible || d1 % 3 != d2 %3))
+				outs |= ((passThroughs & (1 << (shift + d2 - d1 - 1))) > 0) << d2;
 		}
 	}
 	return outs;
