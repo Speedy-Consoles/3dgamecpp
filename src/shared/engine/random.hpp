@@ -3,38 +3,9 @@
 
 #include <random>
 #include <limits>
+#include <boost/random/uniform_int_distribution.hpp>
 
-template <typename T>
-class uniform_int_distribution {
-	T min, max;
-public:
-	using result_type = T;
-
-	uniform_int_distribution(result_type min = 0,
-			result_type max = std::numeric_limits<result_type>::max()) :
-			min(min), max(max) {}
-	
-	result_type a() const { return min; }
-	result_type b() const { return max; }
-
-	template <typename RNG>
-	result_type operator () (RNG& rng) {
-		using rng_type = typename RNG::result_type;
-
-		if (max < min)
-			return (result_type)rng();
-
-		rng_type n = max - min + 1;
-		rng_type remainder = rng.max() % n;
-		rng_type x;
-		do
-		{
-			x = rng();
-		} while (x >= rng.max() - remainder);
-		rng_type result = min + x % n;
-		return (result_type)result;
-	}
-};
+using boost::random::uniform_int_distribution;
 
 template <class T, class RNG>
 void shuffle(T begin, T end, RNG &rng) {
