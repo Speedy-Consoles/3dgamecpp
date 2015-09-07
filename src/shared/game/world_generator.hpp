@@ -39,7 +39,7 @@ struct WorldParams {
 	double surfaceFreqGain        = 2.0;
 	double surfaceThresholdXScale = 1;
 
-	double cavenessScale     = 50;
+	double cavenessScale     = 100;
 	double cavenessOctaves   = 2;
 	double cavenessAmplGain  = 0.3;
 	double cavenessFreqGain  = 2.0;
@@ -49,19 +49,19 @@ struct WorldParams {
 	double cavenessDepthGainFac2 = 0.2;
 
 	double tunnelSwitchOverlap  = 0.1;
-	double tunnelSwitchScale    = 300;
+	double tunnelSwitchScale    = 600;
 	double tunnelSwitchOctaves  = 1;
 	double tunnelSwitchAmplGain = 0.3;
 	double tunnelSwitchFreqGain = 2.0;
 
-	double tunnelScale    = 100;
+	double tunnelScale    = 200;
 	double tunnelOctaves  = 1;
 	double tunnelAmplGain = 0.3;
 	double tunnelFreqGain = 3.0;
 
 	double caveRoomValue = 600;
 
-	double caveThreshold = 300;
+	double caveThreshold = 500;
 
 	double vegetation_xy_scale  = 1000;
 	double temperature_xy_scale = 1500;
