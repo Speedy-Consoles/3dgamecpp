@@ -393,19 +393,47 @@ void ChunkRenderer::visibilitySearch() {
 
 				renderChunks[1 - renderChunksPage].insert({{0, 0, 0}, startChunkCoords});
 
-				for (int d = 0; d < 6; d++) {
-					vec3i64 ncc = startChunkCoords + DIRS[d].cast<int64>();
-					auto nit = vsChunks.find(ncc);
-					if (nit == vsChunks.end()) {
+				vec3i64 cds[26];
+				for (uint i = 0, j = 0; i < 27; i++) {
+					if (i == BIG_CUBE_CYCLE_BASE_INDEX)
+						continue;
+					cds[j++] = BIG_CUBE_CYCLE[i].cast<int64>();
+				}
+				std::sort(cds, cds + 26, vec3i64CompFunc);
+				for (uint i = 0; i < 26; i++) {
+					vec3i64 cc = vsPlayerChunk + cds[i];
+					auto it = vsChunks.find(cc);
+					if (it == vsChunks.end()) {
+						auto pair = vsChunks.insert({cc, ChunkVSInfo()});
+						it = pair.first;
+					}
+
+					it->second.outs = 0x3F;
+					it->second.outsVersion = vsCurrentVersion;
+					it->second.ins = 0x3F;
+					it->second.insVersion = vsCurrentVersion;
+
+					renderChunks[1 - renderChunksPage].insert({cds[i], cc});
+
+					for (int d = 0; d < 6; d++) {
+						vec3i64 ncd = cds[i] + DIRS[d].cast<int64>();
+						if (ncd.maxAbs() <= 1)
+							continue;
+						vec3i64 ncc = vsPlayerChunk + ncd;
+						auto nit = vsChunks.find(ncc);
+						if (nit == vsChunks.end()) {
 							auto pair = vsChunks.insert({ncc, ChunkVSInfo()});
 							nit = pair.first;
+						}
+						nit->second.ins = (1 << ((d + 3) % 6));
+						nit->second.insVersion = vsCurrentVersion;
+						vsFringe.push(nit);
+						vsInFringe.insert(ncc);
 					}
-					nit->second.ins = (1 << ((d + 3) % 6));
-					nit->second.insVersion = vsCurrentVersion;
-					vsFringe.push(nit);
-					vsInFringe.insert(ncc);
 				}
-			} else if (startIt->second.ins > 0 && startIt->second.insVersion == vsCurrentVersion) {
+			} else if ((vsPlayerChunk - startChunkCoords).maxAbs() > 1
+					&& startIt->second.ins > 0
+					&& startIt->second.insVersion == vsCurrentVersion) {
 				vsFringe.push(startIt);
 				vsInFringe.insert(startChunkCoords);
 			} else {
@@ -419,7 +447,6 @@ void ChunkRenderer::visibilitySearch() {
 			vec3i64 cc = vsIt->first;
 			vsFringe.pop();
 			vsInFringe.erase(cc);
-			//std::unordered_map<vec3i64, ChunkBuildInfo, size_t (*)(vec3i64)>::iterator
 			auto builtIt = builtChunks.find(cc);
 
 			int passThroughs = 0x3FFF;
@@ -454,7 +481,10 @@ void ChunkRenderer::visibilitySearch() {
 					nVsIt->second.ins = 0;
 					nVsIt->second.insVersion = vsCurrentVersion;
 				}
-				nVsIt->second.ins |= (1 << ((d + 3) % 6));
+				if ((vsIt->second.outs & (1 << d)) != 0)
+					nVsIt->second.ins |= 1 << ((d + 3) % 6);
+				else
+					nVsIt->second.ins &= ~(1 << ((d + 3) % 6));
 
 				if (vsInFringe.find(ncc) == vsInFringe.end()) {
 					vsFringe.push(nVsIt);
@@ -503,12 +533,12 @@ int ChunkRenderer::getOuts(int ins, int passThroughs, vec3i64 chunkDiff, int tol
 
 		int shift = 0;
 		for (int d2 = 0; d2 < d1; d2++) {
-			if (((dirMask >> d2) & 1) != 0 && (oppositeVisible || d1 % 3 != d2 %3))
+			if (((dirMask >> d2) & 1) != 0 && (oppositeVisible || d1 % 3 != d2 % 3))
 				outs |= ((passThroughs & (1 << (shift + d1 - d2 - 1))) > 0) << d2;
 			shift += 5 - d2;
 		}
 		for (int d2 = d1 + 1; d2 < 6; d2++) {
-			if (((dirMask >> d2) & 1) != 0 && (oppositeVisible || d1 % 3 != d2 %3))
+			if (((dirMask >> d2) & 1) != 0 && (oppositeVisible || d1 % 3 != d2 % 3))
 				outs |= ((passThroughs & (1 << (shift + d2 - d1 - 1))) > 0) << d2;
 		}
 	}
