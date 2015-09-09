@@ -88,37 +88,35 @@ void GL3ChunkRenderer::finishRender() {
 	GL(BindVertexArray(0));
 }
 
-void GL3ChunkRenderer::beginChunkConstruction() {
+void GL3ChunkRenderer::finishChunk(ChunkVisuals chunkVisuals) {
 	bufferSize = 0;
-}
 
-void GL3ChunkRenderer::emitFace(vec3i64 bc, vec3i64 icc, uint blockType, uint faceDir, int shadowLevels[4]) {
-	ushort posIndices[4];
-	uint8 compactShadowLevels = 0;
-	for (int i = 0; i < 4; i++) {
-		vec3i64 v = icc + DIR_QUAD_CORNER_CYCLES_3D[faceDir][i].cast<int64>();
-		posIndices[i] = (ushort) ((v[2] * (Chunk::WIDTH + 1) + v[1]) * (Chunk::WIDTH + 1) + v[0]);
-		compactShadowLevels |= shadowLevels[i] << 2 * i;
+	for (Quad quad : chunkVisuals.quads) {
+		ushort posIndices[4];
+		uint8 compactShadowLevels = 0;
+		for (int i = 0; i < 4; i++) {
+			vec3i64 v = quad.icc.cast<int64>() + DIR_QUAD_CORNER_CYCLES_3D[quad.faceDir][i].cast<int64>();
+			posIndices[i] = (ushort) ((v[2] * (Chunk::WIDTH + 1) + v[1]) * (Chunk::WIDTH + 1) + v[0]);
+			compactShadowLevels |= quad.shadowLevels[i] << 2 * i;
+		}
+		static const int INDICES[6] = {0, 1, 2, 2, 3, 0};
+
+		GL3TextureManager *texManager = static_cast<GL3Renderer *>(renderer)->getTextureManager();
+		GL3TextureManager::Entry entry = texManager->get(quad.faceType, quad.bc, quad.faceDir);
+
+		for (int i = 0; i < 6; i++) {
+			blockVertexBuffer[bufferSize].positionIndex = posIndices[INDICES[i]];
+			blockVertexBuffer[bufferSize].textureIndex = entry.layer;
+			blockVertexBuffer[bufferSize].dirIndexCornerIndex = quad.faceDir | (INDICES[i] << 3);
+			blockVertexBuffer[bufferSize].shadowLevels = compactShadowLevels;
+			bufferSize++;
+		}
 	}
-	static const int INDICES[6] = {0, 1, 2, 2, 3, 0};
 
-	GL3TextureManager *texManager = static_cast<GL3Renderer *>(renderer)->getTextureManager();
-	GL3TextureManager::Entry entry = texManager->get(blockType, bc, faceDir);
-
-	for (int i = 0; i < 6; i++) {
-		blockVertexBuffer[bufferSize].positionIndex = posIndices[INDICES[i]];
-		blockVertexBuffer[bufferSize].textureIndex = entry.layer;
-		blockVertexBuffer[bufferSize].dirIndexCornerIndex = faceDir | (INDICES[i] << 3);
-		blockVertexBuffer[bufferSize].shadowLevels = compactShadowLevels;
-		bufferSize++;
-	}
-}
-
-void GL3ChunkRenderer::finishChunkConstruction(vec3i64 chunkCoords) {
-	auto it = renderInfos.find(chunkCoords);
+	auto it = renderInfos.find(chunkVisuals.cc);
 	if (bufferSize > 0) {
 		if (it == renderInfos.end()) {
-			auto pair = renderInfos.insert({chunkCoords, RenderInfo()});
+			auto pair = renderInfos.insert({chunkVisuals.cc, RenderInfo()});
 			it = pair.first;
 		}
 		if (it->second.vao == 0) {

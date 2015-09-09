@@ -17,6 +17,8 @@ static logging::Logger logger("render");
 
 ChunkRenderer::ChunkRenderer(Client *client, Renderer *renderer) :
 		inBuildQueue(0, vec3i64HashFunc),
+		toBuildQueue(1024),
+		toFinishQueue(1024),
 		builtChunks(0, vec3i64HashFunc),
 		vsChunks(0, vec3i64HashFunc),
 		vsInFringe(0, vec3i64HashFunc),
@@ -25,10 +27,14 @@ ChunkRenderer::ChunkRenderer(Client *client, Renderer *renderer) :
 	renderChunks[0] = std::map<vec3i64, vec3i64, bool(*)(vec3i64, vec3i64)>(vec3i64CompFunc);
 	renderChunks[1] = std::map<vec3i64, vec3i64, bool(*)(vec3i64, vec3i64)>(vec3i64CompFunc);
 	renderDistance = client->getConf().render_distance;
+	dispatch();
 }
 
 ChunkRenderer::~ChunkRenderer() {
-	// nothing
+	requestTermination();
+	ChunkVisuals cv;
+	while (toFinishQueue.pop(cv));
+	wait();
 }
 
 void ChunkRenderer::setConf(const GraphicsConf &conf, const GraphicsConf &old) {
@@ -96,30 +102,35 @@ void ChunkRenderer::tick() {
 	// build chunks in render queue
 	newFaces = 0;
 	newChunks = 0;
-	while (!buildQueue.empty() && newChunks < MAX_NEW_CHUNKS && newFaces < MAX_NEW_FACES) {
+	while (!buildQueue.empty()) {
 		vec3i64 cc = buildQueue.front();
-		Chunk const *chunks[27];
+		ChunkArea area;
 		bool cantRender = false;
 		for (int i = 0; i < 27; ++i) {
-			chunks[i] = client->getChunkManager()->getChunk(cc + BIG_CUBE_CYCLE[i].cast<int64>());
-			if (!chunks[i]) {
+			area.chunks[i] = client->getChunkManager()->getChunk(cc + BIG_CUBE_CYCLE[i].cast<int64>());
+			if (!area.chunks[i]) {
 				cantRender = true;
 				break;
 			}
 		}
-		if (cantRender)
+		// TODO data must be copied due to thread safety
+		if (cantRender || !toBuildQueue.push(area))
 			break;
-		client->getStopwatch()->start(CLOCK_BCH);
-		buildChunk(chunks);
-		client->getStopwatch()->stop(CLOCK_BCH);
-		changedChunksQueue.push_back(cc);
-		for (int i = 0; i < 27; ++i) {
-			client->getChunkManager()->releaseChunk(chunks[i]->getCC());
-		}
 		buildQueue.pop_front();
 		inBuildQueue.erase(inBuildQueue.find(cc));
 	}
 	client->getStopwatch()->stop(CLOCK_IBQ);
+
+	client->getStopwatch()->start(CLOCK_BCH);
+	ChunkVisuals cv;
+	while(toFinishQueue.pop(cv)) {
+		finishChunk(cv);
+		changedChunksQueue.push_back(cv.cc);
+		for (int i = 0; i < 27; ++i) {
+			client->getChunkManager()->releaseChunk(cv.cc + BIG_CUBE_CYCLE[i].cast<int64>());
+		}
+	}
+	client->getStopwatch()->stop(CLOCK_BCH);
 
 	client->getStopwatch()->start(CLOCK_VS);
 	visibilitySearch();
@@ -172,6 +183,17 @@ void ChunkRenderer::render() {
 	client->getStopwatch()->stop(CLOCK_CRR);
 }
 
+void ChunkRenderer::doWork() {
+	ChunkArea area2;
+	if(toBuildQueue.pop(area2)) {
+		ChunkVisuals cv = buildChunk(area2);
+		while(!toFinishQueue.push(cv))
+			sleepFor(millis(50));
+	} else {
+		sleepFor(millis(100));
+	}
+}
+
 void ChunkRenderer::rebuildChunk(vec3i64 chunkCoords) {
 	auto it = builtChunks.find(chunkCoords);
 	if (it == builtChunks.end() || it->second.outDated)
@@ -189,7 +211,7 @@ ChunkRendererDebugInfo ChunkRenderer::getDebugInfo() {
 	info.checkedDistance = LO_INDEX_FINISHED_RADIUS[checkChunkIndex];
 	info.newFaces = newFaces;
 	info.newChunks = newChunks;
-	info.totalFaces = faces;
+	info.totalFaces = numFaces;
 	info.visibleChunks = visibleChunks;
 	info.visibleFaces = visibleFaces;
 	info.buildQueueSize = buildQueue.size();
@@ -197,10 +219,8 @@ ChunkRendererDebugInfo ChunkRenderer::getDebugInfo() {
 	return info;
 }
 
-void ChunkRenderer::buildChunk(Chunk const *chunks[27]) {
-	beginChunkConstruction();
-
-	const Chunk &chunk = *(chunks[BIG_CUBE_CYCLE_BASE_INDEX]);
+ChunkRenderer::ChunkVisuals ChunkRenderer::buildChunk(ChunkArea area) {
+	const Chunk &chunk = *(area.chunks[BIG_CUBE_CYCLE_BASE_INDEX]);
 	vec3i64 cc = chunk.getCC();
 
 	auto it = builtChunks.find(cc);
@@ -209,7 +229,7 @@ void ChunkRenderer::buildChunk(Chunk const *chunks[27]) {
 		auto pair = builtChunks.insert({cc, ChunkBuildInfo()});
 		it = pair.first;
 	} else {
-		faces -= it->second.numFaces;
+		numFaces -= it->second.numFaces;
 	}
 
 	it->second.numFaces = 0;
@@ -223,122 +243,114 @@ void ChunkRenderer::buildChunk(Chunk const *chunks[27]) {
 	} else if (chunk.getNumAirBlocks() == 0) {
 		skip = true;
 		for (int i = 0; i < 27; ++i) {
-			if (BIG_CUBE_CYCLE[i].norm() <= 1 && chunks[i]->getNumAirBlocks() != 0) {
+			if (BIG_CUBE_CYCLE[i].norm() <= 1 && area.chunks[i]->getNumAirBlocks() != 0) {
 				skip = false;
 				break;
 			}
 		}
 	}
 
-	if (skip) {
-		finishChunkConstruction(cc);
-		return;
-	}
+	std::vector<Quad> quads;
+	quads.reserve(Chunk::WIDTH * Chunk::WIDTH * (Chunk::WIDTH + 1) * 3);
+	if (!skip) {
+		newChunks++;
 
-	newChunks++;
+		const uint8 *blocks = chunk.getBlocks();
+		for (uint8 d = 0; d < 3; d++) {
+			vec3i64 dir = DIRS[d].cast<int64>();
+			uint dimFlipIndexDiff = (uint) (((dir[2] * Chunk::WIDTH + dir[1]) * Chunk::WIDTH + dir[0]) * (Chunk::WIDTH - 1));
+			uint i = 0;
+			uint ni = 0;
+			for (int z = (d == 2) ? -1 : 0; z < (int) Chunk::WIDTH; z++) {
+				for (int y = (d == 1) ? -1 : 0; y < (int) Chunk::WIDTH; y++) {
+					for (int x = (d == 0) ? -1 : 0; x < (int) Chunk::WIDTH; x++) {
+						uint8 thatType;
+						uint8 thisType;
+						bool thisOutside = x == -1 || y == -1 || z == -1;
+						bool thatOutside = !thisOutside
+								&& ((x == Chunk::WIDTH - 1 && d==0)
+								|| (y == Chunk::WIDTH - 1 && d==1)
+								|| (z == Chunk::WIDTH - 1 && d==2));
+						if (thatOutside) {
+							const Chunk &otherChunk = *area.chunks[DIR_TO_BIG_CUBE_CYCLE_INDEX[d]];
+							thatType = otherChunk.getBlocks()[i - dimFlipIndexDiff];
+							if (thatType != 0) {
+								if (!thisOutside)
+									i++;
+								continue;
+							}
+						} else
+							thatType = blocks[ni++];
 
-	vec3ui8 uDirs[3];
-	for (uint8 d = 0; d < 3; d++) {
-		uDirs[d] = DIRS[d].cast<uint8>();
-	}
-
-	const uint8 *blocks = chunk.getBlocks();
-	for (uint8 d = 0; d < 3; d++) {
-		vec3i64 dir = uDirs[d].cast<int64>();
-		uint dimFlipIndexDiff = (uint) (((dir[2] * Chunk::WIDTH + dir[1]) * Chunk::WIDTH + dir[0]) * (Chunk::WIDTH - 1));
-		uint i = 0;
-		uint ni = 0;
-		for (int z = (d == 2) ? -1 : 0; z < (int) Chunk::WIDTH; z++) {
-			for (int y = (d == 1) ? -1 : 0; y < (int) Chunk::WIDTH; y++) {
-				for (int x = (d == 0) ? -1 : 0; x < (int) Chunk::WIDTH; x++) {
-					uint8 thatType;
-					uint8 thisType;
-					bool thisOutside = x == -1 || y == -1 || z == -1;
-					bool thatOutside = !thisOutside
-							&& ((x == Chunk::WIDTH - 1 && d==0)
-							|| (y == Chunk::WIDTH - 1 && d==1)
-							|| (z == Chunk::WIDTH - 1 && d==2));
-					if (thatOutside) {
-						const Chunk &otherChunk = *chunks[DIR_TO_BIG_CUBE_CYCLE_INDEX[d]];
-						thatType = otherChunk.getBlocks()[i - dimFlipIndexDiff];
-						if (thatType != 0) {
-							if (!thisOutside)
-								i++;
-							continue;
-						}
-					} else
-						thatType = blocks[ni++];
-
-					if (thisOutside) {
-						const Chunk &otherChunk = *chunks[DIR_TO_BIG_CUBE_CYCLE_INDEX[d + 3]];
-						thisType = otherChunk.getBlocks()[ni - 1 + dimFlipIndexDiff];
-						if (thisType != 0)
-							continue;
-					} else {
-						thisType = blocks[i++];
-					}
-
-					if ((thisType == 0) != (thatType == 0)) {
-						vec3i64 faceBlock;
-						uint8 faceType;
-						uint8 faceDir;
-						if (thisType == 0) {
-							faceBlock = vec3i64(x, y, z) + dir;
-							faceDir = (uint8) (d + 3);
-							faceType = thatType;
+						if (thisOutside) {
+							const Chunk &otherChunk = *area.chunks[DIR_TO_BIG_CUBE_CYCLE_INDEX[d + 3]];
+							thisType = otherChunk.getBlocks()[ni - 1 + dimFlipIndexDiff];
+							if (thisType != 0)
+								continue;
 						} else {
-							faceBlock = vec3i64(x, y, z);
-							faceDir = d;
-							faceType = thisType;
+							thisType = blocks[i++];
 						}
 
-						uint8 corners = 0;
-						for (int j = 0; j < 8; ++j) {
-							vec3i64 v = DIR_QUAD_EIGHT_NEIGHBOR_CYCLES[faceDir][j].cast<int64>();
-							vec3i64 dIcc = faceBlock + v;
-							vec3i8 ncc(0, 0, 0);
-							for (int i = 0; i < 3; i++) {
-								if (dIcc[i] < 0) {
-									ncc[i] = -1;
-									dIcc[i] += Chunk::WIDTH;
-								} else if (dIcc[i] >= (int) Chunk::WIDTH) {
-									ncc[i] = 1;
-									dIcc[i] -= Chunk::WIDTH;
+						if ((thisType == 0) != (thatType == 0)) {
+							Quad quad;
+							if (thisType == 0) {
+								quad.icc = vec3ui8(x, y, z) + DIRS[d].cast<uint8>();
+								quad.faceDir = (uint8) (d + 3);
+								quad.faceType = thatType;
+							} else {
+								quad.icc = vec3ui8(x, y, z);
+								quad.faceDir = d;
+								quad.faceType = thisType;
+							}
+
+							uint8 corners = 0;
+							for (int j = 0; j < 8; ++j) {
+								vec3i v = DIR_QUAD_EIGHT_NEIGHBOR_CYCLES[quad.faceDir][j];
+								vec3i dIcc = quad.icc.cast<int>() + v;
+								vec3i8 ncc(0, 0, 0);
+								for (int i = 0; i < 3; i++) {
+									if (dIcc[i] < 0) {
+										ncc[i] = -1;
+										dIcc[i] += Chunk::WIDTH;
+									} else if (dIcc[i] >= (int) Chunk::WIDTH) {
+										ncc[i] = 1;
+										dIcc[i] -= Chunk::WIDTH;
+									}
+								}
+								const Chunk &otherChunk = *area.chunks[vec2BigCubeCycleIndex(ncc)];
+								uint8 cornerBlock = otherChunk.getBlock(dIcc.cast<uint8>());
+								if (cornerBlock != 0) {
+									corners |= 1 << j;
 								}
 							}
-							const Chunk &otherChunk = *chunks[vec2BigCubeCycleIndex(ncc)];
-							uint8 cornerBlock = otherChunk.getBlock(dIcc.cast<uint8>());
-							if (cornerBlock != 0) {
-								corners |= 1 << j;
+							quad.bc = chunk.getCC() * chunk.WIDTH + quad.icc.cast<int64>();
+
+							for (int j = 0; j < 4; j++) {
+								quad.shadowLevels[j] = 0;
+								bool s1 = (corners & QUAD_CORNER_MASK[j][0]) > 0;
+								bool s2 = (corners & QUAD_CORNER_MASK[j][2]) > 0;
+								bool m = (corners & QUAD_CORNER_MASK[j][1]) > 0;
+								if (s1)
+									quad.shadowLevels[j]++;
+								if (s2)
+									quad.shadowLevels[j]++;
+								if (m || (s1 && s2))
+									quad.shadowLevels[j]++;
 							}
+							quads.push_back(quad);
+							it->second.numFaces += 2;
 						}
-						vec3i64 bc = chunk.getCC() * chunk.WIDTH + faceBlock;
-
-						int shadowLevels[4];
-						for (int j = 0; j < 4; j++) {
-							shadowLevels[j] = 0;
-							bool s1 = (corners & QUAD_CORNER_MASK[j][0]) > 0;
-							bool s2 = (corners & QUAD_CORNER_MASK[j][2]) > 0;
-							bool m = (corners & QUAD_CORNER_MASK[j][1]) > 0;
-							if (s1)
-								shadowLevels[j]++;
-							if (s2)
-								shadowLevels[j]++;
-							if (m || (s1 && s2))
-								shadowLevels[j]++;
-						}
-
-						emitFace(bc, faceBlock, faceType, faceDir, shadowLevels);
-						it->second.numFaces += 2;
 					}
 				}
 			}
 		}
 	}
 
-	finishChunkConstruction(cc);
+	quads.shrink_to_fit();
+
 	newFaces += it->second.numFaces;
-	faces += it->second.numFaces;
+	numFaces += it->second.numFaces;
+	return ChunkVisuals{cc, quads};
 }
 
 void ChunkRenderer::visibilitySearch() {

@@ -31,41 +31,39 @@ void GL2ChunkRenderer::renderChunk(vec3i64 chunkCoords) {
 	GL(PopMatrix());
 }
 
-void GL2ChunkRenderer::beginChunkConstruction() {
+void GL2ChunkRenderer::finishChunk(ChunkVisuals chunkVisuals) {
 	numQuads = 0;
-}
 
-void GL2ChunkRenderer::emitFace(vec3i64 bc, vec3i64 icc, uint blockType, uint faceDir, int shadowLevels[4]) {
-	vec2f texs[4];
-	GL2TextureManager::Entry tex_entry = ((GL2Renderer *) renderer)->getTextureManager()->get(blockType, bc, faceDir);
-	GL2TextureManager::getTextureCoords(tex_entry.index, tex_entry.type, texs);
+	for (Quad quad : chunkVisuals.quads) {
+		vec2f texs[4];
+		GL2TextureManager::Entry tex_entry = ((GL2Renderer *) renderer)->getTextureManager()->get(quad.faceType, quad.bc, quad.faceDir);
+		GL2TextureManager::getTextureCoords(tex_entry.index, tex_entry.type, texs);
 
-	faceIndexBuffer[numQuads] = FaceIndexData{tex_entry.tex, numQuads};
+		faceIndexBuffer[numQuads] = FaceIndexData{tex_entry.tex, numQuads};
 
-	vb[numQuads].normal[0] = DIRS[faceDir][0];
-	vb[numQuads].normal[1] = DIRS[faceDir][1];
-	vb[numQuads].normal[2] = DIRS[faceDir][2];
+		vb[numQuads].normal[0] = DIRS[quad.faceDir][0];
+		vb[numQuads].normal[1] = DIRS[quad.faceDir][1];
+		vb[numQuads].normal[2] = DIRS[quad.faceDir][2];
 
-	for (int j = 0; j < 4; j++) {
-		vb[numQuads].tex[j][0] = texs[j][0];
-		vb[numQuads].tex[j][1] = texs[j][1];
-		float light = 1.0f - shadowLevels[j] * 0.2f;
-		vb[numQuads].color[j][0] = light;
-		vb[numQuads].color[j][1] = light;
-		vb[numQuads].color[j][2] = light;
-		vec3f vertex = (icc.cast<int>() + DIR_QUAD_CORNER_CYCLES_3D[faceDir][j]).cast<float>();
-		vb[numQuads].vertex[j][0] = vertex[0];
-		vb[numQuads].vertex[j][1] = vertex[1];
-		vb[numQuads].vertex[j][2] = vertex[2];
+		for (int j = 0; j < 4; j++) {
+			vb[numQuads].tex[j][0] = texs[j][0];
+			vb[numQuads].tex[j][1] = texs[j][1];
+			float light = 1.0f - quad.shadowLevels[j] * 0.2f;
+			vb[numQuads].color[j][0] = light;
+			vb[numQuads].color[j][1] = light;
+			vb[numQuads].color[j][2] = light;
+			vec3f vertex = (quad.icc.cast<int>() + DIR_QUAD_CORNER_CYCLES_3D[quad.faceDir][j]).cast<float>();
+			vb[numQuads].vertex[j][0] = vertex[0];
+			vb[numQuads].vertex[j][1] = vertex[1];
+			vb[numQuads].vertex[j][2] = vertex[2];
+		}
+		++numQuads;
 	}
-	++numQuads;
-}
 
-void GL2ChunkRenderer::finishChunkConstruction(vec3i64 chunkCoords) {
-	auto it = renderInfos.find(chunkCoords);
+	auto it = renderInfos.find(chunkVisuals.cc);
 	if (numQuads > 0) {
 		if (it == renderInfos.end()) {
-			auto pair = renderInfos.insert({chunkCoords, RenderInfo()});
+			auto pair = renderInfos.insert({chunkVisuals.cc, RenderInfo()});
 			it = pair.first;
 		}
 		if (it->second.dl == 0) {

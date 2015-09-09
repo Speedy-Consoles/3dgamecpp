@@ -8,6 +8,7 @@
 #include <queue>
 
 #include "shared/engine/vmath.hpp"
+#include "shared/engine/queue.hpp"
 #include "shared/game/chunk.hpp"
 #include "shared/chunk_manager.hpp"
 #include "client/client.hpp"
@@ -26,16 +27,18 @@ struct ChunkRendererDebugInfo {
 	int buildQueueSize = 0;
 };
 
-class ChunkRenderer : public ComponentRenderer {
+class ChunkRenderer : public ComponentRenderer, public Thread {
 private:
 	// performance limits
-	static const int MAX_NEW_FACES = 3000;
-	static const int MAX_NEW_CHUNKS = 100;
 	// must be smaller than ChunkManager::CHUNK_POOL_SIZE / 27
 	static const int MAX_BUILD_QUEUE_SIZE =
 			ChunkManager::CHUNK_POOL_SIZE / 27 > 1000 ?
 			1000 : ChunkManager::CHUNK_POOL_SIZE / 27;
 	static const int MAX_VS_CHUNKS = 3000;
+
+	struct ChunkArea {
+		const Chunk *chunks[27];
+	};
 
 	struct ChunkBuildInfo {
 		bool outDated = false;
@@ -52,6 +55,21 @@ private:
 		uint outsVersion = 0;
 	};
 
+protected:
+	struct Quad {
+		vec3i64 bc;
+		vec3ui8 icc;
+		uint faceType;
+		uint faceDir;
+		int shadowLevels[4];
+	};
+
+	struct ChunkVisuals {
+		vec3i64 cc;
+		std::vector<Quad> quads;
+	};
+
+private:
 	// requesting
 	vec3i64 oldPlayerChunk;
 	int checkChunkIndex = 0;
@@ -59,6 +77,8 @@ private:
 	std::deque<vec3i64> buildQueue;
 
 	// building
+	ProducerQueue<ChunkArea> toBuildQueue;
+	ProducerQueue<ChunkVisuals> toFinishQueue;
 	std::unordered_map<vec3i64, ChunkBuildInfo, size_t(*)(vec3i64)> builtChunks;
 
 	// visibility search
@@ -79,7 +99,7 @@ private:
 	// performance info
 	int newFaces = 0;
 	int newChunks = 0;
-	int faces = 0;
+	int numFaces = 0;
 	int visibleChunks = 0;
 	int visibleFaces = 0;
 
@@ -98,12 +118,15 @@ public:
 	void tick() override;
 	void render() override;
 
+	virtual void doWork() override;
+
 	void rebuildChunk(vec3i64 chunkCoords);
 
 	ChunkRendererDebugInfo getDebugInfo();
 
 private:
-	void buildChunk(const Chunk *chunks[27]);
+	ChunkVisuals buildChunk(ChunkArea area);
+	void uploadChunk(ChunkVisuals);
 	void visibilitySearch();
 	int updateVsChunk(vec3i64 chunkCoords, ChunkVSInfo *vsInfo, int passThroughs);
 	int getOuts(int ins, int passThroughs, vec3i64 chunkDiff, int tolerance);
@@ -114,9 +137,7 @@ protected:
 	virtual void beginRender() = 0;
 	virtual void renderChunk(vec3i64 chunkCoords) = 0;
 	virtual void finishRender() = 0;
-	virtual void beginChunkConstruction() = 0;
-	virtual void emitFace(vec3i64 bc, vec3i64 icc, uint blockType, uint faceDir, int shadowLevels[4]) = 0;
-	virtual void finishChunkConstruction(vec3i64 chunkCoords) = 0;
+	virtual void finishChunk(ChunkVisuals chunkVisuals) = 0;
 	virtual void destroyChunkData(vec3i64 chunkCoords) = 0;
 };
 

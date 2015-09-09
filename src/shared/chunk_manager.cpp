@@ -120,6 +120,9 @@ void ChunkManager::onStop() {
 }
 
 void ChunkManager::storeChunks() {
+	requestTermination();
+	ArchiveOperation op;
+	while(loadedStoredQueue.pop(op));
 	wait();
 	while (!preToStoreQueue.empty()) {
 		Chunk *chunk = preToStoreQueue.front();
