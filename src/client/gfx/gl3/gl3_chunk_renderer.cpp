@@ -88,7 +88,7 @@ void GL3ChunkRenderer::finishRender() {
 	GL(BindVertexArray(0));
 }
 
-void GL3ChunkRenderer::finishChunk(ChunkVisuals chunkVisuals) {
+void GL3ChunkRenderer::applyChunkVisuals(ChunkVisuals chunkVisuals) {
 	bufferSize = 0;
 
 	for (Quad quad : chunkVisuals.quads) {

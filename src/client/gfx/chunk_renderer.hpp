@@ -126,7 +126,7 @@ public:
 
 private:
 	ChunkVisuals buildChunk(ChunkArea area);
-	void uploadChunk(ChunkVisuals);
+	void finishChunk(ChunkVisuals);
 	void visibilitySearch();
 	int updateVsChunk(vec3i64 chunkCoords, ChunkVSInfo *vsInfo, int passThroughs);
 	int getOuts(int ins, int passThroughs, vec3i64 chunkDiff, int tolerance);
@@ -137,7 +137,7 @@ protected:
 	virtual void beginRender() = 0;
 	virtual void renderChunk(vec3i64 chunkCoords) = 0;
 	virtual void finishRender() = 0;
-	virtual void finishChunk(ChunkVisuals chunkVisuals) = 0;
+	virtual void applyChunkVisuals(ChunkVisuals chunkVisuals) = 0;
 	virtual void destroyChunkData(vec3i64 chunkCoords) = 0;
 };
 

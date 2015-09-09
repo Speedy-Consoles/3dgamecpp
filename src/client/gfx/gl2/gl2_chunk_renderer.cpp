@@ -31,7 +31,7 @@ void GL2ChunkRenderer::renderChunk(vec3i64 chunkCoords) {
 	GL(PopMatrix());
 }
 
-void GL2ChunkRenderer::finishChunk(ChunkVisuals chunkVisuals) {
+void GL2ChunkRenderer::applyChunkVisuals(ChunkVisuals chunkVisuals) {
 	numQuads = 0;
 
 	for (Quad quad : chunkVisuals.quads) {

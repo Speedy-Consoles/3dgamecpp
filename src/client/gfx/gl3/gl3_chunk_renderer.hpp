@@ -43,7 +43,7 @@ protected:
 	void beginRender() override;
 	void renderChunk(vec3i64 chunkCoords) override;
 	void finishRender() override;
-	void finishChunk(ChunkVisuals chunkVisuals) override;
+	void applyChunkVisuals(ChunkVisuals chunkVisuals) override;
 	void destroyChunkData(vec3i64 chunkCoords) override;
 };
 
