@@ -106,35 +106,16 @@ void ChunkRenderer::tick() {
 	while (!buildQueue.empty()) {
 		vec3i64 cc = buildQueue.front();
 		ChunkArea area;
-		bool render = true;
-		for (int i = 0; i < 27; ++i) {
-			area.chunks[i] = client->getChunkManager()->getChunk(cc + BIG_CUBE_CYCLE[i].cast<int64>());
-			if (!area.chunks[i]) {
-				render = false;
-				break;
-			}
-		}
-
-		if (!render)
+		if (!getChunkArea(cc, &area))
 			break;
 
 		const Chunk *chunk = area.chunks[BIG_CUBE_CYCLE_BASE_INDEX];
-		// skip air chunks and earth chunks
-		bool empty = false;
-		if (chunk->isEmpty()) {
-			empty = true;
-		} else if (chunk->getNumAirBlocks() == 0) {
-			empty = false;
-			for (int i = 0; i < 27; ++i) {
-				if (BIG_CUBE_CYCLE[i].norm() <= 1 && area.chunks[i]->getNumAirBlocks() != 0) {
-					empty = false;
-					break;
-				}
-			}
-		}
 
-		if (empty) {
-			finishChunk(ChunkVisuals{cc, std::vector<Quad>()});
+		if (!chunkHasQuads(area)) {
+			finishChunk(ChunkVisuals{cc, chunk->getRevision(), std::vector<Quad>()});
+			for (int i = 0; i < 27; ++i) {
+				client->getChunkManager()->releaseChunk(cc + BIG_CUBE_CYCLE[i].cast<int64>());
+			}
 		} else if (!toBuildQueue.push(area)) // TODO data must be copied or locked for to thread safety
 			break;
 
@@ -147,6 +128,9 @@ void ChunkRenderer::tick() {
 	ChunkVisuals cv;
 	while(toFinishQueue.pop(cv)) {
 		finishChunk(cv);
+		for (int i = 0; i < 27; ++i) {
+			client->getChunkManager()->releaseChunk(cv.cc + BIG_CUBE_CYCLE[i].cast<int64>());
+		}
 	}
 	client->getStopwatch()->stop(CLOCK_BCH);
 
@@ -202,9 +186,9 @@ void ChunkRenderer::render() {
 }
 
 void ChunkRenderer::doWork() {
-	ChunkArea area2;
-	if(toBuildQueue.pop(area2)) {
-		ChunkVisuals cv = buildChunk(area2);
+	ChunkArea area;
+	if(toBuildQueue.pop(area)) {
+		ChunkVisuals cv = buildChunk(area);
 		while(!toFinishQueue.push(cv))
 			sleepFor(millis(50));
 	} else {
@@ -214,14 +198,27 @@ void ChunkRenderer::doWork() {
 
 void ChunkRenderer::rebuildChunk(vec3i64 chunkCoords) {
 	auto it = builtChunks.find(chunkCoords);
-	if (it == builtChunks.end() || it->second.outDated)
+	if (it == builtChunks.end())
 		return;
-	it->second.outDated = true;
-	inBuildQueue.insert(chunkCoords);
-	buildQueue.push_front(chunkCoords);
-	for (size_t i = 0; i < 27; ++i) {
-		client->getChunkManager()->requestChunk(chunkCoords + BIG_CUBE_CYCLE[i].cast<int64>());
+
+	ChunkArea area;
+	if (!getChunkArea(chunkCoords, &area) && inBuildQueue.find(chunkCoords) == inBuildQueue.end()) {
+		inBuildQueue.insert(chunkCoords);
+		buildQueue.push_front(chunkCoords);
+		for (size_t i = 0; i < 27; ++i) {
+			client->getChunkManager()->requestChunk(chunkCoords + BIG_CUBE_CYCLE[i].cast<int64>());
+		}
+		return;
 	}
+
+	const Chunk *chunk = area.chunks[BIG_CUBE_CYCLE_BASE_INDEX];
+
+	ChunkVisuals cv;
+	if (!chunkHasQuads(area))
+		cv = ChunkVisuals{chunkCoords, chunk->getRevision(), std::vector<Quad>()};
+	else
+		cv = buildChunk(area);
+	finishChunk(cv);
 }
 
 ChunkRendererDebugInfo ChunkRenderer::getDebugInfo() {
@@ -334,31 +331,55 @@ ChunkRenderer::ChunkVisuals ChunkRenderer::buildChunk(ChunkArea area) {
 	}
 
 	quads.shrink_to_fit();
-	return ChunkVisuals{cc, quads};
+	return ChunkVisuals{cc, chunk.getRevision(), quads};
 }
 
 void ChunkRenderer::finishChunk(ChunkVisuals cv) {
-	applyChunkVisuals(cv);
-	newChunks++;
-
 	auto it = builtChunks.find(cv.cc);
 	if (it == builtChunks.end()) {
 		auto pair = builtChunks.insert({cv.cc, ChunkBuildInfo()});
 		it = pair.first;
-	} else {
-		numFaces -= it->second.numFaces;
 	}
 
+	if (it->second.revision > cv.revision)
+		return;
+
+	numFaces -= it->second.numFaces;
+
+	applyChunkVisuals(cv);
+	newChunks++;
+
 	it->second.numFaces = cv.quads.size() * 2;
-	it->second.outDated = false;
+	it->second.revision = cv.revision;
 	it->second.passThroughs = client->getChunkManager()->getChunk(cv.cc)->getPassThroughs();
 
 	newFaces += it->second.numFaces;
 	numFaces += it->second.numFaces;
 	changedChunksQueue.push_back(cv.cc);
+}
+
+bool ChunkRenderer::getChunkArea(vec3i64 chunkCoordinates, ChunkArea *area) {
 	for (int i = 0; i < 27; ++i) {
-		client->getChunkManager()->releaseChunk(cv.cc + BIG_CUBE_CYCLE[i].cast<int64>());
+		area->chunks[i] = client->getChunkManager()->getChunk(chunkCoordinates + BIG_CUBE_CYCLE[i].cast<int64>());
+		if (!area->chunks[i])
+			return false;
 	}
+	return true;
+}
+
+bool ChunkRenderer::chunkHasQuads(ChunkArea area) {
+	const Chunk *chunk = area.chunks[BIG_CUBE_CYCLE_BASE_INDEX];
+	// skip air chunks and earth chunks
+	if (chunk->isEmpty())
+		return false;
+	if (chunk->getNumAirBlocks() == 0) {
+		for (int i = 0; i < 27; ++i) {
+			if (BIG_CUBE_CYCLE[i].norm() <= 1 && area.chunks[i]->getNumAirBlocks() != 0)
+				return true;
+		}
+		return false;
+	}
+	return true;
 }
 
 void ChunkRenderer::visibilitySearch() {

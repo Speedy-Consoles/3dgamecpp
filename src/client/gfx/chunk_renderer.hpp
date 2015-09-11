@@ -41,7 +41,7 @@ private:
 	};
 
 	struct ChunkBuildInfo {
-		bool outDated = false;
+		uint32 revision = 0;
 		int numFaces = 0;
 		uint16 passThroughs = 0;
 		int id = 0;
@@ -66,6 +66,7 @@ protected:
 
 	struct ChunkVisuals {
 		vec3i64 cc;
+		uint32 revision;
 		std::vector<Quad> quads;
 	};
 
@@ -126,6 +127,8 @@ public:
 
 private:
 	ChunkVisuals buildChunk(ChunkArea area);
+	bool getChunkArea(vec3i64 chunkCoordinates, ChunkArea *area);
+	bool chunkHasQuads(ChunkArea area);
 	void finishChunk(ChunkVisuals);
 	void visibilitySearch();
 	int updateVsChunk(vec3i64 chunkCoords, ChunkVSInfo *vsInfo, int passThroughs);
