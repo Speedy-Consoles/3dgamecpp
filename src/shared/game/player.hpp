@@ -88,7 +88,8 @@ private:
 
 public:
 	void tick(bool isLocalPlayer);
-
+	
+	void setPos(vec3i64 pos);
 	void setOrientation(int yaw, int pitch);
 	void setFly(bool fly);
 	void setMoveInput(int moveInput);

@@ -77,6 +77,7 @@ public:
 	~WorldGenerator();
 
 	void generateChunk(Chunk *);
+	vec3i64 getSpawnLocation();
 
 private:
 	WorldParams wp;

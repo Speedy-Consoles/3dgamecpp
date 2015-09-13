@@ -19,6 +19,11 @@ LocalServerInterface::LocalServerInterface(Client *client) :
 {
 	client->getWorld()->addPlayer(0);
 	player = &client->getWorld()->getPlayer(0);
+
+	vec3i64 spawnBC = worldGenerator->getSpawnLocation();
+	vec3i64 spawnWC = spawnBC * RESOLUTION;
+	spawnWC += vec3i64(RESOLUTION / 2, RESOLUTION / 2, Player::EYE_HEIGHT);
+	player->setPos(spawnWC);
 }
 
 LocalServerInterface::~LocalServerInterface() {

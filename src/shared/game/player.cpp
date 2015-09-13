@@ -96,6 +96,10 @@ void Player::ghost() {
 	pos[2] += (int64)round(vel[2]);
 }
 
+void Player::setPos(vec3i64 pos) {
+	this->pos = pos;
+}
+
 void Player::setOrientation(int yaw, int pitch) {
 	this->yaw = yaw;
 	this->pitch = pitch;

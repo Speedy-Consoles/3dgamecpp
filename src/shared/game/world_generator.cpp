@@ -164,3 +164,10 @@ void WorldGenerator::generateChunk(Chunk *chunk) {
 
 	chunk->finishInitialization();
 }
+
+vec3i64 WorldGenerator::getSpawnLocation() {
+	const ElevationChunk elevation = elevationGenerator.getChunk(vec2i64(0, 0));
+	const double h = elevation.heights[0];
+	const int64 bcz = (int64)floor(h);
+	return vec3i64(0, 0, bcz + 1);
+}
