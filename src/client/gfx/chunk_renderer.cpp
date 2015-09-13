@@ -116,7 +116,7 @@ void ChunkRenderer::tick() {
 			for (int i = 0; i < 27; ++i) {
 				client->getChunkManager()->releaseChunk(cc + BIG_CUBE_CYCLE[i].cast<int64>());
 			}
-		} else if (!toBuildQueue.push(area)) // TODO data must be copied or locked for to thread safety
+		} else if (!toBuildQueue.push(area)) // TODO data must be copied or locked for thread safety
 			break;
 
 		buildQueue.pop_front();

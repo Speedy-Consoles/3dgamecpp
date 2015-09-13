@@ -44,7 +44,6 @@ private:
 		uint32 revision = 0;
 		int numFaces = 0;
 		uint16 passThroughs = 0;
-		int id = 0;
 	};
 
 	struct ChunkVSInfo {
