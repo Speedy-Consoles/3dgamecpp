@@ -30,8 +30,7 @@ private:
 	SDL_Window *window;
 	std::unique_ptr<Renderer> renderer;
 
-	const Client::State &state;
-	Client::State oldState = Client::State::IN_MENU;
+	bool isMouseGrabbed = false;
 
 	int width;
 	int height;
@@ -44,7 +43,7 @@ private:
 	float oldRelMouseY = 0.5;
 
 public:
-	Graphics(Client *client, const Client::State *state);
+	Graphics(Client *client);
 	~Graphics();
 
 	Renderer *getRenderer() const { return renderer.get(); }
@@ -67,9 +66,10 @@ public:
 	void tick();
 	void flip();
 
+	void grabMouse(bool);
+
 private:
 	void calcDrawArea();
-	void setMenu(bool menuActive);
 };
 
 #endif // GRAPHICS_HPP

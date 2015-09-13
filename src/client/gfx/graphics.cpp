@@ -11,7 +11,7 @@ using namespace gui;
 
 static logging::Logger logger("gfx");
 
-Graphics::Graphics(Client *client, const Client::State *state) : client(client), state(*state) {
+Graphics::Graphics(Client *client) : client(client) {
 	LOG_DEBUG(logger) << "Constructing Graphics";
 
 	LOG_DEBUG(logger) << "Initializing SDL";
@@ -106,18 +106,23 @@ void Graphics::calcDrawArea() {
 	}
 }
 
-void Graphics::setMenu(bool menuActive) {
-	SDL_SetWindowGrab(window, (SDL_bool) !menuActive);
-	SDL_SetRelativeMouseMode((SDL_bool) !menuActive);
-	if (menuActive) {
-		SDL_WarpMouseInWindow(window, (int) (oldRelMouseX * width), (int) (oldRelMouseY * height));
-	} else {
+void Graphics::grabMouse(bool b) {
+	if (isMouseGrabbed == b)
+		return;
+
+	SDL_SetWindowGrab(window, b ? SDL_TRUE : SDL_FALSE);
+	SDL_SetRelativeMouseMode(b ? SDL_TRUE : SDL_FALSE);
+	if (b) {
 		int x = width / 2;
 		int y = height / 2;
 		SDL_GetMouseState(&x, &y);
 		oldRelMouseX = x / (float) width;
 		oldRelMouseY = y / (float) height;
+	} else {
+		SDL_WarpMouseInWindow(window, (int) (oldRelMouseX * width), (int) (oldRelMouseY * height));
 	}
+
+	isMouseGrabbed = b;
 }
 
 int Graphics::getWidth() const {
@@ -149,13 +154,6 @@ void Graphics::setConf(const GraphicsConf &conf, const GraphicsConf &old) {
 }
 
 void Graphics::tick() {
-	if (oldState != state) {
-		if (state == Client::State::IN_MENU)
-			setMenu(true);
-		else if (oldState == Client::State::IN_MENU)
-			setMenu(false);
-		oldState = state;
-	}
 	renderer->tick();
 	renderer->render();
 }

@@ -87,7 +87,7 @@ Client::Client(const char *worldId, const char *serverAdress) {
 	}
 	LOG_INFO(logger) << blockManager->getNumberOfBlocks() << " blocks were loaded from '" << block_ids_file << "'";
 
-	graphics = std::unique_ptr<Graphics>(new Graphics(this, &state));
+	graphics = std::unique_ptr<Graphics>(new Graphics(this));
 	graphics->createContext();
 	chunkManager = std::unique_ptr<ChunkManager>(new ChunkManager(this));
 	world = std::unique_ptr<World>(new World(worldId, chunkManager.get()));
@@ -310,6 +310,7 @@ void Client::handlePlaying(const Event &event) {
 		case SDL_SCANCODE_ESCAPE:
 			menu->update();
 			state = State::IN_MENU;
+			graphics->grabMouse(false);
 			break;
 		case SDL_SCANCODE_F:
 			serverInterface->toggleFly();
@@ -373,6 +374,7 @@ void Client::handleMenu(const Event &event) {
 		case SDL_SCANCODE_ESCAPE:
 			menu->apply();
 			state = State::PLAYING;
+			graphics->grabMouse(true);
 			break;
 		default:
 			handlePlaying(event);
