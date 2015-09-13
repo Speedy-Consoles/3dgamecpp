@@ -23,18 +23,6 @@ const double Player::AIR_ACCELERATION_PENALTY = 0.01;
 const double Player::JUMP_SPEED = 260;
 
 void Player::tick(bool isLocalPlayer) {
-
-	// TODO predict
-	if (hasSnapshot) {
-		pos = snapshot.pos;
-		vel = snapshot.vel;
-		if (!isLocalPlayer) {
-			yaw = snapshot.yaw;
-			pitch = snapshot.pitch;
-			moveInput = snapshot.moveInput;
-		}
-	}
-
 	// TODO don't let player enter unloaded chunk
 	vec3i64 cp = getChunkPos();
 	if (world->isChunkLoaded(cp) || isFlying) {
@@ -108,7 +96,7 @@ void Player::ghost() {
 	pos[2] += round(vel[2]);
 }
 
-void Player::setOrientation(float yaw, float pitch) {
+void Player::setOrientation(int yaw, int pitch) {
 	this->yaw = yaw;
 	this->pitch = pitch;
 }
@@ -133,11 +121,11 @@ vec3d Player::getVel() const {
 	return vel;
 }
 
-float Player::getYaw() const {
+int Player::getYaw() const {
 	return yaw;
 }
 
-float Player::getPitch() const {
+int Player::getPitch() const {
 	return pitch;
 }
 
@@ -172,7 +160,7 @@ bool Player::isValid() const {
 }
 
 bool Player::getTargetedFace(vec3i64 *outBlock, int *outFaceDir) const {
-	vec3d dir = getVectorFromAngles(yaw, pitch);
+	vec3d dir = getVectorFromAngles(yaw / 100.0f, pitch / 100.0f);
 	vec3i64 hitBlock[3];
 	int faceDir[3];
 	int hit = world->shootRay(pos, dir, TARGET_RANGE * RESOLUTION,
@@ -187,9 +175,15 @@ bool Player::getTargetedFace(vec3i64 *outBlock, int *outFaceDir) const {
 	return false;
 }
 
-void Player::setSnapshot(const PlayerSnapshot &snapshot) {
-	this->snapshot = snapshot;
-	hasSnapshot = true;
+void Player::applySnapshot(const PlayerSnapshot &snapshot, bool local) {
+	pos = snapshot.pos;
+	vel = snapshot.vel;
+	isFlying = snapshot.isFlying;
+	if (!local) {
+		yaw = snapshot.yaw;
+		pitch = snapshot.pitch;
+		moveInput = snapshot.moveInput;
+	}
 }
 
 PlayerSnapshot Player::makeSnapshot(int tick) const {
@@ -207,19 +201,19 @@ void Player::calcVel() {
 	bool sprint = (moveInput & MOVE_INPUT_FLAG_SPRINT) > 0;
 
 	if (right && !left) {
-		inFac[0] += sin(yaw * TAU / 360);
-		inFac[1] -= cos(yaw * TAU / 360);
+		inFac[0] += sin(yaw * TAU / 36000.0f);
+		inFac[1] -= cos(yaw * TAU / 36000.0f);
 	} else if (left && !right) {
-		inFac[0] -= sin(yaw * TAU / 360);
-		inFac[1] += cos(yaw * TAU / 360);
+		inFac[0] -= sin(yaw * TAU / 36000.0f);
+		inFac[1] += cos(yaw * TAU / 36000.0f);
 	}
 
 	if (forward && !backward) {
-		inFac[0] += cos(yaw * TAU / 360);
-		inFac[1] += sin(yaw * TAU / 360);
+		inFac[0] += cos(yaw * TAU / 36000.0f);
+		inFac[1] += sin(yaw * TAU / 36000.0f);
 	} else if (backward && !forward) {
-		inFac[0] -= cos(yaw * TAU / 360);
-		inFac[1] -= sin(yaw * TAU / 360);
+		inFac[0] -= cos(yaw * TAU / 36000.0f);
+		inFac[1] -= sin(yaw * TAU / 36000.0f);
 	}
 
 	if (isFlying) {

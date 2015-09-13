@@ -81,8 +81,8 @@ void GL3TargetRenderer::render() {
 	int td;
 	bool target = player.getTargetedFace(&tbc, &td);
 	if (target) {
-		glm::mat4 viewMatrix = glm::rotate(glm::mat4(1.0f), (float) (-player.getPitch() / 360.0 * TAU), glm::vec3(1.0f, 0.0f, 0.0f));
-		viewMatrix = glm::rotate(viewMatrix, (float) (-player.getYaw() / 360.0 * TAU), glm::vec3(0.0f, 1.0f, 0.0f));
+		glm::mat4 viewMatrix = glm::rotate(glm::mat4(1.0f), (float) (-player.getPitch() / 36000.0f * TAU), glm::vec3(1.0f, 0.0f, 0.0f));
+		viewMatrix = glm::rotate(viewMatrix, (float) (-player.getYaw() / 36000.0f * TAU), glm::vec3(0.0f, 1.0f, 0.0f));
 		viewMatrix = glm::rotate(viewMatrix, (float) (-TAU / 4.0), glm::vec3(1.0f, 0.0f, 0.0f));
 		viewMatrix = glm::rotate(viewMatrix, (float) (TAU / 4.0), glm::vec3(0.0f, 0.0f, 1.0f));
 

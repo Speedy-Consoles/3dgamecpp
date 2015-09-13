@@ -151,7 +151,7 @@ void ChunkRenderer::render() {
 
 	beginRender();
 
-	vec3d lookDir = getVectorFromAngles(player.getYaw(), player.getPitch());
+	vec3d lookDir = getVectorFromAngles(player.getYaw() / 100.0f, player.getPitch() / 100.0f);
 
 	visibleChunks = 0;
 	visibleFaces = 0;

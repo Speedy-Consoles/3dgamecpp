@@ -76,15 +76,12 @@ private:
 
 	vec3i64 pos;
 	vec3d vel;
-	float yaw;
-	float pitch;
+	int yaw;
+	int pitch;
 
 	int moveInput;
 
 	bool valid = false;
-
-	PlayerSnapshot snapshot;
-	bool hasSnapshot = false;
 
 	// currently selected building block
 	uint8 block = 1;
@@ -92,7 +89,7 @@ private:
 public:
 	void tick(bool isLocalPlayer);
 
-	void setOrientation(float yaw, float pitch);
+	void setOrientation(int yaw, int pitch);
 	void setFly(bool fly);
 	void setMoveInput(int moveInput);
 
@@ -100,8 +97,8 @@ public:
 
 	vec3i64 getPos() const;
 	vec3d getVel() const;
-	float getYaw() const;
-	float getPitch() const;
+	int getYaw() const;
+	int getPitch() const;
 	bool getFly() const;
 	int getMoveInput() const;
 	vec3i64 getChunkPos() const;
@@ -113,7 +110,7 @@ public:
 
 	bool getTargetedFace(vec3i64 *outBlock, int *outFaceDir) const;
 
-	void setSnapshot(const PlayerSnapshot &snapshot);
+	void applySnapshot(const PlayerSnapshot &snapshot, bool local);
 	PlayerSnapshot makeSnapshot(int tick) const;
 
 private:

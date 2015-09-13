@@ -176,8 +176,8 @@ void GL3DebugRenderer::renderDebug() {
 		(int64)floor(player.getPos()[1] / (double)RESOLUTION));
 	RENDER_LINE("z: %" PRId64 " (%" PRId64 ")", player.getPos()[2],
 		(int64)floor((player.getPos()[2] - Player::EYE_HEIGHT - 1) / (double)RESOLUTION));
-	RENDER_LINE("yaw:   %6.1f", player.getYaw());
-	RENDER_LINE("pitch: %6.1f", player.getPitch());
+	RENDER_LINE("yaw:   %6.1f", player.getYaw() / 100.0f);
+	RENDER_LINE("pitch: %6.1f", player.getPitch() / 100.0f);
 	RENDER_LINE("xvel: %8.1f", player.getVel()[0]);
 	RENDER_LINE("yvel: %8.1f", player.getVel()[1]);
 	RENDER_LINE("zvel: %8.1f", player.getVel()[2]);

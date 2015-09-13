@@ -57,8 +57,8 @@ void GL2DebugRenderer::renderDebug() {
 	RENDER_LINE("y: %" PRId64 " (%" PRId64 ")", playerPos[1], (int64) floor(playerPos[1] / (double) RESOLUTION));
 	RENDER_LINE("z: %" PRId64 " (%" PRId64 ")", playerPos[2],
 			(int64) floor((playerPos[2] - Player::EYE_HEIGHT - 1) / (double) RESOLUTION));
-	RENDER_LINE("yaw:   %6.1f", player.getYaw());
-	RENDER_LINE("pitch: %6.1f", player.getPitch());
+	RENDER_LINE("yaw:   %6.1f", player.getYaw() / 100.0f);
+	RENDER_LINE("pitch: %6.1f", player.getPitch() / 100.0f);
 	RENDER_LINE("xvel: %8.1f", playerVel[0]);
 	RENDER_LINE("yvel: %8.1f", playerVel[1]);
 	RENDER_LINE("zvel: %8.1f", playerVel[2]);

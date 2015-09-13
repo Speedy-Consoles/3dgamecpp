@@ -86,7 +86,6 @@ void RemoteServerInterface::asyncConnect(std::string address) {
 			case CONNECTION_ACCEPTED:
 				localPlayerId = smsg.conAccepted.id;
 				client->getWorld()->addPlayer(localPlayerId);
-				client->getWorld()->getPlayer(localPlayerId).setFly(true);
 				status = CONNECTED;
 				LOG_INFO(logger) << "Connected to " << ep.address().to_string();
 				break;
@@ -138,18 +137,18 @@ ServerInterface::Status RemoteServerInterface::getStatus() {
 }
 
 void RemoteServerInterface::toggleFly() {
-
+	flying = !flying;
 }
 
 void RemoteServerInterface::setPlayerMoveInput(int moveInput) {
 	this->moveInput = moveInput;
 }
 
-void RemoteServerInterface::setPlayerOrientation(float yaw, float pitch) {
-	if (yaw == pitch)
-		return;
-	else
-		return;
+void RemoteServerInterface::setPlayerOrientation(int yaw, int pitch) {
+	this->yaw = yaw;
+	this->pitch= pitch;
+	if (status == CONNECTED)
+		client->getWorld()->getPlayer(localPlayerId).setOrientation(yaw, pitch);
 }
 
 void RemoteServerInterface::setSelectedBlock(uint8 block) {
@@ -180,7 +179,10 @@ void RemoteServerInterface::tick() {
 	{
 		ClientMessage cmsg;
 		cmsg.type = PLAYER_INPUT;
-		cmsg.playerInput.input = moveInput;
+		cmsg.playerInput.input.yaw = yaw;
+		cmsg.playerInput.input.pitch = pitch;
+		cmsg.playerInput.input.moveInput = moveInput;
+		cmsg.playerInput.input.flying = flying;
 		outBuf.clear();
 		outBuf << cmsg;
 		socket.send(outBuf);
@@ -194,12 +196,11 @@ void RemoteServerInterface::tick() {
 		inBuf >> smsg;
 		switch (smsg.type) {
 		case ECHO_RESPONSE:
-			printf("%s\n", inBuf.rBegin());
+			//printf("%s\n", inBuf.rBegin());
 			break;
 		case PLAYER_SNAPSHOT:
-			// TODO also update other values
-			printf("snapshot: %d\n", smsg.playerSnapshot.snapshot.moveInput);
-			client->getWorld()->getPlayer(smsg.playerSnapshot.id).setMoveInput(smsg.playerSnapshot.snapshot.moveInput);
+			client->getWorld()->getPlayer(smsg.playerSnapshot.id)
+					.applySnapshot(smsg.playerSnapshot.snapshot, smsg.playerSnapshot.id == localPlayerId);
 			break;
 		default:
 			printf("eh?\n");

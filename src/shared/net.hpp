@@ -34,6 +34,13 @@ enum RejectionReason : uint8 {
 	DUPLICATE_ENDPOINT,
 };
 
+struct PlayerInput {
+	uint16 yaw;
+	int16 pitch;
+	uint8 moveInput;
+	bool flying;
+};
+
 union ServerMessage {
 	ServerMessageType type;
 	struct { ServerMessageType type; MessageError error; } malformed;
@@ -50,7 +57,7 @@ union ClientMessage {
 	struct { ClientMessageType type; MessageError error; } malformed;
 	struct { ClientMessageType type; } conRequest;
 	struct { ClientMessageType type; } echoRequest;
-	struct { ClientMessageType type; int input; } playerInput;
+	struct { ClientMessageType type; PlayerInput input; } playerInput;
 };
 
 Buffer &operator << (Buffer &lhs, const ServerMessage &rhs);

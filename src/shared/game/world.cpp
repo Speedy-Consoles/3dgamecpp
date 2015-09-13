@@ -28,12 +28,14 @@ World::~World() {
 }
 
 void World::tick(uint localPlayerID) {
-	requestChunks();
+	if (chunkManager)
+		requestChunks();
 	for (uint i = 0; i < MAX_CLIENTS; i++) {
 		if (players[i].isValid())
 			players[i].tick(i == localPlayerID);
 	}
-	releaseChunks();
+	if (chunkManager)
+		releaseChunks();
 }
 
 void World::requestChunks() {
@@ -172,10 +174,14 @@ bool World::hasCollision(vec3i64 wc) const {
 }
 
 bool World::isChunkLoaded(vec3i64 cc) const {
-	return chunkManager->getChunk(cc) != 0;
+	if (chunkManager)
+		return chunkManager->getChunk(cc) != 0;
+	return false;
 }
 
 uint8 World::getBlock(vec3i64 bc) const {
+	if (!chunkManager)
+		return 0;
 	const Chunk *chunk = chunkManager->getChunk(bc2cc(bc));
 	if (!chunk)
 		return 0;

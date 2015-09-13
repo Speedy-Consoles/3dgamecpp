@@ -61,7 +61,7 @@ void LocalServerInterface::setPlayerMoveInput(int moveInput) {
 		player->setMoveInput(moveInput);
 }
 
-void LocalServerInterface::setPlayerOrientation(float yaw, float pitch) {
+void LocalServerInterface::setPlayerOrientation(int yaw, int pitch) {
 	player->setOrientation(yaw, pitch);
 }
 

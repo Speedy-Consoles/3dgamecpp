@@ -299,7 +299,13 @@ void Server::handleClientMessage(const ClientMessage &cmsg, uint8 id) {
 		break;
 	}
 	case PLAYER_INPUT:
-		world->getPlayer(id).setMoveInput(cmsg.playerInput.input);
+		{
+			int yaw = cmsg.playerInput.input.yaw;
+			int pitch = cmsg.playerInput.input.pitch;
+			world->getPlayer(id).setOrientation(yaw, pitch);
+			world->getPlayer(id).setMoveInput(cmsg.playerInput.input.moveInput);
+			world->getPlayer(id).setFly(cmsg.playerInput.input.flying);
+		}
 		break;
 	default:
 		break;
@@ -317,8 +323,8 @@ void Server::sendSnapshots(int tick) {
 		smsg.playerSnapshot.snapshot.tick = tick;
 		smsg.playerSnapshot.snapshot.pos = world->getPlayer(id).getPos();
 		smsg.playerSnapshot.snapshot.vel = world->getPlayer(id).getVel();
-		smsg.playerSnapshot.snapshot.yaw = (uint16) round(world->getPlayer(id).getYaw() * 100);
-		smsg.playerSnapshot.snapshot.pitch = (int16) round(world->getPlayer(id).getPitch() * 100);
+		smsg.playerSnapshot.snapshot.yaw = (uint16) world->getPlayer(id).getYaw();
+		smsg.playerSnapshot.snapshot.pitch = (int16) world->getPlayer(id).getPitch();
 		smsg.playerSnapshot.snapshot.moveInput = world->getPlayer(id).getMoveInput();
 		smsg.playerSnapshot.snapshot.isFlying = world->getPlayer(id).getFly();
 

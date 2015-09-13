@@ -362,7 +362,7 @@ void GL2Renderer::render() {
 		GL(Disable(GL_FOG));
 		GL(DepthMask(false));
 
-		GL(Rotated(-player.getPitch(), 1, 0, 0));
+		GL(Rotated(-player.getPitch() / 100.0f, 1, 0, 0));
 		skyRenderer->render();
 
 		GL(Enable(GL_DEPTH_TEST));
@@ -372,7 +372,7 @@ void GL2Renderer::render() {
 			glEnable(GL_FOG);
 		GL(DepthMask(true));
 
-		GL(Rotatef(-player.getYaw(), 0, 1, 0));
+		GL(Rotatef(-player.getYaw() / 100.0f, 0, 1, 0));
 		GL(Rotatef(-90, 1, 0, 0));
 		GL(Rotatef(90, 0, 0, 1));
 		vec3i64 playerPos = player.getPos();

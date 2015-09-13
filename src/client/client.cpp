@@ -14,6 +14,7 @@
 #include "shared/engine/socket.hpp"
 #include "shared/engine/stopwatch.hpp"
 #include "shared/engine/time.hpp"
+#include "shared/engine/math.hpp"
 #include "shared/game/world.hpp"
 #include "shared/block_manager.hpp"
 #include "shared/block_utils.hpp"
@@ -309,13 +310,13 @@ void Client::handleInput() {
 			break;
 		case SDL_MOUSEMOTION:
 			if (state == State::PLAYING) {
-				float yaw = player.getYaw();
-				float pitch = player.getPitch();
-				yaw -= event.motion.xrel / 10.0f;
-				pitch -= event.motion.yrel / 10.0f;
-				yaw = fmod(yaw, 360.0f);
-				pitch = std::max(pitch, -90.0f);
-				pitch = std::min(pitch, 90.0f);
+				int yaw = player.getYaw();
+				int  pitch = player.getPitch();
+				yaw -= event.motion.xrel * 10.0f;
+				pitch -= event.motion.yrel * 10.0f;
+				yaw = cycle(yaw, 36000);
+				pitch = std::max(pitch, -9000);
+				pitch = std::min(pitch, 9000);
 				serverInterface->setPlayerOrientation(yaw, pitch);
 			} else if (state == State::IN_MENU) {
 				int x = event.motion.x - graphics->getWidth() / 2;
