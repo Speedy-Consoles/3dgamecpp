@@ -27,6 +27,7 @@
 #include "menu.hpp"
 #include "local_server_interface.hpp"
 #include "remote_server_interface.hpp"
+#include "events.hpp"
 
 static logging::Logger logger("client");
 
@@ -142,7 +143,6 @@ void Client::run() {
         if (getCurrentTime() < time + timeShift + seconds(1) / TICK_SPEED) {
             graphics->tick();
         }
-
 #endif
 
 		// TODO finish here
@@ -169,191 +169,16 @@ void Client::sync(int perSecond) {
 }
 
 void Client::handleInput() {
-	Player &player = world->getPlayer(localClientId);
+	Event event;
 
-    SDL_Event event;
-    while (SDL_PollEvent(&event)) {
-		switch (event.type) {
-		case SDL_MOUSEWHEEL: {
-			if (state == State::PLAYING) {
-				auto block = player.getBlock();
-				block += event.wheel.y;
-				static const int NUMBER_OF_BLOCKS = blockManager->getNumberOfBlocks();
-				while (block > NUMBER_OF_BLOCKS) {
-					block -= NUMBER_OF_BLOCKS;
-				}
-				while (block < 1) {
-					block += NUMBER_OF_BLOCKS;
-				}
-				serverInterface->setSelectedBlock(block);
-			}
-			break;
-		}
-		case SDL_WINDOWEVENT:
-			switch (event.window.event) {
-			case SDL_WINDOWEVENT_CLOSE:
-				closeRequested = true;
-				break;
-			case SDL_WINDOWEVENT_SIZE_CHANGED:
-				graphics->resize(
-					event.window.data1,
-					event.window.data2
-				);
-				menu->getFrame()->move(-graphics->getDrawWidth() / 2 + 10, -graphics->getDrawHeight() / 2 + 10);
-				break;
-			default:
-				break;
-			}
-			break;
-		case SDL_KEYDOWN:
-			if (event.key.keysym.scancode == SDL_SCANCODE_O) {
-				char buf[128];
-				sprintf(buf, "timeShift: %ld\n", timeShift = (timeShift + 100000) % 1000000);
-				LOG_INFO(logger) << buf;
-			} else if (event.key.keysym.scancode == SDL_SCANCODE_P) {
-				char buf[128];
-				sprintf(buf, "timeShift: %ld\n", timeShift = (timeShift + 900000) % 1000000);
-				LOG_INFO(logger) << buf;
-			}
-			if (state == State::PLAYING) {
-				switch (event.key.keysym.scancode) {
-				case SDL_SCANCODE_ESCAPE:
-					menu->update();
-					state = State::IN_MENU;
-					break;
-				case SDL_SCANCODE_F:
-					serverInterface->toggleFly();
-					break;
-				case SDL_SCANCODE_M: {
-					GraphicsConf conf = *_conf;
-					switch (conf.aa) {
-					case AntiAliasing::NONE:    conf.aa = AntiAliasing::MSAA_2; break;
-					case AntiAliasing::MSAA_2:  conf.aa = AntiAliasing::MSAA_4; break;
-					case AntiAliasing::MSAA_4:  conf.aa = AntiAliasing::MSAA_8; break;
-					case AntiAliasing::MSAA_8:  conf.aa = AntiAliasing::MSAA_16; break;
-					case AntiAliasing::MSAA_16: conf.aa = AntiAliasing::NONE; break;
-					}
-					setConf(conf);
-					menu->update();
-					break;
-				}
-//				case SDL_SCANCODE_N:
-//					switch (graphics->getFXAA()) {
-//					case true: graphics->disableFXAA(); break;
-//					case false: graphics->enableFXAA(); break;
-//					}
-//					break;
-				case SDL_SCANCODE_Q:
-					if (SDL_GetModState() & KMOD_LCTRL)
-						closeRequested = true;
-					break;
-				case SDL_SCANCODE_F11: {
-					GraphicsConf conf = *_conf;
-					conf.fullscreen = !conf.fullscreen;
-					setConf(conf);
-					break;
-				}
-				case SDL_SCANCODE_F3:
-					_isDebugOn = !_isDebugOn;
-					break;
-				default:
-					break;
-				} // switch scancode
-			} else if (state == State::IN_MENU) { // if we are in menu
-				switch (event.key.keysym.scancode) {
-				/*case SDL_SCANCODE_W:
-					if (menu->navigateUp()) {
-						graphics->setConf(*conf);
-						serverInterface->setConf(*conf);
-					}
-					break;
-				case SDL_SCANCODE_S:
-					if (menu->navigateDown()) {
-						graphics->setConf(*conf);
-						serverInterface->setConf(*conf);
-					}
-				break;
-				case SDL_SCANCODE_A:
-					if (menu->navigateLeft()) {
-						graphics->setConf(*conf);
-						serverInterface->setConf(*conf);
-					}
-				break;
-				case SDL_SCANCODE_D:
-					if (menu->navigateRight()) {
-						graphics->setConf(*conf);
-						serverInterface->setConf(*conf);
-					}
-				break;*/
-				case SDL_SCANCODE_ESCAPE:
-					menu->apply();
-					state = State::PLAYING;
-					/*for (int z = -5; z < 37; z++) {
-						for (int y = -5; y < 37; y++) {
-							for (int x = -5; x < 37; x++) {
-								world->setBlock(vec3i64(x,y,z), 0, true);
-							}
-						}
-					}
-					for (int z = 0; z < 32; z++) {
-						for (int y = 0; y < 32; y++) {
-							for (int x = 0; x < 32; x++) {
-								world->setBlock(vec3i64(x,y,z), 1, true);
-							}
-						}
-					}*/
-					break;
-				default:
-					break;
-				}
-			}
-			break;
-		case SDL_MOUSEMOTION:
-			if (state == State::PLAYING) {
-				int yaw = player.getYaw();
-				int  pitch = player.getPitch();
-				yaw -= event.motion.xrel * 10.0f;
-				pitch -= event.motion.yrel * 10.0f;
-				yaw = cycle(yaw, 36000);
-				pitch = std::max(pitch, -9000);
-				pitch = std::min(pitch, 9000);
-				serverInterface->setPlayerOrientation(yaw, pitch);
-			} else if (state == State::IN_MENU) {
-				int x = event.motion.x - graphics->getWidth() / 2;
-				int y = graphics->getHeight() / 2 - event.motion.y;
-				float factor = graphics->getScalingFactor();
-				menu->getFrame()->updateMousePosition(x * factor, y * factor);
-			}
-			break;
-		case SDL_MOUSEBUTTONDOWN:
-			if (state == State::PLAYING) {
-				vec3i64 bc;
-				int d;
-				bool target = player.getTargetedFace(&bc, &d);
-				if (target) {
-					if (event.button.button == SDL_BUTTON_LEFT) {
-						vec3i64 rbc = bc + DIRS[d].cast<int64>();
-						serverInterface->placeBlock(rbc, player.getBlock());
-					} else if (event.button.button == SDL_BUTTON_RIGHT) {
-						serverInterface->placeBlock(bc, 0);
-					}
-				}
-			} else if (state == State::IN_MENU){
-				if (event.button.button == SDL_BUTTON_LEFT) {
-					int x = event.button.x - graphics->getWidth() / 2;
-					int y = graphics->getHeight() / 2 - event.button.y;
-					float factor = graphics->getScalingFactor();
-					menu->getFrame()->handleMouseClick(x * factor, y * factor);
-				}
-			}
-			break;
-		}
+	while (event.next()) {
+		handle(event);
 	}
 
-	const uint8 *keyboard = SDL_GetKeyboardState(nullptr);
-
-	int moveInput = 0;
 	if (state == State::PLAYING) {
+		const uint8 *keyboard = SDL_GetKeyboardState(nullptr);
+		int moveInput = 0;
+
 		if (keyboard[SDL_SCANCODE_D])
 			moveInput |= Player::MOVE_INPUT_FLAG_STRAFE_RIGHT;
 		if (keyboard[SDL_SCANCODE_A])
@@ -374,4 +199,189 @@ void Client::handleInput() {
 
 		serverInterface->setPlayerMoveInput(moveInput);
 	}
+}
+
+void Client::handle(const Event &event) {
+	switch (state) {
+	case State::IN_MENU:
+		handleMenu(event);
+		break;
+	case State::PLAYING:
+		handlePlaying(event);
+		break;
+	default:
+		handleAnything(event);
+		break;
+	}
+}
+
+void Client::handleAnything(const Event &event) {
+	switch (event.type) {
+
+	case EventType::WINDOW_CLOSE:
+		closeRequested = true;
+		break;
+
+	case EventType::WINDOW_RESIZED:
+		graphics->resize(
+			event.event.window.data1,
+			event.event.window.data2
+		);
+		menu->getFrame()->move(
+			-graphics->getDrawWidth() / 2 + 10,
+			-graphics->getDrawHeight() / 2 + 10
+		);
+		break;
+
+	case EventType::KEYBOARD_PRESSED:
+		switch (event.event.key.keysym.scancode) {
+		case SDL_SCANCODE_Q:
+			if (SDL_GetModState() & KMOD_LCTRL)
+				closeRequested = true;
+			break;
+
+		case SDL_SCANCODE_O:
+			timeShift = (timeShift + millis(100)) % millis(1000);
+			break;
+
+		case SDL_SCANCODE_P:
+			timeShift = (timeShift + millis(900)) % millis(1000);
+			break;
+
+		} // switch scancode
+		break;
+
+	default:
+		break;
+
+	} // switch event type
+}
+
+void Client::handlePlaying(const Event &event) {
+	Player &player = world->getPlayer(localClientId);
+
+	switch (event.type) {
+
+	case EventType::MOUSE_MOTION: {
+			int yaw = player.getYaw();
+			int  pitch = player.getPitch();
+			yaw -= (int)round(event.event.motion.xrel * 10.0f);
+			pitch -= (int)round(event.event.motion.yrel * 10.0f);
+			yaw = cycle(yaw, 36000);
+			pitch = std::max(pitch, -9000);
+			pitch = std::min(pitch, 9000);
+			serverInterface->setPlayerOrientation(yaw, pitch);
+		break;
+	} // case MOUSE_MOTION
+
+	case EventType::MOUSE_BUTTON_PRESSED: {
+		vec3i64 bc;
+		int d;
+		bool target = player.getTargetedFace(&bc, &d);
+		if (target) {
+			if (event.event.button.button == SDL_BUTTON_LEFT) {
+				vec3i64 rbc = bc + DIRS[d].cast<int64>();
+				serverInterface->placeBlock(rbc, player.getBlock());
+			} else if (event.event.button.button == SDL_BUTTON_RIGHT) {
+				serverInterface->placeBlock(bc, 0);
+			}
+		}
+		break;
+	} // case MOUSE_BUTTON_PRESSED
+
+	case EventType::MOUSE_WHEEL: {
+		auto block = player.getBlock();
+		block += event.event.wheel.y;
+		static const int NUMBER_OF_BLOCKS = blockManager->getNumberOfBlocks();
+		while (block > NUMBER_OF_BLOCKS) {
+			block -= NUMBER_OF_BLOCKS;
+		}
+		while (block < 1) {
+			block += NUMBER_OF_BLOCKS;
+		}
+		serverInterface->setSelectedBlock(block);
+		break;
+	} // case MOUSE_WHEEL
+
+	case EventType::KEYBOARD_PRESSED:
+		switch (event.event.key.keysym.scancode) {
+		case SDL_SCANCODE_ESCAPE:
+			menu->update();
+			state = State::IN_MENU;
+			break;
+		case SDL_SCANCODE_F:
+			serverInterface->toggleFly();
+			break;
+		case SDL_SCANCODE_M: {
+			GraphicsConf conf = *_conf;
+			switch (conf.aa) {
+			case AntiAliasing::NONE:    conf.aa = AntiAliasing::MSAA_2;  break;
+			case AntiAliasing::MSAA_2:  conf.aa = AntiAliasing::MSAA_4;  break;
+			case AntiAliasing::MSAA_4:  conf.aa = AntiAliasing::MSAA_8;  break;
+			case AntiAliasing::MSAA_8:  conf.aa = AntiAliasing::MSAA_16; break;
+			case AntiAliasing::MSAA_16: conf.aa = AntiAliasing::NONE;    break;
+			}
+			setConf(conf);
+			menu->update();
+			break;
+		}
+		case SDL_SCANCODE_F11: {
+			GraphicsConf conf = *_conf;
+			conf.fullscreen = !conf.fullscreen;
+			setConf(conf);
+			break;
+		}
+		case SDL_SCANCODE_F3:
+			_isDebugOn = !_isDebugOn;
+			break;
+		default:
+			handleAnything(event);
+			break;
+		} // switch scancode
+		break;
+
+	default:
+		handleAnything(event);
+		break;
+
+	} // switch event type
+}
+
+void Client::handleMenu(const Event &event) {
+	switch (event.type) {
+
+	case EventType::MOUSE_MOTION: {
+		int x = event.event.motion.x - graphics->getWidth() / 2;
+		int y = graphics->getHeight() / 2 - event.event.motion.y;
+		float factor = graphics->getScalingFactor();
+		menu->getFrame()->updateMousePosition(x * factor, y * factor);
+		break;
+	} // case MOUSE_MOTION
+
+	case EventType::MOUSE_BUTTON_PRESSED: {
+		int x = event.event.button.x - graphics->getWidth() / 2;
+		int y = graphics->getHeight() / 2 - event.event.button.y;
+		float factor = graphics->getScalingFactor();
+		menu->getFrame()->handleMouseClick(x * factor, y * factor);
+		break;
+	} // case MOUSE_BUTTON_PRESSED
+
+	case EventType::KEYBOARD_PRESSED: {
+		switch (event.event.key.keysym.scancode) {
+		case SDL_SCANCODE_ESCAPE:
+			menu->apply();
+			state = State::PLAYING;
+			break;
+		default:
+			handlePlaying(event);
+			break;
+		} // switch scancode
+		break;
+	} // case KEYBOARD_PRESSED
+
+	default:
+		handlePlaying(event);
+		break;
+
+	} // switch event type
 }

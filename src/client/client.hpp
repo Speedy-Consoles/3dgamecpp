@@ -16,6 +16,7 @@ class Stopwatch;
 class BlockManager;
 class ChunkManager;
 class Save;
+struct Event;
 
 class Client {
 public:
@@ -75,6 +76,11 @@ private:
 	void sync(int perSecond);
 
 	void handleInput();
+
+	void handle(const Event &);
+	void handleAnything(const Event &);
+	void handlePlaying(const Event &);
+	void handleMenu(const Event &);
 };
 
 enum ClockId {

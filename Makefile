@@ -2,6 +2,7 @@
 CLIENT_EXECUTABLE_NAME = 3dgame
 CLIENT_OBJECT_FILES = \
 	client/client.cpp.o\
+	client/events.cpp.o\
 	client/config.cpp.o\
 	client/local_server_interface.cpp.o\
 	client/menu.cpp.o\

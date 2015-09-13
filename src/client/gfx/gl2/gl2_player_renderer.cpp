@@ -43,7 +43,7 @@ void GL2PlayerRenderer::render() {
 					(DIR_QUAD_CORNER_CYCLES_3D[d][j][1] * 2 - 1) * Player::RADIUS,
 					DIR_QUAD_CORNER_CYCLES_3D[d][j][2] * Player::HEIGHT - Player::EYE_HEIGHT
 				);
-				glTexCoord2f(QUAD_CORNER_CYCLE[j][0], QUAD_CORNER_CYCLE[j][1]);
+				glTexCoord2f((float)QUAD_CORNER_CYCLE[j][0], (float)QUAD_CORNER_CYCLE[j][1]);
 				vec3f vertex = off.cast<float>() * (1.0f / RESOLUTION);
 				glVertex3f(vertex[0], vertex[1], vertex[2]);
 			}
