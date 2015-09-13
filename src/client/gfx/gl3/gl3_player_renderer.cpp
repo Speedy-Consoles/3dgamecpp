@@ -31,9 +31,9 @@ GL3PlayerRenderer::GL3PlayerRenderer(Client *client, GL3Renderer *renderer) :
 		vec3f vertices[4];
 		for (int i = 0; i < 4; i++) {
 			vertices[i] = vec3f(
-				(DIR_QUAD_CORNER_CYCLES_3D[d][i][0] * 2 - 1) * Player::RADIUS,
-				(DIR_QUAD_CORNER_CYCLES_3D[d][i][1] * 2 - 1) * Player::RADIUS,
-				DIR_QUAD_CORNER_CYCLES_3D[d][i][2] * Player::HEIGHT - Player::EYE_HEIGHT
+				(float)((DIR_QUAD_CORNER_CYCLES_3D[d][i][0] * 2 - 1) * Player::RADIUS),
+				(float)((DIR_QUAD_CORNER_CYCLES_3D[d][i][1] * 2 - 1) * Player::RADIUS),
+				(float)(DIR_QUAD_CORNER_CYCLES_3D[d][i][2] * Player::HEIGHT - Player::EYE_HEIGHT)
 			) * (1.0f / RESOLUTION);
 		}
 		for (int j = 0; j < 6; j++) {

@@ -312,8 +312,8 @@ void Client::handleInput() {
 			if (state == State::PLAYING) {
 				int yaw = player.getYaw();
 				int  pitch = player.getPitch();
-				yaw -= event.motion.xrel * 10.0f;
-				pitch -= event.motion.yrel * 10.0f;
+				yaw -= (int)round(event.motion.xrel * 10.0f);
+				pitch -= (int)round(event.motion.yrel * 10.0f);
 				yaw = cycle(yaw, 36000);
 				pitch = std::max(pitch, -9000);
 				pitch = std::min(pitch, 9000);
