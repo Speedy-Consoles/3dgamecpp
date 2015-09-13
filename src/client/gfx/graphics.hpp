@@ -28,7 +28,6 @@ private:
 
 	SDL_GLContext glContext;
 	SDL_Window *window;
-	std::unique_ptr<Renderer> renderer;
 
 	bool isMouseGrabbed = false;
 
@@ -46,11 +45,9 @@ public:
 	Graphics(Client *client);
 	~Graphics();
 
-	Renderer *getRenderer() const { return renderer.get(); }
-
 	bool createContext();
-	bool createGL2Context();
-	bool createGL3Context();
+	void flip();
+	void grabMouse(bool);
 
 	void resize(int width, int height);
 	void setConf(const GraphicsConf &, const GraphicsConf &);
@@ -62,11 +59,6 @@ public:
 	float getDrawWidth() const;
 
 	float getScalingFactor() const;
-
-	void tick();
-	void flip();
-
-	void grabMouse(bool);
 
 private:
 	void calcDrawArea();

@@ -22,6 +22,8 @@
 #include "shared/saves.hpp"
 #include "gui/widget.hpp"
 #include "gfx/graphics.hpp"
+#include "gfx/gl2/gl2_renderer.hpp"
+#include "gfx/gl3/gl3_renderer.hpp"
 
 #include "config.hpp"
 #include "menu.hpp"
@@ -66,19 +68,13 @@ Client::Client(const char *worldId, const char *serverAdress) {
 	stopwatch = std::unique_ptr<Stopwatch>(new Stopwatch(CLOCK_ID_NUM));
 	stopwatch->start(CLOCK_ALL);
 
-	_conf = std::unique_ptr<GraphicsConf>(new GraphicsConf());
-	load("graphics-default.profile", *_conf);
+	conf = std::unique_ptr<GraphicsConf>(new GraphicsConf());
+	load("graphics-default.profile", *conf);
 
-	save = std::unique_ptr<Save>(new Save(_conf->last_world_id.c_str()));
-	boost::filesystem::path path(save->getPath());
-	if (!boost::filesystem::exists(path)) {
-		boost::filesystem::create_directories(path);
-		std::random_device rng;
-		std::uniform_int_distribution<uint64> distr;
-		uint64 seed = distr(rng);
-		save->initialize(_conf->last_world_id, seed);
-		save->store();
-	}
+	graphics = std::unique_ptr<Graphics>(new Graphics(this));
+	graphics->createContext();
+
+	menu = std::unique_ptr<Menu>(new Menu(this));
 
 	blockManager = std::unique_ptr<BlockManager>(new BlockManager());
 	const char *block_ids_file = "block_ids.txt";
@@ -87,11 +83,26 @@ Client::Client(const char *worldId, const char *serverAdress) {
 	}
 	LOG_INFO(logger) << blockManager->getNumberOfBlocks() << " blocks were loaded from '" << block_ids_file << "'";
 
-	graphics = std::unique_ptr<Graphics>(new Graphics(this));
-	graphics->createContext();
+	save = std::unique_ptr<Save>(new Save(conf->last_world_id.c_str()));
+	boost::filesystem::path path(save->getPath());
+	if (!boost::filesystem::exists(path)) {
+		boost::filesystem::create_directories(path);
+		std::random_device rng;
+		std::uniform_int_distribution<uint64> distr;
+		uint64 seed = distr(rng);
+		save->initialize(conf->last_world_id, seed);
+		save->store();
+	}
+
 	chunkManager = std::unique_ptr<ChunkManager>(new ChunkManager(this));
+
 	world = std::unique_ptr<World>(new World(worldId, chunkManager.get()));
-	menu = std::unique_ptr<Menu>(new Menu(this));
+
+	if (conf->render_backend == RenderBackend::OGL_3) {
+		renderer = std::unique_ptr<GL3Renderer>(new GL3Renderer(this));
+	} else {
+		renderer = std::unique_ptr<GL2Renderer>(new GL2Renderer(this));
+	}
 
 	if (serverAdress) {
 		LOG_INFO(logger) << "Connecting to remote server '" << serverAdress << "'";
@@ -103,10 +114,7 @@ Client::Client(const char *worldId, const char *serverAdress) {
 }
 
 Client::~Client() {
-	// delete graphics so the window closes quickly
-	graphics.reset();
-
-	store("graphics-default.profile", *_conf);
+	store("graphics-default.profile", *conf);
 }
 
 uint8 Client::getLocalClientId() const {
@@ -129,7 +137,6 @@ void Client::run() {
 
 		if (state == State::CONNECTING && serverInterface->getStatus() == ServerInterface::CONNECTED) {
 			state = State::IN_MENU;
-			localClientId = serverInterface->getLocalClientId();
 		}
 
 		serverInterface->tick();
@@ -141,7 +148,8 @@ void Client::run() {
 
 #ifndef NO_GRAPHICS
         if (getCurrentTime() < time + timeShift + seconds(1) / TICK_SPEED) {
-            graphics->tick();
+			renderer->tick();
+			renderer->render();
         }
 #endif
 
@@ -157,10 +165,11 @@ void Client::run() {
 	serverInterface->wait();
 }
 
-void Client::setConf(const GraphicsConf &conf) {
-	graphics->setConf(conf, *_conf);
-	serverInterface->setConf(conf, *_conf);
-	*_conf = conf;
+void Client::setConf(const GraphicsConf &newConf) {
+	graphics->setConf(newConf, *conf);
+	renderer->setConf(newConf, *conf);
+	serverInterface->setConf(newConf, *conf);
+	*conf = newConf;
 }
 
 void Client::sync(int perSecond) {
@@ -227,6 +236,7 @@ void Client::handleAnything(const Event &event) {
 			event.event.window.data1,
 			event.event.window.data2
 		);
+		renderer->resize();
 		menu->getFrame()->move(
 			-graphics->getDrawWidth() / 2 + 10,
 			-graphics->getDrawHeight() / 2 + 10
@@ -260,7 +270,7 @@ void Client::handleAnything(const Event &event) {
 }
 
 void Client::handlePlaying(const Event &event) {
-	Player &player = world->getPlayer(localClientId);
+	Player &player = getLocalPlayer();
 
 	switch (event.type) {
 
@@ -316,22 +326,22 @@ void Client::handlePlaying(const Event &event) {
 			serverInterface->toggleFly();
 			break;
 		case SDL_SCANCODE_M: {
-			GraphicsConf conf = *_conf;
-			switch (conf.aa) {
-			case AntiAliasing::NONE:    conf.aa = AntiAliasing::MSAA_2;  break;
-			case AntiAliasing::MSAA_2:  conf.aa = AntiAliasing::MSAA_4;  break;
-			case AntiAliasing::MSAA_4:  conf.aa = AntiAliasing::MSAA_8;  break;
-			case AntiAliasing::MSAA_8:  conf.aa = AntiAliasing::MSAA_16; break;
-			case AntiAliasing::MSAA_16: conf.aa = AntiAliasing::NONE;    break;
+			GraphicsConf c = *conf;
+			switch (c.aa) {
+			case AntiAliasing::NONE:    c.aa = AntiAliasing::MSAA_2;  break;
+			case AntiAliasing::MSAA_2:  c.aa = AntiAliasing::MSAA_4;  break;
+			case AntiAliasing::MSAA_4:  c.aa = AntiAliasing::MSAA_8;  break;
+			case AntiAliasing::MSAA_8:  c.aa = AntiAliasing::MSAA_16; break;
+			case AntiAliasing::MSAA_16: c.aa = AntiAliasing::NONE;    break;
 			}
-			setConf(conf);
+			setConf(c);
 			menu->update();
 			break;
 		}
 		case SDL_SCANCODE_F11: {
-			GraphicsConf conf = *_conf;
-			conf.fullscreen = !conf.fullscreen;
-			setConf(conf);
+			GraphicsConf c = *conf;
+			c.fullscreen = !c.fullscreen;
+			setConf(c);
 			break;
 		}
 		case SDL_SCANCODE_F3:

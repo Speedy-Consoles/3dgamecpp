@@ -16,6 +16,7 @@ class Stopwatch;
 class BlockManager;
 class ChunkManager;
 class Save;
+class Renderer;
 struct Event;
 
 class Client {
@@ -29,21 +30,23 @@ public:
 	Client(const char *worldId, const char *serverAdress);
 	~Client();
 
+	// getter
 	State getState() const { return state; }
 	bool isDebugOn() const { return _isDebugOn; }
-	uint8 getLocalClientId() const;
-	
-	const GraphicsConf &getConf() const { return *_conf.get(); }
-	Save *getSave() { return save.get(); }
+	const GraphicsConf &getConf() const { return *conf.get(); }
+
+	Stopwatch *getStopwatch() { return stopwatch.get(); }
+	Graphics *getGraphics() { return graphics.get(); }
+	Menu *getMenu() { return menu.get(); }
 	BlockManager *getBlockManager() { return blockManager.get(); }
+	Save *getSave() { return save.get(); }
 	ChunkManager *getChunkManager() { return chunkManager.get(); }
 	World *getWorld() { return world.get(); }
-	Menu *getMenu() { return menu.get(); }
-	Graphics *getGraphics() { return graphics.get(); }
+	Renderer *getRenderer() { return renderer.get(); }
 	ServerInterface *getServerInterface() { return serverInterface.get(); }
-	Stopwatch *getStopwatch() { return stopwatch.get(); }
 
 	// convenience functions
+	uint8 getLocalClientId() const;
 	Player &getLocalPlayer();
 
 	void setConf(const GraphicsConf &);
@@ -51,17 +54,16 @@ public:
 	void run();
 
 private:
-	std::unique_ptr<GraphicsConf> _conf;
-	std::unique_ptr<Save> save;
+	std::unique_ptr<Stopwatch> stopwatch;
+	std::unique_ptr<GraphicsConf> conf;
+	std::unique_ptr<Graphics> graphics;
+	std::unique_ptr<Menu> menu;
 	std::unique_ptr<BlockManager> blockManager;
+	std::unique_ptr<Save> save;
 	std::unique_ptr<ChunkManager> chunkManager;
 	std::unique_ptr<World> world;
-	std::unique_ptr<Menu> menu;
-	std::unique_ptr<Graphics> graphics;
+	std::unique_ptr<Renderer> renderer;
 	std::unique_ptr<ServerInterface> serverInterface;
-	std::unique_ptr<Stopwatch> stopwatch;
-
-	uint8 localClientId;
 
 	State state = State::CONNECTING;
 

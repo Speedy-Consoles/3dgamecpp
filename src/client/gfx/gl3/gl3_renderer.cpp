@@ -88,8 +88,7 @@ GL3Renderer::GL3Renderer(Client *client) :
 }
 
 GL3Renderer::~GL3Renderer() {
-	LOG_DEBUG(logger) << "Destroying GL3 renderer";
-
+	LOG_DEBUG(logger) << "Destroying GL3Renderer";
 	if (skyFbo) GL(DeleteFramebuffers(1, &skyFbo));
 	if (skyTex) GL(DeleteTextures(1, &skyTex));
 }

@@ -54,7 +54,7 @@ GL2Renderer::GL2Renderer(Client *client) :
 }
 
 GL2Renderer::~GL2Renderer() {
-	LOG_TRACE(logger) << "Destroying Renderer";
+	LOG_DEBUG(logger) << "Destroying GL2Renderer";
 }
 
 void GL2Renderer::tick() {

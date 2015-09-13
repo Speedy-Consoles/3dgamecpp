@@ -31,8 +31,7 @@ Graphics::Graphics(Client *client) : client(client) {
 }
 
 Graphics::~Graphics() {
-	renderer.reset();
-
+	LOG_TRACE(logger) << "Destroying Graphics";
 	SDL_DestroyWindow(window);
 	SDL_GL_DeleteContext(glContext);
 	SDL_Quit();
@@ -77,33 +76,11 @@ bool Graphics::createContext() {
 		LOG_FATAL(logger) << "OpenGL version 2.1 not available";
 		return false;
 	}
-	if (GLEW_VERSION_3_3 && client->getConf().render_backend == RenderBackend::OGL_3) {
-		renderer = std::unique_ptr<GL3Renderer>(new GL3Renderer(client));
-	} else {
-		renderer = std::unique_ptr<GL2Renderer>(new GL2Renderer(client));
-	}
 	return true;
 }
 
-void Graphics::resize(int width, int height) {
-	LOG_INFO(logger) << "Resize to " << width << "x" << height;
-	this->width = width;
-	this->height = height;
-	calcDrawArea();
-	glViewport(0, 0, width, height);
-	renderer->resize();
-}
-
-void Graphics::calcDrawArea() {
-	float normalRatio = (float) DEFAULT_WINDOWED_RES[0] / DEFAULT_WINDOWED_RES[1];
-	float currentRatio = (float) width / height;
-	if (currentRatio > normalRatio) {
-		drawWidth = DEFAULT_WINDOWED_RES[0] * 1.0f;
-		drawHeight = DEFAULT_WINDOWED_RES[0] / currentRatio;
-	} else {
-		drawWidth = DEFAULT_WINDOWED_RES[1] * currentRatio;
-		drawHeight = DEFAULT_WINDOWED_RES[1] * 1.0f;
-	}
+void Graphics::flip() {
+	SDL_GL_SwapWindow(window);
 }
 
 void Graphics::grabMouse(bool b) {
@@ -123,6 +100,20 @@ void Graphics::grabMouse(bool b) {
 	}
 
 	isMouseGrabbed = b;
+}
+
+void Graphics::resize(int width, int height) {
+	LOG_INFO(logger) << "Resize to " << width << "x" << height;
+	this->width = width;
+	this->height = height;
+	calcDrawArea();
+	glViewport(0, 0, width, height);
+}
+
+void Graphics::setConf(const GraphicsConf &conf, const GraphicsConf &old) {
+	if (conf.fullscreen != old.fullscreen) {
+		SDL_SetWindowFullscreen(window, conf.fullscreen ? SDL_WINDOW_FULLSCREEN : 0);
+	}
 }
 
 int Graphics::getWidth() const {
@@ -145,19 +136,14 @@ float Graphics::getScalingFactor() const {
 	return drawWidth / width;
 }
 
-void Graphics::setConf(const GraphicsConf &conf, const GraphicsConf &old) {
-	if (conf.fullscreen != old.fullscreen) {
-		SDL_SetWindowFullscreen(window, conf.fullscreen ? SDL_WINDOW_FULLSCREEN : 0);
+void Graphics::calcDrawArea() {
+	float normalRatio = (float) DEFAULT_WINDOWED_RES[0] / DEFAULT_WINDOWED_RES[1];
+	float currentRatio = (float) width / height;
+	if (currentRatio > normalRatio) {
+		drawWidth = DEFAULT_WINDOWED_RES[0] * 1.0f;
+		drawHeight = DEFAULT_WINDOWED_RES[0] / currentRatio;
+	} else {
+		drawWidth = DEFAULT_WINDOWED_RES[1] * currentRatio;
+		drawHeight = DEFAULT_WINDOWED_RES[1] * 1.0f;
 	}
-
-	renderer->setConf(conf, old);
-}
-
-void Graphics::tick() {
-	renderer->tick();
-	renderer->render();
-}
-
-void Graphics::flip() {
-	SDL_GL_SwapWindow(window);
 }

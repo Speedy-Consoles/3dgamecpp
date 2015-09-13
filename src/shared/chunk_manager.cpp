@@ -26,6 +26,7 @@ ChunkManager::ChunkManager(Client *client) :
 }
 
 ChunkManager::~ChunkManager() {
+	LOG_TRACE(logger) << "Destroying ChunkManager";
 	for (int i = 0; i < CHUNK_POOL_SIZE; i++) {
 		delete chunkPool[i];
 	}
