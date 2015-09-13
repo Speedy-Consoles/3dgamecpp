@@ -143,8 +143,8 @@ size_t vec2i64HashFunc(vec2i64 v) {
 }
 
 bool vec3i64CompFunc(vec3i64 v1, vec3i64 v2) {
-	int n1 = v1.norm2();
-	int n2 = v2.norm2();
+	auto n1 = v1.norm2();
+	auto n2 = v2.norm2();
 	if (n1 > n2)
 		return false;
 	if (n1 < n2)
@@ -268,7 +268,7 @@ void initUtil() {
 	for (int i = MAX_RENDER_CUBE_SIZE - 1; i >= 0; --i) {
 		double dist = LOADING_ORDER[i].norm();
 		if (dist <= finishedRadius) {
-			finishedRadius = std::ceil(dist) - 1;
+			finishedRadius = (int)std::ceil(dist) - 1;
 		}
 		LO_INDEX_FINISHED_RADIUS[i] = finishedRadius;
 	}

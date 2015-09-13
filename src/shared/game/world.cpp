@@ -113,9 +113,9 @@ int World::shootRay(vec3i64 start, vec3d ray, double maxDist,
 			int64 planeDist = (block[dirDim] + (sign + 1) / 2) * RESOLUTION - start[dirDim];
 			double factor = planeDist / ray[dirDim];
 			vec3d hit;
-			hit[dirDim] = planeDist;
-			hit[otherDims[0]] = ray[otherDims[0]] * factor;
-			hit[otherDims[1]] = ray[otherDims[1]] * factor;
+			hit[dirDim] = (double)planeDist;
+			hit[otherDims[0]] = (double)ray[otherDims[0]] * factor;
+			hit[otherDims[1]] = (double)ray[otherDims[1]] * factor;
 
 			double diff[2] = {
 				hit[otherDims[0]]
@@ -134,7 +134,7 @@ int World::shootRay(vec3i64 start, vec3d ray, double maxDist,
 				vec3i64 nextBlock = block + dir.cast<int64>();
 				if (getBlock(nextBlock)) {
 					if (outHit != nullptr)
-						*outHit = start + vec3i64(round(hit[0]), round(hit[1]), round(hit[2]));
+						*outHit = start + vec3i64((int64)round(hit[0]), (int64)round(hit[1]), (int64)round(hit[2]));
 					if (outFaceDir != nullptr)
 						outFaceDir[blockHitCounter] = (d + 3) % 6;
 					if (outHitBlock != nullptr)

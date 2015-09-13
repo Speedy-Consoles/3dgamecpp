@@ -21,26 +21,26 @@ struct WorldParams {
 
 	double elevation_xy_scale  = 100000;
 	double elevation_z_scale   = 100;
-	double elevation_octaves   = 6;
+	int    elevation_octaves   = 6;
 	double elevation_ampl_gain = 0.4;
 	double elevation_freq_gain = 5.0;
 
 	double mountain_xy_scale  = 5000;
 	double mountain_z_scale   = 6000;
-	double mountain_octaves   = 7;
+	int    mountain_octaves   = 7;
 	double mountain_ampl_gain = 0.4;
 	double mountain_freq_gain = 2.5;
 	double mountain_exp       = 12;
 
 	double surfaceScale           = 70;
 	double surfaceRelDepth        = 0.3;
-	double surfaceOctaves         = 6;
+	int    surfaceOctaves         = 6;
 	double surfaceAmplGain        = 0.4;
 	double surfaceFreqGain        = 2.0;
 	double surfaceThresholdXScale = 1;
 
 	double cavenessScale     = 100;
-	double cavenessOctaves   = 2;
+	int    cavenessOctaves   = 2;
 	double cavenessAmplGain  = 0.3;
 	double cavenessFreqGain  = 2.0;
 	double cavenessDepthGain1 = 50.0;
@@ -50,12 +50,12 @@ struct WorldParams {
 
 	double tunnelSwitchOverlap  = 0.1;
 	double tunnelSwitchScale    = 600;
-	double tunnelSwitchOctaves  = 1;
+	int    tunnelSwitchOctaves  = 1;
 	double tunnelSwitchAmplGain = 0.3;
 	double tunnelSwitchFreqGain = 2.0;
 
 	double tunnelScale    = 200;
-	double tunnelOctaves  = 1;
+	int    tunnelOctaves  = 1;
 	double tunnelAmplGain = 0.3;
 	double tunnelFreqGain = 3.0;
 

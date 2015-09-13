@@ -54,18 +54,16 @@ void WorldGenerator::generateChunk(Chunk *chunk) {
 	for (uint iccy = 0; iccy < Chunk::WIDTH; iccy++) {
 		int64 bcx = cc[0] * Chunk::WIDTH + iccx;
 		int64 bcy = cc[1] * Chunk::WIDTH + iccy;
-
-		vec3d bc_xy(bcx, bcy, 0);
 			
 		double h = elevation.heights[iccy * Chunk::WIDTH + iccx];
-		double base_vegetation = 0;//vegetation_perlin.perlin(bc_xy * 1 / wp.vegetation_xy_scale);
-		double base_temperature = 0;//temperature_perlin.perlin(bc_xy * 1 / wp.temperature_xy_scale);
+		double base_vegetation = 0;
+		double base_temperature = 0;
 
 		bool solid = false;
 		int realDepth = 0;
 		for (int iccz = Chunk::WIDTH + 8; iccz >= 0; iccz--) {
 			int64 bcz = iccz + cc[2] * Chunk::WIDTH;
-			vec3d dbc(bcx, bcy, bcz);
+			vec3d dbc = vec3i64(bcx, bcy, bcz).cast<double>();
 			
 			const double depth = h - bcz;
 
