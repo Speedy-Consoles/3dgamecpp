@@ -248,6 +248,8 @@ void Client::handleAnything(const Event &event) {
 			timeShift = (timeShift + millis(900)) % millis(1000);
 			break;
 
+		default:
+			break;
 		} // switch scancode
 		break;
 
