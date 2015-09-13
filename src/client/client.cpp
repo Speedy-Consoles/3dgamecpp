@@ -76,40 +76,10 @@ Client::Client(const char *worldId, const char *serverAdress) {
 
 	menu = std::unique_ptr<Menu>(new Menu(this));
 
-	blockManager = std::unique_ptr<BlockManager>(new BlockManager());
-	const char *block_ids_file = "block_ids.txt";
-	if (blockManager->load(block_ids_file)) {
-		LOG_ERROR(logger) << "Problem loading '" << block_ids_file << "'";
-	}
-	LOG_INFO(logger) << blockManager->getNumberOfBlocks() << " blocks were loaded from '" << block_ids_file << "'";
-
-	save = std::unique_ptr<Save>(new Save(conf->last_world_id.c_str()));
-	boost::filesystem::path path(save->getPath());
-	if (!boost::filesystem::exists(path)) {
-		boost::filesystem::create_directories(path);
-		std::random_device rng;
-		std::uniform_int_distribution<uint64> distr;
-		uint64 seed = distr(rng);
-		save->initialize(conf->last_world_id, seed);
-		save->store();
-	}
-
-	chunkManager = std::unique_ptr<ChunkManager>(new ChunkManager(this));
-
-	world = std::unique_ptr<World>(new World(worldId, chunkManager.get()));
-
-	if (conf->render_backend == RenderBackend::OGL_3) {
-		renderer = std::unique_ptr<GL3Renderer>(new GL3Renderer(this));
-	} else {
-		renderer = std::unique_ptr<GL2Renderer>(new GL2Renderer(this));
-	}
-
 	if (serverAdress) {
-		LOG_INFO(logger) << "Connecting to remote server '" << serverAdress << "'";
-		serverInterface = std::unique_ptr<RemoteServerInterface>(new RemoteServerInterface(this, serverAdress));
+		startRemoteGame(serverAdress);
 	} else {
-		LOG_INFO(logger) << "Connecting to local server";
-		serverInterface = std::unique_ptr<LocalServerInterface>(new LocalServerInterface(this));
+		startLocalGame(conf->last_world_id);
 	}
 }
 
@@ -123,6 +93,41 @@ uint8 Client::getLocalClientId() const {
 
 Player &Client::getLocalPlayer() {
 	return world->getPlayer(getLocalClientId());
+}
+
+void Client::startLocalGame(std::string worldId) {
+	LOG_INFO(logger) << "Opening world '" << worldId << "'";
+	exitGame();
+	save = std::unique_ptr<Save>(new Save(worldId));
+	boost::filesystem::path path(save->getPath());
+	if (!boost::filesystem::exists(path)) {
+		boost::filesystem::create_directories(path);
+		std::random_device rng;
+		std::uniform_int_distribution<uint64> distr;
+		uint64 seed = distr(rng);
+		save->initialize(worldId, seed);
+		save->store();
+	}
+	startGame();
+	auto *p = new LocalServerInterface(this);
+	serverInterface = std::unique_ptr<LocalServerInterface>(p);
+}
+
+void Client::startRemoteGame(std::string serverAdress) {
+	LOG_INFO(logger) << "Connecting to remote server '" << serverAdress << "'";
+	exitGame();
+	startGame();
+	auto *p = new RemoteServerInterface(this, serverAdress);
+	serverInterface = std::unique_ptr<RemoteServerInterface>(p);
+}
+
+void Client::exitGame() {
+	serverInterface.reset();
+	renderer.reset();
+	world.reset();
+	chunkManager.reset();
+	blockManager.reset();
+	save.reset();
 }
 
 void Client::run() {
@@ -170,6 +175,25 @@ void Client::setConf(const GraphicsConf &newConf) {
 	renderer->setConf(newConf, *conf);
 	serverInterface->setConf(newConf, *conf);
 	*conf = newConf;
+}
+
+void Client::startGame() {
+	blockManager = std::unique_ptr<BlockManager>(new BlockManager());
+	const char *block_ids_file = "block_ids.txt";
+	if (blockManager->load(block_ids_file)) {
+		LOG_ERROR(logger) << "Problem loading '" << block_ids_file << "'";
+	}
+	LOG_INFO(logger) << blockManager->getNumberOfBlocks() << " blocks were loaded from '" << block_ids_file << "'";
+
+	chunkManager = std::unique_ptr<ChunkManager>(new ChunkManager(this));
+
+	world = std::unique_ptr<World>(new World(chunkManager.get()));
+
+	if (conf->render_backend == RenderBackend::OGL_3) {
+		renderer = std::unique_ptr<GL3Renderer>(new GL3Renderer(this));
+	} else {
+		renderer = std::unique_ptr<GL2Renderer>(new GL2Renderer(this));
+	}
 }
 
 void Client::sync(int perSecond) {

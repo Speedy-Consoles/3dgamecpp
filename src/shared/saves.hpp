@@ -11,7 +11,7 @@ class ChunkArchive;
 
 class Save {
 public:
-	Save(const char *id);
+	Save(std::string);
 	~Save();
 	
 	std::string getId() const { return _id; }

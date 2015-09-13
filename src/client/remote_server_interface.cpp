@@ -13,7 +13,7 @@ using namespace boost::asio::ip;
 
 static logging::Logger logger("remote");
 
-RemoteServerInterface::RemoteServerInterface(Client *client, const char *address) :
+RemoteServerInterface::RemoteServerInterface(Client *client, std::string address) :
 		client(client),
 		worldGenerator(client->getSave()->getWorldGenerator()),
 		loadedQueue(1024),
@@ -39,7 +39,7 @@ RemoteServerInterface::RemoteServerInterface(Client *client, const char *address
 
 	// this will make sure our async_recv calls get handled
 	f = async(launch::async, [this]{ this->ios.run(); });
-	asyncConnect(std::string(address));
+	asyncConnect(address);
 }
 
 

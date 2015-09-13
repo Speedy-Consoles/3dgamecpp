@@ -98,7 +98,7 @@ Server::Server(uint16 port, const char *worldId) :
 	socket(ios)
 {
 	LOG_INFO(logger) << "Creating Server";
-	world = new World(worldId, nullptr); // TODO give chunk manager
+	world = new World(nullptr); // TODO give chunk manager
 	for (uint8 i = 0; i < MAX_CLIENTS; i++) {
 		clients[i].connected = false;
 		clients[i].timeOfLastPacket = 0;

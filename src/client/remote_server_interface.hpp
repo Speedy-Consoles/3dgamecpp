@@ -41,7 +41,7 @@ private:
 	bool flying = false;
 
 public:
-	RemoteServerInterface(Client *client, const char *address);
+	RemoteServerInterface(Client *client, std::string address);
 
 	~RemoteServerInterface();
 

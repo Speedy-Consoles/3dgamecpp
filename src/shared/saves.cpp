@@ -14,7 +14,7 @@ using namespace boost::property_tree;
 
 static logging::Logger logger("io");
 
-Save::Save(const char *id) :
+Save::Save(std::string id) :
 	_id(id), _path(string("./saves/") + id + "/")
 {
 	boost::filesystem::path path(_path);

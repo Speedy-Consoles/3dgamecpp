@@ -48,7 +48,6 @@ public:
 	static const int LOADING_DIAMETER = LOADING_DISTANCE * 2 + 1;
 
 private:
-	std::string id;
 	ChunkManager *chunkManager;
 	std::unordered_set<vec3i64, size_t(*)(vec3i64)> neededChunks;
 
@@ -57,10 +56,8 @@ private:
 	bool oldPlayerValids[MAX_CLIENTS];
 
 public:
-	World(std::string id, ChunkManager *chunkManager);
+	explicit World(ChunkManager *chunkManager);
 	~World();
-
-	std::string getId() const { return id; }
 
 	void tick(uint localPlayerID);
 

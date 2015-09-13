@@ -2,6 +2,7 @@
 #define CLIENT_HPP
 
 #include <memory>
+#include <string>
 
 #include "shared/engine/std_types.hpp"
 #include "shared/engine/time.hpp"
@@ -35,22 +36,27 @@ public:
 	bool isDebugOn() const { return _isDebugOn; }
 	const GraphicsConf &getConf() const { return *conf.get(); }
 
+	// access
 	Stopwatch *getStopwatch() { return stopwatch.get(); }
 	Graphics *getGraphics() { return graphics.get(); }
 	Menu *getMenu() { return menu.get(); }
-	BlockManager *getBlockManager() { return blockManager.get(); }
 	Save *getSave() { return save.get(); }
+	BlockManager *getBlockManager() { return blockManager.get(); }
 	ChunkManager *getChunkManager() { return chunkManager.get(); }
 	World *getWorld() { return world.get(); }
 	Renderer *getRenderer() { return renderer.get(); }
 	ServerInterface *getServerInterface() { return serverInterface.get(); }
 
+	void setConf(const GraphicsConf &);
+
 	// convenience functions
 	uint8 getLocalClientId() const;
 	Player &getLocalPlayer();
 
-	void setConf(const GraphicsConf &);
-
+	// operation
+	void startLocalGame(std::string worldId);
+	void startRemoteGame(std::string serverAdress);
+	void exitGame();
 	void run();
 
 private:
@@ -58,8 +64,8 @@ private:
 	std::unique_ptr<GraphicsConf> conf;
 	std::unique_ptr<Graphics> graphics;
 	std::unique_ptr<Menu> menu;
+	std::unique_ptr<Save> save; 
 	std::unique_ptr<BlockManager> blockManager;
-	std::unique_ptr<Save> save;
 	std::unique_ptr<ChunkManager> chunkManager;
 	std::unique_ptr<World> world;
 	std::unique_ptr<Renderer> renderer;
@@ -75,6 +81,8 @@ private:
 	bool closeRequested = false;
 
 private:
+	void startGame();
+
 	void sync(int perSecond);
 
 	void handleInput();
