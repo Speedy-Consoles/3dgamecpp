@@ -566,9 +566,9 @@ int ChunkRenderer::getOuts(int ins, int passThroughs, vec3i64 chunkDiff, int tol
 	for (int d1 = 0; d1 < 6; d1++) {
 		if (((ins >> d1) & 1) == 0)
 			continue;
-		int dimDiff = std::abs(chunkDiff[d1 % 3]);
-		int otherDimDiff1 = std::abs(chunkDiff[OTHER_DIR_DIMS[d1][0]]);
-		int otherDimDiff2 = std::abs(chunkDiff[OTHER_DIR_DIMS[d1][1]]);
+		int dimDiff = (int)std::abs(chunkDiff[d1 % 3]);
+		int otherDimDiff1 = (int)std::abs(chunkDiff[OTHER_DIR_DIMS[d1][0]]);
+		int otherDimDiff2 = (int)std::abs(chunkDiff[OTHER_DIR_DIMS[d1][1]]);
 		bool oppositeVisible = otherDimDiff1 - tolerance <= dimDiff
 				&& otherDimDiff2 - tolerance <= dimDiff;
 

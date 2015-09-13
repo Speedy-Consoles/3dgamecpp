@@ -70,9 +70,9 @@ void Player::collide() {
 			}
 		}
 		if (numFirstHitFaces == 0) {
-			newPos[0] = newPos[0] + round(remVel[0]);
-			newPos[1] = newPos[1] + round(remVel[1]);
-			newPos[2] = newPos[2] + round(remVel[2]);
+			newPos[0] = newPos[0] + (int64)round(remVel[0]);
+			newPos[1] = newPos[1] + (int64)round(remVel[1]);
+			newPos[2] = newPos[2] + (int64)round(remVel[2]);
 			break;
 		}
 
@@ -91,9 +91,9 @@ void Player::collide() {
 }
 
 void Player::ghost() {
-	pos[0] += round(vel[0]);
-	pos[1] += round(vel[1]);
-	pos[2] += round(vel[2]);
+	pos[0] += (int64)round(vel[0]);
+	pos[1] += (int64)round(vel[1]);
+	pos[2] += (int64)round(vel[2]);
 }
 
 void Player::setOrientation(int yaw, int pitch) {
