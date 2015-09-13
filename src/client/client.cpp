@@ -134,8 +134,6 @@ void Client::run() {
 
 		if (state == State::PLAYING || state == State::IN_MENU) {
 			stopwatch->start(CLOCK_WOT);
-			if (!_isPaused)
-				world->tick(localClientId);
 			stopwatch->stop(CLOCK_WOT);
 		}
 
@@ -221,12 +219,9 @@ void Client::handleInput() {
 				case SDL_SCANCODE_ESCAPE:
 					menu->update();
 					state = State::IN_MENU;
-					_isPaused = true;
 					break;
 				case SDL_SCANCODE_F:
-					if (!_isPaused) {
-						serverInterface->toggleFly();
-					}
+					serverInterface->toggleFly();
 					break;
 				case SDL_SCANCODE_M: {
 					GraphicsConf conf = *_conf;
@@ -292,7 +287,6 @@ void Client::handleInput() {
 				case SDL_SCANCODE_ESCAPE:
 					menu->apply();
 					state = State::PLAYING;
-					_isPaused = false;
 					/*for (int z = -5; z < 37; z++) {
 						for (int y = -5; y < 37; y++) {
 							for (int x = -5; x < 37; x++) {
@@ -314,7 +308,7 @@ void Client::handleInput() {
 			}
 			break;
 		case SDL_MOUSEMOTION:
-			if (state == State::PLAYING && !_isPaused) {
+			if (state == State::PLAYING) {
 				float yaw = player.getYaw();
 				float pitch = player.getPitch();
 				yaw -= event.motion.xrel / 10.0f;
@@ -331,7 +325,7 @@ void Client::handleInput() {
 			}
 			break;
 		case SDL_MOUSEBUTTONDOWN:
-			if (state == State::PLAYING && !_isPaused) {
+			if (state == State::PLAYING) {
 				vec3i64 bc;
 				int d;
 				bool target = player.getTargetedFace(&bc, &d);
@@ -358,7 +352,7 @@ void Client::handleInput() {
 	const uint8 *keyboard = SDL_GetKeyboardState(nullptr);
 
 	int moveInput = 0;
-	if (state == State::PLAYING && !_isPaused) {
+	if (state == State::PLAYING) {
 		if (keyboard[SDL_SCANCODE_D])
 			moveInput |= Player::MOVE_INPUT_FLAG_STRAFE_RIGHT;
 		if (keyboard[SDL_SCANCODE_A])

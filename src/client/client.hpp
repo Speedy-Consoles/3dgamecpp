@@ -29,7 +29,6 @@ public:
 	~Client();
 
 	State getState() const { return state; }
-	bool isPaused() const { return _isPaused; }
 	bool isDebugOn() const { return _isDebugOn; }
 	uint8 getLocalClientId() const;
 	
@@ -65,7 +64,6 @@ private:
 
 	State state = State::CONNECTING;
 
-	bool _isPaused = false;
 	bool _isDebugOn = false;
 
 	Time time = 0;

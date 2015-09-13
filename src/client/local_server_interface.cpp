@@ -41,6 +41,7 @@ void LocalServerInterface::setConf(const GraphicsConf &conf, const GraphicsConf 
 }
 
 void LocalServerInterface::tick() {
+	client->getWorld()->tick(0);
 }
 
 void LocalServerInterface::doWork() {
