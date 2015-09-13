@@ -143,6 +143,12 @@
     <ClCompile Include="..\src\client\gfx\gl3\gl3_crosshair_renderer.cpp">
       <Filter>Source Files\gfx\gl3</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\client\gfx\gl2\gl2_player_renderer.cpp">
+      <Filter>Source Files\gfx\gl2</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\client\gfx\gl3\gl3_player_renderer.cpp">
+      <Filter>Source Files\gfx\gl3</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\client\gfx\gl2\gl2_chunk_renderer.hpp">
@@ -254,6 +260,12 @@
       <Filter>Header Files\gfx\gl2</Filter>
     </ClInclude>
     <ClInclude Include="..\src\client\gfx\gl3\gl3_crosshair_renderer.hpp">
+      <Filter>Header Files\gfx\gl3</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\client\gfx\gl2\gl2_player_renderer.hpp">
+      <Filter>Header Files\gfx\gl2</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\client\gfx\gl3\gl3_player_renderer.hpp">
       <Filter>Header Files\gfx\gl3</Filter>
     </ClInclude>
   </ItemGroup>
