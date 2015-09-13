@@ -25,8 +25,10 @@ enum ServerMessageType : uint8 {
 	CONNECTION_REJECTED,
 	CONNECTION_TIMEOUT,
 	CONNECTION_RESET,
-	PLAYER_SNAPSHOT,
 	ECHO_RESPONSE,
+	PLAYER_JOIN,
+	PLAYER_LEAVE,
+	PLAYER_SNAPSHOT,
 };
 
 enum RejectionReason : uint8 {
@@ -49,6 +51,8 @@ union ServerMessage {
 	struct { ServerMessageType type; } conTimeout;
 	struct { ServerMessageType type; } conReset;
 	struct { ServerMessageType type; } echoResp;
+	struct { ServerMessageType type; uint8 id; } playerJoin;
+	struct { ServerMessageType type; uint8 id; } playerLeave;
 	struct { ServerMessageType type; uint8 id; PlayerSnapshot snapshot; } playerSnapshot;
 };
 

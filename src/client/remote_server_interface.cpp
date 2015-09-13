@@ -198,13 +198,31 @@ void RemoteServerInterface::tick() {
 		case ECHO_RESPONSE:
 			//printf("%s\n", inBuf.rBegin());
 			break;
+		case CONNECTION_RESET:
+			LOG_ERROR(logger) << "Server says we're not connected";
+			// TODO disconnect
+			break;
+		case CONNECTION_TIMEOUT:
+			LOG_ERROR(logger) << "Server says we timed out";
+			// TODO disconnect
+			break;
+		case PLAYER_JOIN:
+			if (smsg.playerJoin.id != localPlayerId)
+				client->getWorld()->addPlayer(smsg.playerJoin.id);
+			break;
+		case PLAYER_LEAVE:
+			if (smsg.playerLeave.id != localPlayerId)
+				client->getWorld()->deletePlayer(smsg.playerLeave.id);
+			break;
 		case PLAYER_SNAPSHOT:
 			client->getWorld()->getPlayer(smsg.playerSnapshot.id)
 					.applySnapshot(smsg.playerSnapshot.snapshot, smsg.playerSnapshot.id == localPlayerId);
 			break;
+		case MALFORMED_SERVER_MESSAGE:
+			LOG_WARNING(logger) << "Received malformed message";
+			break;
 		default:
-			printf("eh?\n");
-			;//TODO
+			LOG_WARNING(logger) << "Received message of unknown type " << smsg.type;
 		}
 		inBuf.clear();
 	}

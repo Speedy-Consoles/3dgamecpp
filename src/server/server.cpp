@@ -64,6 +64,10 @@ private:
 
 	void sendSnapshots(int tick);
 
+	void send(ServerMessage &smsg, uint8 clientId);
+	void send(ServerMessage &smsg, const Endpoint &endpoint);
+	void broadcast(ServerMessage &smsg);
+
 	void disconnect(uint8 id);
 };
 
@@ -262,10 +266,12 @@ void Server::handleConnectionRequest(const Endpoint &endpoint) {
 		LOG_INFO(logger) << "Duplicate remote endpoint with player " << duplicate;
 		smsg.type = CONNECTION_REJECTED;
 		smsg.conRejected.reason = DUPLICATE_ENDPOINT;
+		send(smsg, endpoint);
 	} else if (newPlayer == -1) {
 		LOG_INFO(logger) << "Server is full";
 		smsg.type = CONNECTION_REJECTED;
 		smsg.conRejected.reason = FULL;
+		send(smsg, endpoint);
 	} else {
 		uint8 id = (uint) newPlayer;
 
@@ -277,13 +283,21 @@ void Server::handleConnectionRequest(const Endpoint &endpoint) {
 
 		smsg.type = CONNECTION_ACCEPTED;
 		smsg.conAccepted.id = id;
+		send(smsg, id);
+
+		smsg.type = PLAYER_JOIN;
+		for (uint8 i = 0; i < MAX_CLIENTS; ++i) {
+			if (i != id && !clients[i].connected)
+				continue;
+			smsg.playerJoin.id = i;
+			send(smsg, id);
+		}
+
+		smsg.playerJoin.id = id;
+		broadcast(smsg);
+
 		LOG_INFO(logger) << "New Player " << (int) id;
 	}
-
-	// send response
-	outBuf.clear();
-	outBuf << smsg;
-	socket.send(outBuf, &endpoint);
 }
 
 void Server::handleClientMessage(const ClientMessage &cmsg, uint8 id) {
@@ -328,15 +342,7 @@ void Server::sendSnapshots(int tick) {
 		smsg.playerSnapshot.snapshot.moveInput = world->getPlayer(id).getMoveInput();
 		smsg.playerSnapshot.snapshot.isFlying = world->getPlayer(id).getFly();
 
-		outBuf.clear();
-		outBuf << smsg << inBuf;
-
-		for (uint8 id2 = 0; id2 < MAX_CLIENTS; ++id2) {
-			if (!clients[id2].connected)
-				continue;
-			socket.send(outBuf, &clients[id2].endpoint);
-			outBuf.rSeek(0);
-		}
+		broadcast(smsg);
 	}
 }
 
@@ -350,12 +356,33 @@ void Server::checkInactive() {
 
 			ServerMessage smsg;
 			smsg.type = CONNECTION_TIMEOUT;
-			outBuf.clear();
-			outBuf << smsg;
-			socket.send(outBuf, &clients[id].endpoint);
+			send(smsg, id);
 
 			disconnect(id);
 		}
+	}
+}
+
+void Server::send(ServerMessage &smsg, uint8 clientId) {
+	if (clients[clientId].connected)
+		send(smsg, clients[clientId].endpoint);
+}
+
+void Server::send(ServerMessage &smsg, const Endpoint &endpoint) {
+	outBuf.clear();
+	outBuf << smsg;
+	socket.send(outBuf, &endpoint);
+}
+
+
+void Server::broadcast(ServerMessage &smsg) {
+	outBuf.clear();
+	outBuf << smsg;
+	for (uint8 id = 0; id < MAX_CLIENTS; ++id) {
+		if (!clients[id].connected)
+			continue;
+		socket.send(outBuf, &clients[id].endpoint);
+		outBuf.rSeek(0);
 	}
 }
 
@@ -364,4 +391,9 @@ void Server::disconnect(uint8 id) {
 
 	LOG_INFO(logger) << "Player " << (int) id << " disconnected";
 	clients[id].connected = false;
+
+	ServerMessage smsg;
+	smsg.type = PLAYER_LEAVE;
+	smsg.playerJoin.id = id;
+	broadcast(smsg);
 }

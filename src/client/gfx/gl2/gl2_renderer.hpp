@@ -23,6 +23,7 @@ class Menu;
 class Stopwatch;
 
 class GL2ChunkRenderer;
+class GL2PlayerRenderer;
 class GL2TargetRenderer;
 class GL2SkyRenderer;
 class GL2CrosshairRenderer;
@@ -43,6 +44,7 @@ class GL2Renderer : public Renderer {
 	
 	GL2ChunkRenderer *p_chunkRenderer;
 	std::unique_ptr<ComponentRenderer> chunkRenderer;
+	std::unique_ptr<ComponentRenderer> playerRenderer;
 	std::unique_ptr<ComponentRenderer> targetRenderer;
 	std::unique_ptr<ComponentRenderer> skyRenderer;
 	std::unique_ptr<ComponentRenderer> crosshairRenderer;
@@ -51,9 +53,6 @@ class GL2Renderer : public Renderer {
 	std::unique_ptr<ComponentRenderer> debugRenderer;
 
 	float ZNEAR = 0.1f;
-
-	static const int MAX_NEW_QUADS = 6000;
-	static const int MAX_NEW_CHUNKS = 500;
 
 	float maxFOV;
 

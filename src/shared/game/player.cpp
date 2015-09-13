@@ -187,7 +187,7 @@ void Player::applySnapshot(const PlayerSnapshot &snapshot, bool local) {
 }
 
 PlayerSnapshot Player::makeSnapshot(int tick) const {
-	return PlayerSnapshot{tick, pos, vel, (uint16) round(yaw * 100), (int16) round(pitch * 100), moveInput, isFlying};
+	return PlayerSnapshot{tick, pos, vel, (uint16) yaw, (int16) pitch, moveInput, isFlying};
 }
 
 void Player::calcVel() {

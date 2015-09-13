@@ -13,6 +13,7 @@
 #include "client/menu.hpp"
 
 #include "gl2_chunk_renderer.hpp"
+#include "gl2_player_renderer.hpp"
 #include "gl2_target_renderer.hpp"
 #include "gl2_sky_renderer.hpp"
 #include "gl2_crosshair_renderer.hpp"
@@ -30,6 +31,7 @@ GL2Renderer::GL2Renderer(Client *client) :
 {
 	p_chunkRenderer = new GL2ChunkRenderer(client, this);
 	chunkRenderer = std::unique_ptr<ComponentRenderer>(p_chunkRenderer);
+	playerRenderer = std::unique_ptr<ComponentRenderer>(new GL2PlayerRenderer(client, this));
 	targetRenderer = std::unique_ptr<ComponentRenderer>(new GL2TargetRenderer(client, this));
 	skyRenderer = std::unique_ptr<ComponentRenderer>(new GL2SkyRenderer(client, this));
 	crosshairRenderer = std::unique_ptr<ComponentRenderer>(new GL2CrosshairRenderer(client, this));
@@ -375,6 +377,9 @@ void GL2Renderer::render() {
 		GL(Rotatef(-player.getYaw() / 100.0f, 0, 1, 0));
 		GL(Rotatef(-90, 1, 0, 0));
 		GL(Rotatef(90, 0, 0, 1));
+		glLightfv(GL_LIGHT0, GL_POSITION, sunLightPosition.ptr());
+
+		GL(PushMatrix());
 		vec3i64 playerPos = player.getPos();
 		int64 m = RESOLUTION * Chunk::WIDTH;
 		GL(Translatef(
@@ -382,9 +387,10 @@ void GL2Renderer::render() {
 			(float) -((playerPos[1] % m + m) % m) / RESOLUTION,
 			(float) -((playerPos[2] % m + m) % m) / RESOLUTION
 		));
-		glLightfv(GL_LIGHT0, GL_POSITION, sunLightPosition.ptr());
 		chunkRenderer->render();
 		targetRenderer->render();
+		GL(PopMatrix());
+		playerRenderer->render();
 
 		// copy framebuffer to screen
 		if (fbo) {

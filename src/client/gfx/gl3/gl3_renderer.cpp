@@ -12,6 +12,7 @@
 #include "client/gfx/graphics.hpp"
 
 #include "gl3_chunk_renderer.hpp"
+#include "gl3_player_renderer.hpp"
 #include "gl3_target_renderer.hpp"
 #include "gl3_sky_renderer.hpp"
 #include "gl3_crosshair_renderer.hpp"
@@ -30,6 +31,7 @@ GL3Renderer::GL3Renderer(Client *client) :
 {
 	p_chunkRenderer = new GL3ChunkRenderer(client, this);
 	chunkRenderer = std::unique_ptr<ComponentRenderer>(p_chunkRenderer);
+	playerRenderer = std::unique_ptr<ComponentRenderer>(new GL3PlayerRenderer(client, this));
 	targetRenderer = std::unique_ptr<ComponentRenderer>(new GL3TargetRenderer(client, this));
 	skyRenderer = std::unique_ptr<ComponentRenderer>(new GL3SkyRenderer(client, this));
 	crosshairRenderer = std::unique_ptr<ComponentRenderer>(new GL3CrosshairRenderer(client, this));
@@ -314,6 +316,7 @@ void GL3Renderer::render() {
 	GL(DepthMask(true));
 	GL(Clear(GL_DEPTH_BUFFER_BIT));
 	chunkRenderer->render();
+	playerRenderer->render();
 	targetRenderer->render();
 
 	// copy framebuffer to screen

@@ -113,34 +113,3 @@ void GL2ChunkRenderer::destroyChunkData(vec3i64 chunkCoords) {
 		renderInfos.erase(it);
 	}
 }
-
-//void GL2ChunkRenderer::renderPlayers() {
-//	GL(BindTexture(GL_TEXTURE_2D, 0));
-//	glBegin(GL_QUADS);
-//	for (uint i = 0; i < MAX_CLIENTS; i++) {
-//		if (i == client->getLocalClientId())
-//			continue;
-//		Player &player = client->getWorld()->getPlayer(i);
-//		if (!player.isValid())
-//			continue;
-//		vec3i64 pos = player.getPos();
-//		for (int d = 0; d < 6; d++) {
-//			vec3i8 dir = DIRS[d];
-//			glColor3d(0.8, 0.2, 0.2);
-//
-//			glNormal3d(dir[0], dir[1], dir[2]);
-//			for (int j = 0; j < 4; j++) {
-//				vec3i off(
-//					(DIR_QUAD_CORNER_CYCLES_3D[d][j][0] * 2 - 1) * Player::RADIUS,
-//					(DIR_QUAD_CORNER_CYCLES_3D[d][j][1] * 2 - 1) * Player::RADIUS,
-//					DIR_QUAD_CORNER_CYCLES_3D[d][j][2] * Player::HEIGHT - Player::EYE_HEIGHT
-//				);
-//				glTexCoord2d(QUAD_CORNER_CYCLE[j][0], QUAD_CORNER_CYCLE[j][1]);
-//				vec3d vertex = (pos + off.cast<int64>()).cast<double>() * (1.0 / RESOLUTION);
-//				glVertex3d(vertex[0], vertex[1], vertex[2]);
-//			}
-//		}
-//	}
-//	glEnd();
-//	LOG_OPENGL_ERROR;
-//}

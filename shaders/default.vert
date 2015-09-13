@@ -19,6 +19,7 @@ layout(location = 1) in vec4 color;
 out vec4 vfColor;
 out vec3 vfRealPosition;
 out vec2 vfTexturePosition;
+// TODO out vec3f vfNormal
 
 void main() {
 	vfColor = color;

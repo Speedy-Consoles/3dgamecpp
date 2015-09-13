@@ -13,6 +13,7 @@ CLIENT_OBJECT_FILES = \
 	client/gfx/texture_manager.cpp.o\
 	client/gfx/gl2/gl2_renderer.cpp.o\
 	client/gfx/gl2/gl2_chunk_renderer.cpp.o\
+	client/gfx/gl2/gl2_player_renderer.cpp.o\
 	client/gfx/gl2/gl2_target_renderer.cpp.o\
 	client/gfx/gl2/gl2_crosshair_renderer.cpp.o\
 	client/gfx/gl2/gl2_sky_renderer.cpp.o\
@@ -22,6 +23,7 @@ CLIENT_OBJECT_FILES = \
 	client/gfx/gl2/gl2_texture_manager.cpp.o\
 	client/gfx/gl3/gl3_renderer.cpp.o\
 	client/gfx/gl3/gl3_chunk_renderer.cpp.o\
+	client/gfx/gl3/gl3_player_renderer.cpp.o\
 	client/gfx/gl3/gl3_sky_renderer.cpp.o\
 	client/gfx/gl3/gl3_target_renderer.cpp.o\
 	client/gfx/gl3/gl3_crosshair_renderer.cpp.o\

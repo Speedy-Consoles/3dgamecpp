@@ -18,6 +18,10 @@ Buffer &operator << (Buffer &lhs, const ServerMessage &rhs) {
 		return lhs << MAGIC << rhs.conReset;
 	case ECHO_RESPONSE:
 		return lhs << MAGIC << rhs.echoResp;
+	case PLAYER_JOIN:
+		return lhs << MAGIC << rhs.playerJoin;
+	case PLAYER_LEAVE:
+		return lhs << MAGIC << rhs.playerLeave;
 	case PLAYER_SNAPSHOT:
 		return lhs << MAGIC << rhs.playerSnapshot;
 	default:
@@ -52,6 +56,12 @@ const Buffer &operator >> (const Buffer &lhs, ServerMessage &rhs) {
 			break;
 		case ECHO_RESPONSE:
 			lhs >> rhs.echoResp;
+			break;
+		case PLAYER_JOIN:
+			lhs >> rhs.playerJoin;
+			break;
+		case PLAYER_LEAVE:
+			lhs >> rhs.playerLeave;
 			break;
 		case PLAYER_SNAPSHOT:
 			lhs >> rhs.playerSnapshot;
