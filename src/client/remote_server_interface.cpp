@@ -3,6 +3,7 @@
 #include <thread>
 
 #include "shared/engine/logging.hpp"
+#include "shared/saves.hpp"
 
 #include "client.hpp"
 
@@ -14,6 +15,9 @@ static logging::Logger logger("remote");
 
 RemoteServerInterface::RemoteServerInterface(Client *client, const char *address) :
 		client(client),
+		worldGenerator(client->getSave()->getWorldGenerator()),
+		loadedQueue(1024),
+		toLoadQueue(1024),
 		ios(),
 		w(new boost::asio::io_service::work(ios)),
 		socket(ios),
@@ -232,7 +236,15 @@ void RemoteServerInterface::tick() {
 }
 
 void RemoteServerInterface::doWork() {
-	sleepFor(millis(100));
+	Chunk *chunk;
+	if (toLoadQueue.pop(chunk)) {
+		worldGenerator->generateChunk(chunk);
+		while (!loadedQueue.push(chunk)) {
+			sleepFor(millis(50));
+		}
+	} else {
+		sleepFor(millis(100));
+	}
 }
 
 void RemoteServerInterface::setConf(const GraphicsConf &conf, const GraphicsConf &old) {
@@ -243,5 +255,15 @@ void RemoteServerInterface::setConf(const GraphicsConf &conf, const GraphicsConf
 
 int RemoteServerInterface::getLocalClientId() {
 	return localPlayerId;
+}
+
+bool RemoteServerInterface::requestChunk(Chunk *chunk) {
+	return toLoadQueue.push(chunk);
+}
+
+Chunk *RemoteServerInterface::getNextChunk() {
+	Chunk *chunk = nullptr;
+	loadedQueue.pop(chunk);
+	return chunk;
 }
 

@@ -10,12 +10,17 @@
 #include "shared/engine/socket.hpp"
 #include "shared/engine/buffer.hpp"
 #include "shared/game/world.hpp"
+#include "shared/game/world_generator.hpp"
 #include "shared/net.hpp"
 
 class RemoteServerInterface : public ServerInterface {
 private:
 	uint8 localPlayerId;
 	Client *client;
+
+	std::unique_ptr<WorldGenerator> worldGenerator;
+	ProducerQueue<Chunk *> loadedQueue;
+	ProducerQueue<Chunk *> toLoadQueue;
 
 	Time timeout = seconds(10); // 10 seconds
 
@@ -58,8 +63,8 @@ public:
 
 	int getLocalClientId() override;
 
-	bool requestChunk(Chunk *chunk) override { return chunk?false:false; }
-	Chunk *getNextChunk() override { return nullptr; }
+	bool requestChunk(Chunk *chunk) override;
+	Chunk *getNextChunk() override;
 
 private:
 	void asyncConnect(std::string address);
