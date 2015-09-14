@@ -2,6 +2,7 @@
 
 #include "shared/block_utils.hpp"
 #include "client/gfx/graphics.hpp"
+#include "client/states/text_input_state.hpp"
 
 #include "gui/widget.hpp"
 #include "gui/label.hpp"
@@ -103,6 +104,14 @@ Menu::Menu(Client *client) :
 		this->setTextureFiltering(filt);
 	});
 	frame->add(filtButton);
+	y += 2 * yIncr;
+
+	auto *textField = new Button(0, (float) y, 100, 20);
+	textField->text() = string("Bla");
+	textField->setOnClick([this, client, textField](){
+		client->pushState(new TextInputState(client->getTopState(), client, &textField->text()));
+	});
+	frame->add(textField);
 	y += yIncr;
 
 	update();

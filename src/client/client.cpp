@@ -102,6 +102,18 @@ void Client::popState() {
 		stateStack.back()->unhide();
 }
 
+State *Client::getState(int i) {
+	return stateStack[i].get();
+}
+
+State *Client::getTopState() {
+	return stateStack.back().get();
+}
+
+int Client::numStates() {
+	return stateStack.size();
+}
+
 void Client::run() {
 	LOG_INFO(logger) << "Running client";
 	serverInterface->dispatch();

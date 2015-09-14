@@ -41,6 +41,12 @@ bool Event::next() {
 		case SDL_MOUSEWHEEL:
 			type = EventType::MOUSE_WHEEL;
 			break;
+		case SDL_TEXTINPUT:
+			type = EventType::TEXT_INPUT;
+			break;
+		case SDL_TEXTEDITING:
+			type = EventType::TEXT_EDIT;
+			break;
 		default:
 			type = EventType::OTHER;
 			break;

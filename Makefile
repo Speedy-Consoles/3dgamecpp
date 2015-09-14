@@ -44,6 +44,7 @@ CLIENT_OBJECT_FILES = \
 	client/states/remote_playing_state.cpp.o\
 	client/states/state.cpp.o\
 	client/states/system_init_state.cpp.o
+	client/states/text_input_state.cpp.o
 
 # server stuff
 SERVER_EXECUTABLE_NAME = 3dgame_srv

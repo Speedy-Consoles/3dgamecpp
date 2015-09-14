@@ -54,6 +54,7 @@
     <ClCompile Include="..\src\client\states\remote_playing_state.cpp" />
     <ClCompile Include="..\src\client\states\state.cpp" />
     <ClCompile Include="..\src\client\states\system_init_state.cpp" />
+    <ClCompile Include="..\src\client\states\text_input_state.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\client\client.hpp" />
@@ -103,6 +104,7 @@
     <ClInclude Include="..\src\client\states\remote_playing_state.hpp" />
     <ClInclude Include="..\src\client\states\state.hpp" />
     <ClInclude Include="..\src\client\states\system_init_state.hpp" />
+    <ClInclude Include="..\src\client\states\text_input_state.hpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\shaders\block.frag" />

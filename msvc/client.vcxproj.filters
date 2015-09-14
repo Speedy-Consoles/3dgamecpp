@@ -179,6 +179,9 @@
     <ClCompile Include="..\src\client\states\state.cpp">
       <Filter>Source Files\states</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\client\states\text_input_state.cpp">
+      <Filter>Source Files\states</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\client\gfx\gl2\gl2_chunk_renderer.hpp">
@@ -320,6 +323,9 @@
       <Filter>Header Files\states</Filter>
     </ClInclude>
     <ClInclude Include="..\src\client\states\connecting_state.hpp">
+      <Filter>Header Files\states</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\client\states\text_input_state.hpp">
       <Filter>Header Files\states</Filter>
     </ClInclude>
   </ItemGroup>

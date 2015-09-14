@@ -66,6 +66,10 @@ public:
 	// state machine
 	void pushState(State *);
 	void popState();
+	State *getState(int i);
+	/// shortcut for client->getState(client->numStates() - 1)
+	State *getTopState();
+	int numStates();
 
 	// operation
 	void run();
