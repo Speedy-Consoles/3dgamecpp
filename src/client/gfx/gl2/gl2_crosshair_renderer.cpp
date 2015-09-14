@@ -11,7 +11,7 @@ GL2CrosshairRenderer::GL2CrosshairRenderer(Client *client, GL2Renderer *renderer
 }
 
 void GL2CrosshairRenderer::render() {
-	if (client->getState() == Client::State::PLAYING) {
+	if (client->getStateId() == Client::StateId::PLAYING) {
 		GL(Disable(GL_TEXTURE_2D));
 
 		GL(Color4d(0, 0, 0, 0.5));

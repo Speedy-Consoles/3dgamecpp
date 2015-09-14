@@ -42,6 +42,12 @@
     <Filter Include="Shader Files">
       <UniqueIdentifier>{29233ef8-e11a-4c44-9b0d-38b1867c7cff}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\states">
+      <UniqueIdentifier>{1315eb32-cbcd-43ef-a396-d5b95122d454}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\states">
+      <UniqueIdentifier>{4dea021c-c165-41d9-af77-38e67e6d2df8}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\client\gfx\gl2\gl2_chunk_renderer.cpp">
@@ -151,6 +157,27 @@
     </ClCompile>
     <ClCompile Include="..\src\client\gfx\gl3\gl3_player_renderer.cpp">
       <Filter>Source Files\gfx\gl3</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\client\states\local_playing_state.cpp">
+      <Filter>Source Files\states</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\client\states\remote_playing_state.cpp">
+      <Filter>Source Files\states</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\client\states\menu_state.cpp">
+      <Filter>Source Files\states</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\client\states\playing_state.cpp">
+      <Filter>Source Files\states</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\client\states\system_init_state.cpp">
+      <Filter>Source Files\states</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\client\states\connecting_state.cpp">
+      <Filter>Source Files\states</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\client\states\state.cpp">
+      <Filter>Source Files\states</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -273,6 +300,27 @@
     </ClInclude>
     <ClInclude Include="..\src\client\gfx\gl3\gl3_player_renderer.hpp">
       <Filter>Header Files\gfx\gl3</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\client\states\menu_state.hpp">
+      <Filter>Header Files\states</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\client\states\state.hpp">
+      <Filter>Header Files\states</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\client\states\remote_playing_state.hpp">
+      <Filter>Header Files\states</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\client\states\local_playing_state.hpp">
+      <Filter>Header Files\states</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\client\states\playing_state.hpp">
+      <Filter>Header Files\states</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\client\states\system_init_state.hpp">
+      <Filter>Header Files\states</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\client\states\connecting_state.hpp">
+      <Filter>Header Files\states</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

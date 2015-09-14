@@ -29,7 +29,7 @@ GL2MenuRenderer::~GL2MenuRenderer() {
 }
 
 void GL2MenuRenderer::render() {
-	if (client->getState() != Client::State::IN_MENU)
+	if (client->getStateId() != Client::StateId::MENU)
 		return;
 
 	auto w = client->getGraphics()->getDrawWidth();

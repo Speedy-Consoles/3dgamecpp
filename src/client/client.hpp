@@ -3,6 +3,7 @@
 
 #include <memory>
 #include <string>
+#include <vector>
 
 #include "shared/engine/std_types.hpp"
 #include "shared/engine/time.hpp"
@@ -20,21 +21,25 @@ class Save;
 class Renderer;
 struct Event;
 
+class State;
+
+class SystemInitState;
+
 class Client {
 public:
-	enum class State {
+	enum StateId {
 		CONNECTING,
 		PLAYING,
-		IN_MENU,
+		MENU,
 	};
 
 	Client(const char *worldId, const char *serverAdress);
 	~Client();
 
 	// getter
-	State getState() const { return state; }
-	bool isDebugOn() const { return _isDebugOn; }
+	bool isDebugOn() const { return debugOn; }
 	const GraphicsConf &getConf() const { return *conf.get(); }
+	StateId getStateId() const { return stateId; }
 
 	// access
 	Stopwatch *getStopwatch() { return stopwatch.get(); }
@@ -47,11 +52,17 @@ public:
 	Renderer *getRenderer() { return renderer.get(); }
 	ServerInterface *getServerInterface() { return serverInterface.get(); }
 
+	void setDebugOn(bool b) { debugOn = b; }
 	void setConf(const GraphicsConf &);
+	void setStateId(StateId id) { stateId = id; }
 
 	// convenience functions
 	uint8 getLocalClientId() const;
 	Player &getLocalPlayer();
+
+	// state machine
+	void pushState(State *);
+	void popState();
 
 	// operation
 	void startLocalGame(std::string worldId);
@@ -60,6 +71,8 @@ public:
 	void run();
 
 private:
+	friend SystemInitState;
+
 	std::unique_ptr<Stopwatch> stopwatch;
 	std::unique_ptr<GraphicsConf> conf;
 	std::unique_ptr<Graphics> graphics;
@@ -71,9 +84,10 @@ private:
 	std::unique_ptr<Renderer> renderer;
 	std::unique_ptr<ServerInterface> serverInterface;
 
-	State state = State::CONNECTING;
+	std::vector<std::unique_ptr<State>> stateStack;
+	StateId stateId;
 
-	bool _isDebugOn = false;
+	bool debugOn = false;
 
 	Time time = 0;
     Time timeShift = 0;
@@ -84,13 +98,6 @@ private:
 	void startGame();
 
 	void sync(int perSecond);
-
-	void handleInput();
-
-	void handle(const Event &);
-	void handleAnything(const Event &);
-	void handlePlaying(const Event &);
-	void handleMenu(const Event &);
 };
 
 enum ClockId {

@@ -25,7 +25,7 @@ GL2DebugRenderer::~GL2DebugRenderer() {
 }
 
 void GL2DebugRenderer::render() {
-	if (!client->isDebugOn() || client->getState() != Client::State::PLAYING)
+	if (!client->isDebugOn() || client->getStateId() != Client::StateId::PLAYING)
 		return;
 
 	renderDebug();

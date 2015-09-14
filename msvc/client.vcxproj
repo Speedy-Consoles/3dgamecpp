@@ -47,6 +47,13 @@
     <ClCompile Include="..\src\client\local_server_interface.cpp" />
     <ClCompile Include="..\src\client\menu.cpp" />
     <ClCompile Include="..\src\client\remote_server_interface.cpp" />
+    <ClCompile Include="..\src\client\states\connecting_state.cpp" />
+    <ClCompile Include="..\src\client\states\local_playing_state.cpp" />
+    <ClCompile Include="..\src\client\states\menu_state.cpp" />
+    <ClCompile Include="..\src\client\states\playing_state.cpp" />
+    <ClCompile Include="..\src\client\states\remote_playing_state.cpp" />
+    <ClCompile Include="..\src\client\states\state.cpp" />
+    <ClCompile Include="..\src\client\states\system_init_state.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\client\client.hpp" />
@@ -89,6 +96,13 @@
     <ClInclude Include="..\src\client\menu.hpp" />
     <ClInclude Include="..\src\client\remote_server_interface.hpp" />
     <ClInclude Include="..\src\client\server_interface.hpp" />
+    <ClInclude Include="..\src\client\states\connecting_state.hpp" />
+    <ClInclude Include="..\src\client\states\local_playing_state.hpp" />
+    <ClInclude Include="..\src\client\states\menu_state.hpp" />
+    <ClInclude Include="..\src\client\states\playing_state.hpp" />
+    <ClInclude Include="..\src\client\states\remote_playing_state.hpp" />
+    <ClInclude Include="..\src\client\states\state.hpp" />
+    <ClInclude Include="..\src\client\states\system_init_state.hpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\shaders\block.frag" />

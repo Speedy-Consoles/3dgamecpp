@@ -36,7 +36,14 @@ CLIENT_OBJECT_FILES = \
 	client/gfx/gl3/gl3_font.cpp.o\
 	client/gui/button.cpp.o\
 	client/gui/label.cpp.o\
-	client/gui/widget.cpp.o
+	client/gui/widget.cpp.o\
+	client/states/connecting_state.cpp.o\
+	client/states/local_playing_state.cpp.o\
+	client/states/menu_state.cpp.o\
+	client/states/playing_state.cpp.o\
+	client/states/remote_playing_state.cpp.o\
+	client/states/state.cpp.o\
+	client/states/system_init_state.cpp.o
 
 # server stuff
 SERVER_EXECUTABLE_NAME = 3dgame_srv

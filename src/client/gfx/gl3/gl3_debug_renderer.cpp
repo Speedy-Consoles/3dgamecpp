@@ -127,7 +127,7 @@ void GL3DebugRenderer::tick() {
 }
 
 void GL3DebugRenderer::render() {
-	if (client->isDebugOn() && client->getState() == Client::State::PLAYING) {
+	if (client->isDebugOn() && client->getStateId() == Client::StateId::PLAYING) {
 		renderDebug();
 		if (client->getStopwatch())
 			renderPerformance();

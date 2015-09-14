@@ -11,7 +11,7 @@ GL2HudRenderer::GL2HudRenderer(Client *client, GL2Renderer *renderer) :
 }
 
 void GL2HudRenderer::render() {
-	if (client->getState() != Client::State::PLAYING)
+	if (client->getStateId() != Client::StateId::PLAYING)
 		return;
 
 	const Player &player = client->getLocalPlayer();

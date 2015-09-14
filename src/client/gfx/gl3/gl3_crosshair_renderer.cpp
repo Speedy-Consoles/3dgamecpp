@@ -50,7 +50,7 @@ GL3CrosshairRenderer::GL3CrosshairRenderer(Client *client, GL3Renderer *renderer
 }
 
 void GL3CrosshairRenderer::render() {
-	if (client->getState() == Client::State::PLAYING) {
+	if (client->getStateId() == Client::StateId::PLAYING) {
 		HudShader &shader = ((GL3Renderer *) renderer)->getShaderManager()->getHudShader();
 		shader.setModelMatrix(glm::mat4(1.0f));
 		shader.setColor(glm::vec4{ 1, 1, 1, 1 });

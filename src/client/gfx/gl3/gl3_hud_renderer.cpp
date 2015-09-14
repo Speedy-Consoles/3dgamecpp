@@ -18,7 +18,7 @@ GL3HudRenderer::GL3HudRenderer(Client *client, GL3Renderer *renderer) :
 }
 
 void GL3HudRenderer::render() {
-	if (client->getState() != Client::State::PLAYING)
+	if (client->getStateId() != Client::StateId::PLAYING)
 		return;
 
 	const Player &player = client->getLocalPlayer();

@@ -67,11 +67,13 @@ void LocalServerInterface::setPlayerMoveInput(int moveInput) {
 }
 
 void LocalServerInterface::setPlayerOrientation(int yaw, int pitch) {
-	player->setOrientation(yaw, pitch);
+	if (player->isValid())
+		player->setOrientation(yaw, pitch);
 }
 
 void LocalServerInterface::setSelectedBlock(uint8 block) {
-	player->setBlock(block);
+	if (player->isValid())
+		player->setBlock(block);
 }
 
 void LocalServerInterface::placeBlock(vec3i64 blockCoords, uint8 blockType) {
