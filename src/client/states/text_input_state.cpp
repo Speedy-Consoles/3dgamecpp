@@ -33,8 +33,10 @@ void TextInputState::handle(const Event &e) {
 		LOG_TRACE(logger) << "TextInputState received '" << e.event.text.text << "' edit";
 		break;
 	} // case TEXT_EDIT
-
-	case EventType::KEYBOARD_PRESSED: {
+							   
+	case EventType::KEYBOARD_PRESSED: 
+	case EventType::KEYBOARD_REPEAT:
+	{
 		switch (e.event.key.keysym.scancode) {
 		case SDL_SCANCODE_ESCAPE: {
 			// save parent, because client->popState will actually destroy 'this'
@@ -71,7 +73,7 @@ void TextInputState::handle(const Event &e) {
 			break;
 		} // switch scancode
 		break;
-	} // case KEYBOARD_PRESSED
+	} // case KEYBOARD_PRESSED, KEYBOARD_REPEAT
 
 	default:
 		parent->handle(e);
