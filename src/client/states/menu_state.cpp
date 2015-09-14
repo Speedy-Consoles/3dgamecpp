@@ -12,11 +12,16 @@ MenuState::MenuState(State *parent, Client *client) :
 	menu(client->getMenu())
 {
 	menu->update();
+	client->getGraphics()->grabMouse(false);
 	client->setStateId(Client::MENU);
 }
 
 MenuState::~MenuState() {
 	menu->apply();
+}
+
+void MenuState::unhide() {
+	client->setStateId(Client::MENU);
 }
 
 void MenuState::handle(const Event &e) {
@@ -44,7 +49,6 @@ void MenuState::handle(const Event &e) {
 		switch (e.event.key.keysym.scancode) {
 		case SDL_SCANCODE_ESCAPE:
 			client->popState();
-			graphics->grabMouse(true);
 			break;
 		default:
 			parent->handle(e);

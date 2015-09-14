@@ -13,6 +13,8 @@
 #include "states/system_init_state.hpp"
 #include "states/local_playing_state.hpp"
 #include "states/remote_playing_state.hpp"
+#include "states/menu_state.hpp"
+#include "states/connecting_state.hpp"
 
 #include "config.hpp"
 #include "menu.hpp"
@@ -53,14 +55,26 @@ int main(int argc, char *argv[]) {
 }
 
 Client::Client(const char *worldId, const char *serverAdress) {
-	auto *system_init_state = new SystemInitState(this);
-	pushState(system_init_state);
+	State *state = new SystemInitState(this);
+	pushState(state);
 
 	if (serverAdress) {
-		pushState(new RemotePlayingState(system_init_state, this, serverAdress));
+		state = new RemotePlayingState(state, this, serverAdress);
 	} else {
-		pushState(new LocalPlayingState(system_init_state, this, conf->last_world_id));
+		state = new LocalPlayingState(state, this, conf->last_world_id);
 	}
+	pushState(state);
+
+#define START_APPLICATION_IN_MENU 1
+#if START_APPLICATION_IN_MENU
+	state = new MenuState(state, this);
+	pushState(state);
+#else
+	graphics->grabMouse(true);
+#endif
+
+	state = new ConnectingState(state, this);
+	pushState(state);
 }
 
 Client::~Client() {

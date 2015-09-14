@@ -11,6 +11,8 @@ public:
 	MenuState(State *parent, Client *client);
 	~MenuState();
 
+	void unhide() override;
+
 	void handle(const Event &) override;
 
 protected:

@@ -11,5 +11,5 @@ RemotePlayingState::RemotePlayingState(State *parent, Client *client, std::strin
 	auto *p = new RemoteServerInterface(client, adress);
 	client->serverInterface = std::unique_ptr<RemoteServerInterface>(p);
 	client->world = std::unique_ptr<World>(new World(client->chunkManager.get()));
-	client->pushState(new ConnectingState(this, client));
+
 }

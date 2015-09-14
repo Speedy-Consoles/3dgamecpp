@@ -18,9 +18,6 @@
 
 #include "menu_state.hpp"
 
-static logging::Logger io_logger("io");
-static logging::Logger client_logger("client");
-
 PlayingState::PlayingState(State *parent, Client *client) :
 	State(parent, client)
 {
@@ -46,6 +43,7 @@ void PlayingState::hide() {
 
 void PlayingState::unhide() {
 	hidden = false;
+	client->getGraphics()->grabMouse(true);
 	client->setStateId(Client::PLAYING);
 }
 
