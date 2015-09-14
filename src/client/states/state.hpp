@@ -12,7 +12,7 @@ public:
 	virtual void hide() {};
 	virtual void unhide() {};
 
-	virtual void update() {};
+	virtual void update();
 	virtual void handle(const Event &);
 
 protected:
