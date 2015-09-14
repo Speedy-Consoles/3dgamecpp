@@ -77,6 +77,8 @@ void PlayingState::update() {
 			moveInput |= Player::MOVE_INPUT_FLAG_SPRINT;
 
 		serverInterface->setPlayerMoveInput(moveInput);
+	} else {
+		serverInterface->setPlayerMoveInput(0);
 	}
 
 	client->getChunkManager()->tick();
