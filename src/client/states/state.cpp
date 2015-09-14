@@ -3,7 +3,6 @@
 #include "client/client.hpp"
 #include "client/events.hpp"
 
-
 void State::update() {
 	if (parent)
 		parent->update();

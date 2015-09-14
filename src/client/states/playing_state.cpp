@@ -5,23 +5,39 @@
 #include "client/config.hpp"
 #include "client/server_interface.hpp"
 #include "client/gfx/graphics.hpp"
+#include "client/gfx/gl2/gl2_renderer.hpp"
+#include "client/gfx/gl3/gl3_renderer.hpp"
 
 #include "shared/game/player.hpp"
 
+#include "shared/engine/logging.hpp"
 #include "shared/engine/math.hpp"
 #include "shared/block_manager.hpp"
 #include "shared/block_utils.hpp"
+#include "shared/saves.hpp"
 
 #include "menu_state.hpp"
+
+static logging::Logger io_logger("io");
+static logging::Logger client_logger("client");
 
 PlayingState::PlayingState(State *parent, Client *client) :
 	State(parent, client)
 {
-	// nothing
+	if (client->conf->render_backend == RenderBackend::OGL_3) {
+		client->renderer = std::unique_ptr<GL3Renderer>(new GL3Renderer(client));
+	} else {
+		client->renderer = std::unique_ptr<GL2Renderer>(new GL2Renderer(client));
+	}
 }
 
 PlayingState::~PlayingState() {
-	client->exitGame();
+	client->serverInterface.reset();
+	client->renderer.reset();
+	client->world.reset();
+	client->chunkManager.reset();
+	client->blockManager.reset();
+	client->save.reset();
 }
 
 void PlayingState::hide() {

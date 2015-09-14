@@ -24,6 +24,9 @@ struct Event;
 class State;
 
 class SystemInitState;
+class PlayingState;
+class LocalPlayingState;
+class RemotePlayingState;
 
 class Client {
 public:
@@ -65,13 +68,13 @@ public:
 	void popState();
 
 	// operation
-	void startLocalGame(std::string worldId);
-	void startRemoteGame(std::string serverAdress);
-	void exitGame();
 	void run();
 
 private:
 	friend SystemInitState;
+	friend PlayingState;
+	friend LocalPlayingState;
+	friend RemotePlayingState;
 
 	std::unique_ptr<Stopwatch> stopwatch;
 	std::unique_ptr<GraphicsConf> conf;

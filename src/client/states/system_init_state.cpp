@@ -5,6 +5,7 @@
 #include "client/events.hpp"
 #include "client/gfx/graphics.hpp"
 #include "client/gui/widget.hpp"
+#include "shared/block_manager.hpp"
 #include "shared/engine/stopwatch.hpp"
 #include "shared/engine/logging.hpp"
 
@@ -23,6 +24,14 @@ SystemInitState::SystemInitState(Client *client) :
 	client->graphics->createContext();
 
 	client->menu = std::unique_ptr<Menu>(new Menu(client));
+
+	client->blockManager = std::unique_ptr<BlockManager>(new BlockManager());
+	const char *block_ids_file = "block_ids.txt";
+	if (client->blockManager->load(block_ids_file)) {
+		LOG_ERROR(logger) << "Problem loading '" << block_ids_file << "'";
+	}
+	int num_blocks = client->blockManager->getNumberOfBlocks();
+	LOG_INFO(logger) << num_blocks << " blocks were loaded from '" << block_ids_file << "'";
 }
 
 SystemInitState::~SystemInitState() {
