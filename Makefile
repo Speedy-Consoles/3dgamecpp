@@ -50,7 +50,8 @@ CLIENT_OBJECT_FILES = \
 # server stuff
 SERVER_EXECUTABLE_NAME = 3dgame_srv
 SERVER_OBJECT_FILES = \
-	server/server.cpp.o
+	server/server.cpp.o\
+	server/server_chunk_manager.cpp.o
 
 # test stuff
 TEST_EXECUTABLE_NAME = test

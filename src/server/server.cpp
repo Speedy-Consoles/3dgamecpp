@@ -3,6 +3,7 @@
 #include <string>
 
 #include <boost/asio.hpp>
+#include <boost/filesystem.hpp>
 
 #include "shared/engine/logging.hpp"
 #include "shared/engine/std_types.hpp"
@@ -10,9 +11,12 @@
 #include "shared/engine/socket.hpp"
 #include "shared/engine/buffer.hpp"
 #include "shared/game/world.hpp"
+#include "shared/saves.hpp"
 #include "shared/block_utils.hpp"
 #include "shared/constants.hpp"
 #include "shared/net.hpp"
+
+#include "server_chunk_manager.hpp"
 
 using namespace std;
 using namespace boost;
@@ -31,7 +35,10 @@ class Server {
 private:
 	std::string id;
 	bool closeRequested = false;
-	World *world = nullptr;
+
+	std::unique_ptr<Save> save;
+	std::unique_ptr<World> world;
+	std::unique_ptr<ServerChunkManager> chunkManager;
 
 	Client clients[MAX_CLIENTS];
 
@@ -50,7 +57,7 @@ private:
 	Socket socket;
 
 public:
-	Server(uint16 port, const char *worldId = "region");
+	Server(uint16 port, const char *worldId = "default");
 	~Server();
 
 	void run();
@@ -98,7 +105,21 @@ Server::Server(uint16 port, const char *worldId) :
 	socket(ios)
 {
 	LOG_INFO(logger) << "Creating Server";
-	world = new World(nullptr); // TODO give chunk manager
+
+	save = std::unique_ptr<Save>(new Save(worldId));
+	boost::filesystem::path path(save->getPath());
+	if (!boost::filesystem::exists(path)) {
+		boost::filesystem::create_directories(path);
+		std::random_device rng;
+		uniform_int_distribution<uint64> distr;
+		uint64 seed = distr(rng);
+		save->initialize(worldId, seed);
+		save->store();
+	}
+
+	ServerChunkManager *cm = new ServerChunkManager(save->getWorldGenerator(), save->getChunkArchive());
+	chunkManager = std::unique_ptr<ServerChunkManager>(cm);
+	world = std::unique_ptr<World>(new World(chunkManager.get()));
 	for (uint8 i = 0; i < MAX_CLIENTS; i++) {
 		clients[i].connected = false;
 		clients[i].timeOfLastPacket = 0;
@@ -115,8 +136,6 @@ Server::Server(uint16 port, const char *worldId) :
 }
 
 Server::~Server() {
-	delete world;
-
 	socket.close();
 	delete w;
 	if (f.valid())
@@ -142,6 +161,7 @@ void Server::run() {
 	int tick = 0;
 	while (!closeRequested) {
 		world->tick(-1);
+		chunkManager->tick();
 
 		time += seconds(1) / TICK_SPEED;
 		Time remTime;

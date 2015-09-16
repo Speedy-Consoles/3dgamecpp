@@ -117,7 +117,6 @@ int Client::numStates() {
 
 void Client::run() {
 	LOG_INFO(logger) << "Running client";
-	chunkManager->dispatch();
 	time = getCurrentTime();
 	int tick = 0;
 	while (!closeRequested) {
@@ -139,8 +138,6 @@ void Client::run() {
 		stopwatch->stop(CLOCK_SYN);
 		tick++;
 	}
-	chunkManager->wait();
-	chunkManager->storeChunks();
 }
 
 void Client::setConf(const GraphicsConf &newConf) {
