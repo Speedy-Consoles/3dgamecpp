@@ -6,6 +6,7 @@
 #include "shared/engine/random.hpp"
 
 #include "client/client.hpp"
+#include "client/client_chunk_manager.hpp"
 #include "client/local_server_interface.hpp"
 
 LocalPlayingState::LocalPlayingState(State *parent, Client *client, std::string worldId) :
@@ -22,8 +23,8 @@ LocalPlayingState::LocalPlayingState(State *parent, Client *client, std::string 
 		client->save->store();
 	}
 
-	ChunkManager *cm = new ChunkManager(client, client->save->getChunkArchive());
-	client->chunkManager = std::unique_ptr<ChunkManager>(cm);
+	ClientChunkManager *cm = new ClientChunkManager(client, client->save->getChunkArchive());
+	client->chunkManager = std::unique_ptr<ClientChunkManager>(cm);
 	client->world = std::unique_ptr<World>(new World(client->chunkManager.get()));
 	auto *p = new LocalServerInterface(client);
 	client->serverInterface = std::unique_ptr<LocalServerInterface>(p);

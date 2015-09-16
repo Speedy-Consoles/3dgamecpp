@@ -16,6 +16,7 @@
 #include "states/menu_state.hpp"
 #include "states/connecting_state.hpp"
 
+#include "client_chunk_manager.hpp"
 #include "config.hpp"
 #include "menu.hpp"
 #include "events.hpp"

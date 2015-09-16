@@ -4,6 +4,7 @@
 #include "client/events.hpp"
 #include "client/config.hpp"
 #include "client/server_interface.hpp"
+#include "client/client_chunk_manager.hpp"
 #include "client/gfx/graphics.hpp"
 #include "client/gfx/gl2/gl2_renderer.hpp"
 #include "client/gfx/gl3/gl3_renderer.hpp"

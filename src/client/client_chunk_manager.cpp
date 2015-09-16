@@ -1,16 +1,16 @@
-#include "chunk_manager.hpp"
-#include "engine/logging.hpp"
-#include "engine/time.hpp"
+#include "client_chunk_manager.hpp"
+
+#include "shared/engine/logging.hpp"
+#include "shared/engine/time.hpp"
+#include "shared/game/world.hpp"
 #include "client/client.hpp"
 #include "client/server_interface.hpp"
-#include "game/world.hpp"
-#include "saves.hpp"
 
 using namespace std;
 
-static logging::Logger logger("chm");
+static logging::Logger logger("ccm");
 
-ChunkManager::ChunkManager(Client *client, std::unique_ptr<ChunkArchive> archive) :
+ClientChunkManager::ClientChunkManager(Client *client, std::unique_ptr<ChunkArchive> archive) :
 	loadedStoredQueue(1024),
 	toLoadStoreQueue(1024),
 	chunks(0, vec3i64HashFunc),
@@ -25,14 +25,14 @@ ChunkManager::ChunkManager(Client *client, std::unique_ptr<ChunkArchive> archive
 	}
 }
 
-ChunkManager::~ChunkManager() {
+ClientChunkManager::~ClientChunkManager() {
 	LOG_TRACE(logger) << "Destroying ChunkManager";
 	for (int i = 0; i < CHUNK_POOL_SIZE; i++) {
 		delete chunkPool[i];
 	}
 }
 
-void ChunkManager::tick() {
+void ClientChunkManager::tick() {
 	while (!requestedQueue.empty() && !unusedChunks.empty()) {
 		vec3i64 cc = requestedQueue.front();
 		Chunk *chunk = unusedChunks.top();
@@ -92,7 +92,7 @@ void ChunkManager::tick() {
 	}
 }
 
-void ChunkManager::doWork() {
+void ClientChunkManager::doWork() {
 	ArchiveOperation op;
 	if (toLoadStoreQueue.pop(op)) {
 		switch (op.type) {
@@ -111,7 +111,7 @@ void ChunkManager::doWork() {
 	}
 }
 
-void ChunkManager::onStop() {
+void ClientChunkManager::onStop() {
 	ArchiveOperation op;
 	while (toLoadStoreQueue.pop(op)) {
 		if (op.type == STORE) {
@@ -120,7 +120,7 @@ void ChunkManager::onStop() {
 	}
 }
 
-void ChunkManager::storeChunks() {
+void ClientChunkManager::storeChunks() {
 	requestTermination();
 	ArchiveOperation op;
 	while(loadedStoredQueue.pop(op));
@@ -137,7 +137,7 @@ void ChunkManager::storeChunks() {
 	}
 }
 
-void ChunkManager::placeBlock(vec3i64 chunkCoords, size_t intraChunkIndex,
+void ClientChunkManager::placeBlock(vec3i64 chunkCoords, size_t intraChunkIndex,
 		uint blockType, uint32 revision) {
 	auto it = chunks.find(chunkCoords);
 	if (it != chunks.end()) {
@@ -149,14 +149,14 @@ void ChunkManager::placeBlock(vec3i64 chunkCoords, size_t intraChunkIndex,
 	// TODO operate on cache if chunk is not loaded
 }
 
-const Chunk *ChunkManager::getChunk(vec3i64 chunkCoords) const {
+const Chunk *ClientChunkManager::getChunk(vec3i64 chunkCoords) const {
 	auto it = chunks.find(chunkCoords);
 	if (it != chunks.end())
 		return it->second;
 	return nullptr;
 }
 
-void ChunkManager::requestChunk(vec3i64 chunkCoords) {
+void ClientChunkManager::requestChunk(vec3i64 chunkCoords) {
 	auto it = needCounter.find(chunkCoords);
 	if (it == needCounter.end()) {
 		requestedQueue.push(chunkCoords);
@@ -166,7 +166,7 @@ void ChunkManager::requestChunk(vec3i64 chunkCoords) {
 	}
 }
 
-void ChunkManager::releaseChunk(vec3i64 chunkCoords) {
+void ClientChunkManager::releaseChunk(vec3i64 chunkCoords) {
 	auto it1 = needCounter.find(chunkCoords);
 	if (it1 != needCounter.end()) {
 		it1->second--;
@@ -187,27 +187,27 @@ void ChunkManager::releaseChunk(vec3i64 chunkCoords) {
 	}
 }
 
-int ChunkManager::getNumNeededChunks() const {
+int ClientChunkManager::getNumNeededChunks() const {
 	return needCounter.size();
 }
 
-int ChunkManager::getNumAllocatedChunks() const {
+int ClientChunkManager::getNumAllocatedChunks() const {
 	return CHUNK_POOL_SIZE - unusedChunks.size();
 }
 
-int ChunkManager::getNumLoadedChunks() const {
+int ClientChunkManager::getNumLoadedChunks() const {
 	return chunks.size();
 }
 
-int ChunkManager::getRequestedQueueSize() const {
+int ClientChunkManager::getRequestedQueueSize() const {
 	return requestedQueue.size();
 }
 
-int ChunkManager::getNotInCacheQueueSize() const {
+int ClientChunkManager::getNotInCacheQueueSize() const {
 	return notInCacheQueue.size();
 }
 
-bool ChunkManager::insertLoadedChunk(Chunk *chunk) {
+bool ClientChunkManager::insertLoadedChunk(Chunk *chunk) {
 	auto it = needCounter.find(chunk->getCC());
 	if (it != needCounter.end()) {
 		chunks.insert({chunk->getCC(), chunk});
@@ -218,7 +218,7 @@ bool ChunkManager::insertLoadedChunk(Chunk *chunk) {
 	}
 }
 
-void ChunkManager::recycleChunk(Chunk *chunk) {
+void ClientChunkManager::recycleChunk(Chunk *chunk) {
 	chunk->reset();
 	unusedChunks.push(chunk);
 }

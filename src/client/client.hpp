@@ -16,7 +16,7 @@ class Graphics;
 struct GraphicsConf;
 class Stopwatch;
 class BlockManager;
-class ChunkManager;
+class ClientChunkManager;
 class Save;
 class Renderer;
 struct Event;
@@ -50,7 +50,7 @@ public:
 	Menu *getMenu() { return menu.get(); }
 	Save *getSave() { return save.get(); }
 	BlockManager *getBlockManager() { return blockManager.get(); }
-	ChunkManager *getChunkManager() { return chunkManager.get(); }
+	ClientChunkManager *getChunkManager() { return chunkManager.get(); }
 	World *getWorld() { return world.get(); }
 	Renderer *getRenderer() { return renderer.get(); }
 	ServerInterface *getServerInterface() { return serverInterface.get(); }
@@ -86,7 +86,7 @@ private:
 	std::unique_ptr<Menu> menu;
 	std::unique_ptr<Save> save; 
 	std::unique_ptr<BlockManager> blockManager;
-	std::unique_ptr<ChunkManager> chunkManager;
+	std::unique_ptr<ClientChunkManager> chunkManager;
 	std::unique_ptr<World> world;
 	std::unique_ptr<Renderer> renderer;
 	std::unique_ptr<ServerInterface> serverInterface;

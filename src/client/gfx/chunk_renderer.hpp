@@ -10,8 +10,8 @@
 #include "shared/engine/vmath.hpp"
 #include "shared/engine/queue.hpp"
 #include "shared/game/chunk.hpp"
-#include "shared/chunk_manager.hpp"
 #include "client/client.hpp"
+#include "client/client_chunk_manager.hpp"
 #include "client/gfx/component_renderer.hpp"
 
 struct GraphicsConf;
@@ -32,8 +32,8 @@ private:
 	// performance limits
 	// must be smaller than ChunkManager::CHUNK_POOL_SIZE / 27
 	static const int MAX_BUILD_QUEUE_SIZE =
-			ChunkManager::CHUNK_POOL_SIZE / 27 > 1000 ?
-			1000 : ChunkManager::CHUNK_POOL_SIZE / 27;
+			ClientChunkManager::CHUNK_POOL_SIZE / 27 > 1000 ?
+			1000 : ClientChunkManager::CHUNK_POOL_SIZE / 27;
 	static const int MAX_VS_CHUNKS = 3000;
 
 	struct ChunkArea {

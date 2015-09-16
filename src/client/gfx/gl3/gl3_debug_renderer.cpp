@@ -197,7 +197,7 @@ void GL3DebugRenderer::renderDebug() {
 	RENDER_LINE("visible faces: %d", crdi.visibleFaces);
 	RENDER_LINE("build queue size: %d", crdi.buildQueueSize);
 
-	const ChunkManager *chunkManager = client->getChunkManager();
+	const ClientChunkManager *chunkManager = client->getChunkManager();
 	RENDER_LINE(" ");
 	RENDER_LINE("CHUNK MANAGER INFO:");
 	RENDER_LINE("needed chunks: %d", chunkManager->getNumNeededChunks());

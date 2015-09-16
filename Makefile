@@ -7,6 +7,7 @@ CLIENT_OBJECT_FILES = \
 	client/local_server_interface.cpp.o\
 	client/menu.cpp.o\
 	client/remote_server_interface.cpp.o\
+	client/client_chunk_manager.cpp.o\
 	client/gfx/font.cpp.o\
 	client/gfx/graphics.cpp.o\
 	client/gfx/chunk_renderer.cpp.o\
@@ -77,7 +78,6 @@ SHARED_OBJECT_FILES = \
 	shared/block_manager.cpp.o\
 	shared/block_utils.cpp.o\
 	shared/chunk_archive.cpp.o\
-	shared/chunk_manager.cpp.o\
 	shared/net.cpp.o\
 	shared/saves.cpp.o
 

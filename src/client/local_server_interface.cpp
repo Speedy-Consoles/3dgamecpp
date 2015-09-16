@@ -6,6 +6,7 @@
 #include "shared/engine/logging.hpp"
 #include "shared/saves.hpp"
 #include "client/gfx/graphics.hpp"
+#include "client_chunk_manager.hpp"
 
 using namespace std;
 
