@@ -43,7 +43,7 @@ CLIENT_OBJECT_FILES = \
 	client/states/playing_state.cpp.o\
 	client/states/remote_playing_state.cpp.o\
 	client/states/state.cpp.o\
-	client/states/system_init_state.cpp.o
+	client/states/system_init_state.cpp.o\
 	client/states/text_input_state.cpp.o
 
 # server stuff

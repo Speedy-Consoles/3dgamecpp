@@ -22,7 +22,8 @@ LocalPlayingState::LocalPlayingState(State *parent, Client *client, std::string 
 		client->save->store();
 	}
 
-	client->chunkManager = std::unique_ptr<ChunkManager>(new ChunkManager(client));
+	ChunkManager *cm = new ChunkManager(client, client->save->getChunkArchive());
+	client->chunkManager = std::unique_ptr<ChunkManager>(cm);
 	client->world = std::unique_ptr<World>(new World(client->chunkManager.get()));
 	auto *p = new LocalServerInterface(client);
 	client->serverInterface = std::unique_ptr<LocalServerInterface>(p);

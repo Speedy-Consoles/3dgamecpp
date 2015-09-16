@@ -15,7 +15,7 @@ static logging::Logger logger("remote");
 
 RemoteServerInterface::RemoteServerInterface(Client *client, std::string address) :
 		client(client),
-		worldGenerator(client->getSave()->getWorldGenerator()),
+		worldGenerator(new WorldGenerator(42, WorldParams())),
 		loadedQueue(1024),
 		toLoadQueue(1024),
 		ios(),

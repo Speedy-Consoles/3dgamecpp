@@ -10,14 +10,14 @@ using namespace std;
 
 static logging::Logger logger("chm");
 
-ChunkManager::ChunkManager(Client *client) :
+ChunkManager::ChunkManager(Client *client, std::unique_ptr<ChunkArchive> archive) :
 	loadedStoredQueue(1024),
 	toLoadStoreQueue(1024),
 	chunks(0, vec3i64HashFunc),
 	oldRevisions(0, vec3i64HashFunc),
 	needCounter(0, vec3i64HashFunc),
 	client(client),
-	archive(client->getSave()->getChunkArchive())
+	archive(std::move(archive))
 {
 	for (int i = 0; i < CHUNK_POOL_SIZE; i++) {
 		chunkPool[i] = new Chunk(Chunk::ChunkFlags::VISUAL);

@@ -51,7 +51,7 @@ private:
 	std::unique_ptr<ChunkArchive> archive;
 
 public:
-	ChunkManager(Client *client);
+	ChunkManager(Client *client, std::unique_ptr<ChunkArchive> archive);
 	~ChunkManager();
 
 	void tick();
