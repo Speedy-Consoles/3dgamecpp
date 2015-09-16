@@ -15,8 +15,7 @@ static logging::Logger logger("local");
 LocalServerInterface::LocalServerInterface(Client *client) :
 	client(client),
 	worldGenerator(client->getSave()->getWorldGenerator()),
-	loadedQueue(1024),
-	toLoadQueue(1024)
+	asyncWorldGenerator(worldGenerator.get())
 {
 	client->getWorld()->addPlayer(0);
 	player = &client->getWorld()->getPlayer(0);
@@ -48,18 +47,6 @@ void LocalServerInterface::setConf(const GraphicsConf &conf, const GraphicsConf 
 
 void LocalServerInterface::tick() {
 	client->getWorld()->tick(0);
-}
-
-void LocalServerInterface::doWork() {
-	Chunk *chunk;
-	if (toLoadQueue.pop(chunk)) {
-		worldGenerator->generateChunk(chunk);
-		while (!loadedQueue.push(chunk)) {
-			sleepFor(millis(50));
-		}
-	} else {
-		sleepFor(millis(100));
-	}
 }
 
 void LocalServerInterface::setPlayerMoveInput(int moveInput) {
@@ -124,11 +111,9 @@ void LocalServerInterface::toggleFly() {
 }
 
 bool LocalServerInterface::requestChunk(Chunk *chunk) {
-	return toLoadQueue.push(chunk);
+	return asyncWorldGenerator.requestChunk(chunk);
 }
 
 Chunk *LocalServerInterface::getNextChunk() {
-	Chunk *chunk = nullptr;
-	loadedQueue.pop(chunk);
-	return chunk;
+	return asyncWorldGenerator.getNextChunk();
 }

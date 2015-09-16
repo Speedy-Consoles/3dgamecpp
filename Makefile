@@ -74,6 +74,7 @@ SHARED_OBJECT_FILES = \
 	shared/game/world.cpp.o\
 	shared/game/world_generator.cpp.o\
 	shared/game/elevation_generator.cpp.o\
+	shared/async_world_generator.cpp.o\
 	shared/block_loader.cpp.o\
 	shared/block_manager.cpp.o\
 	shared/block_utils.cpp.o\

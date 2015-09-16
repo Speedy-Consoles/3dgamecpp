@@ -11,6 +11,7 @@
 #include "shared/engine/buffer.hpp"
 #include "shared/game/world.hpp"
 #include "shared/game/world_generator.hpp"
+#include "shared/async_world_generator.hpp"
 #include "shared/net.hpp"
 
 class RemoteServerInterface : public ServerInterface {
@@ -19,8 +20,7 @@ private:
 	Client *client;
 
 	std::unique_ptr<WorldGenerator> worldGenerator;
-	ProducerQueue<Chunk *> loadedQueue;
-	ProducerQueue<Chunk *> toLoadQueue;
+	AsyncWorldGenerator asyncWorldGenerator;
 
 	Time timeout = seconds(10); // 10 seconds
 
@@ -57,7 +57,6 @@ public:
 	void placeBlock(vec3i64 bc, uint8 type) override;
 
 	void tick() override;
-	void doWork() override;
 
 	void setConf(const GraphicsConf &, const GraphicsConf &) override;
 

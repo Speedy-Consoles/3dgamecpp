@@ -7,6 +7,7 @@
 
 #include "shared/game/world.hpp"
 #include "shared/game/world_generator.hpp"
+#include "shared/async_world_generator.hpp"
 
 #include "client.hpp"
 
@@ -15,9 +16,7 @@ class LocalServerInterface : public ServerInterface {
 	Player *player;
 
 	std::unique_ptr<WorldGenerator> worldGenerator;
-
-	ProducerQueue<Chunk *> loadedQueue;
-	ProducerQueue<Chunk *> toLoadQueue;
+	AsyncWorldGenerator asyncWorldGenerator;
 
 public:
 	LocalServerInterface(Client * client);
@@ -31,7 +30,6 @@ public:
 
 	// networking
 	void tick() override;
-	void doWork() override;
 
 	// player actions
 	void setPlayerMoveInput(int moveInput) override;

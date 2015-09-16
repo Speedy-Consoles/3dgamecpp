@@ -8,7 +8,7 @@
 
 #include "config.hpp"
 
-class ServerInterface : public Thread {
+class ServerInterface {
 public:
 	enum Status {
 		NOT_CONNECTED,
@@ -21,7 +21,7 @@ public:
 		CONNECTED,
 	};
 	
-	ServerInterface() : Thread("ServerInterface") {}
+	ServerInterface() {}
 	virtual ~ServerInterface() = default;
 
 	// query

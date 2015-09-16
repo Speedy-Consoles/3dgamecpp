@@ -16,8 +16,7 @@ static logging::Logger logger("remote");
 RemoteServerInterface::RemoteServerInterface(Client *client, std::string address) :
 		client(client),
 		worldGenerator(new WorldGenerator(42, WorldParams())),
-		loadedQueue(1024),
-		toLoadQueue(1024),
+		asyncWorldGenerator(worldGenerator.get()),
 		ios(),
 		w(new boost::asio::io_service::work(ios)),
 		socket(ios),
@@ -235,18 +234,6 @@ void RemoteServerInterface::tick() {
 	}
 }
 
-void RemoteServerInterface::doWork() {
-	Chunk *chunk;
-	if (toLoadQueue.pop(chunk)) {
-		worldGenerator->generateChunk(chunk);
-		while (!loadedQueue.push(chunk)) {
-			sleepFor(millis(50));
-		}
-	} else {
-		sleepFor(millis(100));
-	}
-}
-
 void RemoteServerInterface::setConf(const GraphicsConf &conf, const GraphicsConf &old) {
 	if (conf.render_distance != old.render_distance) {
 		// TODO
@@ -258,12 +245,9 @@ int RemoteServerInterface::getLocalClientId() {
 }
 
 bool RemoteServerInterface::requestChunk(Chunk *chunk) {
-	return toLoadQueue.push(chunk);
+	return asyncWorldGenerator.requestChunk(chunk);
 }
 
 Chunk *RemoteServerInterface::getNextChunk() {
-	Chunk *chunk = nullptr;
-	loadedQueue.pop(chunk);
-	return chunk;
+	return asyncWorldGenerator.getNextChunk();
 }
-
