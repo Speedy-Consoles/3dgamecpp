@@ -12,6 +12,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\client\client.cpp" />
+    <ClCompile Include="..\src\client\client_chunk_manager.cpp" />
     <ClCompile Include="..\src\client\config.cpp" />
     <ClCompile Include="..\src\client\events.cpp" />
     <ClCompile Include="..\src\client\gfx\chunk_renderer.cpp" />
@@ -58,6 +59,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\client\client.hpp" />
+    <ClInclude Include="..\src\client\client_chunk_manager.hpp" />
     <ClInclude Include="..\src\client\config.hpp" />
     <ClInclude Include="..\src\client\events.hpp" />
     <ClInclude Include="..\src\client\gfx\chunk_renderer.hpp" />
