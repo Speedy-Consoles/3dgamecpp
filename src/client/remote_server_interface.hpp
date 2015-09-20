@@ -5,6 +5,7 @@
 
 #include <future>
 #include <string>
+#include <enet/enet.h>
 
 #include "shared/engine/time.hpp"
 #include "shared/engine/socket.hpp"
@@ -22,18 +23,13 @@ private:
 	std::unique_ptr<WorldGenerator> worldGenerator;
 	AsyncWorldGenerator asyncWorldGenerator;
 
-	Time timeout = seconds(10); // 10 seconds
+	Status status = NOT_CONNECTED;
 
-	boost::asio::io_service ios;
-	boost::asio::io_service::work *w;
-	std::future<void> f;
-	Socket socket;
+	ENetHost *host = nullptr;
+	ENetPeer *peer = nullptr;
 
-	std::future<void> connectFuture;
-	std::atomic<Status> status;
-
-	Buffer inBuf;
-	Buffer outBuf;
+	Buffer inBuffer;
+	Buffer outBuffer;
 
 	int yaw = 0;
 	int pitch = 0;
@@ -66,7 +62,10 @@ public:
 	Chunk *getNextChunk() override;
 
 private:
-	void asyncConnect(std::string address);
+	void handlePacket(const enet_uint8 *data, size_t size, size_t channel);
+
+	void receive(ServerMessage *cmsg, const enet_uint8 *data, size_t size);
+	void send(ClientMessage &cmsg);
 };
 
 #endif // REMOTE_SERVER_INTERFACE_HPP

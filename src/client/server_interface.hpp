@@ -12,11 +12,7 @@ class ServerInterface {
 public:
 	enum Status {
 		NOT_CONNECTED,
-		RESOLVING,
-		COULD_NOT_RESOLVE,
 		CONNECTING,
-		SERVER_FULL,
-		TIMEOUT,
 		CONNECTION_ERROR,
 		CONNECTED,
 	};

@@ -2,7 +2,7 @@
 #include <future>
 #include <string>
 
-#include <boost/asio.hpp>
+#include <enet/enet.h>
 #include <boost/filesystem.hpp>
 
 #include "shared/engine/logging.hpp"
@@ -29,7 +29,7 @@ struct PeerData {
 };
 
 struct Client {
-	ENetPeer *eNetPeer = nullptr;
+	ENetPeer *peer = nullptr;
 };
 
 class Server {
@@ -43,7 +43,7 @@ private:
 
 	Client clients[MAX_CLIENTS];
 
-	ENetHost *eNetHost;
+	ENetHost *host;
 
 	Buffer inBuffer;
 	Buffer outBuffer;
@@ -112,20 +112,20 @@ Server::Server(uint16 port, const char *worldId) : inBuffer(1024*64), outBuffer(
 	chunkManager = std::unique_ptr<ServerChunkManager>(cm);
 	world = std::unique_ptr<World>(new World(chunkManager.get()));
 
-	if (enet_initialize () != 0)
-		LOG_FATAL(logger) << "An error occurred while initializing ENet.\n";
+	if (enet_initialize() != 0)
+		LOG_FATAL(logger) << "An error occurred while initializing ENet.";
 
 	ENetAddress address;
 	address.host = ENET_HOST_ANY;
 	address.port = port;
-	eNetHost = enet_host_create(&address, MAX_CLIENTS, 1, 0, 0);
-	if (!eNetHost)
-		LOG_FATAL(logger) << "An error occurred while trying to create an ENet server host.\n";
+	host = enet_host_create(&address, MAX_CLIENTS, 1, 0, 0);
+	if (!host)
+		LOG_FATAL(logger) << "An error occurred while trying to create an ENet server host.";
 }
 
 Server::~Server() {
-	if (eNetHost)
-		enet_host_destroy(eNetHost);
+	if (host)
+		enet_host_destroy(host);
 	enet_deinitialize();
 }
 
@@ -155,7 +155,7 @@ void Server::run() {
 }
 
 void Server::updateNet() {ENetEvent event;
-	while (enet_host_service(eNetHost, &event, 0)) {
+	while (enet_host_service(host, &event, 0) > 0) {
 		Endpoint endpoint;
 		switch (event.type) {
 		case ENET_EVENT_TYPE_CONNECT:
@@ -174,49 +174,51 @@ void Server::updateNet() {ENetEvent event;
 			enet_packet_destroy(event.packet);
 			break;
 		default:
-			LOG_ERROR(logger) << "Received unknown eNetEvent type.\n";
+			LOG_WARNING(logger) << "Received unknown ENetEvent type";
 			break;
 		}
 	}
 }
 
 void Server::handleConnect(ENetPeer *peer) {
+	int id;
 	for (int i = 0; i < (int) MAX_CLIENTS; i++) {
 		if (!clients[i].peer) {
-			clients[i].peer = event.peer;
-			event.peer->data = new PeerData{i};
+			id = i;
+			peer->data = new PeerData{id};
+			clients[id].peer = peer;
 			break;
 		}
 	}
 
 	ServerMessage smsg;
-	smsg.type = PLAYER_JOIN;
+	smsg.type = PLAYER_JOIN_EVENT;
 	// TODO remove this
 	for (int i = 0; i < MAX_CLIENTS; ++i) {
 		if (i == id || !clients[i].peer)
 			continue;
-		smsg.playerJoin.id = i;
+		smsg.playerJoinEvent.id = i;
 		send(smsg, peer);
 	}
 	// TODO << this
 
-	smsg.playerJoin.id = id;
+	smsg.playerJoinEvent.id = id;
 	broadcast(smsg);
 
-	LOG_INFO(logger) << "New Player " << (int) id;
+	LOG_INFO(logger) << "New Player " << id;
 }
 
 void Server::handleDisconnect(ENetPeer *peer) {
 	int id = ((PeerData *) peer->data)->id;
-	delete (ClientInfo *)event.peer->data;
+	delete (PeerData *)peer->data;
 	peer->data = nullptr;
 	clients[id].peer = nullptr;
 
 	world->deletePlayer(id);
 
 	ServerMessage smsg;
-	smsg.type = PLAYER_LEAVE;
-	smsg.playerJoin.id = id;
+	smsg.type = PLAYER_LEAVE_EVENT;
+	smsg.playerJoinEvent.id = id;
 	broadcast(smsg);
 
 	LOG_INFO(logger) << "Player " << (int) id << " disconnected";
@@ -227,7 +229,7 @@ void Server::handlePacket(const enet_uint8 *data, size_t size, size_t channel, E
 
 	// TODO any checks needed here? magic?
 	ClientMessage cmsg;
-	receive(cmsg, data, size);
+	receive(&cmsg, data, size);
 	int id = ((PeerData *) peer->data)->id;
 	LOG_TRACE(logger) << "Message type: " << (int) cmsg.type << ", Player id: " << (int) id;
 	switch (cmsg.type) {
@@ -240,14 +242,18 @@ void Server::handlePacket(const enet_uint8 *data, size_t size, size_t channel, E
 			world->getPlayer(id).setFly(cmsg.playerInput.input.flying);
 		}
 		break;
+	case MALFORMED_CLIENT_MESSAGE:
+		LOG_WARNING(logger) << "Received malformed message";
+		break;
 	default:
+		LOG_WARNING(logger) << "Received message of unknown type " << cmsg.type;
 		break;
 	}
 }
 
 void Server::sendSnapshots(int tick) {
 	for (uint8 id = 0; id < MAX_CLIENTS; ++id) {
-		if (!clients[id].connected)
+		if (!clients[id].peer)
 			continue;
 
 		ServerMessage smsg;
@@ -267,7 +273,7 @@ void Server::sendSnapshots(int tick) {
 
 void Server::receive(ClientMessage *cmsg, const enet_uint8 *data, size_t size) {
 	inBuffer.clear();
-	inBuffer.write(data, size);
+	inBuffer.write((const char *) data, size);
 	inBuffer >> *cmsg;
 }
 
@@ -277,7 +283,7 @@ void Server::send(ServerMessage &smsg, ENetPeer *peer) {
 	outBuffer << smsg;
 	// TODO reliability, sequencing
 	ENetPacket *packet = enet_packet_create((const void *) outBuffer.rBegin(), outBuffer.rSize(), 0);
-	enet_host_send(peer, 0, packet);
+	enet_peer_send(peer, 0, packet);
 }
 
 void Server::send(ServerMessage &smsg, int clientId) {
@@ -290,10 +296,10 @@ void Server::broadcast(ServerMessage &smsg) {
 	outBuffer << smsg;
 	// TODO reliability, sequencing
 	ENetPacket *packet = enet_packet_create((const void *) outBuffer.rBegin(), outBuffer.rSize(), 0);
-	enet_host_broadcast(eNetHost, 0, packet);
+	enet_host_broadcast(host, 0, packet);
 }
 
 void Server::sync(int perSecond) {
 	time = time + seconds(1) / perSecond;
-	sleepUntil(time + timeShift);
+	sleepUntil(time);
 }

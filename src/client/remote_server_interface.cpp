@@ -13,126 +13,41 @@ using namespace boost::asio::ip;
 
 static logging::Logger logger("remote");
 
-RemoteServerInterface::RemoteServerInterface(Client *client, std::string address) :
+RemoteServerInterface::RemoteServerInterface(Client *client, std::string addressString) :
 		client(client),
 		worldGenerator(new WorldGenerator(42, WorldParams())),
 		asyncWorldGenerator(worldGenerator.get()),
-		ios(),
-		w(new boost::asio::io_service::work(ios)),
-		socket(ios),
-		status(NOT_CONNECTED),
-		inBuf(1024*64),
-		outBuf(1024*64)
+		inBuffer(1024*64),
+		outBuffer(1024*64)
 {
-	socket.open();
-	socket.bind(udp::endpoint(udp::v4(), 0));
+	if (enet_initialize() != 0) {
+		LOG_FATAL(logger) << "An error occurred while initializing ENet.";
+		status = CONNECTION_ERROR;
+	}
 
-	auto err = socket.getSystemError();
-	if (err == asio::error::address_in_use) {
-		LOG_FATAL(logger) << "Port already in use";
-		return;
-	} else if(err) {
-		LOG_FATAL(logger) << "Unknown socket error!";
+	host = enet_host_create(NULL, 1, 1, 20000, 5000);
+	if (!host) {
+		LOG_ERROR(logger) << "An error occurred while trying to create an ENet client host.";
+		status = CONNECTION_ERROR;
 		return;
 	}
 
-	// this will make sure our async_recv calls get handled
-	f = async(launch::async, [this]{ this->ios.run(); });
-	asyncConnect(address);
-}
+	ENetAddress address;
+	enet_address_set_host(&address, addressString.c_str());
+	address.port = 8547;
+	peer = enet_host_connect(host, &address, 1, 0);
+	if (!peer) {
+		LOG_ERROR(logger) << "No available peers for initiating an ENet connection.";
+		status = CONNECTION_ERROR;
+	}
 
+	status = CONNECTING;
+}
 
 RemoteServerInterface::~RemoteServerInterface() {
-	socket.close();
-	delete w;
-	if (f.valid())
-		f.get();
-}
-
-void RemoteServerInterface::asyncConnect(std::string address) {
-	connectFuture = std::async(std::launch::async, [this, address]() {
-		status = RESOLVING;
-		LOG_INFO(logger) << "Resolving " << address;
-		udp::resolver r(this->ios);
-		udp::resolver::query q(udp::v4(), address, "");
-		boost::system::error_code err;
-		udp::resolver::iterator iter = r.resolve(q, err);
-		if (err || iter == udp::resolver::iterator()) {
-			status = COULD_NOT_RESOLVE;
-			return;
-		}
-		udp::endpoint ep = *iter;
-		status = CONNECTING;
-		LOG_INFO(logger) << "Connecting to " << ep.address().to_string();
-
-		socket.connect(udp::endpoint(ep.address(), 8547));
-
-		// TODO make connecting more error tolerant
-		ClientMessage cmsg;
-		cmsg.type = CONNECTION_REQUEST;
-		outBuf.clear();
-		outBuf << cmsg;
-
-		socket.acquireWriteBuffer(outBuf);
-		socket.send();
-		socket.releaseWriteBuffer(outBuf);
-
-		inBuf.clear();
-		socket.acquireReadBuffer(inBuf);
-		switch (socket.receiveFor(timeout)) {
-		case Socket::OK:
-		{
-			socket.releaseReadBuffer(inBuf);
-			ServerMessage smsg;
-			inBuf >> smsg;
-			switch (smsg.type) {
-			case CONNECTION_ACCEPTED:
-				localPlayerId = smsg.conAccepted.id;
-				client->getWorld()->addPlayer(localPlayerId);
-				status = CONNECTED;
-				LOG_INFO(logger) << "Connected to " << ep.address().to_string();
-				break;
-			case CONNECTION_REJECTED:
-				if (smsg.conRejected.reason == FULL) {
-					status = SERVER_FULL;
-					break;
-				} else {
-					status = CONNECTION_ERROR;
-					break;
-				}
-			case MALFORMED_SERVER_MESSAGE:
-				switch (smsg.malformed.error) {
-				case MESSAGE_TOO_SHORT:
-					LOG_DEBUG(logger) << "Message too short";
-					status = CONNECTION_ERROR;
-					break;
-				case WRONG_MAGIC:
-					LOG_DEBUG(logger) << "Incorrect magic";
-					status = CONNECTION_ERROR;
-					break;
-				default:
-					LOG_DEBUG(logger) << "Unknown error reading message";
-					status = CONNECTION_ERROR;
-					break;
-				}
-				break;
-			default:
-				LOG_DEBUG(logger) << "Unexpected message";
-				status = CONNECTION_ERROR;
-				return;
-			}
-			break;
-		}
-		case Socket::TIMEOUT:
-			status = TIMEOUT;
-			LOG_INFO(logger) << "Connection to " << ep.address().to_string() << " timed out";
-			break;
-		default:
-			status = CONNECTION_ERROR;
-			LOG_ERROR(logger) << "Error while connecting";
-			break;
-		}
-	});
+	if(host)
+		enet_host_destroy(host);
+	enet_deinitialize();
 }
 
 ServerInterface::Status RemoteServerInterface::getStatus() {
@@ -169,69 +84,59 @@ void RemoteServerInterface::placeBlock(vec3i64 bc, uint8 type) {
 }
 
 void RemoteServerInterface::tick() {
-	// send
-	if (status != CONNECTED)
-		return;
-	{
-		ClientMessage cmsg;
-		cmsg.type = ECHO_REQUEST;
-		outBuf.clear();
-		outBuf << cmsg << "wurst" << '\0';
-		socket.send(outBuf);
-	}
-	{
-		ClientMessage cmsg;
-		cmsg.type = PLAYER_INPUT;
-		cmsg.playerInput.input.yaw = yaw;
-		cmsg.playerInput.input.pitch = pitch;
-		cmsg.playerInput.input.moveInput = moveInput;
-		cmsg.playerInput.input.flying = flying;
-		outBuf.clear();
-		outBuf << cmsg;
-		socket.send(outBuf);
+	if (status == CONNECTING) {
+		ENetEvent event;
+		if (enet_host_service (host, &event, 0) > 0) {
+			switch(event.type) {
+			case ENET_EVENT_TYPE_CONNECT:
+				LOG_INFO(logger) << "Successfully connected to server";
+				status = CONNECTED;
+				break;
+			case ENET_EVENT_TYPE_DISCONNECT:
+				enet_peer_reset (peer);
+				peer = nullptr;
+				LOG_ERROR(logger) << "Could not connect to server";
+				status = CONNECTION_ERROR;
+				break;
+			default:
+				LOG_WARNING(logger) << "Unexpected ENetEvent while connecting";
+				break;
+			}
+		}
 	}
 
+	if (status != CONNECTED)
+		return;
+
 	// receive
-	Socket::ErrorCode error;
-	inBuf.clear();
-	while ((error = socket.receiveNow(inBuf)) == Socket::OK) {
-		ServerMessage smsg;
-		inBuf >> smsg;
-		switch (smsg.type) {
-		case ECHO_RESPONSE:
-			//printf("%s\n", inBuf.rBegin());
+	ENetEvent event;
+	while (enet_host_service(host, &event, 0) > 0) {
+		switch(event.type) {
+		case ENET_EVENT_TYPE_DISCONNECT:
+			peer = nullptr;
+			LOG_INFO(logger) << "Disconnected from server";
+			status = NOT_CONNECTED;
 			break;
-		case CONNECTION_RESET:
-			LOG_ERROR(logger) << "Server says we're not connected";
-			// TODO disconnect
+		case ENET_EVENT_TYPE_RECEIVE:
+			handlePacket(event.packet->data, event.packet->dataLength, event.channelID);
+			enet_packet_destroy(event.packet);
 			break;
-		case CONNECTION_TIMEOUT:
-			LOG_ERROR(logger) << "Server says we timed out";
-			// TODO disconnect
-			break;
-		case PLAYER_JOIN:
-			if (smsg.playerJoin.id != localPlayerId)
-				client->getWorld()->addPlayer(smsg.playerJoin.id);
-			break;
-		case PLAYER_LEAVE:
-			if (smsg.playerLeave.id != localPlayerId)
-				client->getWorld()->deletePlayer(smsg.playerLeave.id);
-			break;
-		case SNAPSHOT:
-			client->getWorld()->getPlayer(smsg.playerSnapshot.id)
-					.applySnapshot(smsg.playerSnapshot.snapshot, smsg.playerSnapshot.id == localPlayerId);
-			break;
-		case MALFORMED_SERVER_MESSAGE:
-			LOG_WARNING(logger) << "Received malformed message";
+		case ENET_EVENT_TYPE_CONNECT:
+			LOG_WARNING(logger) << "Unexpected ENetEvent ENET_EVENT_TYPE_CONNECT";
 			break;
 		default:
-			LOG_WARNING(logger) << "Received message of unknown type " << smsg.type;
+			LOG_WARNING(logger) << "Received unknown ENetEvent type";
+			break;
 		}
-		inBuf.clear();
 	}
-	if (error != Socket::WOULD_BLOCK) {
-		LOG_ERROR(logger) << "Socket error number " << error << " while receiving";
-	}
+
+	ClientMessage cmsg;
+	cmsg.type = PLAYER_INPUT;
+	cmsg.playerInput.input.yaw = yaw;
+	cmsg.playerInput.input.pitch = pitch;
+	cmsg.playerInput.input.moveInput = moveInput;
+	cmsg.playerInput.input.flying = flying;
+	send(cmsg);
 }
 
 void RemoteServerInterface::setConf(const GraphicsConf &conf, const GraphicsConf &old) {
@@ -250,4 +155,45 @@ bool RemoteServerInterface::requestChunk(Chunk *chunk) {
 
 Chunk *RemoteServerInterface::getNextChunk() {
 	return asyncWorldGenerator.getNextChunk();
+}
+
+void RemoteServerInterface::handlePacket(const enet_uint8 *data, size_t size, size_t channel) {
+	ServerMessage smsg;
+	receive(&smsg, data, size);
+	switch (smsg.type) {
+	case PLAYER_JOIN_EVENT:
+		// TODO do this in snapshot
+		if (smsg.playerJoinEvent.id != localPlayerId)
+			client->getWorld()->addPlayer(smsg.playerJoinEvent.id);
+		break;
+	case PLAYER_LEAVE_EVENT:
+		// TODO do this in snapshot
+		if (smsg.playerLeaveEvent.id != localPlayerId)
+			client->getWorld()->deletePlayer(smsg.playerLeaveEvent.id);
+		break;
+	case SNAPSHOT:
+		client->getWorld()->getPlayer(smsg.playerSnapshot.id)
+				.applySnapshot(smsg.playerSnapshot.snapshot, smsg.playerSnapshot.id == localPlayerId);
+		break;
+	case MALFORMED_SERVER_MESSAGE:
+		LOG_WARNING(logger) << "Received malformed message";
+		break;
+	default:
+		LOG_WARNING(logger) << "Received message of unknown type " << smsg.type;
+	}
+}
+
+void RemoteServerInterface::receive(ServerMessage *cmsg, const enet_uint8 *data, size_t size) {
+	inBuffer.clear();
+	inBuffer.write((const char *) data, size);
+	inBuffer >> *cmsg;
+}
+
+void RemoteServerInterface::send(ClientMessage &cmsg) {
+	// TODO make possible without buffer
+	outBuffer.clear();
+	outBuffer << cmsg;
+	// TODO reliability, sequencing
+	ENetPacket *packet = enet_packet_create((const void *) outBuffer.rBegin(), outBuffer.rSize(), 0);
+	enet_peer_send(peer, 0, packet);
 }

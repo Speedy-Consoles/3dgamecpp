@@ -91,7 +91,7 @@ AR = ar crs
 # general flags
 CXXFLAGS = -Wall -Wextra -std=c++11 `freetype-config --cflags` -pthread -Isrc
 LDFLAGS = -pthread
-LIBS_LD_FLAGS = -llog4cxx -lboost_system -lboost_filesystem
+LIBS_LD_FLAGS = -llog4cxx -lboost_system -lboost_filesystem -lenet
 
 #CXXFLAGS += -DNO_GRAPHICS
 
