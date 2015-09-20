@@ -9,8 +9,6 @@
 #include "shared/engine/std_types.hpp"
 #include "shared/engine/time.hpp"
 #include "shared/engine/random.hpp"
-#include "shared/engine/socket.hpp"
-#include "shared/engine/buffer.hpp"
 #include "shared/game/world.hpp"
 #include "shared/saves.hpp"
 #include "shared/block_utils.hpp"
@@ -18,10 +16,6 @@
 #include "shared/net.hpp"
 
 #include "server_chunk_manager.hpp"
-
-using namespace std;
-using namespace boost;
-using namespace boost::asio::ip;
 
 static logging::Logger logger("server");
 
@@ -45,9 +39,6 @@ private:
 
 	ENetHost *host;
 
-	Buffer inBuffer;
-	Buffer outBuffer;
-
 	// time keeping
 	Time time = 0;
 
@@ -66,10 +57,24 @@ private:
 
 	void sendSnapshots(int tick);
 
-	void receive(ClientMessage *cmsg, const enet_uint8 *data, size_t size);
-	void send(ServerMessage &smsg, ENetPeer *peer);
-	void send(ServerMessage &smsg, int clientId);
-	void broadcast(ServerMessage &smsg);
+	template<typename T> void send(T &msg, int clientId) {
+		// TODO reliability, order
+		size_t size = getMessageSize(msg);
+		ENetPacket *packet = enet_packet_create(nullptr, size, 0);
+		if (serialize(msg, (char *) packet->data, size))
+			LOG_ERROR(logger) << "Could not serialize message";
+
+		enet_peer_send(clients[clientId].peer, 0, packet);
+	}
+
+	template<typename T> void broadcast(T &msg) {
+		// TODO reliability, order
+		size_t size = getMessageSize(msg);
+		ENetPacket *packet = enet_packet_create(nullptr, size, 0);
+		if (serialize(msg, (char *) packet->data, size))
+			LOG_ERROR(logger) << "Could not serialize message";
+		enet_host_broadcast(host, 0, packet);
+	}
 
 	void sync(int perSecond);
 };
@@ -90,11 +95,9 @@ int main() {
 	}
 
 	return 0;
-
 }
 
-// TODO correct buffer sizes
-Server::Server(uint16 port, const char *worldId) : inBuffer(1024*64), outBuffer(1024*64) {
+Server::Server(uint16 port, const char *worldId) {
 	LOG_INFO(logger) << "Creating Server";
 
 	save = std::unique_ptr<Save>(new Save(worldId));
@@ -102,7 +105,7 @@ Server::Server(uint16 port, const char *worldId) : inBuffer(1024*64), outBuffer(
 	if (!boost::filesystem::exists(path)) {
 		boost::filesystem::create_directories(path);
 		std::random_device rng;
-		random::uniform_int_distribution<uint64> distr;
+		boost::random::uniform_int_distribution<uint64> distr;
 		uint64 seed = distr(rng);
 		save->initialize(worldId, seed);
 		save->store();
@@ -153,9 +156,9 @@ void Server::run() {
 	LOG_INFO(logger) << "Shutting down server";
 }
 
-void Server::updateNet() {ENetEvent event;
+void Server::updateNet() {
+	ENetEvent event;
 	while (enet_host_service(host, &event, 0) > 0) {
-		Endpoint endpoint;
 		switch (event.type) {
 		case ENET_EVENT_TYPE_CONNECT:
 			handleConnect(event.peer);
@@ -197,19 +200,9 @@ void Server::handleConnect(ENetPeer *peer) {
 
 	world->addPlayer(id);
 
-	ServerMessage smsg;
-	smsg.type = PLAYER_JOIN_EVENT;
-	// TODO remove this
-	for (int i = 0; i < MAX_CLIENTS; ++i) {
-		if (i == id || !clients[i].peer)
-			continue;
-		smsg.playerJoinEvent.id = i;
-		send(smsg, peer);
-	}
-	// TODO << this
-
-	smsg.playerJoinEvent.id = id;
-	broadcast(smsg);
+	PlayerJoinEvent pje;
+	pje.id = id;
+	broadcast(pje);
 
 	LOG_INFO(logger) << "New Player " << id;
 }
@@ -222,10 +215,9 @@ void Server::handleDisconnect(ENetPeer *peer) {
 
 	world->deletePlayer(id);
 
-	ServerMessage smsg;
-	smsg.type = PLAYER_LEAVE_EVENT;
-	smsg.playerJoinEvent.id = id;
-	broadcast(smsg);
+	PlayerLeaveEvent ple;
+	ple.id = id;
+	broadcast(ple);
 
 	LOG_INFO(logger) << "Player " << (int) id << " disconnected";
 }
@@ -233,36 +225,40 @@ void Server::handleDisconnect(ENetPeer *peer) {
 void Server::handlePacket(const enet_uint8 *data, size_t size, size_t channel, ENetPeer *peer) {
 	LOG_TRACE(logger) << "Received message of length " << size;
 
-	// TODO any checks needed here? magic?
-	ClientMessage cmsg;
-	receive(&cmsg, data, size);
+	MessageType type;
+	if (getMessageType((const char *) data, size, &type)) {
+		LOG_WARNING(logger) << "Received malformed message";
+		return;
+	}
+
 	int id = ((PeerData *) peer->data)->id;
-	LOG_TRACE(logger) << "Message type: " << (int) cmsg.type << ", Player id: " << (int) id;
-	switch (cmsg.type) {
+	LOG_TRACE(logger) << "Message type: " << (int) type << ", Player id: " << (int) id;
+	switch (type) {
 	case PLAYER_INPUT:
 		{
-			int yaw = cmsg.playerInput.input.yaw;
-			int pitch = cmsg.playerInput.input.pitch;
+			PlayerInput input;
+			if (deserialize((const char *) data, size, &input)) {
+				LOG_WARNING(logger) << "Received malformed message";
+				break;
+			}
+			int yaw = input.yaw;
+			int pitch = input.pitch;
 			world->getPlayer(id).setOrientation(yaw, pitch);
-			world->getPlayer(id).setMoveInput(cmsg.playerInput.input.moveInput);
-			world->getPlayer(id).setFly(cmsg.playerInput.input.flying);
+			world->getPlayer(id).setMoveInput(input.moveInput);
+			world->getPlayer(id).setFly(input.flying);
 		}
 		break;
-	case MALFORMED_CLIENT_MESSAGE:
-		LOG_WARNING(logger) << "Received malformed message";
-		break;
 	default:
-		LOG_WARNING(logger) << "Received message of unknown type " << cmsg.type;
+		LOG_WARNING(logger) << "Received message of unknown type " << type;
 		break;
 	}
 }
 
 void Server::sendSnapshots(int tick) {
-	ServerMessage smsg;
-	smsg.type = SNAPSHOT;
-	smsg.snapshot.tick = tick;
+	Snapshot snapshot;
+	snapshot.tick = tick;
 	for (int i = 0; i < MAX_CLIENTS; ++i) {
-		PlayerSnapshot &playerSnapshot = *(smsg.snapshot.playerSnapshots + i);
+		PlayerSnapshot &playerSnapshot = *(snapshot.playerSnapshots + i);
 		if (!clients[i].peer) {
 			playerSnapshot.valid = false;
 			playerSnapshot.pos = vec3i64(0, 0, 0);
@@ -285,37 +281,9 @@ void Server::sendSnapshots(int tick) {
 	for (int i = 0; i < MAX_CLIENTS; ++i) {
 		if (!clients[i].peer)
 			continue;
-		smsg.snapshot.localId = i;
-		send(smsg, i);
+		snapshot.localId = i;
+		send(snapshot, i);
 	}
-}
-
-void Server::receive(ClientMessage *cmsg, const enet_uint8 *data, size_t size) {
-	inBuffer.clear();
-	inBuffer.write((const char *) data, size);
-	inBuffer >> *cmsg;
-}
-
-void Server::send(ServerMessage &smsg, ENetPeer *peer) {
-	// TODO make possible without buffer
-	outBuffer.clear();
-	outBuffer << smsg;
-	// TODO reliability, sequencing
-	ENetPacket *packet = enet_packet_create((const void *) outBuffer.rBegin(), outBuffer.rSize(), 0);
-	enet_peer_send(peer, 0, packet);
-}
-
-void Server::send(ServerMessage &smsg, int clientId) {
-	send(smsg, clients[clientId].peer);
-}
-
-void Server::broadcast(ServerMessage &smsg) {
-	// TODO make possible without buffer
-	outBuffer.clear();
-	outBuffer << smsg;
-	// TODO reliability, sequencing
-	ENetPacket *packet = enet_packet_create((const void *) outBuffer.rBegin(), outBuffer.rSize(), 0);
-	enet_host_broadcast(host, 0, packet);
 }
 
 void Server::sync(int perSecond) {

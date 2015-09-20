@@ -1,6 +1,8 @@
 #ifndef NET_HPP
 #define NET_HPP
 
+#include <cstring>
+
 #include "constants.hpp"
 
 #include "engine/vmath.hpp"
@@ -10,27 +12,34 @@
 static const uint8 MAGIC[4] = {0xaa, 0x0d, 0xbe, 0x15};
 
 enum MessageError : uint8 {
-	MESSAGE_TOO_SHORT,
+	MESSAGE_OK = 0,
+	WRONG_MESSAGE_LENGTH,
 	WRONG_MAGIC,
 };
 
-enum ClientMessageType : uint8 {
-	MALFORMED_CLIENT_MESSAGE,
-	PLAYER_INPUT,
+enum BufferError : uint8 {
+	BUFFER_OK = 0,
+	WRONG_BUFFER_LENGTH,
 };
 
-enum ServerMessageType : uint8 {
-	MALFORMED_SERVER_MESSAGE,
+enum MessageType : uint8 {
+	UNKNOWN_MESSAGE_TYPE,
+
+	// Server messages
 	PLAYER_JOIN_EVENT,
 	PLAYER_LEAVE_EVENT,
 	SNAPSHOT,
+
+	// Client messages
+	PLAYER_INPUT,
 };
 
-struct PlayerInput {
-	uint16 yaw;
-	int16 pitch;
-	uint8 moveInput;
-	bool flying;
+struct PlayerJoinEvent {
+	uint8 id;
+};
+
+struct PlayerLeaveEvent {
+	uint8 id;
 };
 
 struct PlayerSnapshot {
@@ -43,29 +52,53 @@ struct PlayerSnapshot {
 	bool isFlying;
 };
 
-union ServerMessage {
-	ServerMessageType type;
-	struct { ServerMessageType type; MessageError error; } malformed;
-	struct { ServerMessageType type; uint8 id; } playerJoinEvent;
-	struct { ServerMessageType type; uint8 id; } playerLeaveEvent;
-	struct {
-		ServerMessageType type;
-		int tick;
-		PlayerSnapshot playerSnapshots[MAX_CLIENTS];
-		uint8 localId;
-	} snapshot;
+struct Snapshot {
+	int tick;
+	PlayerSnapshot playerSnapshots[MAX_CLIENTS];
+	uint8 localId;
 };
 
-union ClientMessage {
-	ClientMessageType type;
-	struct { ClientMessageType type; MessageError error; } malformed;
-	struct { ClientMessageType type; PlayerInput input; } playerInput;
+struct PlayerInput {
+	uint16 yaw;
+	int16 pitch;
+	uint8 moveInput;
+	bool flying;
 };
 
-Buffer &operator << (Buffer &lhs, const ServerMessage &rhs);
-const Buffer &operator >> (const Buffer &lhs, ServerMessage &rhs);
+template<typename T> size_t getMessageSize(const T &) {
+	// TODO consider padding
+	return sizeof(MAGIC) + sizeof(MessageType) + sizeof(T);
+}
 
-Buffer &operator << (Buffer &lhs, const ClientMessage &rhs);
-const Buffer &operator >> (const Buffer &lhs, ClientMessage &rhs);
+MessageError getMessageType(const char *data, size_t size, MessageType *type);
+
+template<typename T> MessageType getMessageType(T &);
+template<> MessageType getMessageType(PlayerJoinEvent&);
+template<> MessageType getMessageType(PlayerLeaveEvent &);
+template<> MessageType getMessageType(Snapshot &);
+template<> MessageType getMessageType(PlayerInput &);
+
+template<typename T> MessageType getMessageType(const T &) {
+	return UNKNOWN_MESSAGE_TYPE;
+}
+
+template<typename T> BufferError serialize(const T &msg, char *data, size_t size) {
+	// TODO (resize?)
+	if (size != getMessageSize(msg))
+		return WRONG_BUFFER_LENGTH;
+	memcpy(data, MAGIC, sizeof(T));
+	data += sizeof(MAGIC);
+	*reinterpret_cast<MessageType *>(data) = getMessageType(msg);
+	data += sizeof(MessageType);
+	memcpy(data, reinterpret_cast<const char *>(&msg), sizeof(T));
+	return BUFFER_OK;
+}
+
+template<typename T> MessageError deserialize(const char *data, size_t size, T *msg) {
+	if (size != getMessageSize(msg))
+		return WRONG_MESSAGE_LENGTH;
+	memcpy(reinterpret_cast<char *>(msg), data, sizeof(T));
+	return MESSAGE_OK;
+}
 
 #endif // NET_HPP

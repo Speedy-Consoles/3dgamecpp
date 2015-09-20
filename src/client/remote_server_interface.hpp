@@ -8,8 +8,7 @@
 #include <enet/enet.h>
 
 #include "shared/engine/time.hpp"
-#include "shared/engine/socket.hpp"
-#include "shared/engine/buffer.hpp"
+#include "shared/engine/logging.hpp"
 #include "shared/game/world.hpp"
 #include "shared/game/world_generator.hpp"
 #include "shared/async_world_generator.hpp"
@@ -27,9 +26,6 @@ private:
 
 	ENetHost *host = nullptr;
 	ENetPeer *peer = nullptr;
-
-	Buffer inBuffer;
-	Buffer outBuffer;
 
 	int yaw = 0;
 	int pitch = 0;
@@ -63,8 +59,16 @@ public:
 private:
 	void handlePacket(const enet_uint8 *data, size_t size, size_t channel);
 
-	void receive(ServerMessage *cmsg, const enet_uint8 *data, size_t size);
-	void send(ClientMessage &cmsg);
+	template<typename T> void send(T &msg) {
+		static logging::Logger logger("remote");
+		// TODO reliability, order
+		size_t size = getMessageSize(msg);
+		ENetPacket *packet = enet_packet_create(nullptr, size, 0);
+		if (serialize(msg, (char *) packet->data, size))
+			LOG_ERROR(logger) << "Could not serialize message";
+
+		enet_peer_send(peer, 0, packet);
+	}
 };
 
 #endif // REMOTE_SERVER_INTERFACE_HPP

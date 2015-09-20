@@ -8,17 +8,13 @@
 #include "client.hpp"
 
 using namespace std;
-using namespace boost;
-using namespace boost::asio::ip;
 
 static logging::Logger logger("remote");
 
 RemoteServerInterface::RemoteServerInterface(Client *client, std::string addressString) :
 		client(client),
 		worldGenerator(new WorldGenerator(42, WorldParams())),
-		asyncWorldGenerator(worldGenerator.get()),
-		inBuffer(1024*64),
-		outBuffer(1024*64)
+		asyncWorldGenerator(worldGenerator.get())
 {
 	if (enet_initialize() != 0) {
 		LOG_FATAL(logger) << "An error occurred while initializing ENet.";
@@ -176,13 +172,12 @@ void RemoteServerInterface::tick() {
 		return;
 
 	// send
-	ClientMessage cmsg;
-	cmsg.type = PLAYER_INPUT;
-	cmsg.playerInput.input.yaw = yaw;
-	cmsg.playerInput.input.pitch = pitch;
-	cmsg.playerInput.input.moveInput = moveInput;
-	cmsg.playerInput.input.flying = flying;
-	send(cmsg);
+	PlayerInput input;
+	input.yaw = yaw;
+	input.pitch = pitch;
+	input.moveInput = moveInput;
+	input.flying = flying;
+	send(input);
 }
 
 void RemoteServerInterface::setConf(const GraphicsConf &conf, const GraphicsConf &old) {
@@ -204,9 +199,16 @@ Chunk *RemoteServerInterface::getNextChunk() {
 }
 
 void RemoteServerInterface::handlePacket(const enet_uint8 *data, size_t size, size_t channel) {
-	ServerMessage smsg;
-	receive(&smsg, data, size);
-	switch (smsg.type) {
+	LOG_TRACE(logger) << "Received message of length " << size;
+
+	MessageType type;
+	if (getMessageType((const char *) data, size, &type)) {
+		LOG_WARNING(logger) << "Received malformed message";
+		return;
+	}
+
+	LOG_TRACE(logger) << "Message type: " << (int) type;
+	switch (type) {
 	case PLAYER_JOIN_EVENT:
 		// TODO
 		break;
@@ -214,37 +216,27 @@ void RemoteServerInterface::handlePacket(const enet_uint8 *data, size_t size, si
 		// TODO
 		break;
 	case SNAPSHOT:
-		localPlayerId = smsg.snapshot.localId;
-		for (int i = 0; i < MAX_CLIENTS; ++i) {
-			PlayerSnapshot &playerSnapshot = *(smsg.snapshot.playerSnapshots + i);
-			Player &player = client->getWorld()->getPlayer(i);
-			if (playerSnapshot.valid && !player.isValid())
-				client->getWorld()->addPlayer(i);
-			else if (!playerSnapshot.valid && player.isValid())
-				client->getWorld()->deletePlayer(i);
-			if (playerSnapshot.valid)
-				player.applySnapshot(playerSnapshot, i == localPlayerId);
+		{
+			Snapshot snapshot;
+			if (deserialize((const char *) data, size, &snapshot)) {
+				LOG_WARNING(logger) << "Received malformed message";
+				break;
+			}
+			localPlayerId = snapshot.localId;
+			for (int i = 0; i < MAX_CLIENTS; ++i) {
+				PlayerSnapshot &playerSnapshot = *(snapshot.playerSnapshots + i);
+				Player &player = client->getWorld()->getPlayer(i);
+				if (playerSnapshot.valid && !player.isValid())
+					client->getWorld()->addPlayer(i);
+				else if (!playerSnapshot.valid && player.isValid())
+					client->getWorld()->deletePlayer(i);
+				if (playerSnapshot.valid)
+					player.applySnapshot(playerSnapshot, i == localPlayerId);
+			}
 		}
 		break;
-	case MALFORMED_SERVER_MESSAGE:
-		LOG_WARNING(logger) << "Received malformed message";
-		break;
 	default:
-		LOG_WARNING(logger) << "Received message of unknown type " << smsg.type;
+		LOG_WARNING(logger) << "Received message of unknown type " << type;
+		break;
 	}
-}
-
-void RemoteServerInterface::receive(ServerMessage *cmsg, const enet_uint8 *data, size_t size) {
-	inBuffer.clear();
-	inBuffer.write((const char *) data, size);
-	inBuffer >> *cmsg;
-}
-
-void RemoteServerInterface::send(ClientMessage &cmsg) {
-	// TODO make possible without buffer
-	outBuffer.clear();
-	outBuffer << cmsg;
-	// TODO reliability, sequencing
-	ENetPacket *packet = enet_packet_create((const void *) outBuffer.rBegin(), outBuffer.rSize(), 0);
-	enet_peer_send(peer, 0, packet);
 }

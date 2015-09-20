@@ -6,86 +6,27 @@
 
 static logging::Logger logger("net");
 
-Buffer &operator << (Buffer &lhs, const ServerMessage &rhs) {
-	switch (rhs.type) {
-	case PLAYER_JOIN_EVENT:
-		return lhs << MAGIC << rhs.playerJoinEvent;
-	case PLAYER_LEAVE_EVENT:
-		return lhs << MAGIC << rhs.playerLeaveEvent;
-	case SNAPSHOT:
-		return lhs << MAGIC << rhs.snapshot;
-	default:
-		LOG_ERROR(logger) << "Tried to buffer server message of unknown type";
-		return lhs;
-	}
+MessageError getMessageType(const char *data, size_t size, MessageType *type) {
+	if (size < sizeof(MAGIC) + sizeof(MessageType))
+		return WRONG_MESSAGE_LENGTH;
+	else if (memcmp(data, MAGIC, sizeof(MAGIC)) != 0)
+		return WRONG_MAGIC;
+	*type = *reinterpret_cast<const MessageType *>(data + sizeof(MAGIC));
+	return MESSAGE_OK;
 }
 
-const Buffer &operator >> (const Buffer &lhs, ServerMessage &rhs) {
-	if (lhs.rSize() < (sizeof (MAGIC)) + sizeof (uint8)) {
-		rhs.type = MALFORMED_SERVER_MESSAGE;
-		rhs.malformed.error = MESSAGE_TOO_SHORT;
-	} else if (memcmp(lhs.rBegin(), MAGIC, sizeof (MAGIC)) != 0) {
-		rhs.type = MALFORMED_SERVER_MESSAGE;
-		rhs.malformed.error = WRONG_MAGIC;
-	} else {
-		lhs.rSeekRel(sizeof (MAGIC));
-		uint8 type = *lhs.rBegin();
-		const char *oldBegin = lhs.rBegin();
-		switch (type) {
-		case PLAYER_JOIN_EVENT:
-			lhs >> rhs.playerJoinEvent;
-			break;
-		case PLAYER_LEAVE_EVENT:
-			lhs >> rhs.playerLeaveEvent;
-			break;
-		case SNAPSHOT:
-			lhs >> rhs.snapshot;
-			break;
-		default:
-			LOG_ERROR(logger) << "Buffer contains server message of unknown type";
-			break;
-		}
-		if (lhs.rBegin() == oldBegin) {
-			rhs.type = MALFORMED_SERVER_MESSAGE;
-			rhs.malformed.error = MESSAGE_TOO_SHORT;
-		}
-	}
-	return lhs;
+template<> MessageType getMessageType(const PlayerJoinEvent &) {
+	return PLAYER_JOIN_EVENT;
 }
 
-Buffer &operator << (Buffer &lhs, const ClientMessage &rhs) {
-	switch (rhs.type) {
-	case PLAYER_INPUT:
-		return lhs << MAGIC << rhs.playerInput;
-	default:
-		LOG_ERROR(logger) << "Tried to buffer client message of unknown type";
-		return lhs;
-	}
+template<> MessageType getMessageType(const PlayerLeaveEvent &) {
+	return PLAYER_LEAVE_EVENT;
 }
 
-const Buffer &operator >> (const Buffer &lhs, ClientMessage &rhs) {
-	if (lhs.rSize() < (sizeof (MAGIC)) + sizeof (uint8)) {
-		rhs.type = MALFORMED_CLIENT_MESSAGE;
-		rhs.malformed.error = MESSAGE_TOO_SHORT;
-	} else if (memcmp(lhs.rBegin(), MAGIC, sizeof (MAGIC)) != 0) {
-		rhs.type = MALFORMED_CLIENT_MESSAGE;
-		rhs.malformed.error = WRONG_MAGIC;
-	} else {
-		lhs.rSeekRel(sizeof (MAGIC));
-		uint8 type = *lhs.rBegin();
-		const char *oldBegin = lhs.rBegin();
-		switch (type) {
-		case PLAYER_INPUT:
-			lhs >> rhs.playerInput;
-			break;
-		default:
-			LOG_ERROR(logger) << "Buffer contains client message of unknown type";
-			break;
-		}
-		if (lhs.rBegin() == oldBegin) {
-			rhs.type = MALFORMED_CLIENT_MESSAGE;
-			rhs.malformed.error = MESSAGE_TOO_SHORT;
-		}
-	}
-	return lhs;
+template<> MessageType getMessageType(const Snapshot &) {
+	return SNAPSHOT;
+}
+
+template<> MessageType getMessageType(const PlayerInput &) {
+	return PLAYER_INPUT;
 }
