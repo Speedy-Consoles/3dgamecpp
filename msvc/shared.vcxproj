@@ -11,11 +11,11 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\src\shared\async_world_generator.cpp" />
     <ClCompile Include="..\src\shared\block_loader.cpp" />
     <ClCompile Include="..\src\shared\block_manager.cpp" />
     <ClCompile Include="..\src\shared\block_utils.cpp" />
     <ClCompile Include="..\src\shared\chunk_archive.cpp" />
-    <ClCompile Include="..\src\shared\chunk_manager.cpp" />
     <ClCompile Include="..\src\shared\engine\buffer.cpp" />
     <ClCompile Include="..\src\shared\engine\logging.cpp" />
     <ClCompile Include="..\src\shared\engine\socket.cpp" />
@@ -33,6 +33,7 @@
     <ClCompile Include="..\src\shared\saves.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\src\shared\async_world_generator.hpp" />
     <ClInclude Include="..\src\shared\block_loader.hpp" />
     <ClInclude Include="..\src\shared\block_manager.hpp" />
     <ClInclude Include="..\src\shared\block_utils.hpp" />

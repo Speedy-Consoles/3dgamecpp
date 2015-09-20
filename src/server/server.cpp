@@ -8,6 +8,7 @@
 #include "shared/engine/logging.hpp"
 #include "shared/engine/std_types.hpp"
 #include "shared/engine/time.hpp"
+#include "shared/engine/random.hpp"
 #include "shared/engine/socket.hpp"
 #include "shared/engine/buffer.hpp"
 #include "shared/game/world.hpp"
@@ -101,7 +102,7 @@ Server::Server(uint16 port, const char *worldId) : inBuffer(1024*64), outBuffer(
 	if (!boost::filesystem::exists(path)) {
 		boost::filesystem::create_directories(path);
 		std::random_device rng;
-		uniform_int_distribution<uint64> distr;
+		random::uniform_int_distribution<uint64> distr;
 		uint64 seed = distr(rng);
 		save->initialize(worldId, seed);
 		save->store();
