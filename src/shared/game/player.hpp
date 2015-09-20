@@ -2,44 +2,7 @@
 #define PLAYER_HPP
 
 #include "shared/engine/vmath.hpp"
-#include "shared/engine/monitor.hpp"
-
-struct PlayerSnapshot {
-	int tick;
-	vec3i64 pos;
-	vec3d vel;
-	uint16 yaw;
-	int16 pitch;
-	int moveInput;
-	bool isFlying;
-
-/*
-	public void write(ByteBuffer buffer) {
-		buffer.putInt(tick);
-		buffer.put((byte) (isFlying ? 1 : 0));
-		buffer.putLong(pos[0]);
-		buffer.putLong(pos[1]);
-		buffer.putLong(pos[2]);
-		buffer.putDouble(vel[0]);
-		buffer.putDouble(vel[1]);
-		buffer.putDouble(vel[2]);
-		buffer.putDouble(yaw);
-		buffer.putDouble(pitch);
-		buffer.putInt(moveInput);
-	}
-
-	public static PlayerSnapshot read(ByteBuffer buffer) {
-		int tick = buffer.getInt();
-		boolean isFlying = buffer.get() == 1;
-		long[] pos = { buffer.getLong(), buffer.getLong(), buffer.getLong() };
-		double[] vel = { buffer.getDouble(), buffer.getDouble(),
-				buffer.getDouble() };
-		double yaw = buffer.getDouble();
-		double pitch = buffer.getDouble();
-		int moveInput = buffer.getInt();
-		return new PlayerSnapshot(tick, isFlying, pos, vel, yaw, pitch, moveInput);
-	}*/
-};
+#include "shared/net.hpp"
 
 class World;
 

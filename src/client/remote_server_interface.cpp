@@ -85,6 +85,7 @@ void RemoteServerInterface::placeBlock(vec3i64 bc, uint8 type) {
 
 void RemoteServerInterface::tick() {
 	if (status == CONNECTING) {
+		// check for connection success
 		ENetEvent event;
 		if (enet_host_service (host, &event, 0) > 0) {
 			switch(event.type) {
@@ -130,6 +131,10 @@ void RemoteServerInterface::tick() {
 		}
 	}
 
+	if (status != CONNECTED)
+		return;
+
+	// send
 	ClientMessage cmsg;
 	cmsg.type = PLAYER_INPUT;
 	cmsg.playerInput.input.yaw = yaw;
@@ -162,18 +167,23 @@ void RemoteServerInterface::handlePacket(const enet_uint8 *data, size_t size, si
 	receive(&smsg, data, size);
 	switch (smsg.type) {
 	case PLAYER_JOIN_EVENT:
-		// TODO do this in snapshot
-		if (smsg.playerJoinEvent.id != localPlayerId)
-			client->getWorld()->addPlayer(smsg.playerJoinEvent.id);
+		// TODO
 		break;
 	case PLAYER_LEAVE_EVENT:
-		// TODO do this in snapshot
-		if (smsg.playerLeaveEvent.id != localPlayerId)
-			client->getWorld()->deletePlayer(smsg.playerLeaveEvent.id);
+		// TODO
 		break;
 	case SNAPSHOT:
-		client->getWorld()->getPlayer(smsg.playerSnapshot.id)
-				.applySnapshot(smsg.playerSnapshot.snapshot, smsg.playerSnapshot.id == localPlayerId);
+		localPlayerId = smsg.snapshot.localId;
+		for (int i = 0; i < MAX_CLIENTS; ++i) {
+			PlayerSnapshot &playerSnapshot = *(smsg.snapshot.playerSnapshots + i);
+			Player &player = client->getWorld()->getPlayer(i);
+			if (playerSnapshot.valid && !player.isValid())
+				client->getWorld()->addPlayer(i);
+			else if (!playerSnapshot.valid && player.isValid())
+				client->getWorld()->deletePlayer(i);
+			if (playerSnapshot.valid)
+				player.applySnapshot(playerSnapshot, i == localPlayerId);
+		}
 		break;
 	case MALFORMED_SERVER_MESSAGE:
 		LOG_WARNING(logger) << "Received malformed message";

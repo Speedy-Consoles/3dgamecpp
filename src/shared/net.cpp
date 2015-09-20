@@ -13,7 +13,7 @@ Buffer &operator << (Buffer &lhs, const ServerMessage &rhs) {
 	case PLAYER_LEAVE_EVENT:
 		return lhs << MAGIC << rhs.playerLeaveEvent;
 	case SNAPSHOT:
-		return lhs << MAGIC << rhs.playerSnapshot;
+		return lhs << MAGIC << rhs.snapshot;
 	default:
 		LOG_ERROR(logger) << "Tried to buffer server message of unknown type";
 		return lhs;
@@ -39,7 +39,7 @@ const Buffer &operator >> (const Buffer &lhs, ServerMessage &rhs) {
 			lhs >> rhs.playerLeaveEvent;
 			break;
 		case SNAPSHOT:
-			lhs >> rhs.playerSnapshot;
+			lhs >> rhs.snapshot;
 			break;
 		default:
 			LOG_ERROR(logger) << "Buffer contains server message of unknown type";

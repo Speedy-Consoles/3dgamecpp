@@ -34,7 +34,6 @@ struct Client {
 
 class Server {
 private:
-	std::string id;
 	bool closeRequested = false;
 
 	std::unique_ptr<Save> save;
@@ -144,8 +143,7 @@ void Server::run() {
 		//TODO use makeSnapshot
 		sendSnapshots(tick);
 
-		time += seconds(1) / TICK_SPEED;
-		Time remTime = time - getCurrentTime() + seconds(1) / TICK_SPEED;
+		// Time remTime = time + seconds(1) / TICK_SPEED - getCurrentTime();
 
 		sync(TICK_SPEED);
 		tick++;
@@ -181,7 +179,7 @@ void Server::updateNet() {ENetEvent event;
 }
 
 void Server::handleConnect(ENetPeer *peer) {
-	int id;
+	int id = -1;
 	for (int i = 0; i < (int) MAX_CLIENTS; i++) {
 		if (!clients[i].peer) {
 			id = i;
@@ -190,6 +188,13 @@ void Server::handleConnect(ENetPeer *peer) {
 			break;
 		}
 	}
+	if (id == -1) {
+		enet_peer_reset(peer);
+		LOG_FATAL(logger) << "Could not find unused id for new player";
+		return;
+	}
+
+	world->addPlayer(id);
 
 	ServerMessage smsg;
 	smsg.type = PLAYER_JOIN_EVENT;
@@ -252,22 +257,35 @@ void Server::handlePacket(const enet_uint8 *data, size_t size, size_t channel, E
 }
 
 void Server::sendSnapshots(int tick) {
-	for (uint8 id = 0; id < MAX_CLIENTS; ++id) {
-		if (!clients[id].peer)
+	ServerMessage smsg;
+	smsg.type = SNAPSHOT;
+	smsg.snapshot.tick = tick;
+	for (int i = 0; i < MAX_CLIENTS; ++i) {
+		PlayerSnapshot &playerSnapshot = *(smsg.snapshot.playerSnapshots + i);
+		if (!clients[i].peer) {
+			playerSnapshot.valid = false;
+			playerSnapshot.pos = vec3i64(0, 0, 0);
+			playerSnapshot.vel = vec3d(0.0, 0.0, 0.0);
+			playerSnapshot.yaw = 0;
+			playerSnapshot.pitch = 0;
+			playerSnapshot.moveInput = 0;
+			playerSnapshot.isFlying = false;
 			continue;
+		}
+		playerSnapshot.valid = true;
+		playerSnapshot.pos = world->getPlayer(i).getPos();
+		playerSnapshot.vel = world->getPlayer(i).getVel();
+		playerSnapshot.yaw = (uint16) world->getPlayer(i).getYaw();
+		playerSnapshot.pitch = (int16) world->getPlayer(i).getPitch();
+		playerSnapshot.moveInput = world->getPlayer(i).getMoveInput();
+		playerSnapshot.isFlying = world->getPlayer(i).getFly();
+	}
 
-		ServerMessage smsg;
-		smsg.type = SNAPSHOT;
-		smsg.playerSnapshot.id = id;
-		smsg.playerSnapshot.snapshot.tick = tick;
-		smsg.playerSnapshot.snapshot.pos = world->getPlayer(id).getPos();
-		smsg.playerSnapshot.snapshot.vel = world->getPlayer(id).getVel();
-		smsg.playerSnapshot.snapshot.yaw = (uint16) world->getPlayer(id).getYaw();
-		smsg.playerSnapshot.snapshot.pitch = (int16) world->getPlayer(id).getPitch();
-		smsg.playerSnapshot.snapshot.moveInput = world->getPlayer(id).getMoveInput();
-		smsg.playerSnapshot.snapshot.isFlying = world->getPlayer(id).getFly();
-
-		broadcast(smsg);
+	for (int i = 0; i < MAX_CLIENTS; ++i) {
+		if (!clients[i].peer)
+			continue;
+		smsg.snapshot.localId = i;
+		send(smsg, i);
 	}
 }
 
