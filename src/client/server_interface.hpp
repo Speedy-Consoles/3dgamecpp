@@ -15,6 +15,7 @@ public:
 		CONNECTING,
 		CONNECTION_ERROR,
 		CONNECTED,
+		DISCONNECTING,
 	};
 	
 	ServerInterface() {}

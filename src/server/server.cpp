@@ -172,7 +172,7 @@ void Server::updateNet() {ENetEvent event;
 			enet_packet_destroy(event.packet);
 			break;
 		default:
-			LOG_WARNING(logger) << "Received unknown ENetEvent type";
+			LOG_WARNING(logger) << "Received unknown ENetEvent type << event.type";
 			break;
 		}
 	}

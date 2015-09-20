@@ -30,7 +30,7 @@ PlayingState::PlayingState(State *parent, Client *client) :
 }
 
 PlayingState::~PlayingState() {
-	client->serverInterface.reset();
+	client->serverInterface = nullptr;
 	client->renderer.reset();
 	client->world.reset();
 	client->chunkManager.reset();

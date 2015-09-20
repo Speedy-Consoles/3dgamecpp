@@ -13,7 +13,7 @@ using namespace boost::asio::ip;
 
 static logging::Logger logger("remote");
 
-RemoteServerInterface::RemoteServerInterface(Client *client, std::string addressString) :
+RemoteServerInterface::RemoteServerInterface(Client *client) :
 		client(client),
 		worldGenerator(new WorldGenerator(42, WorldParams())),
 		asyncWorldGenerator(worldGenerator.get()),
@@ -23,14 +23,27 @@ RemoteServerInterface::RemoteServerInterface(Client *client, std::string address
 	if (enet_initialize() != 0) {
 		LOG_FATAL(logger) << "An error occurred while initializing ENet.";
 		status = CONNECTION_ERROR;
+		return;
 	}
 
 	host = enet_host_create(NULL, 1, 1, 20000, 5000);
 	if (!host) {
 		LOG_ERROR(logger) << "An error occurred while trying to create an ENet client host.";
 		status = CONNECTION_ERROR;
-		return;
 	}
+}
+
+RemoteServerInterface::~RemoteServerInterface() {
+	if(host) {
+		waitForDisconnect();
+		enet_host_destroy(host);
+	}
+	enet_deinitialize();
+}
+
+void RemoteServerInterface::connect(std::string addressString) {
+	if (status != CONNECTION_ERROR && status != NOT_CONNECTED)
+		return;
 
 	ENetAddress address;
 	enet_address_set_host(&address, addressString.c_str());
@@ -44,10 +57,21 @@ RemoteServerInterface::RemoteServerInterface(Client *client, std::string address
 	status = CONNECTING;
 }
 
-RemoteServerInterface::~RemoteServerInterface() {
-	if(host)
-		enet_host_destroy(host);
-	enet_deinitialize();
+void RemoteServerInterface::disconnect() {
+	if (status != CONNECTED)
+		return;
+
+	// TODO reason
+	enet_peer_disconnect(peer, 1);
+	status = DISCONNECTING;
+}
+
+void RemoteServerInterface::waitForDisconnect() {
+	disconnect();
+	while (status == DISCONNECTING) {
+		tick();
+		sleepFor(millis(100));
+	}
 }
 
 ServerInterface::Status RemoteServerInterface::getStatus() {
@@ -87,20 +111,46 @@ void RemoteServerInterface::tick() {
 	if (status == CONNECTING) {
 		// check for connection success
 		ENetEvent event;
-		if (enet_host_service (host, &event, 0) > 0) {
+		while (enet_host_service (host, &event, 0) > 0) {
 			switch(event.type) {
 			case ENET_EVENT_TYPE_CONNECT:
 				LOG_INFO(logger) << "Successfully connected to server";
 				status = CONNECTED;
 				break;
 			case ENET_EVENT_TYPE_DISCONNECT:
-				enet_peer_reset (peer);
+				enet_peer_reset(peer);
 				peer = nullptr;
-				LOG_ERROR(logger) << "Could not connect to server";
+				LOG_WARNING(logger) << "Could not connect to server";
 				status = CONNECTION_ERROR;
 				break;
+			case ENET_EVENT_TYPE_RECEIVE:
+				LOG_WARNING(logger) << "Unexpected ENetEvent ENET_EVENT_TYPE_RECEIVE while connecting";
+				enet_packet_destroy (event.packet);
+				break;
 			default:
-				LOG_WARNING(logger) << "Unexpected ENetEvent while connecting";
+				LOG_WARNING(logger) << "Received unknown ENetEvent type << event.type";
+				break;
+			}
+		}
+	} else if(status == DISCONNECTING) {
+		// check for disconnection success
+		ENetEvent event;
+		while (enet_host_service (host, &event, 0) > 0) {
+			switch(event.type) {
+			case ENET_EVENT_TYPE_CONNECT:
+				LOG_FATAL(logger) << "Unexpected ENetEvent ENET_EVENT_TYPE_CONNECT while disconnecting";
+				break;
+			case ENET_EVENT_TYPE_DISCONNECT:
+				peer = nullptr;
+				LOG_INFO(logger) << "Successfully disconnected from server";
+				status = NOT_CONNECTED;
+				break;
+			case ENET_EVENT_TYPE_RECEIVE:
+				LOG_WARNING(logger) << "Unexpected ENetEvent ENET_EVENT_TYPE_RECEIVE while disconnecting";
+				enet_packet_destroy (event.packet);
+				break;
+			default:
+				LOG_WARNING(logger) << "Received unknown ENetEvent type" << event.type;
 				break;
 			}
 		}
@@ -113,6 +163,9 @@ void RemoteServerInterface::tick() {
 	ENetEvent event;
 	while (enet_host_service(host, &event, 0) > 0) {
 		switch(event.type) {
+		case ENET_EVENT_TYPE_CONNECT:
+			LOG_WARNING(logger) << "Unexpected ENetEvent ENET_EVENT_TYPE_CONNECT";
+			break;
 		case ENET_EVENT_TYPE_DISCONNECT:
 			peer = nullptr;
 			LOG_INFO(logger) << "Disconnected from server";
@@ -121,9 +174,6 @@ void RemoteServerInterface::tick() {
 		case ENET_EVENT_TYPE_RECEIVE:
 			handlePacket(event.packet->data, event.packet->dataLength, event.channelID);
 			enet_packet_destroy(event.packet);
-			break;
-		case ENET_EVENT_TYPE_CONNECT:
-			LOG_WARNING(logger) << "Unexpected ENetEvent ENET_EVENT_TYPE_CONNECT";
 			break;
 		default:
 			LOG_WARNING(logger) << "Received unknown ENetEvent type";

@@ -26,7 +26,14 @@ LocalPlayingState::LocalPlayingState(State *parent, Client *client, std::string 
 	ClientChunkManager *cm = new ClientChunkManager(client, client->save->getChunkArchive());
 	client->chunkManager = std::unique_ptr<ClientChunkManager>(cm);
 	client->world = std::unique_ptr<World>(new World(client->chunkManager.get()));
-	auto *p = new LocalServerInterface(client);
-	client->serverInterface = std::unique_ptr<LocalServerInterface>(p);
+
+	LocalServerInterface *lsi = new LocalServerInterface(client);
+	client->localServerInterface = std::unique_ptr<LocalServerInterface>(lsi);
+	client->serverInterface = lsi;
+
 	client->setStateId(Client::PLAYING);
+}
+
+LocalPlayingState::~LocalPlayingState() {
+	client->localServerInterface.reset();
 }

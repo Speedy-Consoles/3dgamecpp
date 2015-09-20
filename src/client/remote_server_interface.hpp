@@ -17,8 +17,8 @@
 
 class RemoteServerInterface : public ServerInterface {
 private:
-	uint8 localPlayerId;
-	Client *client;
+	uint8 localPlayerId = -1;
+	Client *client = nullptr;
 
 	std::unique_ptr<WorldGenerator> worldGenerator;
 	AsyncWorldGenerator asyncWorldGenerator;
@@ -37,9 +37,12 @@ private:
 	bool flying = false;
 
 public:
-	RemoteServerInterface(Client *client, std::string address);
-
+	RemoteServerInterface(Client *client);
 	~RemoteServerInterface();
+
+	void connect(std::string addressString);
+	void disconnect();
+	void waitForDisconnect();
 
 	Status getStatus() override;
 

@@ -21,6 +21,8 @@
 #include "menu.hpp"
 #include "events.hpp"
 #include "server_interface.hpp"
+#include "local_server_interface.hpp"
+#include "remote_server_interface.hpp"
 
 static logging::Logger logger("client");
 
