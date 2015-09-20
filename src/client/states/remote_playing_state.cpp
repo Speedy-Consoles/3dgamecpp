@@ -12,17 +12,8 @@ RemotePlayingState::RemotePlayingState(State *parent, Client *client, std::strin
 	ClientChunkManager *cm = new ClientChunkManager(client, std::unique_ptr<ChunkArchive>(ca));
 	client->chunkManager = std::unique_ptr<ClientChunkManager>(cm);
 
-	RemoteServerInterface *rsi = client->remoteServerInterface.get();
-	if (!rsi) {
-		rsi = new RemoteServerInterface(client);
-		client->remoteServerInterface = std::unique_ptr<RemoteServerInterface>(rsi);
-	}
-	client->serverInterface = rsi;
-	rsi->connect(address);
+	RemoteServerInterface *si = new RemoteServerInterface(client, address);
+	client->serverInterface = std::unique_ptr<RemoteServerInterface>(si);
 
 	client->world = std::unique_ptr<World>(new World(client->chunkManager.get()));
-}
-
-RemotePlayingState::~RemotePlayingState() {
-	client->remoteServerInterface.get()->waitForDisconnect();
 }

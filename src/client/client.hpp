@@ -55,7 +55,7 @@ public:
 	ClientChunkManager *getChunkManager() { return chunkManager.get(); }
 	World *getWorld() { return world.get(); }
 	Renderer *getRenderer() { return renderer.get(); }
-	ServerInterface *getServerInterface() { return serverInterface; }
+	ServerInterface *getServerInterface() { return serverInterface.get(); }
 
 	void setDebugOn(bool b) { debugOn = b; }
 	void setConf(const GraphicsConf &);
@@ -91,9 +91,7 @@ private:
 	std::unique_ptr<ClientChunkManager> chunkManager;
 	std::unique_ptr<World> world;
 	std::unique_ptr<Renderer> renderer;
-	std::unique_ptr<LocalServerInterface> localServerInterface;
-	std::unique_ptr<RemoteServerInterface> remoteServerInterface;
-	ServerInterface *serverInterface = nullptr;
+	std::unique_ptr<ServerInterface> serverInterface;
 
 	std::vector<std::unique_ptr<State>> stateStack;
 	StateId stateId;

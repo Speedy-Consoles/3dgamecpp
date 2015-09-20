@@ -37,12 +37,8 @@ private:
 	bool flying = false;
 
 public:
-	RemoteServerInterface(Client *client);
+	RemoteServerInterface(Client *client, std::string addressString);
 	~RemoteServerInterface();
-
-	void connect(std::string addressString);
-	void disconnect();
-	void waitForDisconnect();
 
 	Status getStatus() override;
 

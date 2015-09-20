@@ -10,7 +10,6 @@ class Client;
 class LocalPlayingState : public PlayingState {
 public:
 	LocalPlayingState(State *parent, Client *client, std::string worldId);
-	~LocalPlayingState();
 };
 
 #endif // LOCAL_PLAYING_STATE_HPP_

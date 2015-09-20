@@ -8,7 +8,6 @@
 class RemotePlayingState : public PlayingState {
 public:
 	RemotePlayingState(State *parent, Client *client, std::string address);
-	~RemotePlayingState();
 };
 
 #endif // REMOTE_PLAYING_STATE_HPP_

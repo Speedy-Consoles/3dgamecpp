@@ -13,7 +13,7 @@ using namespace boost::asio::ip;
 
 static logging::Logger logger("remote");
 
-RemoteServerInterface::RemoteServerInterface(Client *client) :
+RemoteServerInterface::RemoteServerInterface(Client *client, std::string addressString) :
 		client(client),
 		worldGenerator(new WorldGenerator(42, WorldParams())),
 		asyncWorldGenerator(worldGenerator.get()),
@@ -30,20 +30,8 @@ RemoteServerInterface::RemoteServerInterface(Client *client) :
 	if (!host) {
 		LOG_ERROR(logger) << "An error occurred while trying to create an ENet client host.";
 		status = CONNECTION_ERROR;
-	}
-}
-
-RemoteServerInterface::~RemoteServerInterface() {
-	if(host) {
-		waitForDisconnect();
-		enet_host_destroy(host);
-	}
-	enet_deinitialize();
-}
-
-void RemoteServerInterface::connect(std::string addressString) {
-	if (status != CONNECTION_ERROR && status != NOT_CONNECTED)
 		return;
+	}
 
 	ENetAddress address;
 	enet_address_set_host(&address, addressString.c_str());
@@ -52,26 +40,29 @@ void RemoteServerInterface::connect(std::string addressString) {
 	if (!peer) {
 		LOG_ERROR(logger) << "No available peers for initiating an ENet connection.";
 		status = CONNECTION_ERROR;
+		return;
 	}
 
 	status = CONNECTING;
 }
 
-void RemoteServerInterface::disconnect() {
-	if (status != CONNECTED)
-		return;
-
-	// TODO reason
-	enet_peer_disconnect(peer, 1);
-	status = DISCONNECTING;
-}
-
-void RemoteServerInterface::waitForDisconnect() {
-	disconnect();
-	while (status == DISCONNECTING) {
-		tick();
-		sleepFor(millis(100));
+RemoteServerInterface::~RemoteServerInterface() {
+	if(host) {
+		if (status == CONNECTING) {
+			enet_peer_reset(peer);
+			status = NOT_CONNECTED;
+		}
+		if (status == CONNECTED) {
+			enet_peer_disconnect(peer, 1);
+			status = DISCONNECTING;
+		}
+		while (status == DISCONNECTING) {
+			tick();
+			sleepFor(millis(100));
+		}
+		enet_host_destroy(host);
 	}
+	enet_deinitialize();
 }
 
 ServerInterface::Status RemoteServerInterface::getStatus() {
