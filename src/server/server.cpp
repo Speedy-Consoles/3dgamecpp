@@ -24,11 +24,12 @@ using namespace boost::asio::ip;
 
 static logging::Logger logger("server");
 
+struct PeerData {
+	int id;
+};
+
 struct Client {
-	bool connected;
-	udp::endpoint endpoint;
-	uint32 token;
-	Time timeOfLastPacket;
+	ENetPeer *eNetPeer = nullptr;
 };
 
 class Server {
@@ -42,19 +43,13 @@ private:
 
 	Client clients[MAX_CLIENTS];
 
-    Time timeout = seconds(10);
+	ENetHost *eNetHost;
 
-	Buffer inBuf;
-	Buffer outBuf;
+	Buffer inBuffer;
+	Buffer outBuffer;
 
 	// time keeping
-    Time time = 0;
-
-	// our listening socket
-	boost::asio::io_service ios;
-	boost::asio::io_service::work *w;
-	future<void> f;
-	Socket socket;
+	Time time = 0;
 
 public:
 	Server(uint16 port, const char *worldId = "default");
@@ -63,19 +58,20 @@ public:
 	void run();
 
 private:
-	void handleMessage(const Endpoint &);
-	void checkInactive();
+	void updateNet();
 
-	void handleConnectionRequest(const Endpoint &);
-	void handleClientMessage(const ClientMessage &cmsg, uint8 id);
+	void handleConnect(ENetPeer *peer);
+	void handleDisconnect(ENetPeer *peer);
+	void handlePacket(const enet_uint8 *data, size_t size, size_t channel, ENetPeer *peer);
 
 	void sendSnapshots(int tick);
 
-	void send(ServerMessage &smsg, uint8 clientId);
-	void send(ServerMessage &smsg, const Endpoint &endpoint);
+	void receive(ClientMessage *cmsg, const enet_uint8 *data, size_t size);
+	void send(ServerMessage &smsg, ENetPeer *peer);
+	void send(ServerMessage &smsg, int clientId);
 	void broadcast(ServerMessage &smsg);
 
-	void disconnect(uint8 id);
+	void sync(int perSecond);
 };
 
 int main() {
@@ -97,13 +93,8 @@ int main() {
 
 }
 
-Server::Server(uint16 port, const char *worldId) :
-	inBuf(1024*64),
-	outBuf(1024*64),
-	ios(),
-	w(new boost::asio::io_service::work(ios)),
-	socket(ios)
-{
+// TODO correct buffer sizes
+Server::Server(uint16 port, const char *worldId) : inBuffer(1024*64), outBuffer(1024*64) {
 	LOG_INFO(logger) << "Creating Server";
 
 	save = std::unique_ptr<Save>(new Save(worldId));
@@ -120,218 +111,126 @@ Server::Server(uint16 port, const char *worldId) :
 	ServerChunkManager *cm = new ServerChunkManager(save->getWorldGenerator(), save->getChunkArchive());
 	chunkManager = std::unique_ptr<ServerChunkManager>(cm);
 	world = std::unique_ptr<World>(new World(chunkManager.get()));
-	for (uint8 i = 0; i < MAX_CLIENTS; i++) {
-		clients[i].connected = false;
-		clients[i].timeOfLastPacket = 0;
-	}
 
-	socket.open();
-	socket.bind(udp::endpoint(udp::v4(), port));
+	if (enet_initialize () != 0)
+		LOG_FATAL(logger) << "An error occurred while initializing ENet.\n";
 
-	// this will make sure our async_recv calls get handled
-	f = async(launch::async, [this]{
-		this->ios.run();
-		LOG_INFO(logger) << "ASIO Thread returned";
-	});
+	ENetAddress address;
+	address.host = ENET_HOST_ANY;
+	address.port = port;
+	eNetHost = enet_host_create(&address, MAX_CLIENTS, 1, 0, 0);
+	if (!eNetHost)
+		LOG_FATAL(logger) << "An error occurred while trying to create an ENet server host.\n";
 }
 
 Server::~Server() {
-	socket.close();
-	delete w;
-	if (f.valid())
-		f.get();
+	if (eNetHost)
+		enet_host_destroy(eNetHost);
+	enet_deinitialize();
 }
 
 void Server::run() {
-	LOG_INFO(logger) << "Starting server";
-
-	auto err = socket.getSystemError();
-	if (err == asio::error::address_in_use) {
-		LOG_FATAL(logger) << "Port already in use";
-		return;
-	} else if (err) {
-		LOG_FATAL(logger) << "Unknown socket error!";
-		return;
-	}
+	LOG_INFO(logger) << "Running server";
 
 	time = getCurrentTime();
 
-	inBuf.clear();
-	socket.acquireReadBuffer(inBuf);
 	int tick = 0;
 	while (!closeRequested) {
+		updateNet();
+
 		world->tick(-1);
 		chunkManager->tick();
-
-		time += seconds(1) / TICK_SPEED;
-		Time remTime;
-		while ((remTime = time - getCurrentTime() + seconds(1) / TICK_SPEED) > 0) {
-			// TODO this can be overridden asynchronously
-			Endpoint endpoint;
-			switch (socket.receiveFor(remTime, &endpoint)) {
-			case Socket::OK:
-				socket.releaseReadBuffer(inBuf);
-				handleMessage(endpoint);
-				inBuf.clear();
-				socket.acquireReadBuffer(inBuf);
-				break;
-			case Socket::TIMEOUT:
-				break;
-			case Socket::SYSTEM_ERROR:
-				LOG_ERROR(logger) << "Could not receive on socket: "
-						<< getBoostErrorString(socket.getSystemError());
-				break;
-			default:
-				LOG_ERROR(logger) << "Unknown error while receiving packets";
-			}
-		}
 
 		//TODO use makeSnapshot
 		sendSnapshots(tick);
 
-		checkInactive();
+		time += seconds(1) / TICK_SPEED;
+		Time remTime = time - getCurrentTime() + seconds(1) / TICK_SPEED;
+
+		sync(TICK_SPEED);
 		tick++;
 	}
-	socket.releaseReadBuffer(inBuf);
-	LOG_INFO(logger) << "Server is shutting down";
+
+	LOG_INFO(logger) << "Shutting down server";
 }
 
-void Server::handleMessage(const Endpoint &endpoint) {
-	size_t size = inBuf.rSize();
-	LOG_TRACE(logger) << "Received message of length " << size;
-
-	ClientMessage cmsg;
-	inBuf >> cmsg;
-	switch (cmsg.type) {
-	case MALFORMED_CLIENT_MESSAGE:
-		switch (cmsg.malformed.error) {
-		case MESSAGE_TOO_SHORT:
-			LOG_WARNING(logger) << "Message too short (" << size << ")";
+void Server::updateNet() {ENetEvent event;
+	while (enet_host_service(eNetHost, &event, 0)) {
+		Endpoint endpoint;
+		switch (event.type) {
+		case ENET_EVENT_TYPE_CONNECT:
+			handleConnect(event.peer);
 			break;
-		case WRONG_MAGIC:
-			LOG_WARNING(logger) << "Incorrect magic";
+		case ENET_EVENT_TYPE_DISCONNECT:
+			handleDisconnect(event.peer);
+			break;
+		case ENET_EVENT_TYPE_RECEIVE:
+			handlePacket(
+				event.packet->data,
+				event.packet->dataLength,
+				event.channelID,
+				event.peer
+				);
+			enet_packet_destroy(event.packet);
 			break;
 		default:
-			LOG_WARNING(logger) << "Unknown error reading message";
+			LOG_ERROR(logger) << "Received unknown eNetEvent type.\n";
 			break;
 		}
-		{
-			char formatter[1024];
-			char *head = formatter;
-			for (const char *c = inBuf.data(); c < inBuf.rEnd(); ++c ) {
-				sprintf(head, "%02x ", *c);
-				head += 3;
-			}
-			head = '\0';
-			LOG_DEBUG(logger) << formatter;
-		}
-		break;
-	case CONNECTION_REQUEST:
-		handleConnectionRequest(endpoint);
-		break;
-	default:
-		int8 id = -1;
-		for (int i = 0; i < (int) MAX_CLIENTS; ++i) {
-			if (clients[i].connected && clients[i].endpoint == endpoint) {
-				id = i;
-				break;
-			}
-		}
-
-		if (id >= 0) {
-			clients[id].timeOfLastPacket = getCurrentTime();
-			handleClientMessage(cmsg, id);
-		} else {
-			LOG_DEBUG(logger) << "Unknown remote address";
-
-			ServerMessage smsg;
-			smsg.type = CONNECTION_RESET;
-			outBuf.clear();
-			outBuf << smsg;
-			switch (socket.send(outBuf, &endpoint)) {
-			case Socket::OK:
-				break;
-			case Socket::SYSTEM_ERROR:
-				LOG_ERROR(logger) << "Could not send on socket: "
-						<< getBoostErrorString(socket.getSystemError());
-				break;
-			default:
-				LOG_ERROR(logger) << "Unknown error while sending packet";
-				break;
-			}
-		}
-		break;
 	}
 }
 
-void Server::handleConnectionRequest(const Endpoint &endpoint) {
-	LOG_INFO(logger) << "New connection from " << endpoint.address().to_string() << ":" << endpoint.port();
-
-	// find a free spot for the new player
-	int newPlayer = -1;
-	int duplicate = -1;
+void Server::handleConnect(ENetPeer *peer) {
 	for (int i = 0; i < (int) MAX_CLIENTS; i++) {
-		bool connected = clients[i].connected;
-		if (newPlayer == -1 && !connected) {
-			newPlayer = i;
-		} else if (connected && clients[i].endpoint == endpoint) {
-			duplicate = i;
+		if (!clients[i].peer) {
+			clients[i].peer = event.peer;
+			event.peer->data = new PeerData{i};
 			break;
 		}
 	}
 
-	// check for problems
 	ServerMessage smsg;
-	if (duplicate != -1) {
-		LOG_INFO(logger) << "Duplicate remote endpoint with player " << duplicate;
-		smsg.type = CONNECTION_REJECTED;
-		smsg.conRejected.reason = DUPLICATE_ENDPOINT;
-		send(smsg, endpoint);
-	} else if (newPlayer == -1) {
-		LOG_INFO(logger) << "Server is full";
-		smsg.type = CONNECTION_REJECTED;
-		smsg.conRejected.reason = FULL;
-		send(smsg, endpoint);
-	} else {
-		uint8 id = (uint) newPlayer;
-
-		world->addPlayer(id);
-
-		clients[id].connected = true;
-		clients[id].endpoint = endpoint;
-		clients[id].timeOfLastPacket = getCurrentTime();
-
-		smsg.type = CONNECTION_ACCEPTED;
-		smsg.conAccepted.id = id;
-		send(smsg, id);
-
-		smsg.type = PLAYER_JOIN;
-		for (uint8 i = 0; i < MAX_CLIENTS; ++i) {
-			if (i != id && !clients[i].connected)
-				continue;
-			smsg.playerJoin.id = i;
-			send(smsg, id);
-		}
-
-		smsg.playerJoin.id = id;
-		broadcast(smsg);
-
-		LOG_INFO(logger) << "New Player " << (int) id;
+	smsg.type = PLAYER_JOIN;
+	// TODO remove this
+	for (int i = 0; i < MAX_CLIENTS; ++i) {
+		if (i == id || !clients[i].peer)
+			continue;
+		smsg.playerJoin.id = i;
+		send(smsg, peer);
 	}
+	// TODO << this
+
+	smsg.playerJoin.id = id;
+	broadcast(smsg);
+
+	LOG_INFO(logger) << "New Player " << (int) id;
 }
 
-void Server::handleClientMessage(const ClientMessage &cmsg, uint8 id) {
-	LOG_TRACE(logger) << "Message " << (int) cmsg.type << " for Player " << (int) id << " accepted";
+void Server::handleDisconnect(ENetPeer *peer) {
+	int id = ((PeerData *) peer->data)->id;
+	delete (ClientInfo *)event.peer->data;
+	peer->data = nullptr;
+	clients[id].peer = nullptr;
+
+	world->deletePlayer(id);
+
+	ServerMessage smsg;
+	smsg.type = PLAYER_LEAVE;
+	smsg.playerJoin.id = id;
+	broadcast(smsg);
+
+	LOG_INFO(logger) << "Player " << (int) id << " disconnected";
+}
+
+void Server::handlePacket(const enet_uint8 *data, size_t size, size_t channel, ENetPeer *peer) {
+	LOG_TRACE(logger) << "Received message of length " << size;
+
+	// TODO any checks needed here? magic?
+	ClientMessage cmsg;
+	receive(cmsg, data, size);
+	int id = ((PeerData *) peer->data)->id;
+	LOG_TRACE(logger) << "Message type: " << (int) cmsg.type << ", Player id: " << (int) id;
 	switch (cmsg.type) {
-	case ECHO_REQUEST:
-	{
-		ServerMessage smsg;
-		smsg.type = ECHO_RESPONSE;
-		outBuf.clear();
-		outBuf << smsg << inBuf;
-		socket.send(outBuf, &clients[id].endpoint);
-		break;
-	}
 	case PLAYER_INPUT:
 		{
 			int yaw = cmsg.playerInput.input.yaw;
@@ -352,7 +251,7 @@ void Server::sendSnapshots(int tick) {
 			continue;
 
 		ServerMessage smsg;
-		smsg.type = PLAYER_SNAPSHOT;
+		smsg.type = SNAPSHOT;
 		smsg.playerSnapshot.id = id;
 		smsg.playerSnapshot.snapshot.tick = tick;
 		smsg.playerSnapshot.snapshot.pos = world->getPlayer(id).getPos();
@@ -366,54 +265,35 @@ void Server::sendSnapshots(int tick) {
 	}
 }
 
-void Server::checkInactive() {
-	for (uint8 id = 0; id < MAX_CLIENTS; ++id) {
-		if (!clients[id].connected)
-			continue;
-
-		if (getCurrentTime() - clients[id].timeOfLastPacket > timeout) {
-			LOG_INFO(logger) << "Player " << (int) id << " timed out";
-
-			ServerMessage smsg;
-			smsg.type = CONNECTION_TIMEOUT;
-			send(smsg, id);
-
-			disconnect(id);
-		}
-	}
+void Server::receive(ClientMessage *cmsg, const enet_uint8 *data, size_t size) {
+	inBuffer.clear();
+	inBuffer.write(data, size);
+	inBuffer >> *cmsg;
 }
 
-void Server::send(ServerMessage &smsg, uint8 clientId) {
-	if (clients[clientId].connected)
-		send(smsg, clients[clientId].endpoint);
+void Server::send(ServerMessage &smsg, ENetPeer *peer) {
+	// TODO make possible without buffer
+	outBuffer.clear();
+	outBuffer << smsg;
+	// TODO reliability, sequencing
+	ENetPacket *packet = enet_packet_create((const void *) outBuffer.rBegin(), outBuffer.rSize(), 0);
+	enet_host_send(peer, 0, packet);
 }
 
-void Server::send(ServerMessage &smsg, const Endpoint &endpoint) {
-	outBuf.clear();
-	outBuf << smsg;
-	socket.send(outBuf, &endpoint);
+void Server::send(ServerMessage &smsg, int clientId) {
+	send(smsg, clients[clientId].peer);
 }
-
 
 void Server::broadcast(ServerMessage &smsg) {
-	outBuf.clear();
-	outBuf << smsg;
-	for (uint8 id = 0; id < MAX_CLIENTS; ++id) {
-		if (!clients[id].connected)
-			continue;
-		socket.send(outBuf, &clients[id].endpoint);
-		outBuf.rSeek(0);
-	}
+	// TODO make possible without buffer
+	outBuffer.clear();
+	outBuffer << smsg;
+	// TODO reliability, sequencing
+	ENetPacket *packet = enet_packet_create((const void *) outBuffer.rBegin(), outBuffer.rSize(), 0);
+	enet_host_broadcast(eNetHost, 0, packet);
 }
 
-void Server::disconnect(uint8 id) {
-	world->deletePlayer(id);
-
-	LOG_INFO(logger) << "Player " << (int) id << " disconnected";
-	clients[id].connected = false;
-
-	ServerMessage smsg;
-	smsg.type = PLAYER_LEAVE;
-	smsg.playerJoin.id = id;
-	broadcast(smsg);
+void Server::sync(int perSecond) {
+	time = time + seconds(1) / perSecond;
+	sleepUntil(time + timeShift);
 }

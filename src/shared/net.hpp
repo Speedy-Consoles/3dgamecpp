@@ -14,26 +14,14 @@ enum MessageError : uint8 {
 
 enum ClientMessageType : uint8 {
 	MALFORMED_CLIENT_MESSAGE,
-	CONNECTION_REQUEST,
-	ECHO_REQUEST,
 	PLAYER_INPUT,
 };
 
 enum ServerMessageType : uint8 {
 	MALFORMED_SERVER_MESSAGE,
-	CONNECTION_ACCEPTED,
-	CONNECTION_REJECTED,
-	CONNECTION_TIMEOUT,
-	CONNECTION_RESET,
-	ECHO_RESPONSE,
-	PLAYER_JOIN,
-	PLAYER_LEAVE,
-	PLAYER_SNAPSHOT,
-};
-
-enum RejectionReason : uint8 {
-	FULL,
-	DUPLICATE_ENDPOINT,
+	PLAYER_JOIN_EVENT,
+	PLAYER_LEAVE_EVENT,
+	SNAPSHOT,
 };
 
 struct PlayerInput {
@@ -46,21 +34,14 @@ struct PlayerInput {
 union ServerMessage {
 	ServerMessageType type;
 	struct { ServerMessageType type; MessageError error; } malformed;
-	struct { ServerMessageType type; uint8 id; } conAccepted;
-	struct { ServerMessageType type; RejectionReason reason; } conRejected;
-	struct { ServerMessageType type; } conTimeout;
-	struct { ServerMessageType type; } conReset;
-	struct { ServerMessageType type; } echoResp;
-	struct { ServerMessageType type; uint8 id; } playerJoin;
-	struct { ServerMessageType type; uint8 id; } playerLeave;
+	struct { ServerMessageType type; uint8 id; } playerJoinEvent;
+	struct { ServerMessageType type; uint8 id; } playerLeaveEvent;
 	struct { ServerMessageType type; uint8 id; PlayerSnapshot snapshot; } playerSnapshot;
 };
 
 union ClientMessage {
 	ClientMessageType type;
 	struct { ClientMessageType type; MessageError error; } malformed;
-	struct { ClientMessageType type; } conRequest;
-	struct { ClientMessageType type; } echoRequest;
 	struct { ClientMessageType type; PlayerInput input; } playerInput;
 };
 

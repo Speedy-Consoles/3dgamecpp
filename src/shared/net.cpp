@@ -8,24 +8,14 @@ static logging::Logger logger("net");
 
 Buffer &operator << (Buffer &lhs, const ServerMessage &rhs) {
 	switch (rhs.type) {
-	case CONNECTION_ACCEPTED:
-		return lhs << MAGIC << rhs.conAccepted;
-	case CONNECTION_REJECTED:
-		return lhs << MAGIC << rhs.conRejected;
-	case CONNECTION_TIMEOUT:
-		return lhs << MAGIC << rhs.conTimeout;
-	case CONNECTION_RESET:
-		return lhs << MAGIC << rhs.conReset;
-	case ECHO_RESPONSE:
-		return lhs << MAGIC << rhs.echoResp;
-	case PLAYER_JOIN:
-		return lhs << MAGIC << rhs.playerJoin;
-	case PLAYER_LEAVE:
-		return lhs << MAGIC << rhs.playerLeave;
-	case PLAYER_SNAPSHOT:
+	case PLAYER_JOIN_EVENT:
+		return lhs << MAGIC << rhs.playerJoinEvent;
+	case PLAYER_LEAVE_EVENT:
+		return lhs << MAGIC << rhs.playerLeaveEvent;
+	case SNAPSHOT:
 		return lhs << MAGIC << rhs.playerSnapshot;
 	default:
-		LOG_ERROR(logger) << "Tried to send server message of unknown type";
+		LOG_ERROR(logger) << "Tried to buffer server message of unknown type";
 		return lhs;
 	}
 }
@@ -42,32 +32,17 @@ const Buffer &operator >> (const Buffer &lhs, ServerMessage &rhs) {
 		uint8 type = *lhs.rBegin();
 		const char *oldBegin = lhs.rBegin();
 		switch (type) {
-		case CONNECTION_ACCEPTED:
-			lhs >> rhs.conAccepted;
+		case PLAYER_JOIN_EVENT:
+			lhs >> rhs.playerJoinEvent;
 			break;
-		case CONNECTION_REJECTED:
-			lhs >> rhs.conRejected;
+		case PLAYER_LEAVE_EVENT:
+			lhs >> rhs.playerLeaveEvent;
 			break;
-		case CONNECTION_TIMEOUT:
-			lhs >> rhs.conTimeout;
-			break;
-		case CONNECTION_RESET:
-			lhs >> rhs.conReset;
-			break;
-		case ECHO_RESPONSE:
-			lhs >> rhs.echoResp;
-			break;
-		case PLAYER_JOIN:
-			lhs >> rhs.playerJoin;
-			break;
-		case PLAYER_LEAVE:
-			lhs >> rhs.playerLeave;
-			break;
-		case PLAYER_SNAPSHOT:
+		case SNAPSHOT:
 			lhs >> rhs.playerSnapshot;
 			break;
 		default:
-			LOG_ERROR(logger) << "Received server message of unknown type";
+			LOG_ERROR(logger) << "Buffer contains server message of unknown type";
 			break;
 		}
 		if (lhs.rBegin() == oldBegin) {
@@ -80,14 +55,10 @@ const Buffer &operator >> (const Buffer &lhs, ServerMessage &rhs) {
 
 Buffer &operator << (Buffer &lhs, const ClientMessage &rhs) {
 	switch (rhs.type) {
-	case CONNECTION_REQUEST:
-		return lhs << MAGIC << rhs.conRequest;
-	case ECHO_REQUEST:
-		return lhs << MAGIC << rhs.echoRequest;
 	case PLAYER_INPUT:
 		return lhs << MAGIC << rhs.playerInput;
 	default:
-		LOG_ERROR(logger) << "Tried to send client message of unknown type";
+		LOG_ERROR(logger) << "Tried to buffer client message of unknown type";
 		return lhs;
 	}
 }
@@ -104,17 +75,11 @@ const Buffer &operator >> (const Buffer &lhs, ClientMessage &rhs) {
 		uint8 type = *lhs.rBegin();
 		const char *oldBegin = lhs.rBegin();
 		switch (type) {
-		case CONNECTION_REQUEST:
-			lhs >> rhs.conRequest;
-			break;
-		case ECHO_REQUEST:
-			lhs >> rhs.echoRequest;
-			break;
 		case PLAYER_INPUT:
 			lhs >> rhs.playerInput;
 			break;
 		default:
-			LOG_ERROR(logger) << "Received client message of unknown type";
+			LOG_ERROR(logger) << "Buffer contains client message of unknown type";
 			break;
 		}
 		if (lhs.rBegin() == oldBegin) {

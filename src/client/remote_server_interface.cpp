@@ -217,7 +217,7 @@ void RemoteServerInterface::tick() {
 			if (smsg.playerLeave.id != localPlayerId)
 				client->getWorld()->deletePlayer(smsg.playerLeave.id);
 			break;
-		case PLAYER_SNAPSHOT:
+		case SNAPSHOT:
 			client->getWorld()->getPlayer(smsg.playerSnapshot.id)
 					.applySnapshot(smsg.playerSnapshot.snapshot, smsg.playerSnapshot.id == localPlayerId);
 			break;
