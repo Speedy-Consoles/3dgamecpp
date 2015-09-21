@@ -2,6 +2,8 @@
 #include <future>
 #include <string>
 
+#include <csignal>
+
 #include <enet/enet.h>
 #include <boost/filesystem.hpp>
 
@@ -17,6 +19,14 @@
 
 #include "server_chunk_manager.hpp"
 
+namespace {
+	volatile std::sig_atomic_t closeRequested;
+}
+
+void signalCallback(int signal) {
+	closeRequested = 1;
+}
+
 static logging::Logger logger("server");
 
 struct PeerData {
@@ -29,8 +39,6 @@ struct Client {
 
 class Server {
 private:
-	bool closeRequested = false;
-
 	std::unique_ptr<Save> save;
 	std::unique_ptr<World> world;
 	std::unique_ptr<ServerChunkManager> chunkManager;
@@ -80,6 +88,9 @@ private:
 };
 
 int main() {
+	signal(SIGINT, &signalCallback);
+	signal(SIGTERM, &signalCallback);
+
 	logging::init("logging_srv.conf");
 
 	LOG_TRACE(logger) << "Trace enabled";

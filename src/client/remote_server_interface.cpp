@@ -2,6 +2,7 @@
 
 #include <thread>
 
+#include "shared/engine/time.hpp"
 #include "shared/engine/logging.hpp"
 #include "shared/saves.hpp"
 
@@ -52,10 +53,18 @@ RemoteServerInterface::~RemoteServerInterface() {
 			enet_peer_disconnect(peer, 1);
 			status = DISCONNECTING;
 		}
-		while (status == DISCONNECTING) {
+		Time endTime = getCurrentTime() + seconds(1);
+		while (status == DISCONNECTING && getCurrentTime() < endTime) {
 			tick();
-			sleepFor(millis(100));
+			sleepFor(millis(10));
 		}
+		if (status == DISCONNECTING) {
+			enet_peer_reset(peer);
+			LOG_INFO(logger) << "Forcefully disconnected from server";
+			peer = nullptr;
+			status = NOT_CONNECTED;
+		}
+
 		enet_host_destroy(host);
 	}
 	enet_deinitialize();
@@ -98,10 +107,10 @@ void RemoteServerInterface::tick() {
 	if (status == CONNECTING) {
 		// check for connection success
 		ENetEvent event;
-		while (enet_host_service (host, &event, 0) > 0) {
+		while (enet_host_service(host, &event, 0) > 0) {
 			switch(event.type) {
 			case ENET_EVENT_TYPE_CONNECT:
-				LOG_INFO(logger) << "Successfully connected to server";
+				LOG_INFO(logger) << "Connected to server";
 				status = CONNECTED;
 				break;
 			case ENET_EVENT_TYPE_DISCONNECT:
@@ -122,14 +131,14 @@ void RemoteServerInterface::tick() {
 	} else if(status == DISCONNECTING) {
 		// check for disconnection success
 		ENetEvent event;
-		while (enet_host_service (host, &event, 0) > 0) {
+		while (enet_host_service(host, &event, 0) > 0) {
 			switch(event.type) {
 			case ENET_EVENT_TYPE_CONNECT:
 				LOG_FATAL(logger) << "Unexpected ENetEvent ENET_EVENT_TYPE_CONNECT while disconnecting";
 				break;
 			case ENET_EVENT_TYPE_DISCONNECT:
 				peer = nullptr;
-				LOG_INFO(logger) << "Successfully disconnected from server";
+				LOG_INFO(logger) << "Disconnected from server";
 				status = NOT_CONNECTED;
 				break;
 			case ENET_EVENT_TYPE_RECEIVE:
