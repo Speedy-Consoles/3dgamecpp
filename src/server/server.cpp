@@ -133,6 +133,9 @@ Server::~Server() {
 }
 
 void Server::run() {
+	if (!host)
+		return;
+
 	LOG_INFO(logger) << "Running server";
 
 	time = getCurrentTime();
