@@ -6,7 +6,15 @@
 
 static logging::Logger logger("net");
 
-MessageError getMessageType(const char *data, size_t size, MessageType *type) {
+static const size_t HEADER_SIZE = sizeof(MAGIC) + sizeof(MessageType);
+
+static void writeHeader(MessageType type, char *data) {
+	memcpy(data, MAGIC, sizeof(MAGIC));
+	data += sizeof(MAGIC);
+	*reinterpret_cast<MessageType *>(data) = type;
+}
+
+MessageError readMessageHeader(const char *data, size_t size, MessageType *type) {
 	if (size < sizeof(MAGIC) + sizeof(MessageType))
 		return WRONG_MESSAGE_LENGTH;
 	else if (memcmp(data, MAGIC, sizeof(MAGIC)) != 0)
@@ -15,18 +23,129 @@ MessageError getMessageType(const char *data, size_t size, MessageType *type) {
 	return MESSAGE_OK;
 }
 
-template<> MessageType getMessageType(const PlayerJoinEvent &) {
-	return PLAYER_JOIN_EVENT;
+// TODO (resize packet when serializing?)
+
+#define PLAIN_MSG_START(msg_camel, msg_caps, msg_size) \
+	size_t getMessageSize(const msg_camel &) { return HEADER_SIZE + msg_size; } \
+	MessageType getMessageType(const msg_camel &) { return msg_caps; } \
+	BufferError writeMessage(const msg_camel &msg, char *data, size_t size) { \
+		if (size < HEADER_SIZE + msg_size) \
+			return WRONG_BUFFER_LENGTH; \
+		writeHeader(msg_caps, data); \
+		data += HEADER_SIZE;
+
+#define PLAIN_MSG_MIDDLE(msg_camel, msg_size) \
+		return BUFFER_OK; \
+	} \
+	MessageError readMessageBody(const char *data, size_t size, msg_camel *msg) { \
+		if (size != HEADER_SIZE + msg_size) \
+			return WRONG_MESSAGE_LENGTH; \
+		data += HEADER_SIZE;
+
+#define PLAIN_MSG_END \
+		return MESSAGE_OK; \
+	}
+
+#define READ_TYPE(value, type) { \
+	value = *reinterpret_cast<const type *>(data); \
+	data += sizeof(type); \
 }
 
-template<> MessageType getMessageType(const PlayerLeaveEvent &) {
-	return PLAYER_LEAVE_EVENT;
+#define WRITE_TYPE(value, type) { \
+	*reinterpret_cast<type *>(data) = value; \
+	data += sizeof(type); \
 }
 
-template<> MessageType getMessageType(const Snapshot &) {
-	return SNAPSHOT;
-}
+// PLAYER_JOIN_EVENT
+static const size_t PLAYER_JOIN_EVENT_SIZE = sizeof(uint8);
+PLAIN_MSG_START(PlayerJoinEvent, PLAYER_JOIN_EVENT, PLAYER_JOIN_EVENT_SIZE)
+	WRITE_TYPE(msg.id, uint8)
+PLAIN_MSG_MIDDLE(PlayerJoinEvent, PLAYER_JOIN_EVENT_SIZE)
+	READ_TYPE(msg->id, uint8)
+PLAIN_MSG_END
 
-template<> MessageType getMessageType(const PlayerInput &) {
-	return PLAYER_INPUT;
-}
+// PLAYER_LEAVE_EVENT
+static const size_t PLAYER_LEAVE_EVENT_SIZE = sizeof(uint8);
+PLAIN_MSG_START(PlayerLeaveEvent, PLAYER_LEAVE_EVENT, PLAYER_LEAVE_EVENT_SIZE)
+	WRITE_TYPE(msg.id, uint8)
+PLAIN_MSG_MIDDLE(PlayerLeaveEvent, PLAYER_LEAVE_EVENT_SIZE)
+	READ_TYPE(msg->id, uint8)
+PLAIN_MSG_END
+
+// SNAPSHOT
+static const size_t SNAPSHOT_SIZE =
+		sizeof(uint32)
+		+ MAX_CLIENTS * (
+			sizeof(uint8)
+			+ 3 * sizeof(int64)
+			+ 3 * sizeof(double)
+			+ sizeof(uint16)
+			+ sizeof(int16)
+			+ sizeof(uint8)
+		)
+		+ sizeof(uint8);
+enum PlayerSnapshotFlags : uint8 {
+	SNAPSHOT_FLAG_VALID = 1,
+	SNAPSHOT_FLAG_IS_FLYING = 2,
+};
+PLAIN_MSG_START(Snapshot, SNAPSHOT, SNAPSHOT_SIZE)
+	WRITE_TYPE(msg.tick, uint32)
+	for (int i = 0; i < MAX_CLIENTS; i++) {
+		uint8 flags = 0;
+		if (msg.playerSnapshots[i].valid)
+			flags |= SNAPSHOT_FLAG_VALID;
+		if (msg.playerSnapshots[i].isFlying)
+			flags |= SNAPSHOT_FLAG_IS_FLYING;
+		WRITE_TYPE(flags, uint8)
+		for (int j = 0; j < 3; j++)
+			WRITE_TYPE(msg.playerSnapshots[i].pos[j], int64)
+		for (int j = 0; j < 3; j++)
+			WRITE_TYPE(msg.playerSnapshots[i].vel[j], double)
+		WRITE_TYPE(msg.playerSnapshots[i].yaw, uint16)
+		WRITE_TYPE(msg.playerSnapshots[i].pitch, int16)
+		WRITE_TYPE(msg.playerSnapshots[i].moveInput, uint8)
+	}
+	WRITE_TYPE(msg.localId, uint8);
+PLAIN_MSG_MIDDLE(Snapshot, SNAPSHOT_SIZE)
+	READ_TYPE(msg->tick, uint32);
+	for (int i = 0; i < MAX_CLIENTS; i++) {
+		uint8 flags;
+		READ_TYPE(flags, uint8)
+		msg->playerSnapshots[i].valid = flags & SNAPSHOT_FLAG_VALID;
+		msg->playerSnapshots[i].isFlying = flags & SNAPSHOT_FLAG_IS_FLYING;
+		for (int j = 0; j < 3; j++)
+			READ_TYPE(msg->playerSnapshots[i].pos[j], int64)
+		for (int j = 0; j < 3; j++)
+			READ_TYPE(msg->playerSnapshots[i].vel[j], double)
+		READ_TYPE(msg->playerSnapshots[i].yaw, uint16)
+		READ_TYPE(msg->playerSnapshots[i].pitch, int16)
+		READ_TYPE(msg->playerSnapshots[i].moveInput, uint8)
+	}
+	READ_TYPE(msg->localId, uint8)
+PLAIN_MSG_END
+
+// PLAYER_INPUT
+static const size_t PLAYER_INPUT_SIZE =
+		sizeof(uint8)
+		+ sizeof(uint16)
+		+ sizeof(int16)
+		+ sizeof(uint8);
+enum PlayerInputFlags : uint8 {
+	INPUT_FLAG_IS_FLYING = 1,
+};
+PLAIN_MSG_START(PlayerInput, PLAYER_INPUT, PLAYER_INPUT_SIZE)
+	uint8 flags = 0;
+	if (msg.flying)
+		flags |= INPUT_FLAG_IS_FLYING;
+	WRITE_TYPE(flags, uint8)
+	WRITE_TYPE(msg.yaw, uint16)
+	WRITE_TYPE(msg.pitch, int16)
+	WRITE_TYPE(msg.moveInput, uint8)
+PLAIN_MSG_MIDDLE(PlayerInput, PLAYER_INPUT_SIZE)
+	uint8 flags;
+	READ_TYPE(flags, uint8);
+	msg->flying = (flags & INPUT_FLAG_IS_FLYING) != 0;
+	READ_TYPE(msg->yaw, uint16);
+	READ_TYPE(msg->pitch, int16);
+	READ_TYPE(msg->moveInput, uint8);
+PLAIN_MSG_END

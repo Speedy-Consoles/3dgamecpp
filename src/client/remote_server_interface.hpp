@@ -64,7 +64,7 @@ private:
 		// TODO reliability, order
 		size_t size = getMessageSize(msg);
 		ENetPacket *packet = enet_packet_create(nullptr, size, 0);
-		if (serialize(msg, (char *) packet->data, size))
+		if (writeMessage(msg, (char *) packet->data, size))
 			LOG_ERROR(logger) << "Could not serialize message";
 
 		enet_peer_send(peer, 0, packet);

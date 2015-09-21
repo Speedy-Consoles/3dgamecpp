@@ -202,7 +202,7 @@ void RemoteServerInterface::handlePacket(const enet_uint8 *data, size_t size, si
 	LOG_TRACE(logger) << "Received message of length " << size;
 
 	MessageType type;
-	if (getMessageType((const char *) data, size, &type)) {
+	if (readMessageHeader((const char *) data, size, &type)) {
 		LOG_WARNING(logger) << "Received malformed message";
 		return;
 	}
@@ -218,7 +218,7 @@ void RemoteServerInterface::handlePacket(const enet_uint8 *data, size_t size, si
 	case SNAPSHOT:
 		{
 			Snapshot snapshot;
-			if (deserialize((const char *) data, size, &snapshot)) {
+			if (readMessageBody((const char *) data, size, &snapshot)) {
 				LOG_WARNING(logger) << "Received malformed message";
 				break;
 			}

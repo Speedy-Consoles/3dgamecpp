@@ -35,70 +35,47 @@ enum MessageType : uint8 {
 };
 
 struct PlayerJoinEvent {
-	uint8 id;
+	int id;
 };
 
 struct PlayerLeaveEvent {
-	uint8 id;
+	int id;
 };
 
 struct PlayerSnapshot {
 	bool valid;
 	vec3i64 pos;
 	vec3d vel;
-	uint16 yaw;
-	int16 pitch;
+	int yaw;
+	int pitch;
 	int moveInput;
+
 	bool isFlying;
 };
 
 struct Snapshot {
 	int tick;
 	PlayerSnapshot playerSnapshots[MAX_CLIENTS];
-	uint8 localId;
+	int localId;
 };
 
 struct PlayerInput {
-	uint16 yaw;
-	int16 pitch;
-	uint8 moveInput;
+	int yaw;
+	int pitch;
+	int moveInput;
 	bool flying;
 };
 
-template<typename T> size_t getMessageSize(const T &) {
-	// TODO consider padding
-	return sizeof(MAGIC) + sizeof(MessageType) + sizeof(T);
-}
+MessageError readMessageHeader(const char *data, size_t size, MessageType *type);
 
-MessageError getMessageType(const char *data, size_t size, MessageType *type);
+#define MSG_FUNCS(msg_name) \
+	size_t getMessageSize(const msg_name &); \
+	BufferError writeMessage(const msg_name &msg, char *data, size_t size); \
+	MessageError readMessageBody(const char *data, size_t size, msg_name *msg);
 
-template<typename T> MessageType getMessageType(T &);
-template<> MessageType getMessageType(PlayerJoinEvent&);
-template<> MessageType getMessageType(PlayerLeaveEvent &);
-template<> MessageType getMessageType(Snapshot &);
-template<> MessageType getMessageType(PlayerInput &);
-
-template<typename T> MessageType getMessageType(const T &) {
-	return UNKNOWN_MESSAGE_TYPE;
-}
-
-template<typename T> BufferError serialize(const T &msg, char *data, size_t size) {
-	// TODO (resize?)
-	if (size != getMessageSize(msg))
-		return WRONG_BUFFER_LENGTH;
-	memcpy(data, MAGIC, sizeof(T));
-	data += sizeof(MAGIC);
-	*reinterpret_cast<MessageType *>(data) = getMessageType(msg);
-	data += sizeof(MessageType);
-	memcpy(data, reinterpret_cast<const char *>(&msg), sizeof(T));
-	return BUFFER_OK;
-}
-
-template<typename T> MessageError deserialize(const char *data, size_t size, T *msg) {
-	if (size != getMessageSize(msg))
-		return WRONG_MESSAGE_LENGTH;
-	memcpy(reinterpret_cast<char *>(msg), data, sizeof(T));
-	return MESSAGE_OK;
-}
+MSG_FUNCS(PlayerJoinEvent)
+MSG_FUNCS(PlayerLeaveEvent)
+MSG_FUNCS(Snapshot)
+MSG_FUNCS(PlayerInput)
 
 #endif // NET_HPP
