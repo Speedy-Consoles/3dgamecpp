@@ -1,6 +1,7 @@
 # stuff from the game itself
-saves/
-test/
+/saves/
+/test/
+/chunk_cache/
 loading_order.dat
 *.log
 *.log.*
