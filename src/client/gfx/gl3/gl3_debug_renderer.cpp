@@ -167,20 +167,20 @@ void GL3DebugRenderer::renderDebug() {
 
 	RENDER_LINE("FPS: %.0f", fpsValue * frequency);
 
-	const Player &player = client->getLocalPlayer();
+	const Character &character = client->getLocalCharacter();
 	RENDER_LINE(" ");
-	RENDER_LINE("PLAYER INFO:");
-	RENDER_LINE("x: %" PRId64 " (%" PRId64 ")", player.getPos()[0],
-		(int64)floor(player.getPos()[0] / (double)RESOLUTION));
-	RENDER_LINE("y: %" PRId64 " (%" PRId64 ")", player.getPos()[1],
-		(int64)floor(player.getPos()[1] / (double)RESOLUTION));
-	RENDER_LINE("z: %" PRId64 " (%" PRId64 ")", player.getPos()[2],
-		(int64)floor((player.getPos()[2] - Player::EYE_HEIGHT - 1) / (double)RESOLUTION));
-	RENDER_LINE("yaw:   %6.1f", player.getYaw() / 100.0f);
-	RENDER_LINE("pitch: %6.1f", player.getPitch() / 100.0f);
-	RENDER_LINE("xvel: %8.1f", player.getVel()[0]);
-	RENDER_LINE("yvel: %8.1f", player.getVel()[1]);
-	RENDER_LINE("zvel: %8.1f", player.getVel()[2]);
+	RENDER_LINE("CHARACTER INFO:");
+	RENDER_LINE("x: %" PRId64 " (%" PRId64 ")", character.getPos()[0],
+		(int64)floor(character.getPos()[0] / (double)RESOLUTION));
+	RENDER_LINE("y: %" PRId64 " (%" PRId64 ")", character.getPos()[1],
+		(int64)floor(character.getPos()[1] / (double)RESOLUTION));
+	RENDER_LINE("z: %" PRId64 " (%" PRId64 ")", character.getPos()[2],
+		(int64)floor((character.getPos()[2] - Character::EYE_HEIGHT - 1) / (double)RESOLUTION));
+	RENDER_LINE("yaw:   %6.1f", character.getYaw() / 100.0f);
+	RENDER_LINE("pitch: %6.1f", character.getPitch() / 100.0f);
+	RENDER_LINE("xvel: %8.1f", character.getVel()[0]);
+	RENDER_LINE("yvel: %8.1f", character.getVel()[1]);
+	RENDER_LINE("zvel: %8.1f", character.getVel()[2]);
 
 	const World *world = client->getWorld();
 	RENDER_LINE(" ");

@@ -1,8 +1,8 @@
 #include "chunk_renderer.hpp"
 
+#include "../../shared/game/character.hpp"
 #include "shared/engine/logging.hpp"
 #include "shared/engine/stopwatch.hpp"
-#include "shared/game/player.hpp"
 #include "shared/block_utils.hpp"
 #include "shared/chunk_manager.hpp"
 #include "shared/constants.hpp"
@@ -45,16 +45,16 @@ void ChunkRenderer::setConf(const GraphicsConf &conf, const GraphicsConf &old) {
 }
 
 void ChunkRenderer::tick() {
-	Player &player = client->getLocalPlayer();
-	if (!player.isValid())
+	Character &character = client->getLocalCharacter();
+	if (!character.isValid())
 		return;
 
 	client->getStopwatch()->start(CLOCK_CRT);
 
-	vec3i64 pc = player.getChunkPos();
-	if (pc != oldPlayerChunk) {
+	vec3i64 pc = character.getChunkPos();
+	if (pc != oldCharacterChunk) {
 		// determine new checkChunkIndex
-		vec3i64 diff = pc - oldPlayerChunk;
+		vec3i64 diff = pc - oldCharacterChunk;
 		if (diff.maxAbs() > LO_INDEX_FINISHED_RADIUS[checkChunkIndex]) {
 			checkChunkIndex = 0;
 		} else if (checkChunkIndex > 0) {
@@ -64,7 +64,7 @@ void ChunkRenderer::tick() {
 			else
 				checkChunkIndex = LO_MAX_RADIUS_INDICES[(int) newRadius];
 		}
-		oldPlayerChunk = pc;
+		oldCharacterChunk = pc;
 
 		// delete chunk info of chunks out of range
 		for (auto it = builtChunks.begin(); it != builtChunks.end();) {
@@ -143,20 +143,20 @@ void ChunkRenderer::tick() {
 
 void ChunkRenderer::render() {
 	// render chunks
-	Player &player = client->getLocalPlayer();
-	if (!player.isValid())
+	Character &character = client->getLocalCharacter();
+	if (!character.isValid())
 		return;
 
 	client->getStopwatch()->start(CLOCK_CRR);
 
 	beginRender();
 
-	vec3d lookDir = getVectorFromAngles(player.getYaw() / 100.0f, player.getPitch() / 100.0f);
+	vec3d lookDir = getVectorFromAngles(character.getYaw() / 100.0f, character.getPitch() / 100.0f);
 
 	visibleChunks = 0;
 	visibleFaces = 0;
 
-	vec3i64 pc = player.getChunkPos();
+	vec3i64 pc = character.getChunkPos();
 	for (int i = 0; i < 27; i++) {
 		vec3i64 cc = BIG_CUBE_CYCLE[i].cast<int64>() + pc;
 		auto builtIt = builtChunks.find(cc);
@@ -173,7 +173,7 @@ void ChunkRenderer::render() {
 		if (builtIt != builtChunks.end()
 				&& (cc - pc).norm() >= 2
 				&& (cc - pc).norm() <= renderDistance
-				&& inFrustum(cc, player.getPos(), lookDir)){
+				&& inFrustum(cc, character.getPos(), lookDir)){
 			renderChunk(cc);
 			visibleChunks++;
 			visibleFaces += builtIt->second.numFaces;
@@ -383,33 +383,33 @@ bool ChunkRenderer::chunkHasQuads(ChunkArea area) {
 }
 
 void ChunkRenderer::visibilitySearch() {
-	Player &player = client->getLocalPlayer();
-	if (!player.isValid())
+	Character &character = client->getLocalCharacter();
+	if (!character.isValid())
 		return;
 
-	vec3i64 pc = player.getChunkPos();
+	vec3i64 pc = character.getChunkPos();
 
 	int traversedChunks = 0;
 	while ((
 				!vsFringe.empty()
-				|| pc != vsPlayerChunk
+				|| pc != vsCharacterChunk
 				|| vsRenderDistance != renderDistance
 				|| !changedChunksQueue.empty()
 				|| vsCurrentVersion == 0)
 			&& traversedChunks < MAX_VS_CHUNKS) {
 		vec3i64 startChunkCoords;
 		if (vsFringe.empty()) {
-			if (pc != vsPlayerChunk
+			if (pc != vsCharacterChunk
 					|| vsCurrentVersion == 0
 					|| vsRenderDistance != renderDistance) {
 				for (auto it = vsChunks.begin(); it != vsChunks.end();) {
-					if ((it->first - vsPlayerChunk).norm() > renderDistance) {
+					if ((it->first - vsCharacterChunk).norm() > renderDistance) {
 						it = vsChunks.erase(it);
 					} else {
 						++it;
 					}
 				}
-				vsPlayerChunk = pc;
+				vsCharacterChunk = pc;
 				vsRenderDistance = renderDistance;
 				startChunkCoords = pc;
 				vsCurrentVersion++;
@@ -442,7 +442,7 @@ void ChunkRenderer::visibilitySearch() {
 				}
 				std::sort(cds, cds + 26, vec3i64CompFunc);
 				for (uint i = 0; i < 26; i++) {
-					vec3i64 cc = vsPlayerChunk + cds[i];
+					vec3i64 cc = vsCharacterChunk + cds[i];
 					auto it = vsChunks.find(cc);
 					if (it == vsChunks.end()) {
 						auto pair = vsChunks.insert({cc, ChunkVSInfo()});
@@ -460,7 +460,7 @@ void ChunkRenderer::visibilitySearch() {
 						vec3i64 ncd = cds[i] + DIRS[d].cast<int64>();
 						if (ncd.maxAbs() <= 1)
 							continue;
-						vec3i64 ncc = vsPlayerChunk + ncd;
+						vec3i64 ncc = vsCharacterChunk + ncd;
 						auto nit = vsChunks.find(ncc);
 						if (nit == vsChunks.end()) {
 							auto pair = vsChunks.insert({ncc, ChunkVSInfo()});
@@ -472,7 +472,7 @@ void ChunkRenderer::visibilitySearch() {
 						vsInFringe.insert(ncc);
 					}
 				}
-			} else if ((vsPlayerChunk - startChunkCoords).maxAbs() > 1
+			} else if ((vsCharacterChunk - startChunkCoords).maxAbs() > 1
 					&& startIt->second.ins > 0
 					&& startIt->second.insVersion == vsCurrentVersion) {
 				vsFringe.push(startIt);
@@ -499,9 +499,9 @@ void ChunkRenderer::visibilitySearch() {
 			if (builtIt != builtChunks.end()
 					&& builtIt->second.numFaces > 0
 					&& vsIt->second.ins > 0)
-				renderChunks[page].insert({cc - vsPlayerChunk, cc});
+				renderChunks[page].insert({cc - vsCharacterChunk, cc});
 			else
-				renderChunks[page].erase(cc - vsPlayerChunk);
+				renderChunks[page].erase(cc - vsCharacterChunk);
 
 			for (int d = 0; d < 6; d++) {
 				if (((changedOuts >> d) & 1) == 0)
@@ -509,7 +509,7 @@ void ChunkRenderer::visibilitySearch() {
 
 				vec3i64 ncc = cc + DIRS[d].cast<int64>();
 
-				if ((ncc - vsPlayerChunk).norm() > vsRenderDistance)
+				if ((ncc - vsCharacterChunk).norm() > vsRenderDistance)
 					continue;
 
 				auto nVsIt = vsChunks.find(ncc);
@@ -542,7 +542,7 @@ void ChunkRenderer::visibilitySearch() {
 }
 
 int ChunkRenderer::updateVsChunk(vec3i64 chunkCoords, ChunkVSInfo *vsInfo, int passThroughs) {
-	vec3i64 cd = chunkCoords - vsPlayerChunk;
+	vec3i64 cd = chunkCoords - vsCharacterChunk;
 
 	int oldOuts = vsInfo->outs;
 	if (vsInfo->outsVersion != vsCurrentVersion)

@@ -13,7 +13,7 @@
 
 class LocalServerInterface : public ServerInterface {
 	Client *client;
-	Player *player;
+	Character *character;
 
 	std::unique_ptr<WorldGenerator> worldGenerator;
 	AsyncWorldGenerator asyncWorldGenerator;
@@ -33,7 +33,7 @@ public:
 
 	// player actions
 	void setPlayerMoveInput(int moveInput) override;
-	void setPlayerOrientation(int yaw, int pitch) override;
+	void setCharacterOrientation(int yaw, int pitch) override;
 
 	void setSelectedBlock(uint8 block) override;
 	void placeBlock(vec3i64 bc, uint8 type) override;

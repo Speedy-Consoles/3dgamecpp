@@ -17,17 +17,17 @@ LocalServerInterface::LocalServerInterface(Client *client) :
 	worldGenerator(client->getSave()->getWorldGenerator()),
 	asyncWorldGenerator(worldGenerator.get())
 {
-	client->getWorld()->addPlayer(0);
-	player = &client->getWorld()->getPlayer(0);
+	client->getWorld()->addCharacter(0);
+	character = &client->getWorld()->getCharacter(0);
 
 	vec3i64 spawnBC = client->getSave()->getSpawn();
 	vec3i64 spawnWC = spawnBC * RESOLUTION;
-	spawnWC += vec3i64(RESOLUTION / 2, RESOLUTION / 2, Player::EYE_HEIGHT);
-	player->setPos(spawnWC);
+	spawnWC += vec3i64(RESOLUTION / 2, RESOLUTION / 2, Character::EYE_HEIGHT);
+	character->setPos(spawnWC);
 }
 
 LocalServerInterface::~LocalServerInterface() {
-	client->getWorld()->deletePlayer(0);
+	client->getWorld()->deleteCharacter(0);
 }
 
 ServerInterface::Status LocalServerInterface::getStatus() {
@@ -46,22 +46,22 @@ void LocalServerInterface::setConf(const GraphicsConf &conf, const GraphicsConf 
 }
 
 void LocalServerInterface::tick() {
-	client->getWorld()->tick(0);
+	client->getWorld()->tick();
 }
 
 void LocalServerInterface::setPlayerMoveInput(int moveInput) {
-	if (player->isValid())
-		player->setMoveInput(moveInput);
+	if (character->isValid())
+		character->setMoveInput(moveInput);
 }
 
-void LocalServerInterface::setPlayerOrientation(int yaw, int pitch) {
-	if (player->isValid())
-		player->setOrientation(yaw, pitch);
+void LocalServerInterface::setCharacterOrientation(int yaw, int pitch) {
+	if (character->isValid())
+		character->setOrientation(yaw, pitch);
 }
 
 void LocalServerInterface::setSelectedBlock(uint8 block) {
-	if (player->isValid())
-		player->setBlock(block);
+	if (character->isValid())
+		character->setBlock(block);
 }
 
 void LocalServerInterface::placeBlock(vec3i64 blockCoords, uint8 blockType) {
@@ -107,7 +107,7 @@ void LocalServerInterface::placeBlock(vec3i64 blockCoords, uint8 blockType) {
 }
 
 void LocalServerInterface::toggleFly() {
-	player->setFly(!player->getFly());
+	character->setFly(!character->getFly());
 }
 
 bool LocalServerInterface::requestChunk(Chunk *chunk) {

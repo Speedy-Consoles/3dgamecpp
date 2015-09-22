@@ -11,9 +11,17 @@
 
 static const uint8 MAGIC[4] = {0xaa, 0x0d, 0xbe, 0x15};
 
+enum DisconnectReason : uint32 {
+	TIMEOUT = 0,
+	CLIENT_LEAVE,
+	KICKED,
+	SERVER_SHUTDOWN,
+};
+
 enum MessageError : uint8 {
 	MESSAGE_OK = 0,
-	WRONG_MESSAGE_LENGTH,
+	ABRUPT_MESSAGE_END,
+	MESSAGE_TOO_LONG,
 	WRONG_MAGIC,
 };
 
@@ -31,6 +39,7 @@ enum MessageType : uint8 {
 	SNAPSHOT,
 
 	// Client messages
+	PLAYER_INFO,
 	PLAYER_INPUT,
 };
 
@@ -42,7 +51,7 @@ struct PlayerLeaveEvent {
 	int id;
 };
 
-struct PlayerSnapshot {
+struct CharacterSnapshot {
 	bool valid;
 	vec3i64 pos;
 	vec3d vel;
@@ -55,8 +64,12 @@ struct PlayerSnapshot {
 
 struct Snapshot {
 	int tick;
-	PlayerSnapshot playerSnapshots[MAX_CLIENTS];
+	CharacterSnapshot characterSnapshots[MAX_CLIENTS];
 	int localId;
+};
+
+struct PlayerInfo {
+	std::string name;
 };
 
 struct PlayerInput {
@@ -76,6 +89,7 @@ MessageError readMessageHeader(const char *data, size_t size, MessageType *type)
 MSG_FUNCS(PlayerJoinEvent)
 MSG_FUNCS(PlayerLeaveEvent)
 MSG_FUNCS(Snapshot)
+MSG_FUNCS(PlayerInfo)
 MSG_FUNCS(PlayerInput)
 
 #endif // NET_HPP

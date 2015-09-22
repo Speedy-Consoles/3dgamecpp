@@ -12,7 +12,7 @@
 #include "shared/engine/logging.hpp"
 #include "shared/engine/math.hpp"
 #include "shared/game/world.hpp"
-#include "shared/game/player.hpp"
+#include "../../../shared/game/character.hpp"
 #include "shared/block_utils.hpp"
 #include "shared/chunk_manager.hpp"
 
@@ -34,21 +34,21 @@ GL3ChunkRenderer::~GL3ChunkRenderer() {
 }
 
 void GL3ChunkRenderer::beginRender() {
-	Player &player = client->getLocalPlayer();
-	if (!player.isValid())
+	Character &character = client->getLocalCharacter();
+	if (!character.isValid())
 		return;
 
-	glm::mat4 viewMatrix = glm::rotate(glm::mat4(1.0f), (float) (-player.getPitch() / 36000.0f * TAU), glm::vec3(1.0f, 0.0f, 0.0f));
-	viewMatrix = glm::rotate(viewMatrix, (float) (-player.getYaw() / 36000.0f * TAU), glm::vec3(0.0f, 1.0f, 0.0f));
+	glm::mat4 viewMatrix = glm::rotate(glm::mat4(1.0f), (float) (-character.getPitch() / 36000.0f * TAU), glm::vec3(1.0f, 0.0f, 0.0f));
+	viewMatrix = glm::rotate(viewMatrix, (float) (-character.getYaw() / 36000.0f * TAU), glm::vec3(0.0f, 1.0f, 0.0f));
 	viewMatrix = glm::rotate(viewMatrix, (float) (-TAU / 4.0), glm::vec3(1.0f, 0.0f, 0.0f));
 	viewMatrix = glm::rotate(viewMatrix, (float) (TAU / 4.0), glm::vec3(0.0f, 0.0f, 1.0f));
 
-	vec3i64 playerPos = player.getPos();
+	vec3i64 characterPos = character.getPos();
 	int64 m = RESOLUTION * Chunk::WIDTH;
-	playerTranslationMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(
-		(float) -cycle(playerPos[0], m) / RESOLUTION,
-		(float) -cycle(playerPos[1], m) / RESOLUTION,
-		(float) -cycle(playerPos[2], m) / RESOLUTION)
+	characterTranslationMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(
+		(float) -cycle(characterPos[0], m) / RESOLUTION,
+		(float) -cycle(characterPos[1], m) / RESOLUTION,
+		(float) -cycle(characterPos[2], m) / RESOLUTION)
 	);
 
 	auto *shader = &((GL3Renderer *) renderer)->getShaderManager()->getBlockShader();
@@ -61,15 +61,15 @@ void GL3ChunkRenderer::renderChunk(vec3i64 chunkCoords) {
 	if (it == renderInfos.end() || it->second.vao == 0)
 		return;
 
-	Player &player = client->getLocalPlayer();
-	vec3i64 cd = chunkCoords - player.getChunkPos();
+	Character &character = client->getLocalCharacter();
+	vec3i64 cd = chunkCoords - character.getChunkPos();
 
 	glm::mat4 chunkTranslationMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(
 		(float) (cd[0] * Chunk::WIDTH),
 		(float) (cd[1] * Chunk::WIDTH),
 		(float) (cd[2] * Chunk::WIDTH)
 	));
-	glm::mat4 modelMatrix = playerTranslationMatrix * chunkTranslationMatrix;
+	glm::mat4 modelMatrix = characterTranslationMatrix * chunkTranslationMatrix;
 
 	auto *shader = &((GL3Renderer *) renderer)->getShaderManager()->getBlockShader();
 	shader->setModelMatrix(modelMatrix);

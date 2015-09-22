@@ -16,7 +16,7 @@ static void writeHeader(MessageType type, char *data) {
 
 MessageError readMessageHeader(const char *data, size_t size, MessageType *type) {
 	if (size < sizeof(MAGIC) + sizeof(MessageType))
-		return WRONG_MESSAGE_LENGTH;
+		return ABRUPT_MESSAGE_END;
 	else if (memcmp(data, MAGIC, sizeof(MAGIC)) != 0)
 		return WRONG_MAGIC;
 	*type = *reinterpret_cast<const MessageType *>(data + sizeof(MAGIC));
@@ -25,22 +25,26 @@ MessageError readMessageHeader(const char *data, size_t size, MessageType *type)
 
 // TODO (resize packet when serializing?)
 
-#define PLAIN_MSG_START(msg_camel, msg_caps, msg_size) \
-	size_t getMessageSize(const msg_camel &) { return HEADER_SIZE + msg_size; } \
+#define PLAIN_MSG_START(msg_camel, msg_caps, msg_body_size) \
+	size_t getMessageSize(const msg_camel &) { return HEADER_SIZE + msg_body_size; } \
 	MessageType getMessageType(const msg_camel &) { return msg_caps; } \
 	BufferError writeMessage(const msg_camel &msg, char *data, size_t size) { \
-		if (size < HEADER_SIZE + msg_size) \
+		if (size != HEADER_SIZE + msg_body_size) \
 			return WRONG_BUFFER_LENGTH; \
 		writeHeader(msg_caps, data); \
-		data += HEADER_SIZE;
+		data += HEADER_SIZE; \
+		size -= HEADER_SIZE;
 
-#define PLAIN_MSG_MIDDLE(msg_camel, msg_size) \
+#define PLAIN_MSG_MIDDLE(msg_camel, msg_body_size) \
 		return BUFFER_OK; \
 	} \
 	MessageError readMessageBody(const char *data, size_t size, msg_camel *msg) { \
-		if (size != HEADER_SIZE + msg_size) \
-			return WRONG_MESSAGE_LENGTH; \
-		data += HEADER_SIZE;
+		if (size < HEADER_SIZE + msg_body_size) \
+			return ABRUPT_MESSAGE_END; \
+		else if (size > HEADER_SIZE + msg_body_size) \
+			return MESSAGE_TOO_LONG; \
+		data += HEADER_SIZE; \
+		size -= HEADER_SIZE;
 
 #define PLAIN_MSG_END \
 		return MESSAGE_OK; \
@@ -49,11 +53,13 @@ MessageError readMessageHeader(const char *data, size_t size, MessageType *type)
 #define READ_TYPE(value, type) { \
 	value = *reinterpret_cast<const type *>(data); \
 	data += sizeof(type); \
+	size -= sizeof(type); \
 }
 
 #define WRITE_TYPE(value, type) { \
 	*reinterpret_cast<type *>(data) = value; \
 	data += sizeof(type); \
+	size -= sizeof(type); \
 }
 
 // PLAYER_JOIN_EVENT
@@ -92,18 +98,18 @@ PLAIN_MSG_START(Snapshot, SNAPSHOT, SNAPSHOT_SIZE)
 	WRITE_TYPE(msg.tick, uint32)
 	for (int i = 0; i < MAX_CLIENTS; i++) {
 		uint8 flags = 0;
-		if (msg.playerSnapshots[i].valid)
+		if (msg.characterSnapshots[i].valid)
 			flags |= SNAPSHOT_FLAG_VALID;
-		if (msg.playerSnapshots[i].isFlying)
+		if (msg.characterSnapshots[i].isFlying)
 			flags |= SNAPSHOT_FLAG_IS_FLYING;
 		WRITE_TYPE(flags, uint8)
 		for (int j = 0; j < 3; j++)
-			WRITE_TYPE(msg.playerSnapshots[i].pos[j], int64)
+			WRITE_TYPE(msg.characterSnapshots[i].pos[j], int64)
 		for (int j = 0; j < 3; j++)
-			WRITE_TYPE(msg.playerSnapshots[i].vel[j], double)
-		WRITE_TYPE(msg.playerSnapshots[i].yaw, uint16)
-		WRITE_TYPE(msg.playerSnapshots[i].pitch, int16)
-		WRITE_TYPE(msg.playerSnapshots[i].moveInput, uint8)
+			WRITE_TYPE(msg.characterSnapshots[i].vel[j], double)
+		WRITE_TYPE(msg.characterSnapshots[i].yaw, uint16)
+		WRITE_TYPE(msg.characterSnapshots[i].pitch, int16)
+		WRITE_TYPE(msg.characterSnapshots[i].moveInput, uint8)
 	}
 	WRITE_TYPE(msg.localId, uint8);
 PLAIN_MSG_MIDDLE(Snapshot, SNAPSHOT_SIZE)
@@ -111,18 +117,47 @@ PLAIN_MSG_MIDDLE(Snapshot, SNAPSHOT_SIZE)
 	for (int i = 0; i < MAX_CLIENTS; i++) {
 		uint8 flags;
 		READ_TYPE(flags, uint8)
-		msg->playerSnapshots[i].valid = flags & SNAPSHOT_FLAG_VALID;
-		msg->playerSnapshots[i].isFlying = flags & SNAPSHOT_FLAG_IS_FLYING;
+		msg->characterSnapshots[i].valid = flags & SNAPSHOT_FLAG_VALID;
+		msg->characterSnapshots[i].isFlying = flags & SNAPSHOT_FLAG_IS_FLYING;
 		for (int j = 0; j < 3; j++)
-			READ_TYPE(msg->playerSnapshots[i].pos[j], int64)
+			READ_TYPE(msg->characterSnapshots[i].pos[j], int64)
 		for (int j = 0; j < 3; j++)
-			READ_TYPE(msg->playerSnapshots[i].vel[j], double)
-		READ_TYPE(msg->playerSnapshots[i].yaw, uint16)
-		READ_TYPE(msg->playerSnapshots[i].pitch, int16)
-		READ_TYPE(msg->playerSnapshots[i].moveInput, uint8)
+			READ_TYPE(msg->characterSnapshots[i].vel[j], double)
+		READ_TYPE(msg->characterSnapshots[i].yaw, uint16)
+		READ_TYPE(msg->characterSnapshots[i].pitch, int16)
+		READ_TYPE(msg->characterSnapshots[i].moveInput, uint8)
 	}
 	READ_TYPE(msg->localId, uint8)
 PLAIN_MSG_END
+
+// PLAYER_INFO
+size_t getMessageSize(const PlayerInfo &msg) { return HEADER_SIZE + msg.name.size() + 1; }
+MessageType getMessageType(const PlayerInfo &) { return PLAYER_INFO; }
+BufferError writeMessage(const PlayerInfo &msg, char *data, size_t size) {
+	if (size != getMessageSize(msg))
+		return WRONG_BUFFER_LENGTH;
+	writeHeader(PLAYER_INFO, data);
+	data += HEADER_SIZE;
+	size -= HEADER_SIZE;
+	msg.name.copy(data, msg.name.size());
+	return BUFFER_OK;
+}
+MessageError readMessageBody(const char *data, size_t size, PlayerInfo *msg) {
+	if (size < HEADER_SIZE + 1)
+		return ABRUPT_MESSAGE_END;
+	data += HEADER_SIZE;
+	size -= HEADER_SIZE;
+	char *pc = (char *) std::memchr(data, '\0', size);
+	if (!pc)
+		return ABRUPT_MESSAGE_END;
+	size_t nameLength = pc - data;
+	if (nameLength + 1 < size)
+		return MESSAGE_TOO_LONG;
+	msg->name = std::string(data);
+	data = pc + 1;
+	size -= nameLength + 1;
+	return MESSAGE_OK;
+}
 
 // PLAYER_INPUT
 static const size_t PLAYER_INPUT_SIZE =

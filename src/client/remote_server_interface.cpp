@@ -2,6 +2,7 @@
 
 #include <thread>
 
+#include "shared/engine/time.hpp"
 #include "shared/engine/logging.hpp"
 #include "shared/saves.hpp"
 
@@ -29,6 +30,7 @@ RemoteServerInterface::RemoteServerInterface(Client *client, std::string address
 		return;
 	}
 
+	LOG_INFO(logger) << "Connecting to " << addressString;
 	ENetAddress address;
 	enet_address_set_host(&address, addressString.c_str());
 	address.port = 8547;
@@ -49,13 +51,21 @@ RemoteServerInterface::~RemoteServerInterface() {
 			status = NOT_CONNECTED;
 		}
 		if (status == CONNECTED) {
-			enet_peer_disconnect(peer, 1);
+			enet_peer_disconnect(peer, (enet_uint32) CLIENT_LEAVE);
 			status = DISCONNECTING;
 		}
-		while (status == DISCONNECTING) {
+		Time endTime = getCurrentTime() + seconds(1);
+		while (status == DISCONNECTING && getCurrentTime() < endTime) {
 			tick();
-			sleepFor(millis(100));
+			sleepFor(millis(10));
 		}
+		if (status == DISCONNECTING) {
+			enet_peer_reset(peer);
+			LOG_INFO(logger) << "Forcefully disconnected from server";
+			peer = nullptr;
+			status = NOT_CONNECTED;
+		}
+
 		enet_host_destroy(host);
 	}
 	enet_deinitialize();
@@ -73,11 +83,11 @@ void RemoteServerInterface::setPlayerMoveInput(int moveInput) {
 	this->moveInput = moveInput;
 }
 
-void RemoteServerInterface::setPlayerOrientation(int yaw, int pitch) {
+void RemoteServerInterface::setCharacterOrientation(int yaw, int pitch) {
 	this->yaw = yaw;
 	this->pitch= pitch;
 	if (status == CONNECTED)
-		client->getWorld()->getPlayer(localPlayerId).setOrientation(yaw, pitch);
+		client->getWorld()->getCharacter(localCharacterId).setOrientation(yaw, pitch);
 }
 
 void RemoteServerInterface::setSelectedBlock(uint8 block) {
@@ -95,78 +105,16 @@ void RemoteServerInterface::placeBlock(vec3i64 bc, uint8 type) {
 }
 
 void RemoteServerInterface::tick() {
-	if (status == CONNECTING) {
-		// check for connection success
-		ENetEvent event;
-		while (enet_host_service (host, &event, 0) > 0) {
-			switch(event.type) {
-			case ENET_EVENT_TYPE_CONNECT:
-				LOG_INFO(logger) << "Successfully connected to server";
-				status = CONNECTED;
-				break;
-			case ENET_EVENT_TYPE_DISCONNECT:
-				enet_peer_reset(peer);
-				peer = nullptr;
-				LOG_WARNING(logger) << "Could not connect to server";
-				status = CONNECTION_ERROR;
-				break;
-			case ENET_EVENT_TYPE_RECEIVE:
-				LOG_WARNING(logger) << "Unexpected ENetEvent ENET_EVENT_TYPE_RECEIVE while connecting";
-				enet_packet_destroy (event.packet);
-				break;
-			default:
-				LOG_WARNING(logger) << "Received unknown ENetEvent type << event.type";
-				break;
-			}
-		}
-	} else if(status == DISCONNECTING) {
-		// check for disconnection success
-		ENetEvent event;
-		while (enet_host_service (host, &event, 0) > 0) {
-			switch(event.type) {
-			case ENET_EVENT_TYPE_CONNECT:
-				LOG_FATAL(logger) << "Unexpected ENetEvent ENET_EVENT_TYPE_CONNECT while disconnecting";
-				break;
-			case ENET_EVENT_TYPE_DISCONNECT:
-				peer = nullptr;
-				LOG_INFO(logger) << "Successfully disconnected from server";
-				status = NOT_CONNECTED;
-				break;
-			case ENET_EVENT_TYPE_RECEIVE:
-				LOG_WARNING(logger) << "Unexpected ENetEvent ENET_EVENT_TYPE_RECEIVE while disconnecting";
-				enet_packet_destroy (event.packet);
-				break;
-			default:
-				LOG_WARNING(logger) << "Received unknown ENetEvent type" << event.type;
-				break;
-			}
-		}
-	}
+	if (status == CONNECTING)
+		updateNetConnecting();
+	else if(status == DISCONNECTING)
+		updateNetDisconnecting();
 
 	if (status != CONNECTED)
 		return;
 
 	// receive
-	ENetEvent event;
-	while (enet_host_service(host, &event, 0) > 0) {
-		switch(event.type) {
-		case ENET_EVENT_TYPE_CONNECT:
-			LOG_WARNING(logger) << "Unexpected ENetEvent ENET_EVENT_TYPE_CONNECT";
-			break;
-		case ENET_EVENT_TYPE_DISCONNECT:
-			peer = nullptr;
-			LOG_INFO(logger) << "Disconnected from server";
-			status = NOT_CONNECTED;
-			break;
-		case ENET_EVENT_TYPE_RECEIVE:
-			handlePacket(event.packet->data, event.packet->dataLength, event.channelID);
-			enet_packet_destroy(event.packet);
-			break;
-		default:
-			LOG_WARNING(logger) << "Received unknown ENetEvent type";
-			break;
-		}
-	}
+	updateNet();
 
 	if (status != CONNECTED)
 		return;
@@ -187,7 +135,7 @@ void RemoteServerInterface::setConf(const GraphicsConf &conf, const GraphicsConf
 }
 
 int RemoteServerInterface::getLocalClientId() {
-	return localPlayerId;
+	return localCharacterId;
 }
 
 bool RemoteServerInterface::requestChunk(Chunk *chunk) {
@@ -196,6 +144,95 @@ bool RemoteServerInterface::requestChunk(Chunk *chunk) {
 
 Chunk *RemoteServerInterface::getNextChunk() {
 	return asyncWorldGenerator.getNextChunk();
+}
+
+void RemoteServerInterface::updateNet() {
+	ENetEvent event;
+	while (enet_host_service(host, &event, 0) > 0) {
+		switch(event.type) {
+		case ENET_EVENT_TYPE_CONNECT:
+			LOG_WARNING(logger) << "Unexpected ENetEvent ENET_EVENT_TYPE_CONNECT";
+			break;
+		case ENET_EVENT_TYPE_DISCONNECT:
+			peer = nullptr;
+			switch ((DisconnectReason) event.data) {
+			case TIMEOUT:
+				LOG_INFO(logger) << "Connection time out";
+				break;
+			case KICKED:
+				LOG_INFO(logger) << "Kicked from server";
+				break;
+			case SERVER_SHUTDOWN:
+				LOG_INFO(logger) << "Server shutting down";
+				break;
+			default:
+				LOG_WARNING(logger) << "Unexpected DisconnectReason " << (DisconnectReason) event.data;
+				break;
+			}
+			status = NOT_CONNECTED;
+			break;
+		case ENET_EVENT_TYPE_RECEIVE:
+			handlePacket(event.packet->data, event.packet->dataLength, event.channelID);
+			enet_packet_destroy(event.packet);
+			break;
+		default:
+			LOG_WARNING(logger) << "Received unknown ENetEvent type";
+			break;
+		}
+	}
+}
+
+void RemoteServerInterface::updateNetConnecting() {
+	ENetEvent event;
+	while (enet_host_service(host, &event, 0) > 0) {
+		switch(event.type) {
+		case ENET_EVENT_TYPE_CONNECT:
+			LOG_INFO(logger) << "Connected to server";
+			status = CONNECTED;
+			{
+				PlayerInfo info;
+				info.name = "Unnamed player";
+				send(info);
+			}
+			break;
+		case ENET_EVENT_TYPE_DISCONNECT:
+			enet_peer_reset(peer);
+			peer = nullptr;
+			LOG_WARNING(logger) << "Could not connect to server";
+			status = CONNECTION_ERROR;
+			break;
+		case ENET_EVENT_TYPE_RECEIVE:
+			LOG_WARNING(logger) << "Unexpected ENetEvent ENET_EVENT_TYPE_RECEIVE while connecting";
+			enet_packet_destroy (event.packet);
+			break;
+		default:
+			LOG_WARNING(logger) << "Received unknown ENetEvent type << event.type";
+			break;
+		}
+	}
+}
+
+void RemoteServerInterface::updateNetDisconnecting() {
+	ENetEvent event;
+	while (enet_host_service(host, &event, 0) > 0) {
+		switch(event.type) {
+		case ENET_EVENT_TYPE_CONNECT:
+			LOG_FATAL(logger) << "Unexpected ENetEvent ENET_EVENT_TYPE_CONNECT while disconnecting";
+			break;
+		case ENET_EVENT_TYPE_DISCONNECT:
+			peer = nullptr;
+			LOG_INFO(logger) << "Disconnected from server";
+			status = NOT_CONNECTED;
+			break;
+		case ENET_EVENT_TYPE_RECEIVE:
+			LOG_WARNING(logger) << "Unexpected ENetEvent ENET_EVENT_TYPE_RECEIVE while disconnecting";
+			enet_packet_destroy (event.packet);
+			break;
+		default:
+			LOG_WARNING(logger) << "Received unknown ENetEvent type" << event.type;
+			break;
+		}
+	}
 }
 
 void RemoteServerInterface::handlePacket(const enet_uint8 *data, size_t size, size_t channel) {
@@ -222,16 +259,16 @@ void RemoteServerInterface::handlePacket(const enet_uint8 *data, size_t size, si
 				LOG_WARNING(logger) << "Received malformed message";
 				break;
 			}
-			localPlayerId = snapshot.localId;
+			localCharacterId = snapshot.localId;
 			for (int i = 0; i < MAX_CLIENTS; ++i) {
-				PlayerSnapshot &playerSnapshot = *(snapshot.playerSnapshots + i);
-				Player &player = client->getWorld()->getPlayer(i);
-				if (playerSnapshot.valid && !player.isValid())
-					client->getWorld()->addPlayer(i);
-				else if (!playerSnapshot.valid && player.isValid())
-					client->getWorld()->deletePlayer(i);
-				if (playerSnapshot.valid)
-					player.applySnapshot(playerSnapshot, i == localPlayerId);
+				CharacterSnapshot &characterSnapshot = *(snapshot.characterSnapshots + i);
+				Character &character = client->getWorld()->getCharacter(i);
+				if (characterSnapshot.valid && !character.isValid())
+					client->getWorld()->addCharacter(i);
+				else if (!characterSnapshot.valid && character.isValid())
+					client->getWorld()->deleteCharacter(i);
+				if (characterSnapshot.valid)
+					character.applySnapshot(characterSnapshot, i == localCharacterId);
 			}
 		}
 		break;

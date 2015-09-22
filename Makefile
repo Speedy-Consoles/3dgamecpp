@@ -15,7 +15,7 @@ CLIENT_OBJECT_FILES = \
 	client/gfx/texture_manager.cpp.o\
 	client/gfx/gl2/gl2_renderer.cpp.o\
 	client/gfx/gl2/gl2_chunk_renderer.cpp.o\
-	client/gfx/gl2/gl2_player_renderer.cpp.o\
+	client/gfx/gl2/gl2_character_renderer.cpp.o\
 	client/gfx/gl2/gl2_target_renderer.cpp.o\
 	client/gfx/gl2/gl2_crosshair_renderer.cpp.o\
 	client/gfx/gl2/gl2_sky_renderer.cpp.o\
@@ -25,7 +25,7 @@ CLIENT_OBJECT_FILES = \
 	client/gfx/gl2/gl2_texture_manager.cpp.o\
 	client/gfx/gl3/gl3_renderer.cpp.o\
 	client/gfx/gl3/gl3_chunk_renderer.cpp.o\
-	client/gfx/gl3/gl3_player_renderer.cpp.o\
+	client/gfx/gl3/gl3_character_renderer.cpp.o\
 	client/gfx/gl3/gl3_sky_renderer.cpp.o\
 	client/gfx/gl3/gl3_target_renderer.cpp.o\
 	client/gfx/gl3/gl3_crosshair_renderer.cpp.o\
@@ -51,6 +51,7 @@ CLIENT_OBJECT_FILES = \
 SERVER_EXECUTABLE_NAME = 3dgame_srv
 SERVER_OBJECT_FILES = \
 	server/server.cpp.o\
+	server/game_server.cpp.o\
 	server/server_chunk_manager.cpp.o
 
 # test stuff
@@ -71,7 +72,7 @@ SHARED_OBJECT_FILES = \
 	shared/engine/unicode_int.cpp.o\
 	shared/game/chunk.cpp.o\
 	shared/game/perlin.cpp.o\
-	shared/game/player.cpp.o\
+	shared/game/character.cpp.o\
 	shared/game/world.cpp.o\
 	shared/game/world_generator.cpp.o\
 	shared/game/elevation_generator.cpp.o\

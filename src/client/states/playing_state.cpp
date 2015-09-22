@@ -1,5 +1,6 @@
 #include "playing_state.hpp"
 
+#include "../../shared/game/character.hpp"
 #include "client/client.hpp"
 #include "client/events.hpp"
 #include "client/config.hpp"
@@ -8,8 +9,6 @@
 #include "client/gfx/graphics.hpp"
 #include "client/gfx/gl2/gl2_renderer.hpp"
 #include "client/gfx/gl3/gl3_renderer.hpp"
-
-#include "shared/game/player.hpp"
 
 #include "shared/engine/logging.hpp"
 #include "shared/engine/math.hpp"
@@ -58,22 +57,22 @@ void PlayingState::update() {
 		int moveInput = 0;
 
 		if (keyboard[SDL_SCANCODE_D])
-			moveInput |= Player::MOVE_INPUT_FLAG_STRAFE_RIGHT;
+			moveInput |= Character::MOVE_INPUT_FLAG_STRAFE_RIGHT;
 		if (keyboard[SDL_SCANCODE_A])
-			moveInput |= Player::MOVE_INPUT_FLAG_STRAFE_LEFT;
+			moveInput |= Character::MOVE_INPUT_FLAG_STRAFE_LEFT;
 
 		if (keyboard[SDL_SCANCODE_SPACE])
-			moveInput |= Player::MOVE_INPUT_FLAG_FLY_UP;
+			moveInput |= Character::MOVE_INPUT_FLAG_FLY_UP;
 		if (keyboard[SDL_SCANCODE_LCTRL])
-			moveInput |= Player::MOVE_INPUT_FLAG_FLY_DOWN;
+			moveInput |= Character::MOVE_INPUT_FLAG_FLY_DOWN;
 
 		if (keyboard[SDL_SCANCODE_W])
-			moveInput |= Player::MOVE_INPUT_FLAG_MOVE_FORWARD;
+			moveInput |= Character::MOVE_INPUT_FLAG_MOVE_FORWARD;
 		if (keyboard[SDL_SCANCODE_S])
-			moveInput |= Player::MOVE_INPUT_FLAG_MOVE_BACKWARD;
+			moveInput |= Character::MOVE_INPUT_FLAG_MOVE_BACKWARD;
 
 		if (keyboard[SDL_SCANCODE_LSHIFT])
-			moveInput |= Player::MOVE_INPUT_FLAG_SPRINT;
+			moveInput |= Character::MOVE_INPUT_FLAG_SPRINT;
 
 		serverInterface->setPlayerMoveInput(moveInput);
 	} else {
@@ -86,30 +85,30 @@ void PlayingState::update() {
 
 void PlayingState::handle(const Event &e) {
 	ServerInterface *serverInterface = client->getServerInterface();
-	const Player &player = client->getLocalPlayer();
+	const Character &character = client->getLocalCharacter();
 
 	switch (e.type) {
 
 	case EventType::MOUSE_MOTION: {
-		int yaw = player.getYaw();
-		int  pitch = player.getPitch();
+		int yaw = character.getYaw();
+		int  pitch = character.getPitch();
 		yaw -= (int)round(e.event.motion.xrel * 10.0f);
 		pitch -= (int)round(e.event.motion.yrel * 10.0f);
 		yaw = cycle(yaw, 36000);
 		pitch = std::max(pitch, -9000);
 		pitch = std::min(pitch, 9000);
-		serverInterface->setPlayerOrientation(yaw, pitch);
+		serverInterface->setCharacterOrientation(yaw, pitch);
 		break;
 	} // case MOUSE_MOTION
 
 	case EventType::MOUSE_BUTTON_PRESSED: {
 		vec3i64 bc;
 		int d;
-		bool target = player.getTargetedFace(&bc, &d);
+		bool target = character.getTargetedFace(&bc, &d);
 		if (target) {
 			if (e.event.button.button == SDL_BUTTON_LEFT) {
 				vec3i64 rbc = bc + DIRS[d].cast<int64>();
-				serverInterface->placeBlock(rbc, player.getBlock());
+				serverInterface->placeBlock(rbc, character.getBlock());
 			} else if (e.event.button.button == SDL_BUTTON_RIGHT) {
 				serverInterface->placeBlock(bc, 0);
 			}
@@ -118,7 +117,7 @@ void PlayingState::handle(const Event &e) {
 	} // case MOUSE_BUTTON_PRESSED
 
 	case EventType::MOUSE_WHEEL: {
-		auto block = player.getBlock();
+		auto block = character.getBlock();
 		block += e.event.wheel.y;
 		static const int NUMBER_OF_BLOCKS = client->getBlockManager()->getNumberOfBlocks();
 		while (block > NUMBER_OF_BLOCKS) {

@@ -1,4 +1,4 @@
-#include "player.hpp"
+#include "character.hpp"
 
 #include <limits>
 #include <algorithm>
@@ -11,19 +11,19 @@
 
 using namespace std;
 
-const double Player::FLY_ACCELERATION = 1000;
-const double Player::FLY_SPRINT_ACCELERATION = 5000;
-const double Player::FLY_FRICTION = 0.8;
-const double Player::GROUND_ACCELERATION = 25;
-const double Player::GROUND_SPRINT_ACCELERATION = 50;
-const double Player::GROUND_FRICTION = 0.25;
-const double Player::AIR_ACCELERATION = 2;
-const double Player::AIR_FRICTION = 0.005;
-const double Player::AIR_ACCELERATION_PENALTY = 0.01;
-const double Player::JUMP_SPEED = 260;
+const double Character::FLY_ACCELERATION = 1000;
+const double Character::FLY_SPRINT_ACCELERATION = 5000;
+const double Character::FLY_FRICTION = 0.8;
+const double Character::GROUND_ACCELERATION = 25;
+const double Character::GROUND_SPRINT_ACCELERATION = 50;
+const double Character::GROUND_FRICTION = 0.25;
+const double Character::AIR_ACCELERATION = 2;
+const double Character::AIR_FRICTION = 0.005;
+const double Character::AIR_ACCELERATION_PENALTY = 0.01;
+const double Character::JUMP_SPEED = 260;
 
-void Player::tick(bool isLocalPlayer) {
-	// TODO don't let player enter unloaded chunk
+void Character::tick() {
+	// TODO don't let character enter unloaded chunk
 	vec3i64 cp = getChunkPos();
 	if (world->isChunkLoaded(cp) || isFlying) {
 		calcVel();
@@ -34,7 +34,7 @@ void Player::tick(bool isLocalPlayer) {
 	}
 }
 
-void Player::collide() {
+void Character::collide() {
 	vec3i64 newPos = pos;
 	vec3d remVel = vel;
 	double remDist = remVel.norm();
@@ -90,58 +90,58 @@ void Player::collide() {
 	pos = newPos;
 }
 
-void Player::ghost() {
+void Character::ghost() {
 	pos[0] += (int64)round(vel[0]);
 	pos[1] += (int64)round(vel[1]);
 	pos[2] += (int64)round(vel[2]);
 }
 
-void Player::setPos(vec3i64 pos) {
+void Character::setPos(vec3i64 pos) {
 	this->pos = pos;
 }
 
-void Player::setOrientation(int yaw, int pitch) {
+void Character::setOrientation(int yaw, int pitch) {
 	this->yaw = yaw;
 	this->pitch = pitch;
 }
 
-void Player::setFly(bool isFlying) {
+void Character::setFly(bool isFlying) {
 	this->isFlying = isFlying;
 }
 
-void Player::setMoveInput(int moveInput) {
+void Character::setMoveInput(int moveInput) {
 	this->moveInput = moveInput;
 }
 
-bool Player::getFly() const {
+bool Character::getFly() const {
 	return isFlying;
 }
 
-vec3i64 Player::getPos() const {
+vec3i64 Character::getPos() const {
 	return pos;
 }
 
-vec3d Player::getVel() const {
+vec3d Character::getVel() const {
 	return vel;
 }
 
-int Player::getYaw() const {
+int Character::getYaw() const {
 	return yaw;
 }
 
-int Player::getPitch() const {
+int Character::getPitch() const {
 	return pitch;
 }
 
-int Player::getMoveInput() const {
+int Character::getMoveInput() const {
 	return moveInput;
 }
 
-vec3i64 Player::getChunkPos() const {
+vec3i64 Character::getChunkPos() const {
 	return bc2cc(wc2bc(pos));
 }
 
-void Player::create(World *world) {
+void Character::create(World *world) {
 	this->world = world;
 
 	vel = vec3d(0, 0, 0);
@@ -154,16 +154,16 @@ void Player::create(World *world) {
 	valid = true;
 }
 
-void Player::destroy() {
+void Character::destroy() {
 	world = nullptr;
 	valid = false;
 }
 
-bool Player::isValid() const {
+bool Character::isValid() const {
 	return valid;
 }
 
-bool Player::getTargetedFace(vec3i64 *outBlock, int *outFaceDir) const {
+bool Character::getTargetedFace(vec3i64 *outBlock, int *outFaceDir) const {
 	vec3d dir = getVectorFromAngles(yaw / 100.0f, pitch / 100.0f);
 	vec3i64 hitBlock[3];
 	int faceDir[3];
@@ -179,7 +179,7 @@ bool Player::getTargetedFace(vec3i64 *outBlock, int *outFaceDir) const {
 	return false;
 }
 
-void Player::applySnapshot(const PlayerSnapshot &snapshot, bool local) {
+void Character::applySnapshot(const CharacterSnapshot &snapshot, bool local) {
 	pos = snapshot.pos;
 	vel = snapshot.vel;
 	isFlying = snapshot.isFlying;
@@ -190,11 +190,11 @@ void Player::applySnapshot(const PlayerSnapshot &snapshot, bool local) {
 	}
 }
 
-PlayerSnapshot Player::makeSnapshot(int tick) const {
-	return PlayerSnapshot{tick, pos, vel, (uint16) yaw, (int16) pitch, moveInput, isFlying};
+CharacterSnapshot Character::makeSnapshot(int tick) const {
+	return CharacterSnapshot{tick, pos, vel, (uint16) yaw, (int16) pitch, moveInput, isFlying};
 }
 
-void Player::calcVel() {
+void Character::calcVel() {
 	vec3d inFac(0.0, 0.0, 0.0);
 	bool right = (moveInput & MOVE_INPUT_FLAG_STRAFE_RIGHT) > 0;
 	bool left = (moveInput & MOVE_INPUT_FLAG_STRAFE_LEFT) > 0;
@@ -262,7 +262,7 @@ void Player::calcVel() {
 	vel += inFac * acceleration - vel * friction;
 }
 
-bool Player::isGrounded() const {
+bool Character::isGrounded() const {
 	if (vel[2] > 0)
 		return false;
 	for (int i = 0; i < 4; i++) {

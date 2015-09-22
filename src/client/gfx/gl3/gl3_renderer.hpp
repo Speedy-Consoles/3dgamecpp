@@ -16,7 +16,7 @@
 
 class Graphics;
 class World;
-class Player;
+class Character;
 class Menu;
 class Stopwatch;
 
@@ -39,7 +39,7 @@ private:
 	// chunk renderer
 	GL3ChunkRenderer *p_chunkRenderer;
 	std::unique_ptr<ComponentRenderer> chunkRenderer;
-	std::unique_ptr<ComponentRenderer> playerRenderer;
+	std::unique_ptr<ComponentRenderer> characterRenderer;
 	std::unique_ptr<ComponentRenderer> targetRenderer;
 	std::unique_ptr<ComponentRenderer> skyRenderer;
 	std::unique_ptr<ComponentRenderer> crosshairRenderer;

@@ -1,5 +1,5 @@
 #ifndef GL2_TARGET_RENDERER_HPP_
-#define GL2_Player_RENDERER_HPP_
+#define GL2_TARGET_RENDERER_HPP_
 
 #include "shared/engine/macros.hpp"
 #include "shared/engine/vmath.hpp"

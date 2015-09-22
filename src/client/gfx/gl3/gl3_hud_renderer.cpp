@@ -21,8 +21,8 @@ void GL3HudRenderer::render() {
 	if (client->getStateId() != Client::StateId::PLAYING)
 		return;
 
-	const Player &player = client->getLocalPlayer();
-	if (!player.isValid())
+	const Character &character = client->getLocalCharacter();
+	if (!character.isValid())
 		return;
 
 	return;

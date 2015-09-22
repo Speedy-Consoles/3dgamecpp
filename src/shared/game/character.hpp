@@ -1,12 +1,12 @@
-#ifndef PLAYER_HPP
-#define PLAYER_HPP
+#ifndef CHARACTER_HPP
+#define CHARACTER_HPP
 
 #include "shared/engine/vmath.hpp"
 #include "shared/net.hpp"
 
 class World;
 
-class Player {
+class Character {
 public:
 	static const double FLY_ACCELERATION;
 	static const double FLY_SPRINT_ACCELERATION;
@@ -50,7 +50,7 @@ private:
 	uint8 block = 1;
 
 public:
-	void tick(bool isLocalPlayer);
+	void tick();
 	
 	void setPos(vec3i64 pos);
 	void setOrientation(int yaw, int pitch);
@@ -74,8 +74,8 @@ public:
 
 	bool getTargetedFace(vec3i64 *outBlock, int *outFaceDir) const;
 
-	void applySnapshot(const PlayerSnapshot &snapshot, bool local);
-	PlayerSnapshot makeSnapshot(int tick) const;
+	void applySnapshot(const CharacterSnapshot &snapshot, bool local);
+	CharacterSnapshot makeSnapshot(int tick) const;
 
 private:
 	void calcVel();
@@ -85,4 +85,4 @@ private:
 	bool isGrounded() const;
 };
 
-#endif // PLAYER_HPP
+#endif // CHARACTER_HPP

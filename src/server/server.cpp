@@ -1,85 +1,34 @@
+#include "server.hpp"
+
 #include <thread>
 #include <future>
 #include <string>
 
-#include <enet/enet.h>
+#include <csignal>
+
 #include <boost/filesystem.hpp>
 
-#include "shared/engine/logging.hpp"
 #include "shared/engine/std_types.hpp"
-#include "shared/engine/time.hpp"
 #include "shared/engine/random.hpp"
-#include "shared/game/world.hpp"
-#include "shared/saves.hpp"
 #include "shared/block_utils.hpp"
-#include "shared/constants.hpp"
 #include "shared/net.hpp"
 
-#include "server_chunk_manager.hpp"
+#include "game_server.hpp"
+
+namespace {
+	volatile std::sig_atomic_t closeRequested;
+}
+
+static void signalCallback(int) {
+	closeRequested = 1;
+}
 
 static logging::Logger logger("server");
 
-struct PeerData {
-	int id;
-};
-
-struct Client {
-	ENetPeer *peer = nullptr;
-};
-
-class Server {
-private:
-	bool closeRequested = false;
-
-	std::unique_ptr<Save> save;
-	std::unique_ptr<World> world;
-	std::unique_ptr<ServerChunkManager> chunkManager;
-
-	Client clients[MAX_CLIENTS];
-
-	ENetHost *host;
-
-	// time keeping
-	Time time = 0;
-
-public:
-	Server(uint16 port, const char *worldId = "default");
-	~Server();
-
-	void run();
-
-private:
-	void updateNet();
-
-	void handleConnect(ENetPeer *peer);
-	void handleDisconnect(ENetPeer *peer);
-	void handlePacket(const enet_uint8 *data, size_t size, size_t channel, ENetPeer *peer);
-
-	void sendSnapshots(int tick);
-
-	template<typename T> void send(T &msg, int clientId) {
-		// TODO reliability, order
-		size_t size = getMessageSize(msg);
-		ENetPacket *packet = enet_packet_create(nullptr, size, 0);
-		if (writeMessage(msg, (char *) packet->data, size))
-			LOG_ERROR(logger) << "Could not serialize message";
-
-		enet_peer_send(clients[clientId].peer, 0, packet);
-	}
-
-	template<typename T> void broadcast(T &msg) {
-		// TODO reliability, order
-		size_t size = getMessageSize(msg);
-		ENetPacket *packet = enet_packet_create(nullptr, size, 0);
-		if (writeMessage(msg, (char *) packet->data, size))
-			LOG_ERROR(logger) << "Could not serialize message";
-		enet_host_broadcast(host, 0, packet);
-	}
-
-	void sync(int perSecond);
-};
-
 int main() {
+	signal(SIGINT, &signalCallback);
+	signal(SIGTERM, &signalCallback);
+
 	logging::init("logging_srv.conf");
 
 	LOG_TRACE(logger) << "Trace enabled";
@@ -98,22 +47,9 @@ int main() {
 }
 
 Server::Server(uint16 port, const char *worldId) {
-	LOG_INFO(logger) << "Creating Server";
+	LOG_INFO(logger) << "Creating server";
 
-	save = std::unique_ptr<Save>(new Save(worldId));
-	boost::filesystem::path path(save->getPath());
-	if (!boost::filesystem::exists(path)) {
-		boost::filesystem::create_directories(path);
-		std::random_device rng;
-		boost::random::uniform_int_distribution<uint64> distr;
-		uint64 seed = distr(rng);
-		save->initialize(worldId, seed);
-		save->store();
-	}
-
-	ServerChunkManager *cm = new ServerChunkManager(save->getWorldGenerator(), save->getChunkArchive());
-	chunkManager = std::unique_ptr<ServerChunkManager>(cm);
-	world = std::unique_ptr<World>(new World(chunkManager.get()));
+	gameServer = std::unique_ptr<GameServer>(new GameServer(this, worldId));
 
 	if (enet_initialize() != 0)
 		LOG_FATAL(logger) << "An error occurred while initializing ENet.";
@@ -133,19 +69,18 @@ Server::~Server() {
 }
 
 void Server::run() {
+	if (!host)
+		return;
+
 	LOG_INFO(logger) << "Running server";
 
 	time = getCurrentTime();
 
-	int tick = 0;
 	while (!closeRequested) {
 		updateNet();
+		kickUnfriendly();
 
-		world->tick(-1);
-		chunkManager->tick();
-
-		//TODO use makeSnapshot
-		sendSnapshots(tick);
+		gameServer->tick();
 
 		// Time remTime = time + seconds(1) / TICK_SPEED - getCurrentTime();
 
@@ -154,6 +89,20 @@ void Server::run() {
 	}
 
 	LOG_INFO(logger) << "Shutting down server";
+
+	host->duplicatePeers = 0;
+
+	for (int i = 0; i < MAX_CLIENTS; ++i) {
+		if (clientInfos[i].status != INVALID && clientInfos[i].status != DISCONNECTING) {
+			enet_peer_disconnect(clientInfos[i].peer, (enet_uint32) SERVER_SHUTDOWN);
+			clientInfos[i].status = DISCONNECTING;
+		}
+	}
+
+	Time endTime = getCurrentTime() + seconds(1);
+	while (numClients > 0 && getCurrentTime() < endTime) {
+		updateNetShutdown();
+	}
 }
 
 void Server::updateNet() {
@@ -164,7 +113,7 @@ void Server::updateNet() {
 			handleConnect(event.peer);
 			break;
 		case ENET_EVENT_TYPE_DISCONNECT:
-			handleDisconnect(event.peer);
+			handleDisconnect(event.peer, (DisconnectReason) event.data);
 			break;
 		case ENET_EVENT_TYPE_RECEIVE:
 			handlePacket(
@@ -182,44 +131,74 @@ void Server::updateNet() {
 	}
 }
 
+void Server::updateNetShutdown() {
+	ENetEvent event;
+	if (enet_host_service(host, &event, 10) > 0) {
+		switch (event.type) {
+		case ENET_EVENT_TYPE_CONNECT:
+			LOG_WARNING(logger) << "Received ENetEvent ENET_EVENT_TYPE_CONNECT while shutting down";
+			enet_peer_reset(event.peer);
+			break;
+		case ENET_EVENT_TYPE_DISCONNECT:
+			numClients--;
+			break;
+		case ENET_EVENT_TYPE_RECEIVE:
+			LOG_WARNING(logger) << "Ignoring ENetEvent ENET_EVENT_TYPE_RECEIVE while shutting down";
+			enet_packet_destroy(event.packet);
+			break;
+		default:
+			LOG_WARNING(logger) << "Received unknown ENetEvent type << event.type";
+			break;
+		}
+	}
+}
+
+void Server::kickUnfriendly() {
+	for (int i = 0; i < MAX_CLIENTS; ++i) {
+		if (clientInfos[i].status == CONNECTING && getCurrentTime() > clientInfos[i].connectionStartTime + seconds(2)) {
+			enet_peer_disconnect(clientInfos[i].peer, (enet_uint32) KICKED);
+			clientInfos[i].status = DISCONNECTING;
+		}
+	}
+}
+
 void Server::handleConnect(ENetPeer *peer) {
 	int id = -1;
 	for (int i = 0; i < (int) MAX_CLIENTS; i++) {
-		if (!clients[i].peer) {
+		if (clientInfos[i].status == INVALID) {
 			id = i;
 			peer->data = new PeerData{id};
-			clients[id].peer = peer;
+			clientInfos[id].peer = peer;
+			clientInfos[id].status = CONNECTING;
+			clientInfos[id].connectionStartTime = getCurrentTime();
 			break;
 		}
 	}
 	if (id == -1) {
 		enet_peer_reset(peer);
-		LOG_FATAL(logger) << "Could not find unused id for new player";
+		LOG_ERROR(logger) << "Could not find unused id for new client";
 		return;
 	}
 
-	world->addPlayer(id);
+	numClients++;
 
-	PlayerJoinEvent pje;
-	pje.id = id;
-	broadcast(pje);
-
-	LOG_INFO(logger) << "New Player " << id;
+	LOG_DEBUG(logger) << "Incoming connection: " << id;
 }
 
-void Server::handleDisconnect(ENetPeer *peer) {
+void Server::handleDisconnect(ENetPeer *peer, DisconnectReason reason) {
 	int id = ((PeerData *) peer->data)->id;
+
+	LOG_DEBUG(logger) << "Disconnected: " << (int) id;
+
+	if(clientInfos[id].status == PLAYING)
+		gameServer->onPlayerLeave(id, reason);
+
 	delete (PeerData *)peer->data;
 	peer->data = nullptr;
-	clients[id].peer = nullptr;
+	clientInfos[id].peer = nullptr;
+	clientInfos[id].status = INVALID;
 
-	world->deletePlayer(id);
-
-	PlayerLeaveEvent ple;
-	ple.id = id;
-	broadcast(ple);
-
-	LOG_INFO(logger) << "Player " << (int) id << " disconnected";
+	numClients--;
 }
 
 void Server::handlePacket(const enet_uint8 *data, size_t size, size_t channel, ENetPeer *peer) {
@@ -232,57 +211,42 @@ void Server::handlePacket(const enet_uint8 *data, size_t size, size_t channel, E
 	}
 
 	int id = ((PeerData *) peer->data)->id;
-	LOG_TRACE(logger) << "Message type: " << (int) type << ", Player id: " << (int) id;
-	switch (type) {
-	case PLAYER_INPUT:
-		{
-			PlayerInput input;
-			if (readMessageBody((const char *) data, size, &input)) {
+	LOG_TRACE(logger) << "Message type: " << (int) type << ", client id: " << (int) id;
+	switch (clientInfos[id].status) {
+	case CONNECTING:
+		if (type == PLAYER_INFO) {
+			PlayerInfo info;
+			if (readMessageBody((const char *) data, size, &info)) {
 				LOG_WARNING(logger) << "Received malformed message";
 				break;
 			}
-			int yaw = input.yaw;
-			int pitch = input.pitch;
-			world->getPlayer(id).setOrientation(yaw, pitch);
-			world->getPlayer(id).setMoveInput(input.moveInput);
-			world->getPlayer(id).setFly(input.flying);
+			clientInfos[id].status = PLAYING;
+			gameServer->onPlayerJoin(id, info);
+		} else
+			LOG_WARNING(logger) << "Received message of type " << type << " from client without player info";
+		break;
+	case DISCONNECTING:
+		LOG_WARNING(logger) << "Received message from disconnecting client";
+		break;
+	case PLAYING:
+		switch (type) {
+		case PLAYER_INPUT:
+			{
+				PlayerInput input;
+				if (readMessageBody((const char *) data, size, &input)) {
+					LOG_WARNING(logger) << "Received malformed message";
+					break;
+				}
+				gameServer->onPlayerInput(id, input);
+			}
+			break;
+		default:
+			LOG_WARNING(logger) << "Received message of unknown type " << type;
+			break;
 		}
 		break;
 	default:
-		LOG_WARNING(logger) << "Received message of unknown type " << type;
 		break;
-	}
-}
-
-void Server::sendSnapshots(int tick) {
-	Snapshot snapshot;
-	snapshot.tick = tick;
-	for (int i = 0; i < MAX_CLIENTS; ++i) {
-		PlayerSnapshot &playerSnapshot = *(snapshot.playerSnapshots + i);
-		if (!clients[i].peer) {
-			playerSnapshot.valid = false;
-			playerSnapshot.pos = vec3i64(0, 0, 0);
-			playerSnapshot.vel = vec3d(0.0, 0.0, 0.0);
-			playerSnapshot.yaw = 0;
-			playerSnapshot.pitch = 0;
-			playerSnapshot.moveInput = 0;
-			playerSnapshot.isFlying = false;
-			continue;
-		}
-		playerSnapshot.valid = true;
-		playerSnapshot.pos = world->getPlayer(i).getPos();
-		playerSnapshot.vel = world->getPlayer(i).getVel();
-		playerSnapshot.yaw = (uint16) world->getPlayer(i).getYaw();
-		playerSnapshot.pitch = (int16) world->getPlayer(i).getPitch();
-		playerSnapshot.moveInput = world->getPlayer(i).getMoveInput();
-		playerSnapshot.isFlying = world->getPlayer(i).getFly();
-	}
-
-	for (int i = 0; i < MAX_CLIENTS; ++i) {
-		if (!clients[i].peer)
-			continue;
-		snapshot.localId = i;
-		send(snapshot, i);
 	}
 }
 

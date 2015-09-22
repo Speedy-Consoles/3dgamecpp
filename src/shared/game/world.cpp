@@ -18,7 +18,7 @@ World::World(ChunkManager *chunkManager) :
 {
 	LOG_DEBUG(logger) << "Creating World";
 	for (int i = 0; i < MAX_CLIENTS; ++i) {
-		oldPlayerValids[i] = false;
+		oldCharValids[i] = false;
 	}
 }
 
@@ -26,12 +26,12 @@ World::~World() {
 	LOG_DEBUG(logger) << "Deleting World";
 }
 
-void World::tick(uint localPlayerID) {
+void World::tick() {
 	if (chunkManager)
 		requestChunks();
 	for (uint i = 0; i < MAX_CLIENTS; i++) {
-		if (players[i].isValid())
-			players[i].tick(i == localPlayerID);
+		if (characters[i].isValid())
+			characters[i].tick();
 	}
 	if (chunkManager)
 		releaseChunks();
@@ -39,14 +39,14 @@ void World::tick(uint localPlayerID) {
 
 void World::requestChunks() {
 	for (int p = 0; p < MAX_CLIENTS; p++) {
-		if (!players[p].isValid()) {
-			oldPlayerValids[p] = false;
+		if (!characters[p].isValid()) {
+			oldCharValids[p] = false;
 			continue;
 		}
-		vec3i64 pc = players[p].getChunkPos();
-		if (!oldPlayerValids[p] || pc != oldPlayerChunks[p]) {
-			oldPlayerValids[p] = true;
-			oldPlayerChunks[p] = pc;
+		vec3i64 pc = characters[p].getChunkPos();
+		if (!oldCharValids[p] || pc != oldCharChunks[p]) {
+			oldCharValids[p] = true;
+			oldCharChunks[p] = pc;
 			int checkChunkIndex = 0;
 			while(LOADING_ORDER[checkChunkIndex].norm() <= LOADING_DISTANCE) {
 				vec3i64 cc = pc + LOADING_ORDER[checkChunkIndex].cast<int64>();
@@ -67,9 +67,9 @@ void World::releaseChunks() {
 		bool inRange = false;
 
 		for (int p = 0; p < MAX_CLIENTS; p++) {
-			if (!players[p].isValid())
+			if (!characters[p].isValid())
 				continue;
-			if ((cc - players[p].getChunkPos()).maxAbs() <= (int) LOADING_DISTANCE + 1) {
+			if ((cc - characters[p].getChunkPos()).maxAbs() <= (int) LOADING_DISTANCE + 1) {
 				inRange = true;
 				break;
 			}
@@ -191,27 +191,27 @@ size_t World::getNumNeededChunks() const {
 	return neededChunks.size();
 }
 
-Player &World::getPlayer(int playerID) {
-	return players[playerID];
+Character &World::getCharacter(int charId) {
+	return characters[charId];
 }
 
-const Player &World::getPlayer(int playerID) const {
-	return players[playerID];
+const Character &World::getCharacter(int charId) const {
+	return characters[charId];
 }
 
-void World::addPlayer(int playerID) {
-	players[playerID].create(this);
+void World::addCharacter(int charId) {
+	characters[charId].create(this);
 }
 
-void World::deletePlayer(int playerID) {
-	players[playerID].destroy();
+void World::deleteCharacter(int charId) {
+	characters[charId].destroy();
 }
 
-WorldSnapshot World::makeSnapshot(int tick) const {
-	WorldSnapshot snapshot;
-	for (uint i = 0; i < MAX_CLIENTS; i++) {
-		if (players[i].isValid())
-			snapshot.playerSnapshots[i] = players[i].makeSnapshot(tick);
-	}
-	return snapshot;
-}
+//Snapshot World::makeSnapshot(int tick) const {
+//	Snapshot snapshot;
+//	for (uint i = 0; i < MAX_CLIENTS; i++) {
+//		if (characters[i].isValid())
+//			snapshot.characterSnapshots[i] = characters[i].makeSnapshot(tick);
+//	}
+//	return snapshot;
+//}
