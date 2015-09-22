@@ -34,14 +34,16 @@ struct PeerData {
 };
 
 enum ClientStatus {
-	UNNAMED,
+	INVALID,
+	CONNECTING,
 	PLAYING,
 	DISCONNECTING,
 };
 
 struct Client {
 	ENetPeer *peer = nullptr;
-	ClientStatus status = UNNAMED;
+	ClientStatus status = INVALID;
+	Time connectionStartTime = 0;
 	std::string name;
 
 };
@@ -70,6 +72,8 @@ public:
 private:
 	void updateNet();
 	void updateNetShutdown();
+	void sendSnapshots(int tick);
+	void kickUnfriendly();
 
 	void handleConnect(ENetPeer *peer);
 	void handleDisconnect(ENetPeer *peer, DisconnectReason reason);
@@ -77,8 +81,7 @@ private:
 
 	void onPlayerJoin(int id);
 	void onPlayerLeave(int id, DisconnectReason reason);
-
-	void sendSnapshots(int tick);
+	void onPlayerInput(int id, PlayerInput &input);
 
 	template<typename T> void send(T &msg, int clientId) {
 		// TODO reliability, order
@@ -169,6 +172,7 @@ void Server::run() {
 	int tick = 0;
 	while (!closeRequested) {
 		updateNet();
+		kickUnfriendly();
 
 		world->tick(-1);
 		chunkManager->tick();
@@ -187,7 +191,7 @@ void Server::run() {
 	host->duplicatePeers = 0;
 
 	for (int i = 0; i < MAX_CLIENTS; ++i) {
-		if (clients[i].peer && clients[i].status != DISCONNECTING) {
+		if (clients[i].status != INVALID && clients[i].status != DISCONNECTING) {
 			enet_peer_disconnect(clients[i].peer, (enet_uint32) SERVER_SHUTDOWN);
 			clients[i].status = DISCONNECTING;
 		}
@@ -247,14 +251,56 @@ void Server::updateNetShutdown() {
 	}
 }
 
+void Server::sendSnapshots(int tick) {
+	Snapshot snapshot;
+	snapshot.tick = tick;
+	for (int i = 0; i < MAX_CLIENTS; ++i) {
+		PlayerSnapshot &playerSnapshot = *(snapshot.playerSnapshots + i);
+		if (clients[i].status != PLAYING) {
+			playerSnapshot.valid = false;
+			playerSnapshot.pos = vec3i64(0, 0, 0);
+			playerSnapshot.vel = vec3d(0.0, 0.0, 0.0);
+			playerSnapshot.yaw = 0;
+			playerSnapshot.pitch = 0;
+			playerSnapshot.moveInput = 0;
+			playerSnapshot.isFlying = false;
+			continue;
+		}
+		playerSnapshot.valid = true;
+		playerSnapshot.pos = world->getPlayer(i).getPos();
+		playerSnapshot.vel = world->getPlayer(i).getVel();
+		playerSnapshot.yaw = (uint16) world->getPlayer(i).getYaw();
+		playerSnapshot.pitch = (int16) world->getPlayer(i).getPitch();
+		playerSnapshot.moveInput = world->getPlayer(i).getMoveInput();
+		playerSnapshot.isFlying = world->getPlayer(i).getFly();
+	}
+
+	for (int i = 0; i < MAX_CLIENTS; ++i) {
+		if (clients[i].status != PLAYING)
+			continue;
+		snapshot.localId = i;
+		send(snapshot, i);
+	}
+}
+
+void Server::kickUnfriendly() {
+	for (int i = 0; i < MAX_CLIENTS; ++i) {
+		if (clients[i].status == CONNECTING && getCurrentTime() > clients[i].connectionStartTime + seconds(2)) {
+			enet_peer_disconnect(clients[i].peer, (enet_uint32) KICKED);
+			clients[i].status = DISCONNECTING;
+		}
+	}
+}
+
 void Server::handleConnect(ENetPeer *peer) {
 	int id = -1;
 	for (int i = 0; i < (int) MAX_CLIENTS; i++) {
-		if (!clients[i].peer) {
+		if (clients[i].status == INVALID) {
 			id = i;
 			peer->data = new PeerData{id};
 			clients[id].peer = peer;
-			clients[id].status = UNNAMED;
+			clients[id].status = CONNECTING;
+			clients[id].connectionStartTime = getCurrentTime();
 			break;
 		}
 	}
@@ -271,15 +317,18 @@ void Server::handleConnect(ENetPeer *peer) {
 
 void Server::handleDisconnect(ENetPeer *peer, DisconnectReason reason) {
 	int id = ((PeerData *) peer->data)->id;
-	delete (PeerData *)peer->data;
-	peer->data = nullptr;
-	clients[id].peer = nullptr;
-
-	numClients--;
 
 	LOG_DEBUG(logger) << "Disconnected: " << (int) id;
 
-	onPlayerLeave(id, reason);
+	if(clients[id].status == PLAYING)
+		onPlayerLeave(id, reason);
+
+	delete (PeerData *)peer->data;
+	peer->data = nullptr;
+	clients[id].peer = nullptr;
+	clients[id].status = INVALID;
+
+	numClients--;
 }
 
 void Server::handlePacket(const enet_uint8 *data, size_t size, size_t channel, ENetPeer *peer) {
@@ -294,7 +343,7 @@ void Server::handlePacket(const enet_uint8 *data, size_t size, size_t channel, E
 	int id = ((PeerData *) peer->data)->id;
 	LOG_TRACE(logger) << "Message type: " << (int) type << ", Player id: " << (int) id;
 	switch (clients[id].status) {
-	case UNNAMED:
+	case CONNECTING:
 		if (type == PLAYER_INFO) {
 			PlayerInfo info;
 			if (readMessageBody((const char *) data, size, &info)) {
@@ -319,11 +368,7 @@ void Server::handlePacket(const enet_uint8 *data, size_t size, size_t channel, E
 					LOG_WARNING(logger) << "Received malformed message";
 					break;
 				}
-				int yaw = input.yaw;
-				int pitch = input.pitch;
-				world->getPlayer(id).setOrientation(yaw, pitch);
-				world->getPlayer(id).setMoveInput(input.moveInput);
-				world->getPlayer(id).setFly(input.flying);
+				onPlayerInput(id, input);
 			}
 			break;
 		default:
@@ -366,36 +411,12 @@ void Server::onPlayerLeave(int id, DisconnectReason reason) {
 	}
 }
 
-void Server::sendSnapshots(int tick) {
-	Snapshot snapshot;
-	snapshot.tick = tick;
-	for (int i = 0; i < MAX_CLIENTS; ++i) {
-		PlayerSnapshot &playerSnapshot = *(snapshot.playerSnapshots + i);
-		if (!clients[i].peer) {
-			playerSnapshot.valid = false;
-			playerSnapshot.pos = vec3i64(0, 0, 0);
-			playerSnapshot.vel = vec3d(0.0, 0.0, 0.0);
-			playerSnapshot.yaw = 0;
-			playerSnapshot.pitch = 0;
-			playerSnapshot.moveInput = 0;
-			playerSnapshot.isFlying = false;
-			continue;
-		}
-		playerSnapshot.valid = true;
-		playerSnapshot.pos = world->getPlayer(i).getPos();
-		playerSnapshot.vel = world->getPlayer(i).getVel();
-		playerSnapshot.yaw = (uint16) world->getPlayer(i).getYaw();
-		playerSnapshot.pitch = (int16) world->getPlayer(i).getPitch();
-		playerSnapshot.moveInput = world->getPlayer(i).getMoveInput();
-		playerSnapshot.isFlying = world->getPlayer(i).getFly();
-	}
-
-	for (int i = 0; i < MAX_CLIENTS; ++i) {
-		if (!clients[i].peer)
-			continue;
-		snapshot.localId = i;
-		send(snapshot, i);
-	}
+void Server::onPlayerInput(int id, PlayerInput &input) {
+	int yaw = input.yaw;
+	int pitch = input.pitch;
+	world->getPlayer(id).setOrientation(yaw, pitch);
+	world->getPlayer(id).setMoveInput(input.moveInput);
+	world->getPlayer(id).setFly(input.flying);
 }
 
 void Server::sync(int perSecond) {
