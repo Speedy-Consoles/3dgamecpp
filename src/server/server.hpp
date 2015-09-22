@@ -52,22 +52,28 @@ public:
 
 	int getTick() { return tick; }
 
-	template<typename T> void send(T &msg, int clientId) {
+	// TODO think about channels
+	// maybe chat and events in different channels
+	template<typename T> void send(T &msg, int clientId, bool reliable) {
 		static logging::Logger logger("server");
-		// TODO reliability, order
 		size_t size = getMessageSize(msg);
-		ENetPacket *packet = enet_packet_create(nullptr, size, 0);
+		enet_uint32 flags = 0;
+		if (reliable)
+			flags |= ENET_PACKET_FLAG_RELIABLE;
+		ENetPacket *packet = enet_packet_create(nullptr, size, flags);
 		if (writeMessage(msg, (char *) packet->data, size))
 			LOG_ERROR(logger) << "Could not serialize message";
 
 		enet_peer_send(clientInfos[clientId].peer, 0, packet);
 	}
 
-	template<typename T> void broadcast(T &msg) {
+	template<typename T> void broadcast(T &msg, bool reliable) {
 		static logging::Logger logger("server");
-		// TODO reliability, order
 		size_t size = getMessageSize(msg);
-		ENetPacket *packet = enet_packet_create(nullptr, size, 0);
+		enet_uint32 flags = 0;
+		if (reliable)
+			flags |= ENET_PACKET_FLAG_RELIABLE;
+		ENetPacket *packet = enet_packet_create(nullptr, size, flags);
 		if (writeMessage(msg, (char *) packet->data, size))
 			LOG_ERROR(logger) << "Could not serialize message";
 		enet_host_broadcast(host, 0, packet);
