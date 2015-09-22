@@ -1,23 +1,17 @@
+#include "server.hpp"
+
 #include <thread>
 #include <future>
 #include <string>
 
 #include <csignal>
 
-#include <enet/enet.h>
 #include <boost/filesystem.hpp>
 
-#include "shared/engine/logging.hpp"
 #include "shared/engine/std_types.hpp"
-#include "shared/engine/time.hpp"
 #include "shared/engine/random.hpp"
-#include "shared/game/world.hpp"
-#include "shared/saves.hpp"
 #include "shared/block_utils.hpp"
-#include "shared/constants.hpp"
 #include "shared/net.hpp"
-
-#include "server_chunk_manager.hpp"
 
 namespace {
 	volatile std::sig_atomic_t closeRequested;
@@ -28,82 +22,6 @@ static void signalCallback(int) {
 }
 
 static logging::Logger logger("server");
-
-struct PeerData {
-	int id;
-};
-
-enum ClientStatus {
-	INVALID,
-	CONNECTING,
-	PLAYING,
-	DISCONNECTING,
-};
-
-struct Client {
-	ENetPeer *peer = nullptr;
-	ClientStatus status = INVALID;
-	Time connectionStartTime = 0;
-	std::string name;
-
-};
-
-class Server {
-private:
-	std::unique_ptr<Save> save;
-	std::unique_ptr<ServerChunkManager> chunkManager;
-	std::unique_ptr<World> world;
-
-	Client clients[MAX_CLIENTS];
-
-	int numClients = 0;
-
-	ENetHost *host;
-
-	// time keeping
-	Time time = 0;
-
-public:
-	Server(uint16 port, const char *worldId = "default");
-	~Server();
-
-	void run();
-
-private:
-	void updateNet();
-	void updateNetShutdown();
-	void sendSnapshots(int tick);
-	void kickUnfriendly();
-
-	void handleConnect(ENetPeer *peer);
-	void handleDisconnect(ENetPeer *peer, DisconnectReason reason);
-	void handlePacket(const enet_uint8 *data, size_t size, size_t channel, ENetPeer *peer);
-
-	void onPlayerJoin(int id);
-	void onPlayerLeave(int id, DisconnectReason reason);
-	void onPlayerInput(int id, PlayerInput &input);
-
-	template<typename T> void send(T &msg, int clientId) {
-		// TODO reliability, order
-		size_t size = getMessageSize(msg);
-		ENetPacket *packet = enet_packet_create(nullptr, size, 0);
-		if (writeMessage(msg, (char *) packet->data, size))
-			LOG_ERROR(logger) << "Could not serialize message";
-
-		enet_peer_send(clients[clientId].peer, 0, packet);
-	}
-
-	template<typename T> void broadcast(T &msg) {
-		// TODO reliability, order
-		size_t size = getMessageSize(msg);
-		ENetPacket *packet = enet_packet_create(nullptr, size, 0);
-		if (writeMessage(msg, (char *) packet->data, size))
-			LOG_ERROR(logger) << "Could not serialize message";
-		enet_host_broadcast(host, 0, packet);
-	}
-
-	void sync(int perSecond);
-};
 
 int main() {
 	signal(SIGINT, &signalCallback);
@@ -191,9 +109,9 @@ void Server::run() {
 	host->duplicatePeers = 0;
 
 	for (int i = 0; i < MAX_CLIENTS; ++i) {
-		if (clients[i].status != INVALID && clients[i].status != DISCONNECTING) {
-			enet_peer_disconnect(clients[i].peer, (enet_uint32) SERVER_SHUTDOWN);
-			clients[i].status = DISCONNECTING;
+		if (clientInfos[i].status != INVALID && clientInfos[i].status != DISCONNECTING) {
+			enet_peer_disconnect(clientInfos[i].peer, (enet_uint32) SERVER_SHUTDOWN);
+			clientInfos[i].status = DISCONNECTING;
 		}
 	}
 
@@ -256,7 +174,7 @@ void Server::sendSnapshots(int tick) {
 	snapshot.tick = tick;
 	for (int i = 0; i < MAX_CLIENTS; ++i) {
 		PlayerSnapshot &playerSnapshot = *(snapshot.playerSnapshots + i);
-		if (clients[i].status != PLAYING) {
+		if (clientInfos[i].status != PLAYING) {
 			playerSnapshot.valid = false;
 			playerSnapshot.pos = vec3i64(0, 0, 0);
 			playerSnapshot.vel = vec3d(0.0, 0.0, 0.0);
@@ -276,7 +194,7 @@ void Server::sendSnapshots(int tick) {
 	}
 
 	for (int i = 0; i < MAX_CLIENTS; ++i) {
-		if (clients[i].status != PLAYING)
+		if (clientInfos[i].status != PLAYING)
 			continue;
 		snapshot.localId = i;
 		send(snapshot, i);
@@ -285,9 +203,9 @@ void Server::sendSnapshots(int tick) {
 
 void Server::kickUnfriendly() {
 	for (int i = 0; i < MAX_CLIENTS; ++i) {
-		if (clients[i].status == CONNECTING && getCurrentTime() > clients[i].connectionStartTime + seconds(2)) {
-			enet_peer_disconnect(clients[i].peer, (enet_uint32) KICKED);
-			clients[i].status = DISCONNECTING;
+		if (clientInfos[i].status == CONNECTING && getCurrentTime() > clientInfos[i].connectionStartTime + seconds(2)) {
+			enet_peer_disconnect(clientInfos[i].peer, (enet_uint32) KICKED);
+			clientInfos[i].status = DISCONNECTING;
 		}
 	}
 }
@@ -295,12 +213,12 @@ void Server::kickUnfriendly() {
 void Server::handleConnect(ENetPeer *peer) {
 	int id = -1;
 	for (int i = 0; i < (int) MAX_CLIENTS; i++) {
-		if (clients[i].status == INVALID) {
+		if (clientInfos[i].status == INVALID) {
 			id = i;
 			peer->data = new PeerData{id};
-			clients[id].peer = peer;
-			clients[id].status = CONNECTING;
-			clients[id].connectionStartTime = getCurrentTime();
+			clientInfos[id].peer = peer;
+			clientInfos[id].status = CONNECTING;
+			clientInfos[id].connectionStartTime = getCurrentTime();
 			break;
 		}
 	}
@@ -320,13 +238,13 @@ void Server::handleDisconnect(ENetPeer *peer, DisconnectReason reason) {
 
 	LOG_DEBUG(logger) << "Disconnected: " << (int) id;
 
-	if(clients[id].status == PLAYING)
+	if(clientInfos[id].status == PLAYING)
 		onPlayerLeave(id, reason);
 
 	delete (PeerData *)peer->data;
 	peer->data = nullptr;
-	clients[id].peer = nullptr;
-	clients[id].status = INVALID;
+	clientInfos[id].peer = nullptr;
+	clientInfos[id].status = INVALID;
 
 	numClients--;
 }
@@ -342,7 +260,7 @@ void Server::handlePacket(const enet_uint8 *data, size_t size, size_t channel, E
 
 	int id = ((PeerData *) peer->data)->id;
 	LOG_TRACE(logger) << "Message type: " << (int) type << ", Player id: " << (int) id;
-	switch (clients[id].status) {
+	switch (clientInfos[id].status) {
 	case CONNECTING:
 		if (type == PLAYER_INFO) {
 			PlayerInfo info;
@@ -350,8 +268,8 @@ void Server::handlePacket(const enet_uint8 *data, size_t size, size_t channel, E
 				LOG_WARNING(logger) << "Received malformed message";
 				break;
 			}
-			clients[id].name = info.name;
-			clients[id].status = PLAYING;
+			clientInfos[id].name = info.name;
+			clientInfos[id].status = PLAYING;
 			onPlayerJoin(id);
 		} else
 			LOG_WARNING(logger) << "Received message of type " << type << " from player without info";
@@ -388,7 +306,7 @@ void Server::onPlayerJoin(int id) {
 	pje.id = id;
 	broadcast(pje);
 
-	LOG_INFO(logger) << clients[id].name << " joined the game";
+	LOG_INFO(logger) << clientInfos[id].name << " joined the game";
 }
 
 void Server::onPlayerLeave(int id, DisconnectReason reason) {
@@ -400,10 +318,10 @@ void Server::onPlayerLeave(int id, DisconnectReason reason) {
 
 	switch (reason) {
 	case TIMEOUT:
-		LOG_INFO(logger) <<  clients[id].name << " timed out";
+		LOG_INFO(logger) <<  clientInfos[id].name << " timed out";
 		break;
 	case CLIENT_LEAVE:
-		LOG_INFO(logger) <<  clients[id].name << " disconnected";
+		LOG_INFO(logger) <<  clientInfos[id].name << " disconnected";
 		break;
 	default:
 		LOG_WARNING(logger) << "Unexpected DisconnectReason " << reason;
