@@ -51,7 +51,7 @@ void GameServer::onPlayerJoin(int id, PlayerInfo &info) {
 
 	PlayerJoinEvent pje;
 	pje.id = id;
-	server->broadcast(pje);
+	server->broadcast(pje, true);
 
 	LOG_INFO(logger) << players[id].name << " joined the game";
 }
@@ -62,7 +62,7 @@ void GameServer::onPlayerLeave(int id, DisconnectReason reason) {
 
 	PlayerLeaveEvent ple;
 	ple.id = id;
-	server->broadcast(ple);
+	server->broadcast(ple, true);
 
 	switch (reason) {
 	case TIMEOUT:
@@ -114,6 +114,6 @@ void GameServer::sendSnapshots(int tick) {
 		if (!players[i].valid)
 			continue;
 		snapshot.localId = i;
-		server->send(snapshot, i);
+		server->send(snapshot, i, false);
 	}
 }
