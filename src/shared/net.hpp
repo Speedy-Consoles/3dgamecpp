@@ -11,6 +11,13 @@
 
 static const uint8 MAGIC[4] = {0xaa, 0x0d, 0xbe, 0x15};
 
+enum DisconnectReason : uint32 {
+	TIMEOUT = 0,
+	CLIENT_LEAVE,
+	KICKED,
+	SERVER_SHUTDOWN,
+};
+
 enum MessageError : uint8 {
 	MESSAGE_OK = 0,
 	WRONG_MESSAGE_LENGTH,

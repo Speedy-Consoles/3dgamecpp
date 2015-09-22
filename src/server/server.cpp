@@ -40,10 +40,12 @@ struct Client {
 class Server {
 private:
 	std::unique_ptr<Save> save;
-	std::unique_ptr<World> world;
 	std::unique_ptr<ServerChunkManager> chunkManager;
+	std::unique_ptr<World> world;
 
 	Client clients[MAX_CLIENTS];
+
+	int numClients = 0;
 
 	ENetHost *host;
 
@@ -60,7 +62,7 @@ private:
 	void updateNet();
 
 	void handleConnect(ENetPeer *peer);
-	void handleDisconnect(ENetPeer *peer);
+	void handleDisconnect(ENetPeer *peer, DisconnectReason reason);
 	void handlePacket(const enet_uint8 *data, size_t size, size_t channel, ENetPeer *peer);
 
 	void sendSnapshots(int tick);
@@ -168,6 +170,37 @@ void Server::run() {
 	}
 
 	LOG_INFO(logger) << "Shutting down server";
+
+	host->duplicatePeers = 0;
+
+	for (int i = 0; i < MAX_CLIENTS; ++i) {
+		if (clients[i].peer)
+			enet_peer_disconnect(clients[i].peer, (enet_uint32) SERVER_SHUTDOWN);
+	}
+
+	Time endTime = getCurrentTime() + seconds(1);
+	while (numClients > 0 && getCurrentTime() < endTime) {
+		ENetEvent event;
+		if (enet_host_service(host, &event, 10) > 0) {
+			switch (event.type) {
+			case ENET_EVENT_TYPE_CONNECT:
+				// TODO prevent this
+				LOG_WARNING(logger) << "Ignoring ENET_EVENT_TYPE_CONNECT while shutting down";
+				break;
+			case ENET_EVENT_TYPE_DISCONNECT:
+				LOG_DEBUG(logger) << "disconnect reason during shutdown: " << event.data;
+				numClients--;
+				break;
+			case ENET_EVENT_TYPE_RECEIVE:
+				LOG_WARNING(logger) << "Ignoring ENET_EVENT_TYPE_RECEIVE while shutting down";
+				enet_packet_destroy(event.packet);
+				break;
+			default:
+				LOG_WARNING(logger) << "Received unknown ENetEvent type << event.type";
+				break;
+			}
+		}
+	}
 }
 
 void Server::updateNet() {
@@ -178,7 +211,7 @@ void Server::updateNet() {
 			handleConnect(event.peer);
 			break;
 		case ENET_EVENT_TYPE_DISCONNECT:
-			handleDisconnect(event.peer);
+			handleDisconnect(event.peer, (DisconnectReason) event.data);
 			break;
 		case ENET_EVENT_TYPE_RECEIVE:
 			handlePacket(
@@ -212,6 +245,8 @@ void Server::handleConnect(ENetPeer *peer) {
 		return;
 	}
 
+	numClients++;
+
 	world->addPlayer(id);
 
 	PlayerJoinEvent pje;
@@ -221,11 +256,13 @@ void Server::handleConnect(ENetPeer *peer) {
 	LOG_INFO(logger) << "New Player " << id;
 }
 
-void Server::handleDisconnect(ENetPeer *peer) {
+void Server::handleDisconnect(ENetPeer *peer, DisconnectReason reason) {
 	int id = ((PeerData *) peer->data)->id;
 	delete (PeerData *)peer->data;
 	peer->data = nullptr;
 	clients[id].peer = nullptr;
+
+	numClients--;
 
 	world->deletePlayer(id);
 
@@ -233,7 +270,17 @@ void Server::handleDisconnect(ENetPeer *peer) {
 	ple.id = id;
 	broadcast(ple);
 
-	LOG_INFO(logger) << "Player " << (int) id << " disconnected";
+	switch (reason) {
+	case TIMEOUT:
+		LOG_INFO(logger) << "Player " << (int) id << " timed out";
+		break;
+	case CLIENT_LEAVE:
+		LOG_INFO(logger) << "Player " << (int) id << " disconnected";
+		break;
+	default:
+		LOG_WARNING(logger) << "Unexpected DisconnectReason " << reason;
+		break;
+	}
 }
 
 void Server::handlePacket(const enet_uint8 *data, size_t size, size_t channel, ENetPeer *peer) {

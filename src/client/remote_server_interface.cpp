@@ -50,7 +50,7 @@ RemoteServerInterface::~RemoteServerInterface() {
 			status = NOT_CONNECTED;
 		}
 		if (status == CONNECTED) {
-			enet_peer_disconnect(peer, 1);
+			enet_peer_disconnect(peer, (enet_uint32) CLIENT_LEAVE);
 			status = DISCONNECTING;
 		}
 		Time endTime = getCurrentTime() + seconds(1);
@@ -164,7 +164,20 @@ void RemoteServerInterface::tick() {
 			break;
 		case ENET_EVENT_TYPE_DISCONNECT:
 			peer = nullptr;
-			LOG_INFO(logger) << "Disconnected from server";
+			switch ((DisconnectReason) event.data) {
+			case TIMEOUT:
+				LOG_INFO(logger) << "Connection time out";
+				break;
+			case KICKED:
+				LOG_INFO(logger) << "Kicked from server";
+				break;
+			case SERVER_SHUTDOWN:
+				LOG_INFO(logger) << "Server shutting down";
+				break;
+			default:
+				LOG_WARNING(logger) << "Unexpected DisconnectReason " << (DisconnectReason) event.data;
+				break;
+			}
 			status = NOT_CONNECTED;
 			break;
 		case ENET_EVENT_TYPE_RECEIVE:
