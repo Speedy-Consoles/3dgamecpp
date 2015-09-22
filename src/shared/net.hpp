@@ -2,6 +2,7 @@
 #define NET_HPP
 
 #include <cstring>
+#include <string>
 
 #include "constants.hpp"
 

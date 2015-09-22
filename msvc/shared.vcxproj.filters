@@ -56,9 +56,6 @@
     <ClCompile Include="..\src\shared\game\perlin.cpp">
       <Filter>Source Files\game</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\shared\game\player.cpp">
-      <Filter>Source Files\game</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\shared\game\world.cpp">
       <Filter>Source Files\game</Filter>
     </ClCompile>
@@ -88,6 +85,9 @@
     </ClCompile>
     <ClCompile Include="..\src\shared\async_world_generator.cpp">
       <Filter>Source Files\shared</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\shared\game\character.cpp">
+      <Filter>Source Files\game</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -139,9 +139,6 @@
     <ClInclude Include="..\src\shared\game\perlin.hpp">
       <Filter>Header Files\game</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\shared\game\player.hpp">
-      <Filter>Header Files\game</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\shared\game\world.hpp">
       <Filter>Header Files\game</Filter>
     </ClInclude>
@@ -180,6 +177,9 @@
     </ClInclude>
     <ClInclude Include="..\src\shared\async_world_generator.hpp">
       <Filter>Header Files\shared</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\shared\game\character.hpp">
+      <Filter>Header Files\game</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

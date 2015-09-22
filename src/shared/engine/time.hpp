@@ -15,8 +15,6 @@ inline Time mins(long n)    { return n * 1000 * 1000 * 60; }
 inline Time hours(long n)   { return n * 1000 * 1000 * 60 * 60; }
 inline Time days(long n)    { return n * 1000 * 1000 * 60 * 60 * 24; }
 
-inline long inMillis(Time t) { return std::round(t / 1000.0); }
-
 // get the current time
 Time getCurrentTime();
 

@@ -17,9 +17,18 @@
     <ClCompile Include="..\src\server\server_chunk_manager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\server\game_server.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\server\server_chunk_manager.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\server\game_server.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\server\server.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

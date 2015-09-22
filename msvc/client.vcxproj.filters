@@ -152,12 +152,6 @@
     <ClCompile Include="..\src\client\events.cpp">
       <Filter>Source Files\client</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\client\gfx\gl2\gl2_player_renderer.cpp">
-      <Filter>Source Files\gfx\gl2</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\client\gfx\gl3\gl3_player_renderer.cpp">
-      <Filter>Source Files\gfx\gl3</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\client\states\local_playing_state.cpp">
       <Filter>Source Files\states</Filter>
     </ClCompile>
@@ -184,6 +178,12 @@
     </ClCompile>
     <ClCompile Include="..\src\client\client_chunk_manager.cpp">
       <Filter>Source Files\client</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\client\gfx\gl2\gl2_character_renderer.cpp">
+      <Filter>Source Files\gfx\gl2</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\client\gfx\gl3\gl3_character_renderer.cpp">
+      <Filter>Source Files\gfx\gl3</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -301,12 +301,6 @@
     <ClInclude Include="..\src\client\events.hpp">
       <Filter>Header Files\client</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\client\gfx\gl2\gl2_player_renderer.hpp">
-      <Filter>Header Files\gfx\gl2</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\client\gfx\gl3\gl3_player_renderer.hpp">
-      <Filter>Header Files\gfx\gl3</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\client\states\menu_state.hpp">
       <Filter>Header Files\states</Filter>
     </ClInclude>
@@ -333,6 +327,12 @@
     </ClInclude>
     <ClInclude Include="..\src\client\client_chunk_manager.hpp">
       <Filter>Header Files\client</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\client\gfx\gl2\gl2_character_renderer.hpp">
+      <Filter>Header Files\gfx\gl2</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\client\gfx\gl3\gl3_character_renderer.hpp">
+      <Filter>Header Files\gfx\gl3</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

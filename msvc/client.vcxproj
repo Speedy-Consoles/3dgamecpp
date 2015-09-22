@@ -17,23 +17,23 @@
     <ClCompile Include="..\src\client\events.cpp" />
     <ClCompile Include="..\src\client\gfx\chunk_renderer.cpp" />
     <ClCompile Include="..\src\client\gfx\font.cpp" />
+    <ClCompile Include="..\src\client\gfx\gl2\gl2_character_renderer.cpp" />
     <ClCompile Include="..\src\client\gfx\gl2\gl2_chunk_renderer.cpp" />
     <ClCompile Include="..\src\client\gfx\gl2\gl2_crosshair_renderer.cpp" />
     <ClCompile Include="..\src\client\gfx\gl2\gl2_debug_renderer.cpp" />
     <ClCompile Include="..\src\client\gfx\gl2\gl2_hud_renderer.cpp" />
     <ClCompile Include="..\src\client\gfx\gl2\gl2_menu_renderer.cpp" />
-    <ClCompile Include="..\src\client\gfx\gl2\gl2_player_renderer.cpp" />
     <ClCompile Include="..\src\client\gfx\gl2\gl2_renderer.cpp" />
     <ClCompile Include="..\src\client\gfx\gl2\gl2_sky_renderer.cpp" />
     <ClCompile Include="..\src\client\gfx\gl2\gl2_target_renderer.cpp" />
     <ClCompile Include="..\src\client\gfx\gl2\gl2_texture_manager.cpp" />
+    <ClCompile Include="..\src\client\gfx\gl3\gl3_character_renderer.cpp" />
     <ClCompile Include="..\src\client\gfx\gl3\gl3_chunk_renderer.cpp" />
     <ClCompile Include="..\src\client\gfx\gl3\gl3_crosshair_renderer.cpp" />
     <ClCompile Include="..\src\client\gfx\gl3\gl3_debug_renderer.cpp" />
     <ClCompile Include="..\src\client\gfx\gl3\gl3_font.cpp" />
     <ClCompile Include="..\src\client\gfx\gl3\gl3_hud_renderer.cpp" />
     <ClCompile Include="..\src\client\gfx\gl3\gl3_menu_renderer.cpp" />
-    <ClCompile Include="..\src\client\gfx\gl3\gl3_player_renderer.cpp" />
     <ClCompile Include="..\src\client\gfx\gl3\gl3_renderer.cpp" />
     <ClCompile Include="..\src\client\gfx\gl3\gl3_shaders.cpp" />
     <ClCompile Include="..\src\client\gfx\gl3\gl3_sky_renderer.cpp" />
@@ -65,23 +65,23 @@
     <ClInclude Include="..\src\client\gfx\chunk_renderer.hpp" />
     <ClInclude Include="..\src\client\gfx\component_renderer.hpp" />
     <ClInclude Include="..\src\client\gfx\font.hpp" />
+    <ClInclude Include="..\src\client\gfx\gl2\gl2_character_renderer.hpp" />
     <ClInclude Include="..\src\client\gfx\gl2\gl2_chunk_renderer.hpp" />
     <ClInclude Include="..\src\client\gfx\gl2\gl2_crosshair_renderer.hpp" />
     <ClInclude Include="..\src\client\gfx\gl2\gl2_debug_renderer.hpp" />
     <ClInclude Include="..\src\client\gfx\gl2\gl2_hud_renderer.hpp" />
     <ClInclude Include="..\src\client\gfx\gl2\gl2_menu_renderer.hpp" />
-    <ClInclude Include="..\src\client\gfx\gl2\gl2_player_renderer.hpp" />
     <ClInclude Include="..\src\client\gfx\gl2\gl2_renderer.hpp" />
     <ClInclude Include="..\src\client\gfx\gl2\gl2_sky_renderer.hpp" />
     <ClInclude Include="..\src\client\gfx\gl2\gl2_target_renderer.hpp" />
     <ClInclude Include="..\src\client\gfx\gl2\gl2_texture_manager.hpp" />
+    <ClInclude Include="..\src\client\gfx\gl3\gl3_character_renderer.hpp" />
     <ClInclude Include="..\src\client\gfx\gl3\gl3_chunk_renderer.hpp" />
     <ClInclude Include="..\src\client\gfx\gl3\gl3_crosshair_renderer.hpp" />
     <ClInclude Include="..\src\client\gfx\gl3\gl3_debug_renderer.hpp" />
     <ClInclude Include="..\src\client\gfx\gl3\gl3_font.hpp" />
     <ClInclude Include="..\src\client\gfx\gl3\gl3_hud_renderer.hpp" />
     <ClInclude Include="..\src\client\gfx\gl3\gl3_menu_renderer.hpp" />
-    <ClInclude Include="..\src\client\gfx\gl3\gl3_player_renderer.hpp" />
     <ClInclude Include="..\src\client\gfx\gl3\gl3_renderer.hpp" />
     <ClInclude Include="..\src\client\gfx\gl3\gl3_shaders.hpp" />
     <ClInclude Include="..\src\client\gfx\gl3\gl3_sky_renderer.hpp" />
@@ -191,7 +191,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>$(SolutionDir)bin\$(Configuration)\shared.lib;SDL2.lib;SDL2_image.lib;SDL2main.lib;ftgl.lib;freetype2.lib;glew32.lib;glu32.lib;opengl32.lib;enet.lib;winmm.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>$(SolutionDir)bin\$(Configuration)\shared.lib;SDL2.lib;SDL2_image.lib;SDL2main.lib;ftgl.lib;freetype2.lib;glew32.lib;glu32.lib;opengl32.lib;enet.lib;winmm.lib;ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Console</SubSystem>
     </Link>
   </ItemDefinitionGroup>
