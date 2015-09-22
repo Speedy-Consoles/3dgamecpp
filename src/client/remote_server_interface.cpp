@@ -125,7 +125,7 @@ void RemoteServerInterface::tick() {
 	input.pitch = pitch;
 	input.moveInput = moveInput;
 	input.flying = flying;
-	send(input);
+	send(input, false);
 }
 
 void RemoteServerInterface::setConf(const GraphicsConf &conf, const GraphicsConf &old) {
@@ -192,7 +192,7 @@ void RemoteServerInterface::updateNetConnecting() {
 			{
 				PlayerInfo info;
 				info.name = "Unnamed player";
-				send(info);
+				send(info, true);
 			}
 			break;
 		case ENET_EVENT_TYPE_DISCONNECT:

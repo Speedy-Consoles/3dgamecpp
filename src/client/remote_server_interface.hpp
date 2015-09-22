@@ -63,11 +63,15 @@ private:
 
 	void handlePacket(const enet_uint8 *data, size_t size, size_t channel);
 
-	template<typename T> void send(T &msg) {
+	// TODO think about channels
+	// maybe chat and events in different channels
+	template<typename T> void send(T &msg, bool reliable) {
 		static logging::Logger logger("remote");
-		// TODO reliability, order
 		size_t size = getMessageSize(msg);
-		ENetPacket *packet = enet_packet_create(nullptr, size, 0);
+		enet_uint32 flags = 0;
+		if (reliable)
+			flags |= ENET_PACKET_FLAG_RELIABLE;
+		ENetPacket *packet = enet_packet_create(nullptr, size, flags);
 		if (writeMessage(msg, (char *) packet->data, size))
 			LOG_ERROR(logger) << "Could not serialize message";
 
