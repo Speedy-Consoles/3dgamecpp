@@ -30,6 +30,7 @@ RemoteServerInterface::RemoteServerInterface(Client *client, std::string address
 		return;
 	}
 
+	LOG_INFO(logger) << "Connecting to " << addressString;
 	ENetAddress address;
 	enet_address_set_host(&address, addressString.c_str());
 	address.port = 8547;
@@ -104,58 +105,48 @@ void RemoteServerInterface::placeBlock(vec3i64 bc, uint8 type) {
 }
 
 void RemoteServerInterface::tick() {
-	if (status == CONNECTING) {
-		// check for connection success
-		ENetEvent event;
-		while (enet_host_service(host, &event, 0) > 0) {
-			switch(event.type) {
-			case ENET_EVENT_TYPE_CONNECT:
-				LOG_INFO(logger) << "Connected to server";
-				status = CONNECTED;
-				break;
-			case ENET_EVENT_TYPE_DISCONNECT:
-				enet_peer_reset(peer);
-				peer = nullptr;
-				LOG_WARNING(logger) << "Could not connect to server";
-				status = CONNECTION_ERROR;
-				break;
-			case ENET_EVENT_TYPE_RECEIVE:
-				LOG_WARNING(logger) << "Unexpected ENetEvent ENET_EVENT_TYPE_RECEIVE while connecting";
-				enet_packet_destroy (event.packet);
-				break;
-			default:
-				LOG_WARNING(logger) << "Received unknown ENetEvent type << event.type";
-				break;
-			}
-		}
-	} else if(status == DISCONNECTING) {
-		// check for disconnection success
-		ENetEvent event;
-		while (enet_host_service(host, &event, 0) > 0) {
-			switch(event.type) {
-			case ENET_EVENT_TYPE_CONNECT:
-				LOG_FATAL(logger) << "Unexpected ENetEvent ENET_EVENT_TYPE_CONNECT while disconnecting";
-				break;
-			case ENET_EVENT_TYPE_DISCONNECT:
-				peer = nullptr;
-				LOG_INFO(logger) << "Disconnected from server";
-				status = NOT_CONNECTED;
-				break;
-			case ENET_EVENT_TYPE_RECEIVE:
-				LOG_WARNING(logger) << "Unexpected ENetEvent ENET_EVENT_TYPE_RECEIVE while disconnecting";
-				enet_packet_destroy (event.packet);
-				break;
-			default:
-				LOG_WARNING(logger) << "Received unknown ENetEvent type" << event.type;
-				break;
-			}
-		}
-	}
+	if (status == CONNECTING)
+		updateNetConnecting();
+	else if(status == DISCONNECTING)
+		updateNetDisconnecting();
 
 	if (status != CONNECTED)
 		return;
 
 	// receive
+	updateNet();
+
+	if (status != CONNECTED)
+		return;
+
+	// send
+	PlayerInput input;
+	input.yaw = yaw;
+	input.pitch = pitch;
+	input.moveInput = moveInput;
+	input.flying = flying;
+	send(input);
+}
+
+void RemoteServerInterface::setConf(const GraphicsConf &conf, const GraphicsConf &old) {
+	if (conf.render_distance != old.render_distance) {
+		// TODO
+	}
+}
+
+int RemoteServerInterface::getLocalClientId() {
+	return localPlayerId;
+}
+
+bool RemoteServerInterface::requestChunk(Chunk *chunk) {
+	return asyncWorldGenerator.requestChunk(chunk);
+}
+
+Chunk *RemoteServerInterface::getNextChunk() {
+	return asyncWorldGenerator.getNextChunk();
+}
+
+void RemoteServerInterface::updateNet() {
 	ENetEvent event;
 	while (enet_host_service(host, &event, 0) > 0) {
 		switch(event.type) {
@@ -189,35 +180,54 @@ void RemoteServerInterface::tick() {
 			break;
 		}
 	}
-
-	if (status != CONNECTED)
-		return;
-
-	// send
-	PlayerInput input;
-	input.yaw = yaw;
-	input.pitch = pitch;
-	input.moveInput = moveInput;
-	input.flying = flying;
-	send(input);
 }
 
-void RemoteServerInterface::setConf(const GraphicsConf &conf, const GraphicsConf &old) {
-	if (conf.render_distance != old.render_distance) {
-		// TODO
+void RemoteServerInterface::updateNetConnecting() {
+	ENetEvent event;
+	while (enet_host_service(host, &event, 0) > 0) {
+		switch(event.type) {
+		case ENET_EVENT_TYPE_CONNECT:
+			LOG_INFO(logger) << "Connected to server";
+			status = CONNECTED;
+			break;
+		case ENET_EVENT_TYPE_DISCONNECT:
+			enet_peer_reset(peer);
+			peer = nullptr;
+			LOG_WARNING(logger) << "Could not connect to server";
+			status = CONNECTION_ERROR;
+			break;
+		case ENET_EVENT_TYPE_RECEIVE:
+			LOG_WARNING(logger) << "Unexpected ENetEvent ENET_EVENT_TYPE_RECEIVE while connecting";
+			enet_packet_destroy (event.packet);
+			break;
+		default:
+			LOG_WARNING(logger) << "Received unknown ENetEvent type << event.type";
+			break;
+		}
 	}
 }
 
-int RemoteServerInterface::getLocalClientId() {
-	return localPlayerId;
-}
-
-bool RemoteServerInterface::requestChunk(Chunk *chunk) {
-	return asyncWorldGenerator.requestChunk(chunk);
-}
-
-Chunk *RemoteServerInterface::getNextChunk() {
-	return asyncWorldGenerator.getNextChunk();
+void RemoteServerInterface::updateNetDisconnecting() {
+	ENetEvent event;
+	while (enet_host_service(host, &event, 0) > 0) {
+		switch(event.type) {
+		case ENET_EVENT_TYPE_CONNECT:
+			LOG_FATAL(logger) << "Unexpected ENetEvent ENET_EVENT_TYPE_CONNECT while disconnecting";
+			break;
+		case ENET_EVENT_TYPE_DISCONNECT:
+			peer = nullptr;
+			LOG_INFO(logger) << "Disconnected from server";
+			status = NOT_CONNECTED;
+			break;
+		case ENET_EVENT_TYPE_RECEIVE:
+			LOG_WARNING(logger) << "Unexpected ENetEvent ENET_EVENT_TYPE_RECEIVE while disconnecting";
+			enet_packet_destroy (event.packet);
+			break;
+		default:
+			LOG_WARNING(logger) << "Received unknown ENetEvent type" << event.type;
+			break;
+		}
+	}
 }
 
 void RemoteServerInterface::handlePacket(const enet_uint8 *data, size_t size, size_t channel) {

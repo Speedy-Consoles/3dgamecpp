@@ -57,6 +57,9 @@ public:
 	Chunk *getNextChunk() override;
 
 private:
+	void updateNet();
+	void updateNetConnecting();
+	void updateNetDisconnecting();
 	void handlePacket(const enet_uint8 *data, size_t size, size_t channel);
 
 	template<typename T> void send(T &msg) {
