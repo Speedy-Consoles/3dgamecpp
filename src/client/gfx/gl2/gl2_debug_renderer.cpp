@@ -35,10 +35,10 @@ void GL2DebugRenderer::render() {
 }
 
 void GL2DebugRenderer::renderDebug() {
-	const Player &player = client->getLocalPlayer();
+	const Character &character = client->getLocalCharacter();
 
-	vec3i64 playerPos = player.getPos();
-	vec3d playerVel = player.getVel();
+	vec3i64 characterPos = character.getPos();
+	vec3d characterVel = character.getVel();
 	//uint32 windowFlags = SDL_GetWindowFlags(window);
 
 	glDisable(GL_TEXTURE_2D);
@@ -53,19 +53,19 @@ void GL2DebugRenderer::renderDebug() {
 	//RENDER_LINE("fps: %d", fpsSum);
 	//RENDER_LINE("new faces: %d", newFaces);
 	//RENDER_LINE("faces: %d", faces);
-	RENDER_LINE("x: %" PRId64 "(%" PRId64 ")", playerPos[0], (int64) floor(playerPos[0] / (double) RESOLUTION));
-	RENDER_LINE("y: %" PRId64 " (%" PRId64 ")", playerPos[1], (int64) floor(playerPos[1] / (double) RESOLUTION));
-	RENDER_LINE("z: %" PRId64 " (%" PRId64 ")", playerPos[2],
-			(int64) floor((playerPos[2] - Player::EYE_HEIGHT - 1) / (double) RESOLUTION));
-	RENDER_LINE("yaw:   %6.1f", player.getYaw() / 100.0f);
-	RENDER_LINE("pitch: %6.1f", player.getPitch() / 100.0f);
-	RENDER_LINE("xvel: %8.1f", playerVel[0]);
-	RENDER_LINE("yvel: %8.1f", playerVel[1]);
-	RENDER_LINE("zvel: %8.1f", playerVel[2]);
+	RENDER_LINE("x: %" PRId64 "(%" PRId64 ")", characterPos[0], (int64) floor(characterPos[0] / (double) RESOLUTION));
+	RENDER_LINE("y: %" PRId64 " (%" PRId64 ")", characterPos[1], (int64) floor(characterPos[1] / (double) RESOLUTION));
+	RENDER_LINE("z: %" PRId64 " (%" PRId64 ")", characterPos[2],
+			(int64) floor((characterPos[2] - Character::EYE_HEIGHT - 1) / (double) RESOLUTION));
+	RENDER_LINE("yaw:   %6.1f", character.getYaw() / 100.0f);
+	RENDER_LINE("pitch: %6.1f", character.getPitch() / 100.0f);
+	RENDER_LINE("xvel: %8.1f", characterVel[0]);
+	RENDER_LINE("yvel: %8.1f", characterVel[1]);
+	RENDER_LINE("zvel: %8.1f", characterVel[2]);
 	//RENDER_LINE("chunks loaded: %" PRIuPTR "", client->getWorld()->getNumChunks());
 	//RENDER_LINE("chunks visible: %d", visibleChunks);
 	//RENDER_LINE("faces visible: %d", visibleFaces);
-	//RENDER_LINE("block: %d", player.getBlock());*/
+	//RENDER_LINE("block: %d", character.getBlock());*/
 
 	glPopMatrix();
 }

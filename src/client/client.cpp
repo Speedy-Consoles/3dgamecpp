@@ -89,8 +89,8 @@ uint8 Client::getLocalClientId() const {
 	 return serverInterface->getLocalClientId();
 }
 
-Player &Client::getLocalPlayer() {
-	return world->getPlayer(getLocalClientId());
+Character &Client::getLocalCharacter() {
+	return world->getCharacter(getLocalClientId());
 }
 
 void Client::pushState(State *state) {

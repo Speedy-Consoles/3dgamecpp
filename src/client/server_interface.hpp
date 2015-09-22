@@ -32,7 +32,7 @@ public:
 
 	// player actions
 	virtual void setPlayerMoveInput(int moveInput) = 0;
-	virtual void setPlayerOrientation(int yaw, int pitch) = 0;
+	virtual void setCharacterOrientation(int yaw, int pitch) = 0;
 
 	virtual void setSelectedBlock(uint8 block) = 0;
 	virtual void placeBlock(vec3i64 block, uint8 type) = 0;

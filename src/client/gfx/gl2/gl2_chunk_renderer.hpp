@@ -49,9 +49,6 @@ protected:
 	void finishRender() override {}
 	void applyChunkVisuals(ChunkVisuals chunkVisuals) override;
 	void destroyChunkData(vec3i64 chunkCoords) override;
-
-//	void renderTarget();
-//	void renderPlayers();
 };
 
 #endif //GL2_CHUNK_RENDERER_HPP_

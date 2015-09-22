@@ -71,7 +71,7 @@ protected:
 
 private:
 	// requesting
-	vec3i64 oldPlayerChunk;
+	vec3i64 oldCharacterChunk;
 	int checkChunkIndex = 0;
 	std::unordered_set<vec3i64, size_t(*)(vec3i64)> inBuildQueue;
 	std::deque<vec3i64> buildQueue;
@@ -83,7 +83,7 @@ private:
 
 	// visibility search
 	std::deque<vec3i64> changedChunksQueue;
-	vec3i64 vsPlayerChunk;
+	vec3i64 vsCharacterChunk;
 	std::unordered_map<vec3i64, ChunkVSInfo, size_t(*)(vec3i64)> vsChunks;
 	std::unordered_set<vec3i64, size_t(*)(vec3i64)> vsInFringe;
 	int vsFringeCapacity = 0;

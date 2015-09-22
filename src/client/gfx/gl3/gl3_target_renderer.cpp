@@ -73,20 +73,20 @@ GL3TargetRenderer::~GL3TargetRenderer() {
 }
 
 void GL3TargetRenderer::render() {
-	Player &player = client->getLocalPlayer();
-	if (!player.isValid())
+	Character &character = client->getLocalCharacter();
+	if (!character.isValid())
 		return;
 
 	vec3i64 tbc;
 	int td;
-	bool target = player.getTargetedFace(&tbc, &td);
+	bool target = character.getTargetedFace(&tbc, &td);
 	if (target) {
-		glm::mat4 viewMatrix = glm::rotate(glm::mat4(1.0f), (float) (-player.getPitch() / 36000.0f * TAU), glm::vec3(1.0f, 0.0f, 0.0f));
-		viewMatrix = glm::rotate(viewMatrix, (float) (-player.getYaw() / 36000.0f * TAU), glm::vec3(0.0f, 1.0f, 0.0f));
+		glm::mat4 viewMatrix = glm::rotate(glm::mat4(1.0f), (float) (-character.getPitch() / 36000.0f * TAU), glm::vec3(1.0f, 0.0f, 0.0f));
+		viewMatrix = glm::rotate(viewMatrix, (float) (-character.getYaw() / 36000.0f * TAU), glm::vec3(0.0f, 1.0f, 0.0f));
 		viewMatrix = glm::rotate(viewMatrix, (float) (-TAU / 4.0), glm::vec3(1.0f, 0.0f, 0.0f));
 		viewMatrix = glm::rotate(viewMatrix, (float) (TAU / 4.0), glm::vec3(0.0f, 0.0f, 1.0f));
 
-		vec3i64 diff = tbc * RESOLUTION - player.getPos();
+		vec3i64 diff = tbc * RESOLUTION - character.getPos();
 		glm::mat4 modelMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(
 			(float) diff[0] / RESOLUTION,
 			(float) diff[1] / RESOLUTION,

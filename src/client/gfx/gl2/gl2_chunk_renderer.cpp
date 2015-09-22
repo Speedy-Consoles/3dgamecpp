@@ -22,8 +22,8 @@ void GL2ChunkRenderer::renderChunk(vec3i64 chunkCoords) {
 	if (it == renderInfos.end() || it->second.dl == 0)
 		return;
 
-	Player &player = client->getLocalPlayer();
-	vec3i64 cd = chunkCoords - player.getChunkPos();
+	Character &character = client->getLocalCharacter();
+	vec3i64 cd = chunkCoords - character.getChunkPos();
 
 	GL(PushMatrix());
 	GL(Translatef(cd[0] * (float) Chunk::WIDTH, cd[1] * (float) Chunk::WIDTH, cd[2] * (float) Chunk::WIDTH))

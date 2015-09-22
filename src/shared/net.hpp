@@ -51,7 +51,7 @@ struct PlayerLeaveEvent {
 	int id;
 };
 
-struct PlayerSnapshot {
+struct CharacterSnapshot {
 	bool valid;
 	vec3i64 pos;
 	vec3d vel;
@@ -64,7 +64,7 @@ struct PlayerSnapshot {
 
 struct Snapshot {
 	int tick;
-	PlayerSnapshot playerSnapshots[MAX_CLIENTS];
+	CharacterSnapshot characterSnapshots[MAX_CLIENTS];
 	int localId;
 };
 

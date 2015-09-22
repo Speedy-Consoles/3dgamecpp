@@ -7,39 +7,11 @@
 #include <string>
 #include <memory>
 
+#include "character.hpp"
 #include "shared/constants.hpp"
 #include "shared/chunk_manager.hpp"
 
-#include "player.hpp"
-
 class Chunk;
-
-struct WorldSnapshot {
-	PlayerSnapshot playerSnapshots[MAX_CLIENTS];
-
-/*
-	public void write(ByteBuffer buffer) {
-		for (int i = 0; i < Globals.MAX_CLIENTS; i++) {
-			PlayerSnapshot ps = playerSnapshots[i];
-			if (ps == null) {
-				buffer.put((byte) 0);
-				continue;
-			}
-			buffer.put((byte) 1);
-			playerSnapshots[i].write(buffer);
-		}
-	}
-
-	public static Snapshot readSnapshot(ByteBuffer buffer) {
-		Snapshot snapshot = new Snapshot();
-		for (int i = 0; i < Globals.MAX_CLIENTS; i++) {
-			if (buffer.get() == 1)
-				snapshot.playerSnapshots[i] = PlayerSnapshot.read(buffer);
-		}
-		return snapshot;
-	}
-*/
-};
 
 class World {
 public:
@@ -51,15 +23,15 @@ private:
 	ChunkManager *chunkManager;
 	std::unordered_set<vec3i64, size_t(*)(vec3i64)> neededChunks;
 
-	Player players[MAX_CLIENTS];
-	vec3i64 oldPlayerChunks[MAX_CLIENTS];
-	bool oldPlayerValids[MAX_CLIENTS];
+	Character characters[MAX_CLIENTS];
+	vec3i64 oldCharChunks[MAX_CLIENTS];
+	bool oldCharValids[MAX_CLIENTS];
 
 public:
 	explicit World(ChunkManager *chunkManager);
 	~World();
 
-	void tick(uint localPlayerID);
+	void tick();
 
 	int shootRay(vec3i64 start, vec3d ray, double maxDist,
 			vec3i boxCorner, vec3i64 *outHit, vec3i64 outHitBlock[3],
@@ -67,18 +39,18 @@ public:
 
 	bool hasCollision(vec3i64 wc) const;
 
-	void addPlayer(int playerID);
-	void deletePlayer(int playerID);
+	void addCharacter(int charId);
+	void deleteCharacter(int charId);
 
-	Player &getPlayer(int playerID);
-	const Player &getPlayer(int playerID) const;
+	Character &getCharacter(int charId);
+	const Character &getCharacter(int charId) const;
 
 	bool isChunkLoaded(vec3i64 cc) const;
 	uint8 getBlock(vec3i64 bc) const;
 
 	size_t getNumNeededChunks() const;
 
-	WorldSnapshot makeSnapshot(int tick) const;
+	//Snapshot makeSnapshot(int tick) const;
 
 private:
 	void requestChunks();

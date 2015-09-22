@@ -1,5 +1,5 @@
-#ifndef GL3_PLAYER_RENDERER_HPP_
-#define GL3_PLAYER_RENDERER_HPP_
+#ifndef GL3_CHARACTER_RENDERER_HPP_
+#define GL3_CHARACTER_RENDERER_HPP_
 
 #include "shared/engine/macros.hpp"
 #include "shared/engine/vmath.hpp"
@@ -10,10 +10,10 @@
 class GL3Renderer;
 class ShaderManager;
 
-class GL3PlayerRenderer : public ComponentRenderer {
+class GL3CharacterRenderer : public ComponentRenderer {
 public:
-	GL3PlayerRenderer(Client *client, GL3Renderer *renderer);
-	~GL3PlayerRenderer();
+	GL3CharacterRenderer(Client *client, GL3Renderer *renderer);
+	~GL3CharacterRenderer();
 
 	void render() override;
 
@@ -21,7 +21,7 @@ private:
 	Client *client = nullptr;
 	GL3Renderer *renderer = nullptr;
 
-	vec3f playerColor{ 0.6f, 0.0f, 0.0f };
+	vec3f characterColor{ 0.6f, 0.0f, 0.0f };
 
 	GLuint vao;
 	GLuint vbo;
@@ -33,4 +33,4 @@ private:
 	});
 };
 
-#endif //GL3_PLAYER_RENDERER_HPP_
+#endif //GL3_CHARACTER_RENDERER_HPP_

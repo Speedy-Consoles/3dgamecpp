@@ -18,12 +18,12 @@
 #include "gl2_texture_manager.hpp"
 
 class World;
-class Player;
+class Character;
 class Menu;
 class Stopwatch;
 
 class GL2ChunkRenderer;
-class GL2PlayerRenderer;
+class GL2CharacterRenderer;
 class GL2TargetRenderer;
 class GL2SkyRenderer;
 class GL2CrosshairRenderer;
@@ -44,7 +44,7 @@ class GL2Renderer : public Renderer {
 	
 	GL2ChunkRenderer *p_chunkRenderer;
 	std::unique_ptr<ComponentRenderer> chunkRenderer;
-	std::unique_ptr<ComponentRenderer> playerRenderer;
+	std::unique_ptr<ComponentRenderer> characterRenderer;
 	std::unique_ptr<ComponentRenderer> targetRenderer;
 	std::unique_ptr<ComponentRenderer> skyRenderer;
 	std::unique_ptr<ComponentRenderer> crosshairRenderer;
@@ -69,7 +69,7 @@ class GL2Renderer : public Renderer {
 	int visibleChunks = 0;
 	int visibleFaces = 0;
 
-	vec3i64 oldPlayerChunk;
+	vec3i64 oldCharacterChunk;
 
 	// transformation matrices
 	GLdouble perspectiveMatrix[16];

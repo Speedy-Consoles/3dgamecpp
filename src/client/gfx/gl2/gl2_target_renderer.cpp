@@ -16,14 +16,14 @@ GL2TargetRenderer::GL2TargetRenderer(Client *client, GL2Renderer *renderer) :
 }
 
 void GL2TargetRenderer::render() {
-	Player &player = client->getLocalPlayer();
-	vec3i64 pc = player.getChunkPos();
+	Character &character = client->getLocalCharacter();
+	vec3i64 pc = character.getChunkPos();
 
 	vec3i64 tbc;
 	vec3i64 tcc;
 	vec3ui8 ticc;
 	int td;
-	bool target = player.getTargetedFace(&tbc, &td);
+	bool target = character.getTargetedFace(&tbc, &td);
 	if (target) {
 		tcc = bc2cc(tbc);
 		ticc = bc2icc(tbc);

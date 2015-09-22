@@ -46,12 +46,12 @@ GL3SkyRenderer::GL3SkyRenderer(Client *client, GL3Renderer *renderer) :
 }
 
 void GL3SkyRenderer::render() {
-	Player &player = client->getLocalPlayer();
-	if (!player.isValid())
+	Character &character = client->getLocalCharacter();
+	if (!character.isValid())
 		return;
 
 	auto &defaultShader = ((GL3Renderer *) renderer)->getShaderManager()->getDefaultShader();
-	glm::mat4 viewMatrix = glm::rotate(glm::mat4(1.0f), (float) (-player.getPitch() / 36000.0f * TAU), glm::vec3(1.0f, 0.0f, 0.0f));
+	glm::mat4 viewMatrix = glm::rotate(glm::mat4(1.0f), (float) (-character.getPitch() / 36000.0f * TAU), glm::vec3(1.0f, 0.0f, 0.0f));
 	defaultShader.setViewMatrix(viewMatrix);
 	defaultShader.setModelMatrix(glm::mat4(1.0f));
 	defaultShader.setFogEnabled(false);

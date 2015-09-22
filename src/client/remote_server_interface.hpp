@@ -16,7 +16,7 @@
 
 class RemoteServerInterface : public ServerInterface {
 private:
-	uint8 localPlayerId = -1;
+	uint8 localCharacterId = -1;
 	Client *client = nullptr;
 
 	std::unique_ptr<WorldGenerator> worldGenerator;
@@ -42,7 +42,7 @@ public:
 
 	void setPlayerMoveInput(int moveInput) override;
 
-	void setPlayerOrientation(int yaw, int pitch) override;
+	void setCharacterOrientation(int yaw, int pitch) override;
 	void setSelectedBlock(uint8 block) override;
 
 	void placeBlock(vec3i64 bc, uint8 type) override;

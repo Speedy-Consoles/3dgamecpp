@@ -83,11 +83,11 @@ void RemoteServerInterface::setPlayerMoveInput(int moveInput) {
 	this->moveInput = moveInput;
 }
 
-void RemoteServerInterface::setPlayerOrientation(int yaw, int pitch) {
+void RemoteServerInterface::setCharacterOrientation(int yaw, int pitch) {
 	this->yaw = yaw;
 	this->pitch= pitch;
 	if (status == CONNECTED)
-		client->getWorld()->getPlayer(localPlayerId).setOrientation(yaw, pitch);
+		client->getWorld()->getCharacter(localCharacterId).setOrientation(yaw, pitch);
 }
 
 void RemoteServerInterface::setSelectedBlock(uint8 block) {
@@ -135,7 +135,7 @@ void RemoteServerInterface::setConf(const GraphicsConf &conf, const GraphicsConf
 }
 
 int RemoteServerInterface::getLocalClientId() {
-	return localPlayerId;
+	return localCharacterId;
 }
 
 bool RemoteServerInterface::requestChunk(Chunk *chunk) {
@@ -259,16 +259,16 @@ void RemoteServerInterface::handlePacket(const enet_uint8 *data, size_t size, si
 				LOG_WARNING(logger) << "Received malformed message";
 				break;
 			}
-			localPlayerId = snapshot.localId;
+			localCharacterId = snapshot.localId;
 			for (int i = 0; i < MAX_CLIENTS; ++i) {
-				PlayerSnapshot &playerSnapshot = *(snapshot.playerSnapshots + i);
-				Player &player = client->getWorld()->getPlayer(i);
-				if (playerSnapshot.valid && !player.isValid())
-					client->getWorld()->addPlayer(i);
-				else if (!playerSnapshot.valid && player.isValid())
-					client->getWorld()->deletePlayer(i);
-				if (playerSnapshot.valid)
-					player.applySnapshot(playerSnapshot, i == localPlayerId);
+				CharacterSnapshot &characterSnapshot = *(snapshot.characterSnapshots + i);
+				Character &character = client->getWorld()->getCharacter(i);
+				if (characterSnapshot.valid && !character.isValid())
+					client->getWorld()->addCharacter(i);
+				else if (!characterSnapshot.valid && character.isValid())
+					client->getWorld()->deleteCharacter(i);
+				if (characterSnapshot.valid)
+					character.applySnapshot(characterSnapshot, i == localCharacterId);
 			}
 		}
 		break;

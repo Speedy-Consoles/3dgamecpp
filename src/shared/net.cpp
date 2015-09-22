@@ -98,18 +98,18 @@ PLAIN_MSG_START(Snapshot, SNAPSHOT, SNAPSHOT_SIZE)
 	WRITE_TYPE(msg.tick, uint32)
 	for (int i = 0; i < MAX_CLIENTS; i++) {
 		uint8 flags = 0;
-		if (msg.playerSnapshots[i].valid)
+		if (msg.characterSnapshots[i].valid)
 			flags |= SNAPSHOT_FLAG_VALID;
-		if (msg.playerSnapshots[i].isFlying)
+		if (msg.characterSnapshots[i].isFlying)
 			flags |= SNAPSHOT_FLAG_IS_FLYING;
 		WRITE_TYPE(flags, uint8)
 		for (int j = 0; j < 3; j++)
-			WRITE_TYPE(msg.playerSnapshots[i].pos[j], int64)
+			WRITE_TYPE(msg.characterSnapshots[i].pos[j], int64)
 		for (int j = 0; j < 3; j++)
-			WRITE_TYPE(msg.playerSnapshots[i].vel[j], double)
-		WRITE_TYPE(msg.playerSnapshots[i].yaw, uint16)
-		WRITE_TYPE(msg.playerSnapshots[i].pitch, int16)
-		WRITE_TYPE(msg.playerSnapshots[i].moveInput, uint8)
+			WRITE_TYPE(msg.characterSnapshots[i].vel[j], double)
+		WRITE_TYPE(msg.characterSnapshots[i].yaw, uint16)
+		WRITE_TYPE(msg.characterSnapshots[i].pitch, int16)
+		WRITE_TYPE(msg.characterSnapshots[i].moveInput, uint8)
 	}
 	WRITE_TYPE(msg.localId, uint8);
 PLAIN_MSG_MIDDLE(Snapshot, SNAPSHOT_SIZE)
@@ -117,15 +117,15 @@ PLAIN_MSG_MIDDLE(Snapshot, SNAPSHOT_SIZE)
 	for (int i = 0; i < MAX_CLIENTS; i++) {
 		uint8 flags;
 		READ_TYPE(flags, uint8)
-		msg->playerSnapshots[i].valid = flags & SNAPSHOT_FLAG_VALID;
-		msg->playerSnapshots[i].isFlying = flags & SNAPSHOT_FLAG_IS_FLYING;
+		msg->characterSnapshots[i].valid = flags & SNAPSHOT_FLAG_VALID;
+		msg->characterSnapshots[i].isFlying = flags & SNAPSHOT_FLAG_IS_FLYING;
 		for (int j = 0; j < 3; j++)
-			READ_TYPE(msg->playerSnapshots[i].pos[j], int64)
+			READ_TYPE(msg->characterSnapshots[i].pos[j], int64)
 		for (int j = 0; j < 3; j++)
-			READ_TYPE(msg->playerSnapshots[i].vel[j], double)
-		READ_TYPE(msg->playerSnapshots[i].yaw, uint16)
-		READ_TYPE(msg->playerSnapshots[i].pitch, int16)
-		READ_TYPE(msg->playerSnapshots[i].moveInput, uint8)
+			READ_TYPE(msg->characterSnapshots[i].vel[j], double)
+		READ_TYPE(msg->characterSnapshots[i].yaw, uint16)
+		READ_TYPE(msg->characterSnapshots[i].pitch, int16)
+		READ_TYPE(msg->characterSnapshots[i].moveInput, uint8)
 	}
 	READ_TYPE(msg->localId, uint8)
 PLAIN_MSG_END

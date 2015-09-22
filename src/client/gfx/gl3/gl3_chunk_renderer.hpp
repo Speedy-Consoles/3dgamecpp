@@ -32,7 +32,7 @@ private:
 
 	// chunk construction state
 	size_t bufferSize = 0;
-	glm::mat4 playerTranslationMatrix;
+	glm::mat4 characterTranslationMatrix;
 	BlockVertexData blockVertexBuffer[Chunk::WIDTH * Chunk::WIDTH * (Chunk::WIDTH + 1) * 3 * 2 * 3];
 
 public:

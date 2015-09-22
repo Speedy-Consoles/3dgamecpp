@@ -14,13 +14,13 @@ void GL2HudRenderer::render() {
 	if (client->getStateId() != Client::StateId::PLAYING)
 		return;
 
-	const Player &player = client->getLocalPlayer();
-	if (!player.isValid())
+	const Character &character = client->getLocalCharacter();
+	if (!character.isValid())
 		return;
 
 	GL(Enable(GL_TEXTURE_2D));
 	vec2f texs[4];
-	GL2TextureManager::Entry tex_entry = renderer->getTextureManager()->get(client->getLocalPlayer().getBlock());
+	GL2TextureManager::Entry tex_entry = renderer->getTextureManager()->get(client->getLocalCharacter().getBlock());
 	GL2TextureManager::getTextureCoords(tex_entry.index, tex_entry.type, texs);
 	GL(BindTexture(GL_TEXTURE_2D, tex_entry.tex));
 

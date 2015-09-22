@@ -12,7 +12,7 @@ class ServerInterface;
 class LocalServerInterface;
 class RemoteServerInterface;
 class World;
-class Player;
+class Character;
 class Menu;
 class Graphics;
 struct GraphicsConf;
@@ -63,7 +63,7 @@ public:
 
 	// convenience functions
 	uint8 getLocalClientId() const;
-	Player &getLocalPlayer();
+	Character &getLocalCharacter();
 
 	// state machine
 	void pushState(State *);
