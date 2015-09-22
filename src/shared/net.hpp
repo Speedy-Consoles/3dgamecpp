@@ -20,7 +20,8 @@ enum DisconnectReason : uint32 {
 
 enum MessageError : uint8 {
 	MESSAGE_OK = 0,
-	WRONG_MESSAGE_LENGTH,
+	ABRUPT_MESSAGE_END,
+	MESSAGE_TOO_LONG,
 	WRONG_MAGIC,
 };
 
@@ -38,6 +39,7 @@ enum MessageType : uint8 {
 	SNAPSHOT,
 
 	// Client messages
+	PLAYER_INFO,
 	PLAYER_INPUT,
 };
 
@@ -66,6 +68,10 @@ struct Snapshot {
 	int localId;
 };
 
+struct PlayerInfo {
+	std::string name;
+};
+
 struct PlayerInput {
 	int yaw;
 	int pitch;
@@ -83,6 +89,7 @@ MessageError readMessageHeader(const char *data, size_t size, MessageType *type)
 MSG_FUNCS(PlayerJoinEvent)
 MSG_FUNCS(PlayerLeaveEvent)
 MSG_FUNCS(Snapshot)
+MSG_FUNCS(PlayerInfo)
 MSG_FUNCS(PlayerInput)
 
 #endif // NET_HPP

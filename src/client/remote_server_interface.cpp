@@ -189,6 +189,11 @@ void RemoteServerInterface::updateNetConnecting() {
 		case ENET_EVENT_TYPE_CONNECT:
 			LOG_INFO(logger) << "Connected to server";
 			status = CONNECTED;
+			{
+				PlayerInfo info;
+				info.name = "Unnamed player";
+				send(info);
+			}
 			break;
 		case ENET_EVENT_TYPE_DISCONNECT:
 			enet_peer_reset(peer);

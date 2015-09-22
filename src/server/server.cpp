@@ -23,7 +23,7 @@ namespace {
 	volatile std::sig_atomic_t closeRequested;
 }
 
-void signalCallback(int signal) {
+static void signalCallback(int) {
 	closeRequested = 1;
 }
 
@@ -33,8 +33,17 @@ struct PeerData {
 	int id;
 };
 
+enum ClientStatus {
+	UNNAMED,
+	PLAYING,
+	DISCONNECTING,
+};
+
 struct Client {
 	ENetPeer *peer = nullptr;
+	ClientStatus status = UNNAMED;
+	std::string name;
+
 };
 
 class Server {
@@ -60,10 +69,14 @@ public:
 
 private:
 	void updateNet();
+	void updateNetShutdown();
 
 	void handleConnect(ENetPeer *peer);
 	void handleDisconnect(ENetPeer *peer, DisconnectReason reason);
 	void handlePacket(const enet_uint8 *data, size_t size, size_t channel, ENetPeer *peer);
+
+	void onPlayerJoin(int id);
+	void onPlayerLeave(int id, DisconnectReason reason);
 
 	void sendSnapshots(int tick);
 
@@ -174,32 +187,15 @@ void Server::run() {
 	host->duplicatePeers = 0;
 
 	for (int i = 0; i < MAX_CLIENTS; ++i) {
-		if (clients[i].peer)
+		if (clients[i].peer && clients[i].status != DISCONNECTING) {
 			enet_peer_disconnect(clients[i].peer, (enet_uint32) SERVER_SHUTDOWN);
+			clients[i].status = DISCONNECTING;
+		}
 	}
 
 	Time endTime = getCurrentTime() + seconds(1);
 	while (numClients > 0 && getCurrentTime() < endTime) {
-		ENetEvent event;
-		if (enet_host_service(host, &event, 10) > 0) {
-			switch (event.type) {
-			case ENET_EVENT_TYPE_CONNECT:
-				// TODO prevent this
-				LOG_WARNING(logger) << "Ignoring ENET_EVENT_TYPE_CONNECT while shutting down";
-				break;
-			case ENET_EVENT_TYPE_DISCONNECT:
-				LOG_DEBUG(logger) << "disconnect reason during shutdown: " << event.data;
-				numClients--;
-				break;
-			case ENET_EVENT_TYPE_RECEIVE:
-				LOG_WARNING(logger) << "Ignoring ENET_EVENT_TYPE_RECEIVE while shutting down";
-				enet_packet_destroy(event.packet);
-				break;
-			default:
-				LOG_WARNING(logger) << "Received unknown ENetEvent type << event.type";
-				break;
-			}
-		}
+		updateNetShutdown();
 	}
 }
 
@@ -229,6 +225,28 @@ void Server::updateNet() {
 	}
 }
 
+void Server::updateNetShutdown() {
+	ENetEvent event;
+	if (enet_host_service(host, &event, 10) > 0) {
+		switch (event.type) {
+		case ENET_EVENT_TYPE_CONNECT:
+			LOG_WARNING(logger) << "Received ENetEvent ENET_EVENT_TYPE_CONNECT while shutting down";
+			enet_peer_reset(event.peer);
+			break;
+		case ENET_EVENT_TYPE_DISCONNECT:
+			numClients--;
+			break;
+		case ENET_EVENT_TYPE_RECEIVE:
+			LOG_WARNING(logger) << "Ignoring ENetEvent ENET_EVENT_TYPE_RECEIVE while shutting down";
+			enet_packet_destroy(event.packet);
+			break;
+		default:
+			LOG_WARNING(logger) << "Received unknown ENetEvent type << event.type";
+			break;
+		}
+	}
+}
+
 void Server::handleConnect(ENetPeer *peer) {
 	int id = -1;
 	for (int i = 0; i < (int) MAX_CLIENTS; i++) {
@@ -236,24 +254,19 @@ void Server::handleConnect(ENetPeer *peer) {
 			id = i;
 			peer->data = new PeerData{id};
 			clients[id].peer = peer;
+			clients[id].status = UNNAMED;
 			break;
 		}
 	}
 	if (id == -1) {
 		enet_peer_reset(peer);
-		LOG_FATAL(logger) << "Could not find unused id for new player";
+		LOG_ERROR(logger) << "Could not find unused id for new player";
 		return;
 	}
 
 	numClients++;
 
-	world->addPlayer(id);
-
-	PlayerJoinEvent pje;
-	pje.id = id;
-	broadcast(pje);
-
-	LOG_INFO(logger) << "New Player " << id;
+	LOG_DEBUG(logger) << "Incoming connection: " << id;
 }
 
 void Server::handleDisconnect(ENetPeer *peer, DisconnectReason reason) {
@@ -264,23 +277,9 @@ void Server::handleDisconnect(ENetPeer *peer, DisconnectReason reason) {
 
 	numClients--;
 
-	world->deletePlayer(id);
+	LOG_DEBUG(logger) << "Disconnected: " << (int) id;
 
-	PlayerLeaveEvent ple;
-	ple.id = id;
-	broadcast(ple);
-
-	switch (reason) {
-	case TIMEOUT:
-		LOG_INFO(logger) << "Player " << (int) id << " timed out";
-		break;
-	case CLIENT_LEAVE:
-		LOG_INFO(logger) << "Player " << (int) id << " disconnected";
-		break;
-	default:
-		LOG_WARNING(logger) << "Unexpected DisconnectReason " << reason;
-		break;
-	}
+	onPlayerLeave(id, reason);
 }
 
 void Server::handlePacket(const enet_uint8 *data, size_t size, size_t channel, ENetPeer *peer) {
@@ -294,23 +293,75 @@ void Server::handlePacket(const enet_uint8 *data, size_t size, size_t channel, E
 
 	int id = ((PeerData *) peer->data)->id;
 	LOG_TRACE(logger) << "Message type: " << (int) type << ", Player id: " << (int) id;
-	switch (type) {
-	case PLAYER_INPUT:
-		{
-			PlayerInput input;
-			if (readMessageBody((const char *) data, size, &input)) {
+	switch (clients[id].status) {
+	case UNNAMED:
+		if (type == PLAYER_INFO) {
+			PlayerInfo info;
+			if (readMessageBody((const char *) data, size, &info)) {
 				LOG_WARNING(logger) << "Received malformed message";
 				break;
 			}
-			int yaw = input.yaw;
-			int pitch = input.pitch;
-			world->getPlayer(id).setOrientation(yaw, pitch);
-			world->getPlayer(id).setMoveInput(input.moveInput);
-			world->getPlayer(id).setFly(input.flying);
+			clients[id].name = info.name;
+			clients[id].status = PLAYING;
+			onPlayerJoin(id);
+		} else
+			LOG_WARNING(logger) << "Received message of type " << type << " from player without info";
+		break;
+	case DISCONNECTING:
+		LOG_WARNING(logger) << "Received message from disconnecting player";
+		break;
+	case PLAYING:
+		switch (type) {
+		case PLAYER_INPUT:
+			{
+				PlayerInput input;
+				if (readMessageBody((const char *) data, size, &input)) {
+					LOG_WARNING(logger) << "Received malformed message";
+					break;
+				}
+				int yaw = input.yaw;
+				int pitch = input.pitch;
+				world->getPlayer(id).setOrientation(yaw, pitch);
+				world->getPlayer(id).setMoveInput(input.moveInput);
+				world->getPlayer(id).setFly(input.flying);
+			}
+			break;
+		default:
+			LOG_WARNING(logger) << "Received message of unknown type " << type;
+			break;
 		}
 		break;
 	default:
-		LOG_WARNING(logger) << "Received message of unknown type " << type;
+		break;
+	}
+}
+
+void Server::onPlayerJoin(int id) {
+	world->addPlayer(id);
+
+	PlayerJoinEvent pje;
+	pje.id = id;
+	broadcast(pje);
+
+	LOG_INFO(logger) << clients[id].name << " joined the game";
+}
+
+void Server::onPlayerLeave(int id, DisconnectReason reason) {
+	world->deletePlayer(id);
+
+	PlayerLeaveEvent ple;
+	ple.id = id;
+	broadcast(ple);
+
+	switch (reason) {
+	case TIMEOUT:
+		LOG_INFO(logger) <<  clients[id].name << " timed out";
+		break;
+	case CLIENT_LEAVE:
+		LOG_INFO(logger) <<  clients[id].name << " disconnected";
+		break;
+	default:
+		LOG_WARNING(logger) << "Unexpected DisconnectReason " << reason;
 		break;
 	}
 }
