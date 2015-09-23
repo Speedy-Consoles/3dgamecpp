@@ -29,13 +29,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\src\shared\engine\buffer.cpp">
-      <Filter>Source Files\engine</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\shared\engine\logging.cpp">
-      <Filter>Source Files\engine</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\shared\engine\socket.cpp">
       <Filter>Source Files\engine</Filter>
     </ClCompile>
     <ClCompile Include="..\src\shared\engine\stopwatch.cpp">
@@ -94,9 +88,6 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\src\shared\engine\buffer.hpp">
-      <Filter>Header Files\engine</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\shared\engine\logging.hpp">
       <Filter>Header Files\engine</Filter>
     </ClInclude>
@@ -110,9 +101,6 @@
       <Filter>Header Files\engine</Filter>
     </ClInclude>
     <ClInclude Include="..\src\shared\engine\queue.hpp">
-      <Filter>Header Files\engine</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\shared\engine\socket.hpp">
       <Filter>Header Files\engine</Filter>
     </ClInclude>
     <ClInclude Include="..\src\shared\engine\stack.hpp">
