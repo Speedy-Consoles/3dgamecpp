@@ -189,3 +189,68 @@ PLAIN_MSG_MIDDLE(PlayerInput, PLAYER_INPUT_SIZE)
 	READ_TYPE(msg->pitch, int16);
 	READ_TYPE(msg->moveInput, uint8);
 PLAIN_MSG_END
+
+// ChunkRequest
+static const size_t CHUNK_REQUEST_SIZE =
+		3 * sizeof(int64)
+		+ sizeof(uint32);
+PLAIN_MSG_START(ChunkRequest, CHUNK_REQUEST, CHUNK_REQUEST_SIZE)
+	for (int i = 0; i < 3; i++)
+		WRITE_TYPE(msg.coords[i], int64)
+	if (msg.cached)
+		WRITE_TYPE((uint32) -1, uint32)
+	else
+		WRITE_TYPE(msg.cachedRevision, uint32)
+PLAIN_MSG_MIDDLE(ChunkRequest, CHUNK_REQUEST_SIZE)
+	for (int i = 0; i < 3; i++)
+		READ_TYPE(msg->coords[i], int64)
+	uint32 rev;
+	READ_TYPE(rev, uint32)
+	if (rev == (uint32) -1) {
+		msg->cached = true;
+		msg->cachedRevision = rev;
+	} else {
+		msg->cached = false;
+	}
+PLAIN_MSG_END
+
+// PLAYER_INFO
+size_t getMessageSize(const ChunkMessage &msg) {
+	return HEADER_SIZE
+			+ sizeof(int64) * 3
+			+ sizeof(uint32)
+			+ sizeof(uint16)
+			+ msg.encodedLength;
+}
+MessageType getMessageType(const ChunkMessage &) { return CHUNK_MESSAGE; }
+char *getEncodedBlocksPointer(char *data) {
+	return data
+			+ HEADER_SIZE
+			+ sizeof(int64) * 3
+			+ sizeof(uint32)
+			+ sizeof(uint16);
+}
+BufferError writeMessageMeta(const ChunkMessage &msg, char *data, size_t size) {
+	if (size != getMessageSize(msg))
+		return WRONG_BUFFER_LENGTH;
+	writeHeader(PLAYER_INFO, data);
+	data += HEADER_SIZE;
+	size -= HEADER_SIZE;
+	for (int i = 0; i < 3; i++)
+		WRITE_TYPE(msg.chunkCoords[i], int64)
+	WRITE_TYPE(msg.revision, uint32)
+	WRITE_TYPE(msg.encodedLength, uint16)
+	// after this come the already written encoded blocks
+	return BUFFER_OK;
+}
+MessageError readMessageBody(const char *data, size_t size, ChunkMessage *msg) {
+	if (size < HEADER_SIZE + 1)
+		return ABRUPT_MESSAGE_END;
+	data += HEADER_SIZE;
+	size -= HEADER_SIZE;
+	for (int i = 0; i < 3; i++)
+		READ_TYPE(msg->chunkCoords[i], int64)
+	READ_TYPE(msg->revision, uint32)
+	READ_TYPE(msg->encodedLength, uint16)
+	// after this come the encoded blocks, which have to be read separately
+}
