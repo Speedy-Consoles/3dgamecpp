@@ -8,6 +8,7 @@
 #include "engine/logging.hpp"
 
 #include "block_utils.hpp"
+#include "chunk_compression.hpp"
 
 using namespace std;
 
@@ -17,8 +18,6 @@ static const uint8 MAGIC[4] = { 0x59, 0x97, 0x22, 0xDF };
 
 static const int32 ENDIANESS_BYTES = 0x01020304;
 static const int32 ENDIANESS_BYTES_FLIPPED = 0x04030201;
-
-static const uint8 ESCAPE_CHAR = (uint8) (-1);
 
 static const uint HEAP_BLOCK_SIZE = 256;
 
@@ -84,10 +83,6 @@ public:
 	bool hasChunk(vec3i64);
 	bool loadChunk(Chunk *);
 	void storeChunk(const Chunk &);
-	void decodeBlocks_RLE(uint8 *blocks);
-	int encodeBlocks_RLE(const uint8 *blocks, uint8 *, size_t);
-	void decodeBlocks_PLAIN(uint8 *blocks);
-	int encodeBlocks_PLAIN(const uint8 *blocks, uint8 *, size_t);
 
 	int getFileSize();
 	int getUsedChunkBytes();
@@ -284,9 +279,9 @@ bool ArchiveFile::loadChunk(Chunk *chunk) {
 	_file.seekg(getChunkHeapStart() + dir_entry.offset * _header.heap_block_size);
 
 	if ((dir_entry.flags & LAYOUT_ENC_MASK) == LAYOUT_RLE) {
-		decodeBlocks_RLE(chunk->getBlocksForInit());
+		decodeBlocks_RLE(&_file, chunk->getBlocksForInit());
 	} else if ((dir_entry.flags & LAYOUT_ENC_MASK) == LAYOUT_PLAIN) {
-		decodeBlocks_PLAIN(chunk->getBlocksForInit());
+		decodeBlocks_PLAIN(&_file, chunk->getBlocksForInit());
 	} else {
 		LOG_ERROR(logger) << "Chunk Layout " << dir_entry.flags << " unsupported";
 		return false;
@@ -384,115 +379,6 @@ void ArchiveFile::storeChunk(const Chunk &chunk) {
 		LOG_ERROR(logger) << "Safe operation failed for chunk "
 				<< cc[0] << " " << cc[1] << " "<< cc[2];
 	}
-}
-
-void ArchiveFile::decodeBlocks_RLE(uint8 *blocks) {
-	size_t index = 0;
-	while (index < Chunk::SIZE) {
-		uint8 next_block;
-		_file.read((char *) &next_block, sizeof (uint8));
-
-		if (next_block == ESCAPE_CHAR) {
-			uint8 next_byte, block_type;
-			uint32 run_length;
-			_file.read((char *) &next_byte, sizeof (uint8));
-
-			// Like UTF8, the first bit signals a multi-byte sequence
-			if ((next_byte & 0x80) == 0) {
-				// This is the only byte
-				run_length = next_byte;
-			} else {
-				// There is exactly one extra byte, the oher 7 bits can be used for the value
-				uint32 encoded_run_length = next_byte & 0x7F;
-				_file.read((char *) &next_byte, sizeof (uint8));
-				encoded_run_length = (encoded_run_length << 8) | next_byte;
-				// we count from 1 and not from 0 to save space
-				run_length = encoded_run_length + 1;
-			}
-
-			_file.read((char *) &block_type, sizeof (uint8));
-			for (uint32 i = 0; i < run_length; ++i) {
-				if (index >= Chunk::SIZE) {
-					LOG_ERROR(logger) << "Block data exceeded Chunk size";
-					break;
-				}
-				blocks[index++] = block_type;
-			}
-		} else {
-			blocks[index++] = next_block;
-		}
-	}
-}
-
-int ArchiveFile::encodeBlocks_RLE(const uint8 *blocks, uint8 *buffer, size_t size) {
-	uint8 cur_run_type = blocks[0];
-	size_t cur_run_length = 1;
-	uint8 *head = buffer;
-
-	auto finishRun = [&]() -> int {
-		if (cur_run_length == 0)
-			return 0;
-		if (cur_run_length > 3 || cur_run_type == ESCAPE_CHAR) {
-			if (cur_run_length < 0x80) {
-				if ((uint) (head - buffer) + 3u <= size) {
-					*head++ = ESCAPE_CHAR;
-					*head++ = cur_run_length;
-					*head++ = cur_run_type;
-				} else {
-					return -1;
-				}
-			} else {
-				// we count from 1 and not from 0 to save space
-				size_t encoded_run_length = cur_run_length - 1;
-				if ((uint) (head - buffer) + 4u <= size) {
-					*head++ = ESCAPE_CHAR;
-					*head++ = 0x80 | (encoded_run_length >> 8);
-					*head++ = encoded_run_length & 0xFF;
-					*head++ = cur_run_type;
-				} else {
-					return -1;
-				}
-			}
-		} else {
-			if (head - buffer + cur_run_length <= size) {
-				for (size_t j = 0; j < cur_run_length; ++j)
-					*head++ = cur_run_type;
-			} else {
-				return -1;
-			}
-		}
-		return 0;
-	};
-
-	for (size_t i = 1; i < size; ++i) {
-		uint8 next_block = blocks[i];
-		if (cur_run_length >= 0x8000) {
-			if (finishRun() != 0)
-				return head - buffer;
-			cur_run_length = 0;
-		}
-		if (cur_run_type == next_block) {
-			cur_run_length++;
-		} else {
-			if (finishRun() != 0)
-				return head - buffer;
-			cur_run_type = next_block;
-			cur_run_length = 1;
-		}
-	}
-
-	finishRun();
-	return head - buffer;
-}
-
-void ArchiveFile::decodeBlocks_PLAIN(uint8 *blocks) {
-	_file.read((char *)blocks, Chunk::SIZE * sizeof (uint8));
-}
-
-int ArchiveFile::encodeBlocks_PLAIN(const uint8 *blocks, uint8 *buffer, size_t size) {
-	size_t actual_size = std::min(Chunk::SIZE * sizeof(uint8), size);
-	memcpy(buffer, blocks, actual_size);
-	return (int) actual_size;
 }
 
 int ArchiveFile::getFileSize() {
