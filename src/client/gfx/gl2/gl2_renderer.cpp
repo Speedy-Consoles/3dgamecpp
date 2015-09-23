@@ -1,3 +1,5 @@
+#ifndef WITHOUT_GL2
+
 #include "gl2_renderer.hpp"
 
 #include <SDL2/SDL_image.h>
@@ -424,3 +426,5 @@ void GL2Renderer::render() {
 	debugRenderer->render();
 	menuRenderer->render();
 }
+
+#endif // WITHOUT_GL2

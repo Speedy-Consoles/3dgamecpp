@@ -1,3 +1,4 @@
+#ifndef WITHOUT_GL2
 #include "gl2_sky_renderer.hpp"
 
 #include "gl2_renderer.hpp"
@@ -23,3 +24,4 @@ void GL2SkyRenderer::render() {
 	glVertex3d(-2, 2, 2);
 	glEnd();
 }
+#endif

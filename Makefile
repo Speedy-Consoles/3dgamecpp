@@ -95,6 +95,7 @@ LDFLAGS = -pthread
 LIBS_LD_FLAGS = -llog4cxx -lboost_system -lboost_filesystem -lenet
 
 #CXXFLAGS += -DNO_GRAPHICS
+CXXFLAGS += -DWITHOUT_GL2
 
 # program specific flags
 CLIENT_LDFLAGS = $(LDFLAGS)

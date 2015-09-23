@@ -1,3 +1,5 @@
+#ifndef WITHOUT_GL2
+
 #include "gl2_hud_renderer.hpp"
 
 #include "shared/engine/logging.hpp"
@@ -39,3 +41,5 @@ void GL2HudRenderer::render() {
 
 	GL(PopMatrix());
 }
+
+#endif // WITHOUT_GL2

@@ -1,3 +1,4 @@
+#ifndef WITHOUT_GL2
 #include "gl2_texture_manager.hpp"
 
 #include <SDL2/SDL_image.h>
@@ -137,3 +138,4 @@ GLuint GL2TextureManager::loadTexture(int block, uint8 dir_mask, SDL_Surface *im
 
 	return tex;
 }
+#endif // WITHOUT_GL2

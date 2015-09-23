@@ -1,3 +1,5 @@
+#ifndef WITHOUT_GL2
+
 #include "gl2_menu_renderer.hpp"
 
 #include "shared/engine/logging.hpp"
@@ -89,3 +91,5 @@ void GL2MenuRenderer::renderText(const char *text) {
 	glTranslatef(0, -font->Descender(), 0);
 	font->Render(text);
 }
+
+#endif // WITHOUT_GL2

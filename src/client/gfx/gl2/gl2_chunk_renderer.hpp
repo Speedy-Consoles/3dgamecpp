@@ -1,3 +1,5 @@
+#ifndef WITHOUT_GL2
+
 #ifndef GL2_CHUNK_RENDERER_HPP_
 #define GL2_CHUNK_RENDERER_HPP_
 
@@ -52,3 +54,5 @@ protected:
 };
 
 #endif //GL2_CHUNK_RENDERER_HPP_
+
+#endif // WITHOUT_GL2

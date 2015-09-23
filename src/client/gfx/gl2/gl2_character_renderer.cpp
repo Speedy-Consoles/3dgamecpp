@@ -1,3 +1,5 @@
+#ifndef WITHOUT_GL2
+
 #include "gl2_character_renderer.hpp"
 
 #include <glm/gtc/matrix_transform.hpp>
@@ -53,3 +55,5 @@ void GL2CharacterRenderer::render() {
 		GL(PopMatrix());
 	}
 }
+
+#endif // WITHOUT_GL2

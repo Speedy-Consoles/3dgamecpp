@@ -21,11 +21,15 @@
 PlayingState::PlayingState(State *parent, Client *client) :
 	State(parent, client)
 {
+#ifndef WITHOUT_GL2
 	if (client->conf->render_backend == RenderBackend::OGL_3) {
+#endif // WITHOUT_GL2
 		client->renderer = std::unique_ptr<GL3Renderer>(new GL3Renderer(client));
+#ifndef WITHOUT_GL2
 	} else {
 		client->renderer = std::unique_ptr<GL2Renderer>(new GL2Renderer(client));
 	}
+#endif // WITHOUT_GL2
 }
 
 PlayingState::~PlayingState() {

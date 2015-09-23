@@ -1,3 +1,5 @@
+#ifndef WITHOUT_GL2
+
 #ifndef GL2_CROSSHAIR_RENDERER_HPP_
 #define GL2_CROSSHAIR_RENDERER_HPP_
 
@@ -17,3 +19,5 @@ public:
 };
 
 #endif //GL2_CROSSHAIR_RENDERER_HPP_
+
+#endif // WITHOUT_GL2

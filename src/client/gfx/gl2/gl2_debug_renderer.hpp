@@ -1,3 +1,5 @@
+#ifndef WITHOUT_GL2
+
 #ifndef GL2_DEBUG_RENDERER_HPP_
 #define GL2_DEBUG_RENDERER_HPP_
 
@@ -27,3 +29,5 @@ private:
 };
 
 #endif //GL2_DEBUG_RENDERER_HPP_
+
+#endif // WITHOUT_GL2

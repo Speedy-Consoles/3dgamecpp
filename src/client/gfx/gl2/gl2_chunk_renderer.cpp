@@ -1,3 +1,5 @@
+#ifndef WITHOUT_GL2
+
 #include "gl2_chunk_renderer.hpp"
 
 #include "shared/engine/logging.hpp"
@@ -113,3 +115,5 @@ void GL2ChunkRenderer::destroyChunkData(vec3i64 chunkCoords) {
 		renderInfos.erase(it);
 	}
 }
+
+#endif // WITHOUT_GL2

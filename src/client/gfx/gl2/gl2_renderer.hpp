@@ -1,3 +1,5 @@
+#ifndef WITHOUT_GL2
+
 #ifndef GL2_RENDERER_HPP
 #define GL2_RENDERER_HPP
 
@@ -119,3 +121,4 @@ private:
 };
 
 #endif // GL2_RENDERER_HPP
+#endif // WITHOUT_GL2

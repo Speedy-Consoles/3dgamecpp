@@ -1,3 +1,5 @@
+#ifndef WITHOUT_GL2
+
 #include "gl2_crosshair_renderer.hpp"
 
 #include "shared/engine/logging.hpp"
@@ -30,3 +32,5 @@ void GL2CrosshairRenderer::render() {
 		LOG_OPENGL_ERROR;
 	}
 }
+
+#endif // WITHOUT_GL2

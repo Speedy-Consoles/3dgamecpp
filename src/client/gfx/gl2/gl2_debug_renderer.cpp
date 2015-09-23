@@ -1,3 +1,5 @@
+#ifndef WITHOUT_GL2
+
 #include "gl2_debug_renderer.hpp"
 
 #include "shared/engine/logging.hpp"
@@ -164,3 +166,5 @@ void GL2DebugRenderer::renderPerformance() {
 	}
 	glPopMatrix();
 }
+
+#endif // WITHOUT_GL2

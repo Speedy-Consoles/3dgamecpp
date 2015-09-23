@@ -1,3 +1,4 @@
+#ifndef WITHOUT_GL2
 #include "gl2_target_renderer.hpp"
 
 #include <glm/gtc/matrix_transform.hpp>
@@ -64,3 +65,4 @@ void GL2TargetRenderer::render() {
 		GL(Enable(GL_TEXTURE_2D));
 	}
 }
+#endif // WITHOUT_GL2
