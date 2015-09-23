@@ -94,7 +94,7 @@ private:
 	std::unique_ptr<ServerInterface> serverInterface;
 
 	std::vector<std::unique_ptr<State>> stateStack;
-	StateId stateId;
+	StateId stateId = StateId::CONNECTING;
 
 	bool debugOn = false;
 

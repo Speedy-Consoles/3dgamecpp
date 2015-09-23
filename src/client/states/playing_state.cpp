@@ -81,6 +81,13 @@ void PlayingState::update() {
 
 	client->getChunkManager()->tick();
 	serverInterface->tick();
+
+#ifndef NO_GRAPHICS
+	if (getCurrentTime() < client->time + client->timeShift + seconds(1) / TICK_SPEED) {
+		client->renderer->tick();
+		client->renderer->render();
+	}
+#endif
 }
 
 void PlayingState::handle(const Event &e) {

@@ -110,7 +110,7 @@ void RemoteServerInterface::tick() {
 	else if(status == DISCONNECTING)
 		updateNetDisconnecting();
 
-	if (status != CONNECTED)
+	if (status != CONNECTED && status != WAITING_FOR_SNAPSHOT)
 		return;
 
 	// receive
@@ -188,7 +188,7 @@ void RemoteServerInterface::updateNetConnecting() {
 		switch(event.type) {
 		case ENET_EVENT_TYPE_CONNECT:
 			LOG_INFO(logger) << "Connected to server";
-			status = CONNECTED;
+			status = WAITING_FOR_SNAPSHOT;
 			{
 				PlayerInfo info;
 				info.name = "Unnamed player";
@@ -236,7 +236,7 @@ void RemoteServerInterface::updateNetDisconnecting() {
 }
 
 void RemoteServerInterface::handlePacket(const enet_uint8 *data, size_t size, size_t channel) {
-	LOG_TRACE(logger) << "Received message of length " << size;
+	//LOG_TRACE(logger) << "Received message of length " << size;
 
 	MessageType type;
 	if (readMessageHeader((const char *) data, size, &type)) {
@@ -244,7 +244,7 @@ void RemoteServerInterface::handlePacket(const enet_uint8 *data, size_t size, si
 		return;
 	}
 
-	LOG_TRACE(logger) << "Message type: " << (int) type;
+	//LOG_TRACE(logger) << "Message type: " << (int) type;
 	switch (type) {
 	case PLAYER_JOIN_EVENT:
 		// TODO
@@ -254,6 +254,7 @@ void RemoteServerInterface::handlePacket(const enet_uint8 *data, size_t size, si
 		break;
 	case SNAPSHOT:
 		{
+			status = CONNECTED;
 			Snapshot snapshot;
 			if (readMessageBody((const char *) data, size, &snapshot)) {
 				LOG_WARNING(logger) << "Received malformed message";

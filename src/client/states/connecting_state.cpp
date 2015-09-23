@@ -10,8 +10,9 @@ ConnectingState::ConnectingState(State *parent, Client *client) :
 }
 
 void ConnectingState::update() {
-	parent->update();
+	// parent->update();
 
+	client->getServerInterface()->tick();
 	if (client->getServerInterface()->getStatus() == ServerInterface::CONNECTED) {
 		client->popState();
 	}

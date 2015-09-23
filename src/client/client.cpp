@@ -128,13 +128,6 @@ void Client::run() {
 
 		stateStack.back()->update();
 
-#ifndef NO_GRAPHICS
-		if (getCurrentTime() < time + timeShift + seconds(1) / TICK_SPEED) {
-			renderer->tick();
-			renderer->render();
-		}
-#endif
-
 		stopwatch->start(CLOCK_SYN);
 		sync(TICK_SPEED);
 		stopwatch->stop(CLOCK_SYN);
