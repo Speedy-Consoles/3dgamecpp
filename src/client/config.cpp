@@ -24,7 +24,7 @@ float         DEFAULT_FOV             = 120;
 uint          DEFAULT_TEX_MIPMAPPING  = 1000;
 TexFiltering  DEFAULT_TEX_FILTERING   = TexFiltering::LINEAR;
 bool          DEFAULT_TEX_ATLAS       = false;
-string        DEFAULT_TEXTURES_FILE   = "block_textures.txt";
+string        DEFAULT_TEXTURES_FILE   = "textures_definitance2_64.txt";
 
 namespace boost {
 namespace property_tree {
