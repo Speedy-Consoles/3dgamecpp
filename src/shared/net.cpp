@@ -140,6 +140,11 @@ BufferError writeMessage(const PlayerInfo &msg, char *data, size_t size) {
 	data += HEADER_SIZE;
 	size -= HEADER_SIZE;
 	msg.name.copy(data, msg.name.size());
+	data += msg.name.size();
+	size -= msg.name.size();
+	*data = '\0';
+	data += sizeof(char);
+	size -= sizeof(char);
 	return BUFFER_OK;
 }
 MessageError readMessageBody(const char *data, size_t size, PlayerInfo *msg) {
