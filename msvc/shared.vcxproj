@@ -24,6 +24,7 @@
     <ClCompile Include="..\src\shared\block_manager.cpp" />
     <ClCompile Include="..\src\shared\block_utils.cpp" />
     <ClCompile Include="..\src\shared\chunk_archive.cpp" />
+    <ClCompile Include="..\src\shared\chunk_compression.cpp" />
     <ClCompile Include="..\src\shared\engine\buffer.cpp" />
     <ClCompile Include="..\src\shared\engine\logging.cpp" />
     <ClCompile Include="..\src\shared\engine\socket.cpp" />
@@ -46,6 +47,7 @@
     <ClInclude Include="..\src\shared\block_manager.hpp" />
     <ClInclude Include="..\src\shared\block_utils.hpp" />
     <ClInclude Include="..\src\shared\chunk_archive.hpp" />
+    <ClInclude Include="..\src\shared\chunk_compression.hpp" />
     <ClInclude Include="..\src\shared\chunk_manager.hpp" />
     <ClInclude Include="..\src\shared\constants.hpp" />
     <ClInclude Include="..\src\shared\engine\buffer.hpp" />

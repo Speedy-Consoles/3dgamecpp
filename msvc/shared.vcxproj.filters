@@ -89,6 +89,9 @@
     <ClCompile Include="..\src\shared\game\character.cpp">
       <Filter>Source Files\game</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\shared\chunk_compression.cpp">
+      <Filter>Source Files\shared</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\shared\engine\buffer.hpp">
@@ -180,6 +183,9 @@
     </ClInclude>
     <ClInclude Include="..\src\shared\game\character.hpp">
       <Filter>Header Files\game</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\shared\chunk_compression.hpp">
+      <Filter>Header Files\shared</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
