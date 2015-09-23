@@ -3,6 +3,7 @@
 
 #include <cstring>
 #include <string>
+#include <sstream>
 
 #include "constants.hpp"
 
@@ -38,10 +39,12 @@ enum MessageType : uint8 {
 	PLAYER_JOIN_EVENT,
 	PLAYER_LEAVE_EVENT,
 	SNAPSHOT,
+	CHUNK_MESSAGE,
 
 	// Client messages
 	PLAYER_INFO,
 	PLAYER_INPUT,
+	CHUNK_REQUEST,
 };
 
 struct PlayerJoinEvent {
@@ -69,6 +72,13 @@ struct Snapshot {
 	int localId;
 };
 
+struct ChunkMessage {
+	vec3i64 chunkCoords;
+	uint32 revision;
+	size_t encodedLength;
+	const char *encodedBlocks;
+};
+
 struct PlayerInfo {
 	std::string name;
 };
@@ -78,6 +88,12 @@ struct PlayerInput {
 	int pitch;
 	int moveInput;
 	bool flying;
+};
+
+struct ChunkRequest {
+	vec3i64 coords;
+	bool cached;
+	uint32 cachedRevision;
 };
 
 MessageError readMessageHeader(const char *data, size_t size, MessageType *type);
@@ -92,5 +108,10 @@ MSG_FUNCS(PlayerLeaveEvent)
 MSG_FUNCS(Snapshot)
 MSG_FUNCS(PlayerInfo)
 MSG_FUNCS(PlayerInput)
+
+size_t getMessageSize(const ChunkMessage &);
+char *getEncodedBlocksPointer(char *data);
+BufferError writeMessageHeaderAndMeta(const ChunkMessage &msg, char *data, size_t size);
+MessageError readMessageBody(const char *data, size_t size, ChunkMessage *msg);
 
 #endif // NET_HPP

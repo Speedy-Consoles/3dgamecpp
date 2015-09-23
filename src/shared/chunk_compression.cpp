@@ -1,5 +1,7 @@
 #include "chunk_compression.hpp"
 
+#include <cstring>
+
 #include "shared/game/chunk.hpp"
 
 #include "shared/engine/logging.hpp"

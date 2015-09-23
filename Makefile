@@ -81,6 +81,7 @@ SHARED_OBJECT_FILES = \
 	shared/block_manager.cpp.o\
 	shared/block_utils.cpp.o\
 	shared/chunk_archive.cpp.o\
+	shared/chunk_compression.cpp.o\
 	shared/net.cpp.o\
 	shared/saves.cpp.o
 
