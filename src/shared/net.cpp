@@ -190,7 +190,7 @@ PLAIN_MSG_MIDDLE(PlayerInput, PLAYER_INPUT_SIZE)
 	READ_TYPE(msg->moveInput, uint8);
 PLAIN_MSG_END
 
-// ChunkRequest
+// CHUNK_REQUEST
 static const size_t CHUNK_REQUEST_SIZE =
 		3 * sizeof(int64)
 		+ sizeof(uint32);
@@ -214,21 +214,17 @@ PLAIN_MSG_MIDDLE(ChunkRequest, CHUNK_REQUEST_SIZE)
 	}
 PLAIN_MSG_END
 
-// PLAYER_INFO
+// CHUNK_MESSAGE
+static const size_t CHUNK_MESSAGE_META_SIZE =
+		sizeof(int64) * 3
+		+ sizeof(uint32)
+		+ sizeof(uint16);
 size_t getMessageSize(const ChunkMessage &msg) {
-	return HEADER_SIZE
-			+ sizeof(int64) * 3
-			+ sizeof(uint32)
-			+ sizeof(uint16)
-			+ msg.encodedLength;
+	return HEADER_SIZE + CHUNK_MESSAGE_META_SIZE + msg.encodedLength;
 }
 MessageType getMessageType(const ChunkMessage &) { return CHUNK_MESSAGE; }
 char *getEncodedBlocksPointer(char *data) {
-	return data
-			+ HEADER_SIZE
-			+ sizeof(int64) * 3
-			+ sizeof(uint32)
-			+ sizeof(uint16);
+	return data + HEADER_SIZE + CHUNK_MESSAGE_META_SIZE;
 }
 BufferError writeMessageMeta(const ChunkMessage &msg, char *data, size_t size) {
 	if (size != getMessageSize(msg))
@@ -244,7 +240,7 @@ BufferError writeMessageMeta(const ChunkMessage &msg, char *data, size_t size) {
 	return BUFFER_OK;
 }
 MessageError readMessageBody(const char *data, size_t size, ChunkMessage *msg) {
-	if (size < HEADER_SIZE + sizeof(int64) * 3+ sizeof(uint32)+ sizeof(uint16))
+	if (size < HEADER_SIZE + CHUNK_MESSAGE_META_SIZE)
 		return ABRUPT_MESSAGE_END;
 	data += HEADER_SIZE;
 	size -= HEADER_SIZE;
@@ -252,6 +248,8 @@ MessageError readMessageBody(const char *data, size_t size, ChunkMessage *msg) {
 		READ_TYPE(msg->chunkCoords[i], int64)
 	READ_TYPE(msg->revision, uint32)
 	READ_TYPE(msg->encodedLength, uint16)
+	if (size < msg->encodedLength)
+		return ABRUPT_MESSAGE_END;
 	msg->encodedBlocks = data;
 	return MESSAGE_OK;
 }

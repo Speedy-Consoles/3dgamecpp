@@ -108,10 +108,11 @@ MSG_FUNCS(PlayerLeaveEvent)
 MSG_FUNCS(Snapshot)
 MSG_FUNCS(PlayerInfo)
 MSG_FUNCS(PlayerInput)
+MSG_FUNCS(ChunkRequest)
 
 size_t getMessageSize(const ChunkMessage &);
 char *getEncodedBlocksPointer(char *data);
-BufferError writeMessageHeaderAndMeta(const ChunkMessage &msg, char *data, size_t size);
+BufferError writeMessageMeta(const ChunkMessage &msg, char *data, size_t size);
 MessageError readMessageBody(const char *data, size_t size, ChunkMessage *msg);
 
 #endif // NET_HPP

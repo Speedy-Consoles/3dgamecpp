@@ -240,6 +240,25 @@ void Server::handlePacket(const enet_uint8 *data, size_t size, size_t channel, E
 				gameServer->onPlayerInput(id, input);
 			}
 			break;
+		case CHUNK_REQUEST:
+			{
+				// TODO let another thread encode the chunk
+				ChunkRequest request;
+				if (readMessageBody((const char *) data, size, &request)) {
+					LOG_WARNING(logger) << "Received malformed message";
+					break;
+				}
+				size_t packetSize = Chunk::SIZE * sizeof(uint8);
+				ENetPacket *packet = enet_packet_create(nullptr, packetSize, ENET_PACKET_FLAG_RELIABLE);
+				ChunkMessage chunkMessage;
+				chunkMessage.encodedBlocks = getEncodedBlocksPointer((char *) packet->data);
+				gameServer->onChunkRequest(request, &chunkMessage);
+				if (writeMessageMeta(chunkMessage, (char *) packet->data, packetSize))
+					LOG_ERROR(logger) << "Could not serialize message";
+				enet_packet_resize(packet, getMessageSize(chunkMessage));
+				enet_peer_send(clientInfos[id].peer, 0, packet);
+			}
+			break;
 		default:
 			LOG_WARNING(logger) << "Received message of unknown type " << type;
 			break;

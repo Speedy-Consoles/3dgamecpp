@@ -85,6 +85,13 @@ void GameServer::onPlayerInput(int id, PlayerInput &input) {
 	world->getCharacter(id).setFly(input.flying);
 }
 
+void GameServer::onChunkRequest(ChunkRequest &request, ChunkMessage *msg) {
+	// TODO
+	msg->chunkCoords = vec3i64(0, 0, 0);
+	msg->revision = 0;
+	msg->encodedLength = 0;
+}
+
 void GameServer::sendSnapshots(int tick) {
 	Snapshot snapshot;
 	snapshot.tick = tick;
