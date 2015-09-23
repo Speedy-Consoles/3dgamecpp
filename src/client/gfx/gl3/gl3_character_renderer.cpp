@@ -12,7 +12,8 @@
 
 const vec3f GL3CharacterRenderer::CHARACTER_COLOR = {0.6f, 0.0f, 0.0f};
 const vec3i GL3CharacterRenderer::HEAD_SIZE = {400, 400, 500};
-const vec3i GL3CharacterRenderer::BODY_SIZE = {300, 600, Character::EYE_HEIGHT - 250};
+const vec3i GL3CharacterRenderer::BODY_SIZE = {300, 600, 1450};
+
 
 GL3CharacterRenderer::GL3CharacterRenderer(Client *client, GL3Renderer *renderer) :
 	client(client),
@@ -99,7 +100,7 @@ void GL3CharacterRenderer::buildHead() {
 			vertices[i] = vec3f(
 				(DIR_QUAD_CORNER_CYCLES_3D[d][i][0] - 0.5f) * HEAD_SIZE[0],
 				(DIR_QUAD_CORNER_CYCLES_3D[d][i][1] - 0.5f) * HEAD_SIZE[1],
-				(DIR_QUAD_CORNER_CYCLES_3D[d][i][2] - 0.5f) * HEAD_SIZE[2]
+				(DIR_QUAD_CORNER_CYCLES_3D[d][i][2] - 0.5f) * HEAD_SIZE[2] + HEAD_Z_OFFSET
 			) * (1.0f / RESOLUTION);
 		}
 		for (int j = 0; j < 6; j++) {
@@ -155,7 +156,14 @@ void GL3CharacterRenderer::render() {
 		GL(BindVertexArray(bodyVao));
 		GL(DrawArrays(GL_TRIANGLES, 0, 144));
 
-		modelMatrix = glm::rotate(modelMatrix, (float) (-character.getPitch() / 36000.0f * TAU), glm::vec3(0.0f, 1.0f, 0.0f));
+		modelMatrix = glm::translate(modelMatrix, glm::vec3(
+			0.0f,
+			0.0f,
+			(float)  HEAD_ANCHOR_Z_OFFSET / RESOLUTION)
+		);
+
+		int pitch = clamp(character.getPitch(), PITCH_MIN * 100, PITCH_MAX * 100);
+		modelMatrix = glm::rotate(modelMatrix, (float) (-pitch / 36000.0f * TAU), glm::vec3(0.0f, 1.0f, 0.0f));
 
 		defaultShader.setModelMatrix(modelMatrix);
 		defaultShader.useProgram();

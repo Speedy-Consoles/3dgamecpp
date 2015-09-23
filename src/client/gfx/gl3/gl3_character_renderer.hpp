@@ -15,6 +15,10 @@ class GL3CharacterRenderer : public ComponentRenderer {
 	static const vec3f CHARACTER_COLOR;
 	static const vec3i HEAD_SIZE;
 	static const vec3i BODY_SIZE;
+	static const int HEAD_Z_OFFSET = 100;
+	static const int HEAD_ANCHOR_Z_OFFSET = -100;
+	static const int PITCH_MIN = -60;
+	static const int PITCH_MAX = 60;
 private:
 	Client *client = nullptr;
 	GL3Renderer *renderer = nullptr;
