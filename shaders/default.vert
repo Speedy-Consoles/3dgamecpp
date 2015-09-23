@@ -27,6 +27,6 @@ void main() {
 	vec4 realPosition = viewMatrix * modelMatrix * vec4(position, 1.0);
 	vfRealPosition = realPosition.xyz;
 	gl_Position = projectionMatrix * realPosition;
-	vfNormal = normal;
+	vfNormal = normal * inverse(mat3(modelMatrix));
 	vfTexturePosition = vec2(0.0);
 }
