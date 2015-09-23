@@ -20,16 +20,18 @@ graphics-default.profile
 *.obj
 
 # linux build system
-bin/
-obj/
+/bin/
+/obj/
+ship*.bat
 
 # windows build system
-deps/
-msvc/bin/
-msvc/obj/
-msvc/**/*.sdf
-msvc/**/*.opensdf
-msvc/**/*.suo
+/deps/
+/package/
+/msvc/bin/
+/msvc/obj/
+/msvc/**/*.sdf
+/msvc/**/*.opensdf
+/msvc/**/*.suo
 
 # windows testing
 Guitar*
