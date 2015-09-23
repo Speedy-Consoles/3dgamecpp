@@ -3,6 +3,7 @@
 
 #include "shared/engine/macros.hpp"
 #include "shared/engine/vmath.hpp"
+#include "shared/game/character.hpp"
 #include "client/client.hpp"
 #include "client/gfx/graphics.hpp"
 #include "client/gfx/component_renderer.hpp"
@@ -11,20 +12,17 @@ class GL3Renderer;
 class ShaderManager;
 
 class GL3CharacterRenderer : public ComponentRenderer {
-public:
-	GL3CharacterRenderer(Client *client, GL3Renderer *renderer);
-	~GL3CharacterRenderer();
-
-	void render() override;
-
+	static const vec3f CHARACTER_COLOR;
+	static const vec3i HEAD_SIZE;
+	static const vec3i BODY_SIZE;
 private:
 	Client *client = nullptr;
 	GL3Renderer *renderer = nullptr;
 
-	vec3f characterColor{ 0.6f, 0.0f, 0.0f };
-
-	GLuint vao;
-	GLuint vbo;
+	GLuint bodyVao;
+	GLuint bodyVbo;
+	GLuint headVao;
+	GLuint headVbo;
 
 	PACKED(
 	struct VertexData {
@@ -32,6 +30,14 @@ private:
 		GLfloat nxyz[3];
 		GLfloat rgba[4];
 	});
+public:
+	GL3CharacterRenderer(Client *client, GL3Renderer *renderer);
+	~GL3CharacterRenderer();
+
+	void render() override;
+private:
+	void buildBody();
+	void buildHead();
 };
 
 #endif //GL3_CHARACTER_RENDERER_HPP_

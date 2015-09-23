@@ -10,14 +10,30 @@
 
 #include "gl3_renderer.hpp"
 
+const vec3f GL3CharacterRenderer::CHARACTER_COLOR = {0.6f, 0.0f, 0.0f};
+const vec3i GL3CharacterRenderer::HEAD_SIZE = {400, 400, 500};
+const vec3i GL3CharacterRenderer::BODY_SIZE = {300, 600, Character::EYE_HEIGHT - 250};
+
 GL3CharacterRenderer::GL3CharacterRenderer(Client *client, GL3Renderer *renderer) :
 	client(client),
 	renderer(renderer)
 {
-	GL(GenVertexArrays(1, &vao));
-	GL(GenBuffers(1, &vbo));
-	GL(BindVertexArray(vao));
-	GL(BindBuffer(GL_ARRAY_BUFFER, vbo));
+	buildBody();
+	buildHead();
+}
+
+GL3CharacterRenderer::~GL3CharacterRenderer() {
+	GL(DeleteVertexArrays(1, &bodyVao));
+	GL(DeleteBuffers(1, &bodyVbo));
+	GL(DeleteVertexArrays(1, &headVao));
+	GL(DeleteBuffers(1, &headVbo));
+}
+
+void GL3CharacterRenderer::buildBody() {
+	GL(GenVertexArrays(1, &bodyVao));
+	GL(GenBuffers(1, &bodyVbo));
+	GL(BindVertexArray(bodyVao));
+	GL(BindBuffer(GL_ARRAY_BUFFER, bodyVbo));
 	GL(VertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 40, 0));
 	GL(VertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 40, (void *) 12));
 	GL(VertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, 40, (void *) 24));
@@ -35,9 +51,9 @@ GL3CharacterRenderer::GL3CharacterRenderer(Client *client, GL3Renderer *renderer
 		vec3f vertices[4];
 		for (int i = 0; i < 4; i++) {
 			vertices[i] = vec3f(
-				(float)((DIR_QUAD_CORNER_CYCLES_3D[d][i][0] * 2 - 1) * Character::RADIUS),
-				(float)((DIR_QUAD_CORNER_CYCLES_3D[d][i][1] * 2 - 1) * Character::RADIUS),
-				(float)(DIR_QUAD_CORNER_CYCLES_3D[d][i][2] * Character::HEIGHT - Character::EYE_HEIGHT)
+				(DIR_QUAD_CORNER_CYCLES_3D[d][i][0] - 0.5f) * BODY_SIZE[0],
+				(DIR_QUAD_CORNER_CYCLES_3D[d][i][1] - 0.5f) * BODY_SIZE[1],
+				DIR_QUAD_CORNER_CYCLES_3D[d][i][2] * BODY_SIZE[2] - Character::EYE_HEIGHT
 			) * (1.0f / RESOLUTION);
 		}
 		for (int j = 0; j < 6; j++) {
@@ -47,9 +63,9 @@ GL3CharacterRenderer::GL3CharacterRenderer(Client *client, GL3Renderer *renderer
 			vertexData[index].nxyz[0] = normal[0];
 			vertexData[index].nxyz[1] = normal[1];
 			vertexData[index].nxyz[2] = normal[2];
-			vertexData[index].rgba[0] = characterColor[0];
-			vertexData[index].rgba[1] = characterColor[1];
-			vertexData[index].rgba[2] = characterColor[2];
+			vertexData[index].rgba[0] = CHARACTER_COLOR[0];
+			vertexData[index].rgba[1] = CHARACTER_COLOR[1];
+			vertexData[index].rgba[2] = CHARACTER_COLOR[2];
 			vertexData[index].rgba[3] = 1.0f;
 			index++;
 		}
@@ -59,18 +75,65 @@ GL3CharacterRenderer::GL3CharacterRenderer(Client *client, GL3Renderer *renderer
 	GL(BindBuffer(GL_ARRAY_BUFFER, 0));
 }
 
-GL3CharacterRenderer::~GL3CharacterRenderer() {
-	GL(DeleteVertexArrays(1, &vao));
-	GL(DeleteBuffers(1, &vbo));
+void GL3CharacterRenderer::buildHead() {
+	GL(GenVertexArrays(1, &headVao));
+	GL(GenBuffers(1, &headVbo));
+	GL(BindVertexArray(headVao));
+	GL(BindBuffer(GL_ARRAY_BUFFER, headVbo));
+	GL(VertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 40, 0));
+	GL(VertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 40, (void *) 12));
+	GL(VertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, 40, (void *) 24));
+	GL(EnableVertexAttribArray(0));
+	GL(EnableVertexAttribArray(1));
+	GL(EnableVertexAttribArray(2));
+	GL(BindVertexArray(0));
+
+	VertexData vertexData[36];
+	int vertexIndices[6] = {0, 1, 2, 0, 2, 3};
+	int index = 0;
+	for (int d = 0; d < 6; d++) {
+		vec3f normal(0.0);
+		normal[d % 3] = DIRS[d][d % 3];
+		vec3f vertices[4];
+		for (int i = 0; i < 4; i++) {
+			vertices[i] = vec3f(
+				(DIR_QUAD_CORNER_CYCLES_3D[d][i][0] - 0.5f) * HEAD_SIZE[0],
+				(DIR_QUAD_CORNER_CYCLES_3D[d][i][1] - 0.5f) * HEAD_SIZE[1],
+				(DIR_QUAD_CORNER_CYCLES_3D[d][i][2] - 0.5f) * HEAD_SIZE[2]
+			) * (1.0f / RESOLUTION);
+		}
+		for (int j = 0; j < 6; j++) {
+			vertexData[index].xyz[0] = vertices[vertexIndices[j]][0];
+			vertexData[index].xyz[1] = vertices[vertexIndices[j]][1];
+			vertexData[index].xyz[2] = vertices[vertexIndices[j]][2];
+			vertexData[index].nxyz[0] = normal[0];
+			vertexData[index].nxyz[1] = normal[1];
+			vertexData[index].nxyz[2] = normal[2];
+			vertexData[index].rgba[0] = CHARACTER_COLOR[0];
+			vertexData[index].rgba[1] = CHARACTER_COLOR[1];
+			vertexData[index].rgba[2] = CHARACTER_COLOR[2];
+			vertexData[index].rgba[3] = 1.0f;
+			index++;
+		}
+	}
+
+	GL(BufferData(GL_ARRAY_BUFFER, sizeof(vertexData), vertexData, GL_STATIC_DRAW));
+	GL(BindBuffer(GL_ARRAY_BUFFER, 0));
 }
 
 void GL3CharacterRenderer::render() {
 	Character &localCharacter = client->getLocalCharacter();
 
+		auto &defaultShader = ((GL3Renderer *) renderer)->getShaderManager()->getDefaultShader();
+
 	glm::mat4 viewMatrix = glm::rotate(glm::mat4(1.0f), (float) (-localCharacter.getPitch() / 36000.0f * TAU), glm::vec3(1.0f, 0.0f, 0.0f));
 	viewMatrix = glm::rotate(viewMatrix, (float) (-localCharacter.getYaw() / 36000.0f * TAU), glm::vec3(0.0f, 1.0f, 0.0f));
 	viewMatrix = glm::rotate(viewMatrix, (float) (-TAU / 4.0), glm::vec3(1.0f, 0.0f, 0.0f));
 	viewMatrix = glm::rotate(viewMatrix, (float) (TAU / 4.0), glm::vec3(0.0f, 0.0f, 1.0f));
+
+	defaultShader.setViewMatrix(viewMatrix);
+	defaultShader.setLightEnabled(true);
+	defaultShader.setFogEnabled(client->getConf().fog != Fog::NONE);
 
 	for (uint i = 0; i < MAX_CLIENTS; i++) {
 		if (i == client->getLocalClientId())
@@ -84,20 +147,20 @@ void GL3CharacterRenderer::render() {
 			(float) pDiff[1] / RESOLUTION,
 			(float) pDiff[2] / RESOLUTION)
 		);
-
 		modelMatrix = glm::rotate(modelMatrix, (float) (character.getYaw() / 36000.0f * TAU), glm::vec3(0.0f, 0.0f, 1.0f));
-		modelMatrix = glm::rotate(modelMatrix, (float) (-character.getPitch() / 36000.0f * TAU), glm::vec3(0.0f, 1.0f, 0.0f));
 
-
-		auto &defaultShader = ((GL3Renderer *) renderer)->getShaderManager()->getDefaultShader();
-
-		defaultShader.setViewMatrix(viewMatrix);
 		defaultShader.setModelMatrix(modelMatrix);
-		defaultShader.setLightEnabled(true);
-		defaultShader.setFogEnabled(client->getConf().fog != Fog::NONE);
 		defaultShader.useProgram();
 
-		GL(BindVertexArray(vao));
+		GL(BindVertexArray(bodyVao));
+		GL(DrawArrays(GL_TRIANGLES, 0, 144));
+
+		modelMatrix = glm::rotate(modelMatrix, (float) (-character.getPitch() / 36000.0f * TAU), glm::vec3(0.0f, 1.0f, 0.0f));
+
+		defaultShader.setModelMatrix(modelMatrix);
+		defaultShader.useProgram();
+
+		GL(BindVertexArray(headVao));
 		GL(DrawArrays(GL_TRIANGLES, 0, 144));
 		GL(BindVertexArray(0));
 	}
