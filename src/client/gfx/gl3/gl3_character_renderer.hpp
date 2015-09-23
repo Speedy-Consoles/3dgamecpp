@@ -29,6 +29,7 @@ private:
 	PACKED(
 	struct VertexData {
 		GLfloat xyz[3];
+		GLfloat nxyz[3];
 		GLfloat rgba[4];
 	});
 };

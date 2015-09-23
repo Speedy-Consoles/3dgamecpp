@@ -14,17 +14,19 @@ uniform mat4 viewMatrix;
 uniform mat4 modelMatrix;
 
 layout(location = 0) in vec3 position;
-layout(location = 1) in vec4 color;
+layout(location = 1) in vec3 normal;
+layout(location = 2) in vec4 color;
 
 out vec4 vfColor;
 out vec3 vfRealPosition;
+out vec3 vfNormal;
 out vec2 vfTexturePosition;
-// TODO out vec3f vfNormal
 
 void main() {
 	vfColor = color;
 	vec4 realPosition = viewMatrix * modelMatrix * vec4(position, 1.0);
 	vfRealPosition = realPosition.xyz;
 	gl_Position = projectionMatrix * realPosition;
+	vfNormal = normal;
 	vfTexturePosition = vec2(0.0);
 }

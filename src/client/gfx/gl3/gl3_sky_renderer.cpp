@@ -38,9 +38,9 @@ GL3SkyRenderer::GL3SkyRenderer(Client *client, GL3Renderer *renderer) :
 
 	GL(BufferData(GL_ARRAY_BUFFER, sizeof(vertexData), vertexData, GL_STATIC_DRAW));
 	GL(VertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 28, 0));
-	GL(VertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 28, (void *) 12));
+	GL(VertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, 28, (void *) 12));
 	GL(EnableVertexAttribArray(0));
-	GL(EnableVertexAttribArray(1));
+	GL(EnableVertexAttribArray(2));
 	GL(BindBuffer(GL_ARRAY_BUFFER, 0));
 	GL(BindVertexArray(0));
 }
@@ -55,7 +55,7 @@ void GL3SkyRenderer::render() {
 	defaultShader.setViewMatrix(viewMatrix);
 	defaultShader.setModelMatrix(glm::mat4(1.0f));
 	defaultShader.setFogEnabled(false);
-    defaultShader.setLightEnabled(false);
+	defaultShader.setLightEnabled(false);
 	defaultShader.useProgram();
 
 	GL(BindVertexArray(vao));

@@ -18,16 +18,20 @@ GL3CharacterRenderer::GL3CharacterRenderer(Client *client, GL3Renderer *renderer
 	GL(GenBuffers(1, &vbo));
 	GL(BindVertexArray(vao));
 	GL(BindBuffer(GL_ARRAY_BUFFER, vbo));
-	GL(VertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 28, 0));
-	GL(VertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 28, (void *) 12));
+	GL(VertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 40, 0));
+	GL(VertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 40, (void *) 12));
+	GL(VertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, 40, (void *) 24));
 	GL(EnableVertexAttribArray(0));
 	GL(EnableVertexAttribArray(1));
+	GL(EnableVertexAttribArray(2));
 	GL(BindVertexArray(0));
 
 	VertexData vertexData[36];
 	int vertexIndices[6] = {0, 1, 2, 0, 2, 3};
 	int index = 0;
 	for (int d = 0; d < 6; d++) {
+		vec3f normal(0.0);
+		normal[d % 3] = DIRS[d][d % 3];
 		vec3f vertices[4];
 		for (int i = 0; i < 4; i++) {
 			vertices[i] = vec3f(
@@ -40,6 +44,9 @@ GL3CharacterRenderer::GL3CharacterRenderer(Client *client, GL3Renderer *renderer
 			vertexData[index].xyz[0] = vertices[vertexIndices[j]][0];
 			vertexData[index].xyz[1] = vertices[vertexIndices[j]][1];
 			vertexData[index].xyz[2] = vertices[vertexIndices[j]][2];
+			vertexData[index].nxyz[0] = normal[0];
+			vertexData[index].nxyz[1] = normal[1];
+			vertexData[index].nxyz[2] = normal[2];
 			vertexData[index].rgba[0] = characterColor[0];
 			vertexData[index].rgba[1] = characterColor[1];
 			vertexData[index].rgba[2] = characterColor[2];
