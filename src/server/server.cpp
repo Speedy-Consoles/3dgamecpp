@@ -1,11 +1,7 @@
 #include "server.hpp"
 
-#include <thread>
-#include <future>
 #include <string>
-
 #include <csignal>
-
 #include <boost/filesystem.hpp>
 
 #include "shared/engine/std_types.hpp"
@@ -14,6 +10,7 @@
 #include "shared/net.hpp"
 
 #include "game_server.hpp"
+#include "chunk_server.hpp"
 
 namespace {
 	volatile std::sig_atomic_t closeRequested;
@@ -47,9 +44,25 @@ int main() {
 }
 
 Server::Server(uint16 port, const char *worldId) {
+	save = std::unique_ptr<Save>(new Save(worldId));
+	boost::filesystem::path path(save->getPath());
+	if (!boost::filesystem::exists(path)) {
+		boost::filesystem::create_directories(path);
+		std::random_device rng;
+		boost::random::uniform_int_distribution<uint64> distr;
+		uint64 seed = distr(rng);
+		save->initialize(worldId, seed);
+		save->store();
+	}
+
+	ServerChunkManager *cm = new ServerChunkManager(save->getWorldGenerator(), save->getChunkArchive());
+	chunkManager = std::unique_ptr<ServerChunkManager>(cm);
+	world = std::unique_ptr<World>(new World(chunkManager.get()));
+
 	LOG_INFO(logger) << "Creating server";
 
-	gameServer = std::unique_ptr<GameServer>(new GameServer(this, worldId));
+	gameServer = std::unique_ptr<GameServer>(new GameServer(this));
+	chunkServer = std::unique_ptr<ChunkServer>(new ChunkServer(this));
 
 	if (enet_initialize() != 0)
 		LOG_FATAL(logger) << "An error occurred while initializing ENet.";
@@ -81,6 +94,7 @@ void Server::run() {
 		kickUnfriendly();
 
 		gameServer->tick();
+		chunkServer->tick();
 
 		// Time remTime = time + seconds(1) / TICK_SPEED - getCurrentTime();
 
@@ -103,6 +117,14 @@ void Server::run() {
 	while (numClients > 0 && getCurrentTime() < endTime) {
 		updateNetShutdown();
 	}
+}
+
+void Server::finishChunkMessageJob(ChunkMessageJob job) {
+	size_t size = getMessageSize(job.message);
+	enet_packet_resize(job.packet, size);
+	if (writeMessageMeta(job.message, (char *) job.packet->data, size))
+		LOG_ERROR(logger) << "Could not serialize message";
+	enet_peer_send(clientInfos[job.clientId].peer, 0, job.packet);
 }
 
 void Server::updateNet() {
@@ -248,15 +270,12 @@ void Server::handlePacket(const enet_uint8 *data, size_t size, size_t channel, E
 					LOG_WARNING(logger) << "Received malformed message";
 					break;
 				}
+				ChunkMessageJob job;
 				size_t packetSize = Chunk::SIZE * sizeof(uint8);
-				ENetPacket *packet = enet_packet_create(nullptr, packetSize, ENET_PACKET_FLAG_RELIABLE);
-				ChunkMessage chunkMessage;
-				chunkMessage.encodedBlocks = getEncodedBlocksPointer((char *) packet->data);
-				gameServer->onChunkRequest(request, &chunkMessage);
-				if (writeMessageMeta(chunkMessage, (char *) packet->data, packetSize))
-					LOG_ERROR(logger) << "Could not serialize message";
-				enet_packet_resize(packet, getMessageSize(chunkMessage));
-				enet_peer_send(clientInfos[id].peer, 0, packet);
+				job.packet = enet_packet_create(nullptr, packetSize, ENET_PACKET_FLAG_RELIABLE);
+				job.message.encodedBlocks = getEncodedBlocksPointer((char *) job.packet->data);
+				job.clientId = id;
+				chunkServer->onChunkRequest(request, job);
 			}
 			break;
 		default:

@@ -5,12 +5,17 @@
 #include <string>
 #include <enet/enet.h>
 
+#include "shared/game/world.hpp"
+#include "shared/saves.hpp"
 #include "shared/net.hpp"
 #include "shared/engine/logging.hpp"
 #include "shared/engine/time.hpp"
 #include "shared/constants.hpp"
 
+#include "server_chunk_manager.hpp"
+
 class GameServer;
+class ChunkServer;
 
 struct PeerData {
 	int id;
@@ -29,9 +34,20 @@ struct ClientInfo {
 	Time connectionStartTime = 0;
 };
 
+struct ChunkMessageJob {
+	ChunkMessage message;
+	int clientId;
+	ENetPacket *packet;
+};
+
 class Server {
 private:
+	std::unique_ptr<Save> save;
+	std::unique_ptr<ServerChunkManager> chunkManager;
+	std::unique_ptr<World> world;
+
 	std::unique_ptr<GameServer> gameServer;
+	std::unique_ptr<ChunkServer> chunkServer;
 
 	ClientInfo clientInfos[MAX_CLIENTS];
 
@@ -51,6 +67,10 @@ public:
 	void run();
 
 	int getTick() { return tick; }
+	World *getWorld() { return world.get(); }
+	ServerChunkManager *getChunkManager() { return chunkManager.get(); }
+
+	void finishChunkMessageJob(ChunkMessageJob job);
 
 	// TODO think about channels
 	// maybe chat and events in different channels

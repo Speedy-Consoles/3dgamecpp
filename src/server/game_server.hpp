@@ -4,9 +4,6 @@
 #include "server.hpp"
 
 #include "shared/game/world.hpp"
-#include "shared/saves.hpp"
-
-#include "server_chunk_manager.hpp"
 
 struct Player {
 	bool valid = false;
@@ -16,15 +13,12 @@ struct Player {
 class GameServer {
 private:
 	Server *server;
-
-	std::unique_ptr<Save> save;
-	std::unique_ptr<ServerChunkManager> chunkManager;
-	std::unique_ptr<World> world;
+	World *world;
 
 	Player players[MAX_CLIENTS];
 
 public:
-	GameServer(Server *server, const char *worldId);
+	GameServer(Server *server);
 	~GameServer();
 
 	void tick();
@@ -33,7 +27,7 @@ public:
 	void onPlayerLeave(int id, DisconnectReason reason);
 	void onPlayerInput(int id, PlayerInput &input);
 
-	void onChunkRequest(ChunkRequest &request, ChunkMessage *msg);
+	void onChunkRequest(ChunkRequest &request, ChunkMessageJob job);
 
 private:
 	void sendSnapshots(int tick);

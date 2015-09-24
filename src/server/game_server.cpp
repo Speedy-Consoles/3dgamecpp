@@ -1,35 +1,14 @@
 #include "game_server.hpp"
 
-#include <thread>
-#include <future>
-#include <string>
-
-#include <boost/filesystem.hpp>
-
 #include "shared/engine/std_types.hpp"
-#include "shared/engine/random.hpp"
 #include "shared/block_utils.hpp"
 #include "shared/net.hpp"
 
 static logging::Logger logger("gserver");
 
-GameServer::GameServer(Server *server, const char *worldId) : server(server) {
+GameServer::GameServer(Server *server) : server(server) {
 	LOG_INFO(logger) << "Creating game server";
-
-	save = std::unique_ptr<Save>(new Save(worldId));
-	boost::filesystem::path path(save->getPath());
-	if (!boost::filesystem::exists(path)) {
-		boost::filesystem::create_directories(path);
-		std::random_device rng;
-		boost::random::uniform_int_distribution<uint64> distr;
-		uint64 seed = distr(rng);
-		save->initialize(worldId, seed);
-		save->store();
-	}
-
-	ServerChunkManager *cm = new ServerChunkManager(save->getWorldGenerator(), save->getChunkArchive());
-	chunkManager = std::unique_ptr<ServerChunkManager>(cm);
-	world = std::unique_ptr<World>(new World(chunkManager.get()));
+	world = server->getWorld();
 }
 
 GameServer::~GameServer() {
@@ -38,7 +17,6 @@ GameServer::~GameServer() {
 
 void GameServer::tick() {
 	world->tick();
-	chunkManager->tick();
 
 	//TODO use makeSnapshot
 	sendSnapshots(server->getTick());
@@ -85,11 +63,8 @@ void GameServer::onPlayerInput(int id, PlayerInput &input) {
 	world->getCharacter(id).setFly(input.flying);
 }
 
-void GameServer::onChunkRequest(ChunkRequest &request, ChunkMessage *msg) {
+void GameServer::onChunkRequest(ChunkRequest &request, ChunkMessageJob job) {
 	// TODO
-	msg->chunkCoords = vec3i64(0, 0, 0);
-	msg->revision = 0;
-	msg->encodedLength = 0;
 }
 
 void GameServer::sendSnapshots(int tick) {
