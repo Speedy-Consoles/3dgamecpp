@@ -25,9 +25,7 @@
     <ClCompile Include="..\src\shared\block_utils.cpp" />
     <ClCompile Include="..\src\shared\chunk_archive.cpp" />
     <ClCompile Include="..\src\shared\chunk_compression.cpp" />
-    <ClCompile Include="..\src\shared\engine\buffer.cpp" />
     <ClCompile Include="..\src\shared\engine\logging.cpp" />
-    <ClCompile Include="..\src\shared\engine\socket.cpp" />
     <ClCompile Include="..\src\shared\engine\stopwatch.cpp" />
     <ClCompile Include="..\src\shared\engine\thread.cpp" />
     <ClCompile Include="..\src\shared\engine\time.cpp" />
@@ -50,14 +48,12 @@
     <ClInclude Include="..\src\shared\chunk_compression.hpp" />
     <ClInclude Include="..\src\shared\chunk_manager.hpp" />
     <ClInclude Include="..\src\shared\constants.hpp" />
-    <ClInclude Include="..\src\shared\engine\buffer.hpp" />
     <ClInclude Include="..\src\shared\engine\logging.hpp" />
     <ClInclude Include="..\src\shared\engine\macros.hpp" />
     <ClInclude Include="..\src\shared\engine\math.hpp" />
     <ClInclude Include="..\src\shared\engine\monitor.hpp" />
     <ClInclude Include="..\src\shared\engine\queue.hpp" />
     <ClInclude Include="..\src\shared\engine\random.hpp" />
-    <ClInclude Include="..\src\shared\engine\socket.hpp" />
     <ClInclude Include="..\src\shared\engine\stack.hpp" />
     <ClInclude Include="..\src\shared\engine\std_types.hpp" />
     <ClInclude Include="..\src\shared\engine\stopwatch.hpp" />

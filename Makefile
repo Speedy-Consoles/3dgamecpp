@@ -64,9 +64,7 @@ TEST_OBJECT_FILES = \
 # stuff needed by both client and server
 SHARED_ARCHIVE_NAME = shared_archive
 SHARED_OBJECT_FILES = \
-	shared/engine/buffer.cpp.o\
 	shared/engine/logging.cpp.o\
-	shared/engine/socket.cpp.o\
 	shared/engine/stopwatch.cpp.o\
 	shared/engine/thread.cpp.o\
 	shared/engine/time.cpp.o\

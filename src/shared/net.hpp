@@ -9,7 +9,6 @@
 
 #include "engine/vmath.hpp"
 #include "engine/std_types.hpp"
-#include "engine/buffer.hpp"
 
 static const uint8 MAGIC[4] = {0xaa, 0x0d, 0xbe, 0x15};
 
