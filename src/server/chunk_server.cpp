@@ -10,7 +10,9 @@ ChunkServer::ChunkServer(Server *server) : server(server), toEncodeQueue(1024), 
 }
 
 ChunkServer::~ChunkServer() {
-	// nothing
+	ChunkMessageJob job;
+	while (encodedQueue.pop(job));
+	wait();
 }
 
 void ChunkServer::tick() {
