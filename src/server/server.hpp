@@ -34,14 +34,6 @@ struct ClientInfo {
 	Time connectionStartTime = 0;
 };
 
-struct ChunkMessageJob {
-	ChunkRequest request;
-	ChunkMessage message;
-	const uint8 *blocks;
-	int clientId;
-	ENetPacket *packet;
-};
-
 class Server {
 private:
 	std::unique_ptr<Save> save;
@@ -71,8 +63,6 @@ public:
 	int getTick() { return tick; }
 	World *getWorld() { return world.get(); }
 	ServerChunkManager *getChunkManager() { return chunkManager.get(); }
-
-	void finishChunkMessageJob(ChunkMessageJob job);
 
 	// TODO think about channels
 	// maybe chat and events in different channels

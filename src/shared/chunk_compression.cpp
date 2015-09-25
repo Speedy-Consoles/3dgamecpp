@@ -48,6 +48,52 @@ void decodeBlocks_RLE(std::istream *is, uint8 *blocks) {
 	}
 }
 
+void decodeBlocks_RLE(const uint8 *encoded, size_t size, uint8 *blocks) {
+	size_t index = 0;
+	while (index < Chunk::SIZE) {
+		uint8 next_block;
+		next_block = *encoded;
+		encoded++;
+		size--;
+
+		if (next_block == ESCAPE_CHAR) {
+			uint8 next_byte, block_type;
+			uint32 run_length;
+			next_byte = *encoded;
+			encoded++;
+			size--;
+
+			// Like UTF8, the first bit signals a multi-byte sequence
+			if ((next_byte & 0x80) == 0) {
+				// This is the only byte
+				run_length = next_byte;
+			} else {
+				// There is exactly one extra byte, the other 7 bits can be used for the value
+				uint32 encoded_run_length = next_byte & 0x7F;
+				next_byte = *encoded;
+				encoded++;
+				size--;
+				encoded_run_length = (encoded_run_length << 8) | next_byte;
+				// we count from 1 and not from 0 to save space
+				run_length = encoded_run_length + 1;
+			}
+
+			block_type = *encoded;
+			encoded++;
+			size--;
+			for (uint32 i = 0; i < run_length; ++i) {
+				if (index >= Chunk::SIZE) {
+					LOG_ERROR(logger) << "Block data exceeded Chunk size";
+					break;
+				}
+				blocks[index++] = block_type;
+			}
+		} else {
+			blocks[index++] = next_block;
+		}
+	}
+}
+
 int encodeBlocks_RLE(const uint8 *blocks, uint8 *buffer, size_t size) {
 	uint8 cur_run_type = blocks[0];
 	size_t cur_run_length = 1;

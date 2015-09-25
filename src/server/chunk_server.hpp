@@ -3,23 +3,25 @@
 
 #include "server.hpp"
 
-class ChunkServer : Thread {
+struct TaggedChunkRequest {
+	int clientId;
+	ChunkRequest request;
+};
+
+class ChunkServer {
 private:
 	Server *server;
 	ServerChunkManager *chunkManager;
 
-	std::queue<ChunkMessageJob> requestedQueue;
-	ProducerQueue<ChunkMessageJob> toEncodeQueue;
-	ProducerQueue<ChunkMessageJob> encodedQueue;
+	std::queue<TaggedChunkRequest> requestedQueue;
 
 public:
 	ChunkServer(Server *server);
 	~ChunkServer();
 
 	void tick();
-	virtual void doWork() override;
 
-	void onChunkRequest(ChunkMessageJob job);
+	void onChunkRequest(ChunkRequest request, int clientId);
 };
 
 #endif // CHUNK_SERVER_HPP

@@ -122,14 +122,6 @@ void Server::run() {
 	}
 }
 
-void Server::finishChunkMessageJob(ChunkMessageJob job) {
-	size_t size = getMessageSize(job.message);
-	enet_packet_resize(job.packet, size);
-	if (writeMessageMeta(job.message, (char *) job.packet->data, size))
-		LOG_ERROR(logger) << "Could not serialize message";
-	enet_peer_send(clientInfos[job.clientId].peer, 0, job.packet);
-}
-
 void Server::updateNet() {
 	ENetEvent event;
 	while (enet_host_service(host, &event, 0) > 0) {
@@ -267,19 +259,12 @@ void Server::handlePacket(const enet_uint8 *data, size_t size, size_t channel, E
 			break;
 		case CHUNK_REQUEST:
 			{
-				// TODO let another thread encode the chunk
 				ChunkRequest request;
 				if (readMessageBody((const char *) data, size, &request)) {
 					LOG_WARNING(logger) << "Received malformed message";
 					break;
 				}
-				ChunkMessageJob job;
-				size_t packetSize = Chunk::SIZE * sizeof(uint8);
-				job.request = request;
-				job.packet = enet_packet_create(nullptr, packetSize, ENET_PACKET_FLAG_RELIABLE);
-				job.message.encodedBlocks = getEncodedBlocksPointer((char *) job.packet->data);
-				job.clientId = id;
-				chunkServer->onChunkRequest(job);
+				chunkServer->onChunkRequest(request, id);
 			}
 			break;
 		default:

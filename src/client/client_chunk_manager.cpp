@@ -61,7 +61,7 @@ void ClientChunkManager::tick() {
 
 	while(!notInCacheQueue.empty()) {
 		Chunk *chunk = notInCacheQueue.front();
-		if (client->getServerInterface()->requestChunk(chunk))
+		if (client->getServerInterface()->requestChunk(chunk, false, -1))
 			notInCacheQueue.pop();
 		else
 			break;

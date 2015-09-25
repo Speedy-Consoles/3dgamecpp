@@ -75,7 +75,7 @@ struct ChunkMessage {
 	vec3i64 chunkCoords;
 	uint32 revision;
 	size_t encodedLength;
-	const char *encodedBlocks;
+	uint8 *encodedBlocks;
 };
 
 struct PlayerInfo {
@@ -108,10 +108,6 @@ MSG_FUNCS(Snapshot)
 MSG_FUNCS(PlayerInfo)
 MSG_FUNCS(PlayerInput)
 MSG_FUNCS(ChunkRequest)
-
-size_t getMessageSize(const ChunkMessage &);
-char *getEncodedBlocksPointer(char *data);
-BufferError writeMessageMeta(const ChunkMessage &msg, char *data, size_t size);
-MessageError readMessageBody(const char *data, size_t size, ChunkMessage *msg);
+MSG_FUNCS(ChunkMessage)
 
 #endif // NET_HPP

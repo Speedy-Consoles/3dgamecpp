@@ -4,53 +4,43 @@
 
 static logging::Logger logger("cserver");
 
-ChunkServer::ChunkServer(Server *server) : server(server), toEncodeQueue(1024), encodedQueue(1024) {
+ChunkServer::ChunkServer(Server *server) : server(server) {
 	LOG_INFO(logger) << "Creating chunk server";
 	chunkManager = server->getChunkManager();
 }
 
 ChunkServer::~ChunkServer() {
-	ChunkMessageJob job;
-	while (encodedQueue.pop(job));
-	wait();
+	// nothing
 }
 
 void ChunkServer::tick() {
-	ChunkMessageJob job;
 	while(!requestedQueue.empty()) {
-		job = requestedQueue.front();
-		const Chunk *chunk = chunkManager->getChunk(job.request.coords);
+		TaggedChunkRequest tcr = requestedQueue.front();
+		const Chunk *chunk = chunkManager->getChunk(tcr.request.coords);
 		if (!chunk)
 			break;
-		job.blocks = chunk->getBlocks();
-		job.message.chunkCoords = job.request.coords;
-		job.message.revision = chunk->getRevision();
-		if (chunk->getRevision() == job.request.cachedRevision)
-			job.message.encodedLength = 0;
-		else if (!toEncodeQueue.push(job))
-			break;
-	}
-
-	while (encodedQueue.pop(job)) {
-		server->finishChunkMessageJob(job);
-	}
-}
-
-void ChunkServer::onChunkRequest(ChunkMessageJob job) {
-	// TODO check for revision first
-	chunkManager->requestChunk(job.request.coords);
-	requestedQueue.push(job);
-}
-
-void ChunkServer::doWork() {
-	ChunkMessageJob job;
-	if (toEncodeQueue.pop(job)) {
-		// TODO make this thread-safe
-		encodeBlocks_RLE(job.blocks, (uint8 *) job.message.encodedBlocks, job.packet->dataLength);
-		while (!encodedQueue.push(job)) {
-			sleepFor(millis(50));
+		requestedQueue.pop();
+		ChunkMessage message;
+		message.chunkCoords = tcr.request.coords;
+		message.revision = chunk->getRevision();
+		if (chunk->getRevision() != tcr.request.cachedRevision) {
+			// TODO allocation should happen in chunk manager
+			message.encodedBlocks = new uint8[Chunk::SIZE];
+			message.encodedLength = encodeBlocks_RLE(chunk->getBlocks(), message.encodedBlocks, Chunk::SIZE);
+			server->send(message, tcr.clientId, true);
+			// TODO deallocation should also happen in chunk manager
+			delete[] message.encodedBlocks;
+		} else {
+			message.encodedLength = 0;
+			server->send(message, tcr.clientId, true);
 		}
-	} else {
-		sleepFor(millis(100));
+		chunkManager->releaseChunk(tcr.request.coords);
 	}
+}
+
+void ChunkServer::onChunkRequest(ChunkRequest request, int clientId) {
+	// TODO check for revision first
+	// TODO request compressed blocks instead of whole chunk
+	chunkManager->requestChunk(request.coords);
+	requestedQueue.push(TaggedChunkRequest{clientId, request});
 }

@@ -27,8 +27,6 @@ public:
 	void onPlayerLeave(int id, DisconnectReason reason);
 	void onPlayerInput(int id, PlayerInput &input);
 
-	void onChunkRequest(ChunkRequest &request, ChunkMessageJob job);
-
 private:
 	void sendSnapshots(int tick);
 };

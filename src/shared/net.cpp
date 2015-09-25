@@ -223,20 +223,19 @@ size_t getMessageSize(const ChunkMessage &msg) {
 	return HEADER_SIZE + CHUNK_MESSAGE_META_SIZE + msg.encodedLength;
 }
 MessageType getMessageType(const ChunkMessage &) { return CHUNK_MESSAGE; }
-char *getEncodedBlocksPointer(char *data) {
-	return data + HEADER_SIZE + CHUNK_MESSAGE_META_SIZE;
-}
-BufferError writeMessageMeta(const ChunkMessage &msg, char *data, size_t size) {
+BufferError writeMessage(const ChunkMessage &msg, char *data, size_t size) {
 	if (size != getMessageSize(msg))
 		return WRONG_BUFFER_LENGTH;
-	writeHeader(PLAYER_INFO, data);
+	writeHeader(CHUNK_MESSAGE, data);
 	data += HEADER_SIZE;
 	size -= HEADER_SIZE;
 	for (int i = 0; i < 3; i++)
 		WRITE_TYPE(msg.chunkCoords[i], int64)
 	WRITE_TYPE(msg.revision, uint32)
 	WRITE_TYPE(msg.encodedLength, uint16)
-	// after this come the already written encoded blocks
+	memcpy(data, msg.encodedBlocks, msg.encodedLength);
+	data += msg.encodedLength;
+	size -= msg.encodedLength;
 	return BUFFER_OK;
 }
 MessageError readMessageBody(const char *data, size_t size, ChunkMessage *msg) {
@@ -250,6 +249,8 @@ MessageError readMessageBody(const char *data, size_t size, ChunkMessage *msg) {
 	READ_TYPE(msg->encodedLength, uint16)
 	if (size < msg->encodedLength)
 		return ABRUPT_MESSAGE_END;
-	msg->encodedBlocks = data;
+	memcpy(msg->encodedBlocks, data, msg->encodedLength);
+	data += msg->encodedLength;
+	size -= msg->encodedLength;
 	return MESSAGE_OK;
 }

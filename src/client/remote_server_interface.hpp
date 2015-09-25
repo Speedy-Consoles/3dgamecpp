@@ -6,6 +6,7 @@
 #include <future>
 #include <string>
 #include <enet/enet.h>
+#include <queue>
 
 #include "shared/engine/time.hpp"
 #include "shared/engine/logging.hpp"
@@ -18,6 +19,9 @@ class RemoteServerInterface : public ServerInterface {
 private:
 	uint8 localCharacterId = -1;
 	Client *client = nullptr;
+
+	std::unordered_map<vec3i64, Chunk *, size_t(*)(vec3i64)> requestedChunks;
+	std::queue<Chunk *> receivedChunks;
 
 	std::unique_ptr<WorldGenerator> worldGenerator;
 	AsyncWorldGenerator asyncWorldGenerator;
@@ -53,7 +57,7 @@ public:
 
 	int getLocalClientId() override;
 
-	bool requestChunk(Chunk *chunk) override;
+	bool requestChunk(Chunk *chunk, bool cached, uint32 cachedRevision) override;
 	Chunk *getNextChunk() override;
 
 private:

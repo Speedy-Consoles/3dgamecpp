@@ -4,6 +4,7 @@
 
 #include "shared/engine/time.hpp"
 #include "shared/engine/logging.hpp"
+#include "shared/chunk_compression.hpp"
 #include "shared/saves.hpp"
 
 #include "client.hpp"
@@ -14,6 +15,7 @@ static logging::Logger logger("remote");
 
 RemoteServerInterface::RemoteServerInterface(Client *client, std::string addressString) :
 		client(client),
+		requestedChunks(0, vec3i64HashFunc),
 		worldGenerator(new WorldGenerator(42, WorldParams())),
 		asyncWorldGenerator(worldGenerator.get())
 {
@@ -119,7 +121,7 @@ void RemoteServerInterface::tick() {
 	if (status != CONNECTED)
 		return;
 
-	// send
+	// send input
 	PlayerInput input;
 	input.yaw = yaw;
 	input.pitch = pitch;
@@ -138,12 +140,23 @@ int RemoteServerInterface::getLocalClientId() {
 	return localCharacterId;
 }
 
-bool RemoteServerInterface::requestChunk(Chunk *chunk) {
-	return asyncWorldGenerator.requestChunk(chunk);
+bool RemoteServerInterface::requestChunk(Chunk *chunk, bool cached, uint32 cachedRevision) {
+	ChunkRequest msg;
+	msg.coords = chunk->getCC();
+	msg.cached = cached;
+	msg.cachedRevision = cachedRevision;
+	send(msg, true);
+	requestedChunks.insert({chunk->getCC(), chunk});
+	return true;
 }
 
 Chunk *RemoteServerInterface::getNextChunk() {
-	return asyncWorldGenerator.getNextChunk();
+	if (receivedChunks.empty())
+		return nullptr;
+
+	Chunk *chunk = receivedChunks.front();
+	receivedChunks.pop();
+	return chunk;
 }
 
 void RemoteServerInterface::updateNet() {
@@ -271,6 +284,29 @@ void RemoteServerInterface::handlePacket(const enet_uint8 *data, size_t size, si
 				if (characterSnapshot.valid)
 					character.applySnapshot(characterSnapshot, i == localCharacterId);
 			}
+		}
+		break;
+	case CHUNK_MESSAGE:
+		{
+			ChunkMessage msg;
+			// TODO allocation should be in the chunk or something
+			msg.encodedBlocks = new uint8[Chunk::SIZE];
+			if (readMessageBody((const char *) data, size, &msg)) {
+				LOG_WARNING(logger) << "Received malformed message";
+				break;
+			}
+			auto it = requestedChunks.find(msg.chunkCoords);
+			if (it == requestedChunks.end())
+				break;
+			Chunk *chunk = it->second;
+			if (msg.encodedLength != 0) {
+				decodeBlocks_RLE(msg.encodedBlocks, msg.encodedLength, chunk->getBlocksForInit());
+				chunk->initRevision(msg.revision);
+				chunk->finishInitialization();
+			}
+			receivedChunks.push(chunk);
+			// TODO deallocation should also be in the chunk or something
+			delete[] msg.encodedBlocks;
 		}
 		break;
 	default:

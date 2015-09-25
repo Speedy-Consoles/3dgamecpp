@@ -2,6 +2,7 @@
 #define LOCAL_SERVER_INTERFACE_HPP
 
 #include <memory>
+#include <queue>
 
 #include "server_interface.hpp"
 
@@ -14,6 +15,8 @@
 class LocalServerInterface : public ServerInterface {
 	Client *client;
 	Character *character;
+
+	std::queue<Chunk *> cachedChunksQueue;
 
 	std::unique_ptr<WorldGenerator> worldGenerator;
 	AsyncWorldGenerator asyncWorldGenerator;
@@ -40,7 +43,7 @@ public:
 	void toggleFly() override;
 	
 	// chunks
-	bool requestChunk(Chunk *chunk) override;
+	bool requestChunk(Chunk *chunk, bool cached, uint32 cachedRevision) override;
 	Chunk *getNextChunk() override;
 };
 

@@ -61,10 +61,6 @@ void GameServer::onPlayerInput(int id, PlayerInput &input) {
 	world->getCharacter(id).setFly(input.flying);
 }
 
-void GameServer::onChunkRequest(ChunkRequest &request, ChunkMessageJob job) {
-	// TODO
-}
-
 void GameServer::sendSnapshots(int tick) {
 	Snapshot snapshot;
 	snapshot.tick = tick;

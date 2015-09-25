@@ -110,10 +110,18 @@ void LocalServerInterface::toggleFly() {
 	character->setFly(!character->getFly());
 }
 
-bool LocalServerInterface::requestChunk(Chunk *chunk) {
+bool LocalServerInterface::requestChunk(Chunk *chunk, bool cached, uint32) {
+	if (cached) {
+		cachedChunksQueue.push(chunk);
+		return true;
+	}
 	return asyncWorldGenerator.requestChunk(chunk);
 }
 
 Chunk *LocalServerInterface::getNextChunk() {
-	return asyncWorldGenerator.getNextChunk();
+	if (cachedChunksQueue.empty())
+		return asyncWorldGenerator.getNextChunk();
+	Chunk *chunk = cachedChunksQueue.front();
+	cachedChunksQueue.pop();
+	return chunk;
 }
