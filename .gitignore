@@ -22,7 +22,7 @@ graphics-default.profile
 # linux build system
 /bin/
 /obj/
-ship*.bat
+*.bat
 
 # windows build system
 /deps/

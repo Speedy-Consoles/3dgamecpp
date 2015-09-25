@@ -19,11 +19,13 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\src\server\chunk_server.cpp" />
     <ClCompile Include="..\src\server\game_server.cpp" />
     <ClCompile Include="..\src\server\server.cpp" />
     <ClCompile Include="..\src\server\server_chunk_manager.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\src\server\chunk_server.hpp" />
     <ClInclude Include="..\src\server\game_server.hpp" />
     <ClInclude Include="..\src\server\server.hpp" />
     <ClInclude Include="..\src\server\server_chunk_manager.hpp" />
