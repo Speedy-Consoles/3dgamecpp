@@ -21,6 +21,7 @@ public:
 
 	void tick();
 
+	void onClientLeave(int id);
 	void onChunkRequest(ChunkRequest request, int clientId);
 };
 

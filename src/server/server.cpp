@@ -207,8 +207,10 @@ void Server::handleDisconnect(ENetPeer *peer, DisconnectReason reason) {
 
 	LOG_DEBUG(logger) << "Disconnected: " << (int) id;
 
-	if(clientInfos[id].status == PLAYING)
+	if(clientInfos[id].status == PLAYING) {
 		gameServer->onPlayerLeave(id, reason);
+		chunkServer->onClientLeave(id);
+	}
 
 	delete (PeerData *)peer->data;
 	peer->data = nullptr;

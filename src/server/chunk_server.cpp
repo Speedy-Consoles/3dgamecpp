@@ -38,6 +38,16 @@ void ChunkServer::tick() {
 	}
 }
 
+void ChunkServer::onClientLeave(int id) {
+	std::queue<TaggedChunkRequest> newQueue;
+	while(!requestedQueue.empty()) {
+		TaggedChunkRequest tcr = requestedQueue.front();
+		if (tcr.clientId != id)
+			newQueue.push(tcr);
+		requestedQueue.pop();
+	}
+}
+
 void ChunkServer::onChunkRequest(ChunkRequest request, int clientId) {
 	// TODO check for revision first
 	// TODO request compressed blocks instead of whole chunk
