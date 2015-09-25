@@ -35,7 +35,9 @@ struct ClientInfo {
 };
 
 struct ChunkMessageJob {
+	ChunkRequest request;
 	ChunkMessage message;
+	const uint8 *blocks;
 	int clientId;
 	ENetPacket *packet;
 };

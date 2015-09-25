@@ -16,8 +16,6 @@ GameServer::~GameServer() {
 }
 
 void GameServer::tick() {
-	world->tick();
-
 	//TODO use makeSnapshot
 	sendSnapshots(server->getTick());
 }

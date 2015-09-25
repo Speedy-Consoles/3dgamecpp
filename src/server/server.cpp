@@ -93,6 +93,9 @@ void Server::run() {
 		updateNet();
 		kickUnfriendly();
 
+		world->tick();
+		chunkManager->tick();
+
 		gameServer->tick();
 		chunkServer->tick();
 
@@ -272,10 +275,11 @@ void Server::handlePacket(const enet_uint8 *data, size_t size, size_t channel, E
 				}
 				ChunkMessageJob job;
 				size_t packetSize = Chunk::SIZE * sizeof(uint8);
+				job.request = request;
 				job.packet = enet_packet_create(nullptr, packetSize, ENET_PACKET_FLAG_RELIABLE);
 				job.message.encodedBlocks = getEncodedBlocksPointer((char *) job.packet->data);
 				job.clientId = id;
-				chunkServer->onChunkRequest(request, job);
+				chunkServer->onChunkRequest(job);
 			}
 			break;
 		default:
