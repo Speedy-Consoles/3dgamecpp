@@ -99,7 +99,9 @@ void Server::run() {
 		gameServer->tick();
 		chunkServer->tick();
 
-		// Time remTime = time + seconds(1) / TICK_SPEED - getCurrentTime();
+		Time remTime = time + seconds(1) / TICK_SPEED - getCurrentTime();
+		if (remTime < 0)
+			LOG_WARNING(logger) << "CAN'T KEEP UP!";
 
 		sync(TICK_SPEED);
 		tick++;
