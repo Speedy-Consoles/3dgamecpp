@@ -25,7 +25,7 @@ RemoteServerInterface::RemoteServerInterface(Client *client, std::string address
 		return;
 	}
 
-	host = enet_host_create(NULL, 1, 1, 20000, 5000);
+	host = enet_host_create(NULL, 1, 1, 0, 0);
 	if (!host) {
 		LOG_ERROR(logger) << "An error occurred while trying to create an ENet client host.";
 		status = CONNECTION_ERROR;

@@ -89,6 +89,7 @@ void ClientChunkManager::tick() {
 	while ((chunk = client->getServerInterface()->getNextChunk()) != nullptr) {
 		if (!chunk->isInitialized())
 			LOG_WARNING(logger) << "Server interface didn't initialize chunk";
+		// TODO make sure, it will be saved
 		insertLoadedChunk(chunk);
 		numSessionChunkGens++;
 	}
