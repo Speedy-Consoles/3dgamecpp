@@ -14,11 +14,19 @@ void decodeBlocks_RLE(std::istream *is, uint8 *blocks) {
 	size_t index = 0;
 	while (index < Chunk::SIZE) {
 		uint8 next_block;
+		if (!is->good()) {
+			LOG_ERROR(logger) << "encoded stream ended abruptly";
+			return;
+		}
 		is->read((char *) &next_block, sizeof (uint8));
 
 		if (next_block == ESCAPE_CHAR) {
 			uint8 next_byte, block_type;
 			uint32 run_length;
+			if (!is->good()) {
+				LOG_ERROR(logger) << "encoded stream ended abruptly";
+				return;
+			}
 			is->read((char *) &next_byte, sizeof (uint8));
 
 			// Like UTF8, the first bit signals a multi-byte sequence
@@ -28,12 +36,20 @@ void decodeBlocks_RLE(std::istream *is, uint8 *blocks) {
 			} else {
 				// There is exactly one extra byte, the other 7 bits can be used for the value
 				uint32 encoded_run_length = next_byte & 0x7F;
+				if (!is->good()) {
+					LOG_ERROR(logger) << "encoded stream ended abruptly";
+					return;
+				}
 				is->read((char *) &next_byte, sizeof (uint8));
 				encoded_run_length = (encoded_run_length << 8) | next_byte;
 				// we count from 1 and not from 0 to save space
 				run_length = encoded_run_length + 1;
 			}
 
+			if (!is->good()) {
+				LOG_ERROR(logger) << "encoded stream ended abruptly";
+				return;
+			}
 			is->read((char *) &block_type, sizeof (uint8));
 			for (uint32 i = 0; i < run_length; ++i) {
 				if (index >= Chunk::SIZE) {
@@ -52,6 +68,10 @@ void decodeBlocks_RLE(const uint8 *encoded, size_t size, uint8 *blocks) {
 	size_t index = 0;
 	while (index < Chunk::SIZE) {
 		uint8 next_block;
+		if (size < 1) {
+			LOG_ERROR(logger) << "encoded stream ended abruptly";
+			return;
+		}
 		next_block = *encoded;
 		encoded++;
 		size--;
@@ -59,6 +79,10 @@ void decodeBlocks_RLE(const uint8 *encoded, size_t size, uint8 *blocks) {
 		if (next_block == ESCAPE_CHAR) {
 			uint8 next_byte, block_type;
 			uint32 run_length;
+			if (size < 1) {
+				LOG_ERROR(logger) << "encoded stream ended abruptly";
+				return;
+			}
 			next_byte = *encoded;
 			encoded++;
 			size--;
@@ -70,6 +94,10 @@ void decodeBlocks_RLE(const uint8 *encoded, size_t size, uint8 *blocks) {
 			} else {
 				// There is exactly one extra byte, the other 7 bits can be used for the value
 				uint32 encoded_run_length = next_byte & 0x7F;
+				if (size < 1) {
+					LOG_ERROR(logger) << "encoded stream ended abruptly";
+					return;
+				}
 				next_byte = *encoded;
 				encoded++;
 				size--;
@@ -78,6 +106,10 @@ void decodeBlocks_RLE(const uint8 *encoded, size_t size, uint8 *blocks) {
 				run_length = encoded_run_length + 1;
 			}
 
+			if (size < 1) {
+				LOG_ERROR(logger) << "encoded stream ended abruptly";
+				return;
+			}
 			block_type = *encoded;
 			encoded++;
 			size--;
