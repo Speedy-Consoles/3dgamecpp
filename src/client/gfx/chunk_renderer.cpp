@@ -351,7 +351,12 @@ void ChunkRenderer::finishChunk(ChunkVisuals cv) {
 
 	it->second.numFaces = cv.quads.size() * 2;
 	it->second.revision = cv.revision;
-	it->second.passThroughs = client->getChunkManager()->getChunk(cv.cc)->getPassThroughs();
+	const Chunk *chunk = client->getChunkManager()->getChunk(cv.cc);
+	if (!chunk) {
+		LOG_ERROR(logger) << "missing chunk for finish";
+		it->second.passThroughs = 0x3F;
+	} else
+		it->second.passThroughs = chunk->getPassThroughs();
 
 	newFaces += it->second.numFaces;
 	numFaces += it->second.numFaces;

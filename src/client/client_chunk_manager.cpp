@@ -38,9 +38,9 @@ void ClientChunkManager::tick() {
 	while (!requestedQueue.empty() && !unusedChunks.empty()) {
 		vec3i64 cc = requestedQueue.front();
 		Chunk *chunk = unusedChunks.top();
-		chunk->initCC(cc);
 		if (!chunk)
 			LOG_ERROR(logger) << "Chunk allocation failed";
+		chunk->initCC(cc);
 		ArchiveOperation op = {chunk, LOAD};
 		if (toLoadStoreQueue.push(op)) {
 			requestedQueue.pop();

@@ -304,6 +304,7 @@ void RemoteServerInterface::handlePacket(const enet_uint8 *data, size_t size, si
 				chunk->initRevision(msg.revision);
 				chunk->finishInitialization();
 			}
+			requestedChunks.erase(it);
 			receivedChunks.push(chunk);
 			// TODO deallocation should also be in the chunk or something
 			delete[] msg.encodedBlocks;
