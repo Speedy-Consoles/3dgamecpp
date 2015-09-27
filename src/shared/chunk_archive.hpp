@@ -25,7 +25,7 @@ public:
 	ChunkArchive &operator = (const ChunkArchive &) = delete;
 	ChunkArchive &operator = (ChunkArchive &&) = delete;
 
-	bool hasChunk(vec3i64);
+	bool hasChunk(vec3i64, uint32 *revision = nullptr);
 
 	bool loadChunk(Chunk *);
 	void storeChunk(const Chunk &);

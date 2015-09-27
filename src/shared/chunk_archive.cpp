@@ -80,7 +80,7 @@ public:
 	void loadDirectory();
 	void initialize();
 
-	bool hasChunk(vec3i64);
+	bool hasChunk(vec3i64, uint32 *);
 	bool loadChunk(Chunk *);
 	void storeChunk(const Chunk &);
 
@@ -239,14 +239,17 @@ void ArchiveFile::initialize() {
 	memset((char *)_dir.data(), 0, _header.dir_size * sizeof(DirectoryEntry));
 }
 
-bool ArchiveFile::hasChunk(vec3i64 cc) {
+bool ArchiveFile::hasChunk(vec3i64 cc, uint32 *revision) {
 	if (!_good) return false;
 	size_t x = cycle(cc[0], _region_size);
 	size_t y = cycle(cc[1], _region_size);
 	size_t z = cycle(cc[2], _region_size);
 	size_t id = x + (_region_size * (y + (_region_size * z)));
 	const DirectoryEntry &dir_entry = _dir[id];
-	return dir_entry.size != 0 || dir_entry.flags != 0;
+	bool has_chunk = dir_entry.size != 0 || dir_entry.flags != 0;
+	if (revision != nullptr && has_chunk)
+		*revision = dir_entry.revision;
+	return has_chunk;
 }
 
 bool ArchiveFile::loadChunk(Chunk *chunk) {
@@ -451,9 +454,9 @@ ChunkArchive::ChunkArchive(const char *str) :
 			<< used_bytes / 1024 / 1024 << " MB of " << total_bytes / 1024 / 1024 << " MB of space";
 }
 
-bool ChunkArchive::hasChunk(vec3i64 cc) {
+bool ChunkArchive::hasChunk(vec3i64 cc, uint32 *revision) {
 	ArchiveFile *archive_file = getArchiveFile(cc);
-	return archive_file->hasChunk(cc);
+	return archive_file->hasChunk(cc, revision);
 }
 
 bool ChunkArchive::loadChunk(Chunk *chunk) {
