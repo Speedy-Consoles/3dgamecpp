@@ -42,7 +42,7 @@ private:
 	ProducerQueue<ArchiveOperation> loadedStoredQueue;
 	ProducerQueue<ArchiveOperation> toLoadStoreQueue;
 	std::unordered_map<vec3i64, Chunk *, size_t(*)(vec3i64)> chunks;
-	std::unordered_map<vec3i64, uint32, size_t(*)(vec3i64)> oldRevisions;
+	std::unordered_map<vec3i64, uint32, size_t(*)(vec3i64)> cacheRevisions;
 	std::unordered_map<vec3i64, int, size_t(*)(vec3i64)> needCounter;
 
 	int numSessionChunkLoads = 0;
@@ -59,7 +59,6 @@ public:
 	void tick();
 	virtual void doWork() override;
 	virtual void onStop() override;
-	void storeChunks();
 
 	void placeBlock(vec3i64 chunkCoords, size_t intraChunkIndex,
 			uint blockType, uint32 revision);
@@ -79,7 +78,7 @@ public:
 	int getNumSessionChunkGens() const { return numSessionChunkGens; }
 
 private:
-	bool insertLoadedChunk(Chunk *chunk);
+	void insertLoadedChunk(Chunk *chunk);
 	void recycleChunk(Chunk *chunk);
 };
 
