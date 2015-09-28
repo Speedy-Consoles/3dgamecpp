@@ -65,6 +65,8 @@ TEST_OBJECT_FILES = \
 SHARED_ARCHIVE_NAME = shared_archive
 SHARED_OBJECT_FILES = \
 	shared/engine/logging.cpp.o\
+	shared/engine/mutex.cpp.o\
+	shared/engine/rwlock.cpp.o\
 	shared/engine/stopwatch.cpp.o\
 	shared/engine/thread.cpp.o\
 	shared/engine/time.cpp.o\
