@@ -39,7 +39,7 @@ void ReadWriteLock::unlockWrite() {
 #else
 
 ReadWriteLock::ReadWriteLock() {
-	pthread_rwlock_init(&_lock);
+	pthread_rwlock_init(&_lock, nullptr);
 }
 
 ReadWriteLock::~ReadWriteLock() {

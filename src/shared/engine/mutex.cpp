@@ -27,7 +27,7 @@ void Mutex::unlock() {
 #else
 
 Mutex::Mutex() {
-	pthread_mutex_init(&_mutex);
+	pthread_mutex_init(&_mutex, nullptr);
 }
 
 Mutex::~Mutex() {
