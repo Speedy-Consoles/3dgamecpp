@@ -11,10 +11,10 @@ static logging::Logger logger("chm");
 ServerChunkManager::ServerChunkManager(
 		std::unique_ptr<WorldGenerator> worldGenerator,
 		std::unique_ptr<ChunkArchive> archive) :
-	loadedStoredQueue(1024),
-	toLoadStoreQueue(1024),
+	threadOutQueue(1024),
+	threadInQueue(1024),
 	chunks(0, vec3i64HashFunc),
-	oldRevisions(0, vec3i64HashFunc),
+	cacheRevisions(0, vec3i64HashFunc),
 	needCounter(0, vec3i64HashFunc),
 	worldGenerator(std::move(worldGenerator)),
 	asyncWorldGenerator(this->worldGenerator.get()),
@@ -29,7 +29,22 @@ ServerChunkManager::ServerChunkManager(
 
 ServerChunkManager::~ServerChunkManager() {
 	LOG_TRACE(logger) << "Destroying ChunkManager";
-	storeChunks();
+	requestTermination();
+	ArchiveOperation op;
+	while(threadOutQueue.pop(op));
+	wait();
+	while (!prethreadInQueue.empty()) {
+		ArchiveOperation op = prethreadInQueue.front();
+		prethreadInQueue.pop();
+		if (op.type != STORE)
+			continue;
+		archive->storeChunk(*op.chunk);
+	}
+	for (auto it1 = chunks.begin(); it1 != chunks.end(); ++it1) {
+		auto it2 = cacheRevisions.find(it1->first);
+		if (it2 == cacheRevisions.end() || it1->second->getRevision() != it2->second)
+			archive->storeChunk(*it1->second);
+	}
 	for (int i = 0; i < CHUNK_POOL_SIZE; i++) {
 		delete chunkPool[i];
 	}
@@ -39,45 +54,37 @@ void ServerChunkManager::tick() {
 	while (!requestedQueue.empty() && !unusedChunks.empty()) {
 		vec3i64 cc = requestedQueue.front();
 		Chunk *chunk = unusedChunks.top();
-		chunk->initCC(cc);
 		if (!chunk)
 			LOG_ERROR(logger) << "Chunk allocation failed";
+		chunk->initCC(cc);
 		ArchiveOperation op = {chunk, LOAD};
-		if (toLoadStoreQueue.push(op)) {
-			requestedQueue.pop();
-			unusedChunks.pop();
-		} else
-			break;
+		prethreadInQueue.push(op);
+		requestedQueue.pop();
+		unusedChunks.pop();
 	}
 
-	while (!preToStoreQueue.empty()) {
-		Chunk *chunk = preToStoreQueue.front();
-		ArchiveOperation op = {chunk, STORE};
-		if (toLoadStoreQueue.push(op)) {
-			preToStoreQueue.pop();
-			continue;
-		} else
+	while (!prethreadInQueue.empty()) {
+		ArchiveOperation op = prethreadInQueue.front();
+		if (!threadInQueue.push(op))
 			break;
+		prethreadInQueue.pop();
 	}
 
-	while(!notInCacheQueue.empty()) {
-		Chunk *chunk = notInCacheQueue.front();
-		if (asyncWorldGenerator.requestChunk(chunk))
-			notInCacheQueue.pop();
-		else
+	while(!toGenerateQueue.empty()) {
+		Chunk *chunk = toGenerateQueue.front();
+		if (!asyncWorldGenerator.requestChunk(chunk))
 			break;
+		toGenerateQueue.pop();
 	}
 
 	ArchiveOperation op;
-	while (loadedStoredQueue.pop(op)) {
+	while (threadOutQueue.pop(op)) {
 		switch(op.type) {
 		case LOAD:
-			if (op.chunk->isInitialized()) {
-				if (insertLoadedChunk(op.chunk))
-					oldRevisions.insert({op.chunk->getCC(), op.chunk->getRevision()});
-			} else {
-				notInCacheQueue.push(op.chunk);
-			}
+			if (op.chunk->isInitialized())
+				insertLoadedChunk(op.chunk);
+			else
+				toGenerateQueue.push(op.chunk);
 			numSessionChunkLoads++;
 			break;
 		case STORE:
@@ -89,15 +96,15 @@ void ServerChunkManager::tick() {
 	Chunk *chunk;
 	while ((chunk = asyncWorldGenerator.getNextChunk()) != nullptr) {
 		if (!chunk->isInitialized())
-			LOG_WARNING(logger) << "Server interface didn't initialize chunk";
-		insertLoadedChunk(chunk);
+			LOG_WARNING(logger) << "Generator didn't initialize chunk";
+		insertReceivedChunk(chunk);
 		numSessionChunkGens++;
 	}
 }
 
 void ServerChunkManager::doWork() {
 	ArchiveOperation op;
-	if (toLoadStoreQueue.pop(op)) {
+	if (threadInQueue.pop(op)) {
 		switch (op.type) {
 		case LOAD:
 			archive->loadChunk(op.chunk);
@@ -106,7 +113,7 @@ void ServerChunkManager::doWork() {
 			archive->storeChunk(*op.chunk);
 			break;
 		}
-		while (!loadedStoredQueue.push(op)) {
+		while (!threadOutQueue.push(op)) {
 			sleepFor(millis(50));
 		}
 	} else {
@@ -116,27 +123,10 @@ void ServerChunkManager::doWork() {
 
 void ServerChunkManager::onStop() {
 	ArchiveOperation op;
-	while (toLoadStoreQueue.pop(op)) {
+	while (threadInQueue.pop(op)) {
 		if (op.type == STORE) {
 			archive->storeChunk(*op.chunk);
 		}
-	}
-}
-
-void ServerChunkManager::storeChunks() {
-	requestTermination();
-	ArchiveOperation op;
-	while(loadedStoredQueue.pop(op));
-	wait();
-	while (!preToStoreQueue.empty()) {
-		Chunk *chunk = preToStoreQueue.front();
-		preToStoreQueue.pop();
-		archive->storeChunk(*chunk);
-	}
-	for (auto it1 = chunks.begin(); it1 != chunks.end(); ++it1) {
-		auto it2 = oldRevisions.find(it1->first);
-		if (it2 == oldRevisions.end() || it1->second->getRevision() != it2->second)
-			archive->storeChunk(*it1->second);
 	}
 }
 
@@ -177,14 +167,14 @@ void ServerChunkManager::releaseChunk(vec3i64 chunkCoords) {
 			needCounter.erase(it1);
 			auto it2 = chunks.find(chunkCoords);
 			if (it2 != chunks.end()) {
-				auto it3 = oldRevisions.find(chunkCoords);
-				if (it3 == oldRevisions.end() || it2->second->getRevision() != it3->second)
-					preToStoreQueue.push(it2->second);
+				auto it3 = cacheRevisions.find(chunkCoords);
+				if (it3 == cacheRevisions.end() || it2->second->getRevision() != it3->second)
+					prethreadInQueue.push(ArchiveOperation{it2->second, STORE});
 				else
 					recycleChunk(it2->second);
 				chunks.erase(it2);
-				if (it3 != oldRevisions.end())
-					oldRevisions.erase(it3);
+				if (it3 != cacheRevisions.end())
+					cacheRevisions.erase(it3);
 			}
 		}
 	}
@@ -207,17 +197,26 @@ int ServerChunkManager::getRequestedQueueSize() const {
 }
 
 int ServerChunkManager::getNotInCacheQueueSize() const {
-	return notInCacheQueue.size();
+	return toGenerateQueue.size();
 }
 
-bool ServerChunkManager::insertLoadedChunk(Chunk *chunk) {
+void ServerChunkManager::insertLoadedChunk(Chunk *chunk) {
 	auto it = needCounter.find(chunk->getCC());
 	if (it != needCounter.end()) {
 		chunks.insert({chunk->getCC(), chunk});
-		return true;
+		cacheRevisions.insert({chunk->getCC(), chunk->getRevision()});
 	} else {
 		recycleChunk(chunk);
-		return false;
+	}
+}
+
+void ServerChunkManager::insertReceivedChunk(Chunk *chunk) {
+	auto it = needCounter.find(chunk->getCC());
+	if (it != needCounter.end()) {
+		chunks.insert({chunk->getCC(), chunk});
+	} else {
+		ArchiveOperation op = {chunk, STORE};
+		prethreadInQueue.push(op);
 	}
 }
 

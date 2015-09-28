@@ -37,12 +37,12 @@ private:
 	std::stack<Chunk *> unusedChunks;
 
 	std::queue<vec3i64> requestedQueue;
-	std::queue<Chunk *> notInCacheQueue;
-	std::queue<Chunk *> preToStoreQueue;
-	ProducerQueue<ArchiveOperation> loadedStoredQueue;
-	ProducerQueue<ArchiveOperation> toLoadStoreQueue;
+	std::queue<Chunk *> toGenerateQueue;
+	std::queue<ArchiveOperation> prethreadInQueue;
+	ProducerQueue<ArchiveOperation> threadOutQueue;
+	ProducerQueue<ArchiveOperation> threadInQueue;
 	std::unordered_map<vec3i64, Chunk *, size_t(*)(vec3i64)> chunks;
-	std::unordered_map<vec3i64, uint32, size_t(*)(vec3i64)> oldRevisions;
+	std::unordered_map<vec3i64, uint32, size_t(*)(vec3i64)> cacheRevisions;
 	std::unordered_map<vec3i64, int, size_t(*)(vec3i64)> needCounter;
 
 	int numSessionChunkLoads = 0;
@@ -81,7 +81,8 @@ public:
 	int getNumSessionChunkGens() const { return numSessionChunkGens; }
 
 private:
-	bool insertLoadedChunk(Chunk *chunk);
+	void insertLoadedChunk(Chunk *chunk);
+	void insertReceivedChunk(Chunk *chunk);
 	void recycleChunk(Chunk *chunk);
 };
 
