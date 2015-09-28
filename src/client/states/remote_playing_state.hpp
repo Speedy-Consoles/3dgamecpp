@@ -7,7 +7,14 @@
 
 class RemotePlayingState : public PlayingState {
 public:
-	RemotePlayingState(State *parent, Client *client, std::string address);
+	RemotePlayingState(Client *client) : PlayingState(client) {};
+
+	void init(std::string address);
+
+	void onPush(State *) override;
+
+private:
+	std::string address;
 };
 
 #endif // REMOTE_PLAYING_STATE_HPP_

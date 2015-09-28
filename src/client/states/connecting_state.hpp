@@ -7,7 +7,9 @@ class Client;
 
 class ConnectingState : public State {
 public:
-	ConnectingState(State *parent, Client *client);
+	ConnectingState(Client *client) : State(client) {};
+
+	void onPush(State *) override;
 
 	void update() override;
 };

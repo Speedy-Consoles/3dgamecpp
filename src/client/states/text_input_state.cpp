@@ -4,21 +4,25 @@
 
 #include "client/client.hpp"
 #include "client/events.hpp"
+#include "client/state_machine.hpp"
 #include "shared/engine/logging.hpp"
 
 static logging::Logger logger("state");
 
-TextInputState::TextInputState(State *parent, Client *client, std::string *target) :
-	State(parent, client),
-	target(target)
-{
+void TextInputState::init(std::string *target) {
+	this->target = target;
+}
+
+void TextInputState::onPush(State *old_top) {
+	State::onPush(old_top);
 	LOG_DEBUG(logger) << "Entering TextInputState";
 	SDL_StartTextInput();
 }
 
-TextInputState::~TextInputState() {
+void TextInputState::onPop() {
 	LOG_DEBUG(logger) << "Exiting TextInputState";
 	SDL_StopTextInput();
+	State::onPop();
 }
 
 void TextInputState::handle(const Event &e) {
@@ -38,15 +42,9 @@ void TextInputState::handle(const Event &e) {
 	case EventType::KEYBOARD_REPEAT:
 	{
 		switch (e.event.key.keysym.scancode) {
-		case SDL_SCANCODE_ESCAPE: {
-			// save parent, because client->popState will actually destroy 'this'
-			auto parent_copy = parent;
-			client->popState();
-			parent_copy->handle(e);
-			break;
-		}
+		case SDL_SCANCODE_ESCAPE:
 		case SDL_SCANCODE_RETURN:
-			client->popState();
+			client->getStateMachine()->pop();
 			break;
 		case SDL_SCANCODE_BACKSPACE:
 			byte octet;

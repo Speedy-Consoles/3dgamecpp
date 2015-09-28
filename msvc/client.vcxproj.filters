@@ -185,6 +185,12 @@
     <ClCompile Include="..\src\client\gfx\gl3\gl3_character_renderer.cpp">
       <Filter>Source Files\gfx\gl3</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\client\state_machine.cpp">
+      <Filter>Source Files\client</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\client\states.cpp">
+      <Filter>Source Files\client</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\client\gfx\gl2\gl2_chunk_renderer.hpp">
@@ -333,6 +339,12 @@
     </ClInclude>
     <ClInclude Include="..\src\client\gfx\gl3\gl3_character_renderer.hpp">
       <Filter>Header Files\gfx\gl3</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\client\state_machine.hpp">
+      <Filter>Header Files\client</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\client\states.hpp">
+      <Filter>Header Files\client</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

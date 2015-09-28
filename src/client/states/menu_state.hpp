@@ -8,10 +8,12 @@ class Menu;
 
 class MenuState : public State {
 public:
-	MenuState(State *parent, Client *client);
-	~MenuState();
+	MenuState(Client *client) : State(client) {};
 
-	void unhide() override;
+	void onPush(State *) override;
+	void onPop() override;
+
+	void onUnobscure() override;
 
 	void handle(const Event &) override;
 

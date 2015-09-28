@@ -7,8 +7,10 @@ class Client;
 
 class SystemInitState : public State {
 public:
-	SystemInitState(Client *client);
-	~SystemInitState();
+	SystemInitState(Client *client) : State(client) {}
+	
+	void onPush(State *) override;
+	void onPop() override;
 
 	void handle(const Event &) override;
 };

@@ -9,7 +9,8 @@
 #include "shared/saves.hpp"
 #include "gfx/graphics.hpp"
 
-#include "states/state.hpp"
+#include "states.hpp"
+#include "state_machine.hpp"
 #include "states/system_init_state.hpp"
 #include "states/local_playing_state.hpp"
 #include "states/remote_playing_state.hpp"
@@ -33,7 +34,7 @@ int main(int argc, char *argv[]) {
 	LOG_TRACE(logger) << "Trace enabled";
 
 	const char *worldId = "region";
-	const char *serverAdress = nullptr;
+	const char *serverAddress = nullptr;
 
 	argv++;
 	argc--;
@@ -43,7 +44,7 @@ int main(int argc, char *argv[]) {
 			worldId = *++argv;
 			argc--;
 		} else if (strcmp(*argv, "-a") == 0) {
-			serverAdress = *++argv;
+			serverAddress = *++argv;
 			argc--;
 		}
 		argv++;
@@ -51,38 +52,36 @@ int main(int argc, char *argv[]) {
 	}
 
 	initUtil();
-	Client client(worldId, serverAdress);
+	Client client(worldId, serverAddress);
 	client.run();
 
 	return 0;
 }
 
-Client::Client(const char *worldId, const char *serverAdress) {
-	State *state = new SystemInitState(this);
-	pushState(state);
+Client::Client(const char *worldId, const char *serverAddress) {
+	states = std::unique_ptr<States>(new States(this));
+	stateMachine = std::unique_ptr<StateMachine>(new StateMachine);
 
-	if (serverAdress) {
-		state = new RemotePlayingState(state, this, serverAdress);
+	stateMachine->push(states->getSystemInit());
+
+	if (serverAddress) {
+		RemotePlayingState *playingState = states->getRemotePlaying();
+		playingState->init(serverAddress);
+		stateMachine->push(playingState);
 	} else {
-		state = new LocalPlayingState(state, this, conf->last_world_id);
+		LocalPlayingState *playingState = states->getLocalPlaying();
+		playingState->init(conf->last_world_id);
+		stateMachine->push(playingState);
 	}
-	pushState(state);
 
 #define START_APPLICATION_IN_MENU 1
 #if START_APPLICATION_IN_MENU
-	state = new MenuState(state, this);
-	pushState(state);
+	stateMachine->push(states->getMenu());
 #else
 	graphics->grabMouse(true);
 #endif
 
-	state = new ConnectingState(state, this);
-	pushState(state);
-}
-
-Client::~Client() {
-	while (stateStack.size() > 0)
-		popState();
+	stateMachine->push(states->getConnecting());
 }
 
 uint8 Client::getLocalClientId() const {
@@ -93,40 +92,12 @@ Character &Client::getLocalCharacter() {
 	return world->getCharacter(getLocalClientId());
 }
 
-void Client::pushState(State *state) {
-	if (!stateStack.empty())
-		stateStack.back()->hide();
-	stateStack.push_back(std::unique_ptr<State>(state));
-}
-
-void Client::popState() {
-	stateStack.pop_back();
-	if (!stateStack.empty())
-		stateStack.back()->unhide();
-}
-
-State *Client::getState(int i) {
-	return stateStack[i].get();
-}
-
-State *Client::getTopState() {
-	return stateStack.back().get();
-}
-
-int Client::numStates() {
-	return stateStack.size();
-}
-
 void Client::run() {
 	LOG_INFO(logger) << "Running client";
 	time = getCurrentTime();
 	int tick = 0;
 	while (!closeRequested) {
-		Event e;
-		while (e.next())
-			stateStack.back()->handle(e);
-
-		stateStack.back()->update();
+		stateMachine->update();
 
 		stopwatch->start(CLOCK_SYN);
 		sync(TICK_SPEED);

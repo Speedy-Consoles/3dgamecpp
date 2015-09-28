@@ -8,17 +8,15 @@ class ServerInterface;
 
 class PlayingState : public State {
 public:
-	PlayingState(State *state, Client *client);
-	~PlayingState();
+	PlayingState(Client *client) : State(client) {};
 	
-	void hide() override;
-	void unhide() override;
+	void onPush(State *) override;
+	void onPop() override;
+
+	void onUnobscure() override;
 
 	void update() override;
 	void handle(const Event &) override;
-
-private:
-	bool hidden = false;
 };
 
 #endif // PLAYING_STATE_HPP

@@ -5,9 +5,13 @@
 #include "client/remote_server_interface.hpp"
 #include "client/states/connecting_state.hpp"
 
-RemotePlayingState::RemotePlayingState(State *parent, Client *client, std::string address) :
-	PlayingState(parent, client)
-{
+void RemotePlayingState::init(std::string address) {
+	this->address = address;
+}
+
+void RemotePlayingState::onPush(State *old_top) {
+	PlayingState::onPush(old_top);
+
 	ChunkArchive *ca = new ChunkArchive("chunk_cache/dummy/");
 	ClientChunkManager *cm = new ClientChunkManager(client, std::unique_ptr<ChunkArchive>(ca));
 	client->chunkManager = std::unique_ptr<ClientChunkManager>(cm);

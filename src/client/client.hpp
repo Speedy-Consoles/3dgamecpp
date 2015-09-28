@@ -22,6 +22,8 @@ class ClientChunkManager;
 class Save;
 class Renderer;
 struct Event;
+class States;
+class StateMachine;
 
 class State;
 
@@ -39,7 +41,6 @@ public:
 	};
 
 	Client(const char *worldId, const char *serverAdress);
-	~Client();
 
 	// getter
 	bool isDebugOn() const { return debugOn; }
@@ -56,6 +57,8 @@ public:
 	World *getWorld() { return world.get(); }
 	Renderer *getRenderer() { return renderer.get(); }
 	ServerInterface *getServerInterface() { return serverInterface.get(); }
+	States *getStates() { return states.get(); }
+	StateMachine *getStateMachine() { return stateMachine.get(); }
 
 	void setDebugOn(bool b) { debugOn = b; }
 	void setConf(const GraphicsConf &);
@@ -64,14 +67,6 @@ public:
 	// convenience functions
 	uint8 getLocalClientId() const;
 	Character &getLocalCharacter();
-
-	// state machine
-	void pushState(State *);
-	void popState();
-	State *getState(int i);
-	/// shortcut for client->getState(client->numStates() - 1)
-	State *getTopState();
-	int numStates();
 
 	// operation
 	void run();
@@ -92,8 +87,9 @@ private:
 	std::unique_ptr<World> world;
 	std::unique_ptr<Renderer> renderer;
 	std::unique_ptr<ServerInterface> serverInterface;
-
-	std::vector<std::unique_ptr<State>> stateStack;
+	
+	std::unique_ptr<States> states;
+	std::unique_ptr<StateMachine> stateMachine;
 	StateId stateId = StateId::CONNECTING;
 
 	bool debugOn = false;

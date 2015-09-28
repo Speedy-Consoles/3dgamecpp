@@ -6,6 +6,8 @@
 #include "client/config.hpp"
 #include "client/server_interface.hpp"
 #include "client/client_chunk_manager.hpp"
+#include "client/states.hpp"
+#include "client/state_machine.hpp"
 #include "client/gfx/graphics.hpp"
 #include "client/gfx/gl2/gl2_renderer.hpp"
 #include "client/gfx/gl3/gl3_renderer.hpp"
@@ -18,9 +20,9 @@
 
 #include "menu_state.hpp"
 
-PlayingState::PlayingState(State *parent, Client *client) :
-	State(parent, client)
-{
+void PlayingState::onPush(State *old_top) {
+	State::onPush(old_top);
+
 	if (client->conf->render_backend == RenderBackend::OGL_3) {
 		client->renderer = std::unique_ptr<GL3Renderer>(new GL3Renderer(client));
 	} else {
@@ -28,7 +30,7 @@ PlayingState::PlayingState(State *parent, Client *client) :
 	}
 }
 
-PlayingState::~PlayingState() {
+void PlayingState::onPop() {
 	client->serverInterface.reset();
 	client->renderer.reset();
 	client->world.reset();
@@ -37,12 +39,8 @@ PlayingState::~PlayingState() {
 	client->save.reset();
 }
 
-void PlayingState::hide() {
-	hidden = true;
-}
-
-void PlayingState::unhide() {
-	hidden = false;
+void PlayingState::onUnobscure() {
+	State::onUnobscure();
 	client->getGraphics()->grabMouse(true);
 	client->setStateId(Client::PLAYING);
 }
@@ -52,7 +50,7 @@ void PlayingState::update() {
 
 	ServerInterface *serverInterface = client->getServerInterface();
 
-	if (!hidden) {
+	if (isTop()) {
 		const uint8 *keyboard = SDL_GetKeyboardState(nullptr);
 		int moveInput = 0;
 
@@ -140,7 +138,7 @@ void PlayingState::handle(const Event &e) {
 	case EventType::KEYBOARD_PRESSED:
 		switch (e.event.key.keysym.scancode) {
 		case SDL_SCANCODE_ESCAPE:
-			client->pushState(new MenuState(this, client));
+			client->getStateMachine()->push(client->getStates()->getMenu());
 			client->getGraphics()->grabMouse(false);
 			break;
 		case SDL_SCANCODE_F:

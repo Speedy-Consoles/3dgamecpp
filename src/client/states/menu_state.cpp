@@ -4,23 +4,25 @@
 #include "client/events.hpp"
 #include "client/config.hpp"
 #include "client/menu.hpp"
+#include "client/state_machine.hpp"
 #include "client/gfx/graphics.hpp"
 #include "client/gui/widget.hpp"
 
-MenuState::MenuState(State *parent, Client *client) :
-	State(parent, client),
-	menu(client->getMenu())
-{
+void MenuState::onPush(State *old_top) {
+	State::onPush(old_top);
+	menu = client->getMenu();
 	menu->update();
 	client->getGraphics()->grabMouse(false);
 	client->setStateId(Client::MENU);
 }
 
-MenuState::~MenuState() {
+void MenuState::onPop() {
 	menu->apply();
+	State::onPop();
 }
 
-void MenuState::unhide() {
+void MenuState::onUnobscure() {
+	State::onUnobscure();
 	client->setStateId(Client::MENU);
 }
 
@@ -48,7 +50,7 @@ void MenuState::handle(const Event &e) {
 	case EventType::KEYBOARD_PRESSED: {
 		switch (e.event.key.keysym.scancode) {
 		case SDL_SCANCODE_ESCAPE:
-			client->popState();
+			client->getStateMachine()->pop();
 			break;
 		default:
 			parent->handle(e);

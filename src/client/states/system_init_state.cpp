@@ -11,9 +11,9 @@
 
 static logging::Logger logger("client");
 
-SystemInitState::SystemInitState(Client *client) :
-	State(nullptr, client)
-{
+void SystemInitState::onPush(State *old_top) {
+	State::onPush(old_top);
+
 	client->stopwatch = std::unique_ptr<Stopwatch>(new Stopwatch(CLOCK_ID_NUM));
 	client->stopwatch->start(CLOCK_ALL);
 
@@ -34,8 +34,9 @@ SystemInitState::SystemInitState(Client *client) :
 	LOG_INFO(logger) << num_blocks << " blocks were loaded from '" << block_ids_file << "'";
 }
 
-SystemInitState::~SystemInitState() {
+void SystemInitState::onPop() {
 	store("graphics-default.profile", *client->conf);
+	State::onPop();
 }
 
 void SystemInitState::handle(const Event &e) {

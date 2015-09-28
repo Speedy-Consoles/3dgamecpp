@@ -9,13 +9,17 @@ class Client;
 
 class TextInputState : public State {
 public:
-	TextInputState(State *parent, Client *client, std::string *target);
-	~TextInputState();
+	TextInputState(Client *client) : State(client) {}
+
+	void init(std::string *target);
+
+	void onPush(State *) override;
+	void onPop() override;
 
 	void handle(const Event &) override;
 
 private:
-	std::string *target = nullptr;
+	std::string *target;
 };
 
 #endif // TEXT_INPUT_STATE_HPP_

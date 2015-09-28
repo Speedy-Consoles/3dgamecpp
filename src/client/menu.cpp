@@ -3,6 +3,8 @@
 #include "shared/block_utils.hpp"
 #include "client/gfx/graphics.hpp"
 #include "client/states/text_input_state.hpp"
+#include "client/state_machine.hpp"
+#include "client/states.hpp"
 
 #include "gui/widget.hpp"
 #include "gui/label.hpp"
@@ -109,7 +111,9 @@ Menu::Menu(Client *client) :
 	auto *textField = new Button(0, (float) y, 100, 20);
 	textField->text() = string("Bla");
 	textField->setOnClick([this, client, textField](){
-		client->pushState(new TextInputState(client->getTopState(), client, &textField->text()));
+		TextInputState *state = client->getStates()->getTextInput();
+		state->init(&textField->text());
+		client->getStateMachine()->push(state);
 	});
 	frame->add(textField);
 	y += yIncr;
