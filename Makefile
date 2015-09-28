@@ -38,6 +38,8 @@ CLIENT_OBJECT_FILES = \
 	client/gui/button.cpp.o\
 	client/gui/label.cpp.o\
 	client/gui/widget.cpp.o\
+	client/states.cpp.o\
+	client/state_machine.cpp.o\
 	client/states/connecting_state.cpp.o\
 	client/states/local_playing_state.cpp.o\
 	client/states/menu_state.cpp.o\
