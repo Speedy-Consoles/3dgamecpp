@@ -38,9 +38,9 @@ private:
 
 	std::queue<vec3i64> requestedQueue;
 	std::queue<Chunk *> notInCacheQueue;
-	std::queue<Chunk *> preToStoreQueue;
-	ProducerQueue<ArchiveOperation> loadedStoredQueue;
-	ProducerQueue<ArchiveOperation> toLoadStoreQueue;
+	std::queue<ArchiveOperation> preThreadInQueue;
+	ProducerQueue<ArchiveOperation> threadOutQueue;
+	ProducerQueue<ArchiveOperation> threadInQueue;
 	std::unordered_map<vec3i64, Chunk *, size_t(*)(vec3i64)> chunks;
 	std::unordered_map<vec3i64, uint32, size_t(*)(vec3i64)> cacheRevisions;
 	std::unordered_map<vec3i64, int, size_t(*)(vec3i64)> needCounter;
@@ -79,6 +79,7 @@ public:
 
 private:
 	void insertLoadedChunk(Chunk *chunk);
+	void insertReceivedChunk(Chunk *chunk);
 	void recycleChunk(Chunk *chunk);
 };
 
