@@ -26,6 +26,8 @@
     <ClCompile Include="..\src\shared\chunk_archive.cpp" />
     <ClCompile Include="..\src\shared\chunk_compression.cpp" />
     <ClCompile Include="..\src\shared\engine\logging.cpp" />
+    <ClCompile Include="..\src\shared\engine\mutex.cpp" />
+    <ClCompile Include="..\src\shared\engine\rwlock.cpp" />
     <ClCompile Include="..\src\shared\engine\stopwatch.cpp" />
     <ClCompile Include="..\src\shared\engine\thread.cpp" />
     <ClCompile Include="..\src\shared\engine\time.cpp" />
@@ -52,8 +54,10 @@
     <ClInclude Include="..\src\shared\engine\macros.hpp" />
     <ClInclude Include="..\src\shared\engine\math.hpp" />
     <ClInclude Include="..\src\shared\engine\monitor.hpp" />
+    <ClInclude Include="..\src\shared\engine\mutex.hpp" />
     <ClInclude Include="..\src\shared\engine\queue.hpp" />
     <ClInclude Include="..\src\shared\engine\random.hpp" />
+    <ClInclude Include="..\src\shared\engine\rwlock.hpp" />
     <ClInclude Include="..\src\shared\engine\stack.hpp" />
     <ClInclude Include="..\src\shared\engine\std_types.hpp" />
     <ClInclude Include="..\src\shared\engine\stopwatch.hpp" />
@@ -152,7 +156,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>false</SDLCheck>
-      <PreprocessorDefinitions>_WIN32_WINNT=0x0501;_WINSOCK_DEPRECATED_NO_WARNINGS;_CRT_SECURE_NO_WARNINGS;NO_LOG4CXX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_WINSOCK_DEPRECATED_NO_WARNINGS;_CRT_SECURE_NO_WARNINGS;NO_LOG4CXX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <DisableSpecificWarnings>4244</DisableSpecificWarnings>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
     </ClCompile>
@@ -165,7 +169,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>false</SDLCheck>
-      <PreprocessorDefinitions>_WIN32_WINNT=0x0501;_WINSOCK_DEPRECATED_NO_WARNINGS;_CRT_SECURE_NO_WARNINGS;NO_LOG4CXX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_WINSOCK_DEPRECATED_NO_WARNINGS;_CRT_SECURE_NO_WARNINGS;NO_LOG4CXX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <DisableSpecificWarnings>4244</DisableSpecificWarnings>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
     </ClCompile>
@@ -180,7 +184,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>false</SDLCheck>
-      <PreprocessorDefinitions>_WIN32_WINNT=0x0501;_WINSOCK_DEPRECATED_NO_WARNINGS;_CRT_SECURE_NO_WARNINGS;NO_LOG4CXX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_WINSOCK_DEPRECATED_NO_WARNINGS;_CRT_SECURE_NO_WARNINGS;NO_LOG4CXX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <DisableSpecificWarnings>
       </DisableSpecificWarnings>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
@@ -198,7 +202,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>false</SDLCheck>
-      <PreprocessorDefinitions>_WIN32_WINNT=0x0501;_WINSOCK_DEPRECATED_NO_WARNINGS;_CRT_SECURE_NO_WARNINGS;NO_LOG4CXX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_WINSOCK_DEPRECATED_NO_WARNINGS;_CRT_SECURE_NO_WARNINGS;NO_LOG4CXX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <DisableSpecificWarnings>
       </DisableSpecificWarnings>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
