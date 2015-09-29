@@ -171,6 +171,7 @@
   <ItemGroup>
     <ClCompile Include="..\src\test\test_chunk_archive.cpp" />
     <ClCompile Include="..\src\test\test_loading_order.cpp" />
+    <ClCompile Include="..\src\test\test_thread_pool.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\test\gtest.hpp" />

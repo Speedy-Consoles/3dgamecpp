@@ -22,6 +22,7 @@ public:
 
 	// query
 	bool isRunning();
+	bool isTerminationRequested();
 
 	// operation
 	void dispatch();
@@ -33,8 +34,11 @@ public:
 	void wait();
 	bool waitFor(Time);
 	bool waitUntil(Time);
-
-	static void setNameOfThisThread(const char *);
 };
+
+namespace ThisThread {
+	void setName(const char *);
+	void yield();
+}
 
 #endif // THREAD_HPP_

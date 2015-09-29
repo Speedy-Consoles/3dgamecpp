@@ -30,6 +30,7 @@
     <ClCompile Include="..\src\shared\engine\rwlock.cpp" />
     <ClCompile Include="..\src\shared\engine\stopwatch.cpp" />
     <ClCompile Include="..\src\shared\engine\thread.cpp" />
+    <ClCompile Include="..\src\shared\engine\thread_pool.cpp" />
     <ClCompile Include="..\src\shared\engine\time.cpp" />
     <ClCompile Include="..\src\shared\engine\unicode_int.cpp" />
     <ClCompile Include="..\src\shared\game\character.cpp" />
@@ -46,6 +47,7 @@
     <ClInclude Include="..\src\shared\block_loader.hpp" />
     <ClInclude Include="..\src\shared\block_manager.hpp" />
     <ClInclude Include="..\src\shared\block_utils.hpp" />
+    <ClInclude Include="..\src\shared\build_config.hpp" />
     <ClInclude Include="..\src\shared\chunk_archive.hpp" />
     <ClInclude Include="..\src\shared\chunk_compression.hpp" />
     <ClInclude Include="..\src\shared\chunk_manager.hpp" />
@@ -62,6 +64,7 @@
     <ClInclude Include="..\src\shared\engine\std_types.hpp" />
     <ClInclude Include="..\src\shared\engine\stopwatch.hpp" />
     <ClInclude Include="..\src\shared\engine\thread.hpp" />
+    <ClInclude Include="..\src\shared\engine\thread_pool.hpp" />
     <ClInclude Include="..\src\shared\engine\time.hpp" />
     <ClInclude Include="..\src\shared\engine\unicode_int.hpp" />
     <ClInclude Include="..\src\shared\engine\vmath.hpp" />

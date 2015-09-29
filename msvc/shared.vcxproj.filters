@@ -92,6 +92,9 @@
     <ClCompile Include="..\src\shared\engine\mutex.cpp">
       <Filter>Source Files\engine</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\shared\engine\thread_pool.cpp">
+      <Filter>Source Files\engine</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\shared\engine\logging.hpp">
@@ -185,6 +188,12 @@
       <Filter>Header Files\engine</Filter>
     </ClInclude>
     <ClInclude Include="..\src\shared\engine\mutex.hpp">
+      <Filter>Header Files\engine</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\shared\build_config.hpp">
+      <Filter>Header Files\shared</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\shared\engine\thread_pool.hpp">
       <Filter>Header Files\engine</Filter>
     </ClInclude>
   </ItemGroup>

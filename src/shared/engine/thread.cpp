@@ -10,14 +10,19 @@ bool Thread::isRunning() {
 	if (!fut.valid())
 		return false;
 	auto future_state = fut.wait_for(std::chrono::microseconds(0));
+	// TODO this comparison is almost certainly a bug, should probably be 'timeout'
 	return future_state == std::future_status::ready;
+}
+
+bool Thread::isTerminationRequested() {
+	return shouldHalt.load(memory_order_seq_cst);
 }
 
 void Thread::dispatch() {
 	shouldHalt = false;
 	fut = async(launch::async, [this]() {
 		if (this->name.length() > 0)
-			setNameOfThisThread(this->name.c_str());
+			ThisThread::setName(this->name.c_str());
 		this->onStart();
 		while (!shouldHalt.load(memory_order_seq_cst)) {
 			doWork();
@@ -27,7 +32,7 @@ void Thread::dispatch() {
 }
 
 void Thread::requestTermination() {
-	 shouldHalt.store(true, memory_order_relaxed);
+	 shouldHalt.store(true, memory_order_seq_cst);
 }
 
 void Thread::wait() {
@@ -61,6 +66,8 @@ bool Thread::waitUntil(Time t) {
 	}
 }
 
+namespace ThisThread {
+
 #ifdef _MSC_VER
 
 #include <windows.h>
@@ -76,7 +83,7 @@ typedef struct tagTHREADNAME_INFO
 } THREADNAME_INFO;
 #pragma pack(pop)
 
-void Thread::setNameOfThisThread(const char *name) {
+void setName(const char *name) {
 	THREADNAME_INFO info;
 	info.dwType = 0x1000;
 	info.szName = name;
@@ -94,7 +101,7 @@ void Thread::setNameOfThisThread(const char *name) {
 
 #else
 
-void Thread::setNameOfThisThread(const char *) {
+void setName(const char *) {
 	static bool b = false;
 	if (!b) {
 		LOG_DEBUG(logger) << "Naming threads not implemented";
@@ -103,3 +110,9 @@ void Thread::setNameOfThisThread(const char *) {
 }
 
 #endif
+
+void yield() {
+	std::this_thread::yield();
+}
+
+} // namespace ThisThread
