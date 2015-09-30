@@ -70,7 +70,7 @@ Server::Server(uint16 port, const char *worldId) {
 	ENetAddress address;
 	address.host = ENET_HOST_ANY;
 	address.port = port;
-	host = enet_host_create(&address, MAX_CLIENTS, 1, 0, 0);
+	host = enet_host_create(&address, MAX_CLIENTS, NUM_CHANNELS, 0, 0);
 	if (!host)
 		LOG_FATAL(logger) << "An error occurred while trying to create an ENet server host.";
 }
@@ -101,7 +101,7 @@ void Server::run() {
 
 		Time remTime = time + seconds(1) / TICK_SPEED - getCurrentTime();
 		if (remTime < 0)
-			LOG_WARNING(logger) << "CAN'T KEEP UP!";
+			LOG_WARNING(logger) << "CAN'T KEEP UP! (" << -remTime << " micro seconds behind)" ;
 
 		sync(TICK_SPEED);
 		tick++;

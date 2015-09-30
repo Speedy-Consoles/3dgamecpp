@@ -25,7 +25,7 @@ RemoteServerInterface::RemoteServerInterface(Client *client, std::string address
 		return;
 	}
 
-	host = enet_host_create(NULL, 1, 1, 0, 0);
+	host = enet_host_create(NULL, 1, NUM_CHANNELS, 0, 0);
 	if (!host) {
 		LOG_ERROR(logger) << "An error occurred while trying to create an ENet client host.";
 		status = CONNECTION_ERROR;
@@ -36,7 +36,7 @@ RemoteServerInterface::RemoteServerInterface(Client *client, std::string address
 	ENetAddress address;
 	enet_address_set_host(&address, addressString.c_str());
 	address.port = 8547;
-	peer = enet_host_connect(host, &address, 1, 0);
+	peer = enet_host_connect(host, &address, NUM_CHANNELS, 0);
 	if (!peer) {
 		LOG_ERROR(logger) << "No available peers for initiating an ENet connection.";
 		status = CONNECTION_ERROR;
@@ -127,7 +127,7 @@ void RemoteServerInterface::tick() {
 	input.pitch = pitch;
 	input.moveInput = moveInput;
 	input.flying = flying;
-	send(input, false);
+	send(input, CHANNEL_STATE, false);
 }
 
 void RemoteServerInterface::setConf(const GraphicsConf &conf, const GraphicsConf &old) {
@@ -145,7 +145,7 @@ bool RemoteServerInterface::requestChunk(Chunk *chunk, bool cached, uint32 cache
 	msg.coords = chunk->getCC();
 	msg.cached = cached;
 	msg.cachedRevision = cachedRevision;
-	send(msg, true);
+	send(msg, CHANNEL_BLOCK_DATA, true);
 	requestedChunks.insert({chunk->getCC(), chunk});
 	return true;
 }
@@ -205,7 +205,7 @@ void RemoteServerInterface::updateNetConnecting() {
 			{
 				PlayerInfo info;
 				info.name = "Unnamed player";
-				send(info, true);
+				send(info, CHANNEL_CHAT, true);
 			}
 			break;
 		case ENET_EVENT_TYPE_DISCONNECT:

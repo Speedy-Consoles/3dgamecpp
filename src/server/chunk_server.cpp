@@ -27,12 +27,12 @@ void ChunkServer::tick() {
 			// TODO allocation should happen in chunk manager
 			message.encodedBlocks = new uint8[Chunk::SIZE];
 			message.encodedLength = encodeBlocks_RLE(chunk->getBlocks(), message.encodedBlocks, Chunk::SIZE);
-			server->send(message, tcr.clientId, true);
+			server->send(message, tcr.clientId, CHANNEL_BLOCK_DATA, true);
 			// TODO deallocation should also happen in chunk manager
 			delete[] message.encodedBlocks;
 		} else {
 			message.encodedLength = 0;
-			server->send(message, tcr.clientId, true);
+			server->send(message, tcr.clientId, CHANNEL_BLOCK_DATA, true);
 		}
 		chunkManager->releaseChunk(tcr.request.coords);
 	}
