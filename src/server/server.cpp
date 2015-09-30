@@ -101,7 +101,7 @@ void Server::run() {
 
 		Time remTime = time + seconds(1) / TICK_SPEED - getCurrentTime();
 		if (remTime < 0)
-			LOG_WARNING(logger) << "CAN'T KEEP UP! (" << -remTime << "ms over)" ;
+			LOG_WARNING(logger) << "CAN'T KEEP UP! (" << -remTime << " micro seconds behind)" ;
 
 		sync(TICK_SPEED);
 		tick++;
