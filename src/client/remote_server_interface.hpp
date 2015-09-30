@@ -69,7 +69,7 @@ private:
 
 	// TODO think about channels
 	// maybe chat and events in different channels
-	template<typename T> void send(T &msg, bool reliable) {
+	template<typename T> void send(T &msg, enet_uint8 channel, bool reliable) {
 		static logging::Logger logger("remote");
 		size_t size = getMessageSize(msg);
 		enet_uint32 flags = 0;
@@ -79,7 +79,7 @@ private:
 		if (writeMessage(msg, (char *) packet->data, size))
 			LOG_ERROR(logger) << "Could not serialize message";
 
-		enet_peer_send(peer, 0, packet);
+		enet_peer_send(peer, channel, packet);
 	}
 };
 

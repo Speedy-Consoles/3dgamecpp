@@ -12,6 +12,13 @@
 
 static const uint8 MAGIC[4] = {0xaa, 0x0d, 0xbe, 0x15};
 
+enum ChannelNames {
+	CHANNEL_STATE = 0,
+	CHANNEL_BLOCK_DATA,
+	CHANNEL_CHAT,
+	NUM_CHANNELS,
+};
+
 enum DisconnectReason : uint32 {
 	TIMEOUT = 0,
 	CLIENT_LEAVE,

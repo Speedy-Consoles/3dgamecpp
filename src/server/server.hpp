@@ -66,7 +66,7 @@ public:
 
 	// TODO think about channels
 	// maybe chat and events in different channels
-	template<typename T> void send(T &msg, int clientId, bool reliable) {
+	template<typename T> void send(T &msg, int clientId, enet_uint8 channel, bool reliable) {
 		static logging::Logger logger("server");
 		size_t size = getMessageSize(msg);
 		enet_uint32 flags = 0;
@@ -76,10 +76,10 @@ public:
 		if (writeMessage(msg, (char *) packet->data, size))
 			LOG_ERROR(logger) << "Could not serialize message";
 
-		enet_peer_send(clientInfos[clientId].peer, 0, packet);
+		enet_peer_send(clientInfos[clientId].peer, channel, packet);
 	}
 
-	template<typename T> void broadcast(T &msg, bool reliable) {
+	template<typename T> void broadcast(T &msg, enet_uint8 channel, bool reliable) {
 		static logging::Logger logger("server");
 		size_t size = getMessageSize(msg);
 		enet_uint32 flags = 0;
@@ -88,7 +88,7 @@ public:
 		ENetPacket *packet = enet_packet_create(nullptr, size, flags);
 		if (writeMessage(msg, (char *) packet->data, size))
 			LOG_ERROR(logger) << "Could not serialize message";
-		enet_host_broadcast(host, 0, packet);
+		enet_host_broadcast(host, channel, packet);
 	}
 
 private:

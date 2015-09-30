@@ -70,7 +70,7 @@ Server::Server(uint16 port, const char *worldId) {
 	ENetAddress address;
 	address.host = ENET_HOST_ANY;
 	address.port = port;
-	host = enet_host_create(&address, MAX_CLIENTS, 1, 0, 0);
+	host = enet_host_create(&address, MAX_CLIENTS, NUM_CHANNELS, 0, 0);
 	if (!host)
 		LOG_FATAL(logger) << "An error occurred while trying to create an ENet server host.";
 }
