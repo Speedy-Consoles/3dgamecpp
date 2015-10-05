@@ -2,7 +2,9 @@
 #define MUTEX_HPP
 
 #ifdef _MSC_VER
-#include <windows.h>
+#define NOMINMAX
+#include <WinSock2.h>
+#include <Windows.h>
 #else
 #include <pthread.h>
 #endif
@@ -13,6 +15,7 @@ public:
 	~Mutex();
 
 	void lock();
+	// returns true iff the lock was successfully taken
 	bool tryLock();
 	void unlock();
 
