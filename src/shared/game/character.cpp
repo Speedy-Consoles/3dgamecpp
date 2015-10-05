@@ -191,7 +191,8 @@ void Character::applySnapshot(const CharacterSnapshot &snapshot, bool local) {
 }
 
 CharacterSnapshot Character::makeSnapshot(int tick) const {
-	return CharacterSnapshot{tick, pos, vel, (uint16) yaw, (int16) pitch, moveInput, isFlying};
+	// TODO please check whether 'tick' is supposed to go into 'valid'
+	return CharacterSnapshot{tick != 0, pos, vel, (uint16) yaw, (int16) pitch, moveInput, isFlying};
 }
 
 void Character::calcVel() {

@@ -118,7 +118,7 @@ PLAIN_MSG_MIDDLE(Snapshot, SNAPSHOT_SIZE)
 		uint8 flags;
 		READ_TYPE(flags, uint8)
 		msg->characterSnapshots[i].valid = flags & SNAPSHOT_FLAG_VALID;
-		msg->characterSnapshots[i].isFlying = flags & SNAPSHOT_FLAG_IS_FLYING;
+		msg->characterSnapshots[i].isFlying = (flags & SNAPSHOT_FLAG_IS_FLYING) != 0;
 		for (int j = 0; j < 3; j++)
 			READ_TYPE(msg->characterSnapshots[i].pos[j], int64)
 		for (int j = 0; j < 3; j++)

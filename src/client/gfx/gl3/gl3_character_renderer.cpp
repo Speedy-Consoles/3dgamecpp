@@ -54,7 +54,7 @@ void GL3CharacterRenderer::buildBody() {
 			vertices[i] = vec3f(
 				(DIR_QUAD_CORNER_CYCLES_3D[d][i][0] - 0.5f) * BODY_SIZE[0],
 				(DIR_QUAD_CORNER_CYCLES_3D[d][i][1] - 0.5f) * BODY_SIZE[1],
-				DIR_QUAD_CORNER_CYCLES_3D[d][i][2] * BODY_SIZE[2] - Character::EYE_HEIGHT
+				(float) DIR_QUAD_CORNER_CYCLES_3D[d][i][2] * BODY_SIZE[2] - Character::EYE_HEIGHT
 			) * (1.0f / RESOLUTION);
 		}
 		for (int j = 0; j < 6; j++) {
