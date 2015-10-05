@@ -23,6 +23,8 @@ static const uint HEAP_BLOCK_SIZE = 256;
 
 static const int32 RECENT_HEADER_VERSION = 3;
 
+static const uint REGION_SIZE = 16;
+
 class ArchiveFile {
 private:
 
@@ -100,6 +102,10 @@ private:
 
 	Header _header;
 	std::vector<DirectoryEntry> _dir;
+
+	ReadWriteLock _dir_lock;
+
+
 };
 
 ArchiveFile::~ArchiveFile() {
@@ -245,7 +251,11 @@ bool ArchiveFile::hasChunk(vec3i64 cc, uint32 *revision) {
 	size_t y = cycle(cc[1], _region_size);
 	size_t z = cycle(cc[2], _region_size);
 	size_t id = x + (_region_size * (y + (_region_size * z)));
-	const DirectoryEntry &dir_entry = _dir[id];
+
+	_dir_lock.lockRead();
+	const DirectoryEntry dir_entry = _dir[id];
+	_dir_lock.unlockRead();
+
 	bool has_chunk = dir_entry.size != 0 || dir_entry.flags != 0;
 	if (revision != nullptr && has_chunk)
 		*revision = dir_entry.revision;
@@ -263,7 +273,10 @@ bool ArchiveFile::loadChunk(Chunk *chunk) {
 	size_t y = cycle(cc[1], _region_size);
 	size_t z = cycle(cc[2], _region_size);
 	size_t id = x + (_region_size * (y + (_region_size * z)));
-	const DirectoryEntry &dir_entry = _dir[id];
+
+	_dir_lock.lockRead();
+	const DirectoryEntry dir_entry = _dir[id];
+	_dir_lock.unlockRead();
 
 	if (dir_entry.size == 0 && dir_entry.flags == 0) {
 		return false;
@@ -313,7 +326,10 @@ void ArchiveFile::storeChunk(const Chunk &chunk) {
 	size_t y = cycle(cc[1], _region_size);
 	size_t z = cycle(cc[2], _region_size);
 	size_t id = x + (_region_size * (y + (_region_size * z)));
-	DirectoryEntry &dir_entry = _dir[id];
+
+	_dir_lock.lockRead();
+	DirectoryEntry dir_entry = _dir[id];
+	_dir_lock.unlockRead();
 
 	dir_entry.revision = chunk.getRevision();
 
@@ -322,34 +338,38 @@ void ArchiveFile::storeChunk(const Chunk &chunk) {
 		dir_entry.size = 0;
 		dir_entry.visibility = 0;
 		dir_entry.flags = LAYOUT_EMPTY;
-	} else {
-
-		uint8 *const buffer = new uint8[Chunk::SIZE];
+	}
+	
+	else {
+		// leave some wiggle room, so we can detect whether a chunk actually grew
+		uint8 *const buffer = new uint8[Chunk::SIZE + 4];
 		int bytes_written;
+		uint num_blocks;
 
 		// try RLE encoding
 		bytes_written = encodeBlocks_RLE(chunk.getBlocks(), buffer, Chunk::SIZE);
-		if (bytes_written < 0) {
+		if (bytes_written <= 0) {
 			LOG_ERROR(logger) << "Chunk (" << cc << ") could not be written";
 			return;
 		}
+		num_blocks = ((uint)bytes_written - 1) / _header.heap_block_size + 1;
 		dir_entry.flags = LAYOUT_RLE;
 
 		// use plain encoding if we didn't compress the chunk enough
-		if ((uint) bytes_written / _header.heap_block_size >= Chunk::SIZE / _header.heap_block_size) {
+		if (num_blocks >= Chunk::SIZE / _header.heap_block_size) {
 			bytes_written = encodeBlocks_PLAIN(chunk.getBlocks(), buffer, Chunk::SIZE);
-			if (bytes_written < 0) {
+			if (bytes_written <= 0) {
 				LOG_ERROR(logger) << "Chunk (" << cc << ") could not be written";
 				return;
 			}
+			num_blocks = ((uint)bytes_written - 1) / _header.heap_block_size + 1;
 			dir_entry.flags = LAYOUT_PLAIN;
 		}
 
-		uint num_blocks = (bytes_written - 1) / _header.heap_block_size + 1;
 		if (num_blocks > dir_entry.size) {
 			//LOG_DEBUG(logger) << "Resized Chunk (" << cc << ")";
-			_file.seekp(0, ios_base::end);
-			size_t file_end = (size_t) _file.tellp();
+			_file.seekg(0, ios_base::end);
+			size_t file_end = (size_t) _file.tellg();
 			size_t chunk_heap_size = file_end - getChunkHeapStart();
 			size_t start;
 			if (chunk_heap_size > 0)
@@ -373,6 +393,10 @@ void ArchiveFile::storeChunk(const Chunk &chunk) {
 			dir_entry.visibility = 0;
 		}
 	}
+
+	_dir_lock.lockWrite();
+	_dir[id] = dir_entry;
+	_dir_lock.unlockWrite();
 
 	_file.seekp(_header.directory_offset + id * sizeof (DirectoryEntry));
 	_file.write((char *)(&dir_entry), sizeof (DirectoryEntry));
@@ -455,21 +479,72 @@ ChunkArchive::ChunkArchive(const char *str) :
 }
 
 bool ChunkArchive::hasChunk(vec3i64 cc, uint32 *revision) {
-	ArchiveFile *archive_file = getArchiveFile(cc);
-	return archive_file->hasChunk(cc, revision);
+	_file_map_lock.lockRead();
+	ArchiveFile *archive_file = unsafe_getArchiveFile(cc);
+	bool result = archive_file->hasChunk(cc, revision);
+	_file_map_lock.unlockRead();
+	return result;
 }
 
 bool ChunkArchive::loadChunk(Chunk *chunk) {
-	ArchiveFile *archive_file = getArchiveFile(chunk->getCC());
-	return archive_file->loadChunk(chunk);
+	_file_map_lock.lockRead();
+	ArchiveFile *archive_file = unsafe_getArchiveFile(chunk->getCC());
+	bool result = archive_file->loadChunk(chunk);
+	_file_map_lock.unlockRead();
+	return result;
 }
 
 void ChunkArchive::storeChunk(const Chunk &chunk) {
-	ArchiveFile *archive_file = getArchiveFile(chunk.getCC());
+	_file_map_lock.lockRead();
+	ArchiveFile *archive_file = unsafe_getArchiveFile(chunk.getCC());
 	archive_file->storeChunk(chunk);
+	_file_map_lock.unlockRead();
 }
 
 void ChunkArchive::clean(Time t) {
+	_file_map_lock.lockWrite();
+	unsafe_clean(t);
+	_file_map_lock.unlockWrite();
+}
+
+// the caller of this function needs to hold a read-lock
+ArchiveFile *ChunkArchive::unsafe_getArchiveFile(vec3i64 cc) {
+	vec3i64 rc;
+	rc[0] = cc[0] / REGION_SIZE - (cc[0] < 0 ? 1 : 0);
+	rc[1] = cc[1] / REGION_SIZE - (cc[1] < 0 ? 1 : 0);
+	rc[2] = cc[2] / REGION_SIZE - (cc[2] < 0 ? 1 : 0);
+
+	auto iter = _file_map.find(rc);
+	while (iter == _file_map.end()) {
+		_file_map_lock.unlockRead();
+		_file_map_lock.lockWrite();
+
+		iter = _file_map.find(rc);
+		if (iter == _file_map.end()) {
+			unsafe_addArchiveFile(rc);
+		}
+
+		_file_map_lock.unlockWrite();
+		_file_map_lock.lockRead();
+		iter = _file_map.find(rc);
+	}
+
+	return iter->second;
+}
+
+// the caller of this function needs to hold a write-lock
+void ChunkArchive::unsafe_addArchiveFile(vec3i64 rc) {
+	unsafe_clean(seconds(10));
+	char buffer[200];
+	sprintf(buffer, "%" PRId64 "_%" PRId64 "_%" PRId64 ".region",
+			rc[0], rc[1], rc[2]);
+	std::string filename = _path + std::string(buffer);
+	ArchiveFile *archive_file = new ArchiveFile(filename.c_str(), REGION_SIZE);
+	_file_map.insert({rc, archive_file});
+}
+
+// the caller of this function needs to hold a write lock
+void ChunkArchive::unsafe_clean(Time t) {
 	int num_cleaned = 0;
 	Time now = getCurrentTime();
 	auto iter = _file_map.begin();
@@ -485,26 +560,4 @@ void ChunkArchive::clean(Time t) {
 	}
 	if (num_cleaned)
 		LOG_DEBUG(logger) << "Cleaned " << num_cleaned << " file handles";
-}
-
-ArchiveFile *ChunkArchive::getArchiveFile(vec3i64 cc) {
-	static const uint REGION_SIZE = 16;
-	vec3i64 rc;
-	rc[0] = cc[0] / REGION_SIZE - (cc[0] < 0 ? 1 : 0);
-	rc[1] = cc[1] / REGION_SIZE - (cc[1] < 0 ? 1 : 0);
-	rc[2] = cc[2] / REGION_SIZE - (cc[2] < 0 ? 1 : 0);
-
-	auto iter = _file_map.find(rc);
-	if (iter != _file_map.end()) {
-		return iter->second;
-	} else {
-		clean(seconds(10));
-		char buffer[200];
-		sprintf(buffer, "%" PRId64 "_%" PRId64 "_%" PRId64 ".region",
-				rc[0], rc[1], rc[2]);
-		std::string filename = _path + std::string(buffer);
-		ArchiveFile *archive_file = new ArchiveFile(filename.c_str(), REGION_SIZE);
-		_file_map.insert({rc, archive_file});
-		return archive_file;
-	}
 }
