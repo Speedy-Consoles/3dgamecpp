@@ -99,6 +99,25 @@ TEST(ChunkArchiveTest, RandomChunk) {
 	EXPECT_EQ(0, getRelativeChunkDifference(supposed, actual)) << "Random chunk did not store and load properly";
 }
 
+TEST(ChunkArchiveTest, RunLengths) {
+	Chunk supposed;
+	supposed.initCC({ 0, 0, 0 });
+	Chunk actual;
+
+	uint8 data[] = { 0, 1, 0, 0, 1, 1, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1 };
+	int ndata = sizeof(data) / sizeof(uint8);
+
+	initChunk(supposed, [&data, ndata](size_t, size_t, size_t, size_t index) -> uint8 {
+		if (index < ndata)
+			return data[index];
+		else
+			return (index / 0x200) % 2;
+	});
+
+	store_and_load(supposed, &actual);
+	EXPECT_EQ(0, getRelativeChunkDifference(supposed, actual)) << "RunLengths chunk did not store and load properly";
+}
+
 TEST(ChunkArchiveTest, FarFromSpawnChunk) {
 	Chunk supposed;
 	supposed.initCC({ 9999999, 9999999, 0 });
