@@ -198,15 +198,15 @@ PLAIN_MSG_START(ChunkRequest, CHUNK_REQUEST, CHUNK_REQUEST_SIZE)
 	for (int i = 0; i < 3; i++)
 		WRITE_TYPE(msg.coords[i], int64)
 	if (msg.cached)
-		WRITE_TYPE((uint32) -1, uint32)
-	else
 		WRITE_TYPE(msg.cachedRevision, uint32)
+	else
+		WRITE_TYPE((uint32) -1, uint32)
 PLAIN_MSG_MIDDLE(ChunkRequest, CHUNK_REQUEST_SIZE)
 	for (int i = 0; i < 3; i++)
 		READ_TYPE(msg->coords[i], int64)
 	uint32 rev;
 	READ_TYPE(rev, uint32)
-	if (rev == (uint32) -1) {
+	if (rev != (uint32) -1) {
 		msg->cached = true;
 		msg->cachedRevision = rev;
 	} else {
