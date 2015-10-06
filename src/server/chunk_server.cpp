@@ -23,7 +23,7 @@ void ChunkServer::tick() {
 		ChunkMessage message;
 		message.chunkCoords = tcr.request.coords;
 		message.revision = chunk->getRevision();
-		if (chunk->getRevision() != tcr.request.cachedRevision) {
+		if (!tcr.request.cached || chunk->getRevision() != tcr.request.cachedRevision) {
 			// TODO allocation should happen in chunk manager
 			message.encodedBlocks = new uint8[Chunk::SIZE];
 			message.encodedLength = encodeBlocks_RLE(chunk->getBlocks(), message.encodedBlocks, Chunk::SIZE);
