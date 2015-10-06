@@ -17,7 +17,8 @@ RemoteServerInterface::RemoteServerInterface(Client *client, std::string address
 		client(client),
 		requestedChunks(0, vec3i64HashFunc),
 		worldGenerator(new WorldGenerator(42, WorldParams())),
-		asyncWorldGenerator(worldGenerator.get())
+		asyncWorldGenerator(worldGenerator.get()),
+		encodedBuffer(new uint8[Chunk::SIZE])
 {
 	if (enet_initialize() != 0) {
 		LOG_FATAL(logger) << "An error occurred while initializing ENet.";
@@ -288,8 +289,7 @@ void RemoteServerInterface::handlePacket(const enet_uint8 *data, size_t size, si
 	case CHUNK_MESSAGE:
 		{
 			ChunkMessage msg;
-			// TODO allocation should be in the chunk or something
-			msg.encodedBlocks = new uint8[Chunk::SIZE];
+			msg.encodedBlocks = encodedBuffer.get();
 			if (readMessageBody((const char *) data, size, &msg)) {
 				LOG_WARNING(logger) << "Received malformed message";
 				break;
@@ -306,8 +306,6 @@ void RemoteServerInterface::handlePacket(const enet_uint8 *data, size_t size, si
 			}
 			requestedChunks.erase(it);
 			receivedChunks.push(chunk);
-			// TODO deallocation should also be in the chunk or something
-			delete[] msg.encodedBlocks;
 		}
 		break;
 	default:

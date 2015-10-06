@@ -28,6 +28,8 @@ private:
 
 	Status status = NOT_CONNECTED;
 
+	std::unique_ptr<uint8> encodedBuffer;
+
 	ENetHost *host = nullptr;
 	ENetPeer *peer = nullptr;
 
