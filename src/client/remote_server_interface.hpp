@@ -57,7 +57,7 @@ public:
 
 	int getLocalClientId() override;
 
-	bool requestChunk(Chunk *chunk, bool cached, uint32 cachedRevision) override;
+	void requestChunk(Chunk *chunk, bool cached, uint32 cachedRevision) override;
 	Chunk *getNextChunk() override;
 
 private:

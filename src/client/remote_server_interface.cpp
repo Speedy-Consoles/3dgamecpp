@@ -140,14 +140,13 @@ int RemoteServerInterface::getLocalClientId() {
 	return localCharacterId;
 }
 
-bool RemoteServerInterface::requestChunk(Chunk *chunk, bool cached, uint32 cachedRevision) {
+void RemoteServerInterface::requestChunk(Chunk *chunk, bool cached, uint32 cachedRevision) {
 	ChunkRequest msg;
 	msg.coords = chunk->getCC();
 	msg.cached = cached;
 	msg.cachedRevision = cachedRevision;
 	send(msg, CHANNEL_BLOCK_DATA, true);
 	requestedChunks.insert({chunk->getCC(), chunk});
-	return true;
 }
 
 Chunk *RemoteServerInterface::getNextChunk() {

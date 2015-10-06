@@ -19,8 +19,8 @@ AsyncWorldGenerator::AsyncWorldGenerator(WorldGenerator *worldGenerator) : Threa
 
 AsyncWorldGenerator::~AsyncWorldGenerator() {
 	Chunk *chunk;
-	while (loadedQueue.pop(chunk));
 	requestTermination();
+	while (loadedQueue.pop(chunk));
 	wait();
 }
 
@@ -36,7 +36,7 @@ void AsyncWorldGenerator::doWork() {
 	}
 }
 
-bool AsyncWorldGenerator::requestChunk(Chunk *chunk) {
+bool AsyncWorldGenerator::generateChunk(Chunk *chunk) {
 	return toLoadQueue.push(chunk);
 }
 

@@ -40,7 +40,7 @@ public:
 	virtual void toggleFly() = 0;
 
 	// chunks
-	virtual bool requestChunk(Chunk *chunk, bool cached, uint32 cachedRevision) = 0;
+	virtual void requestChunk(Chunk *chunk, bool cached, uint32 cachedRevision) = 0;
 	virtual Chunk *getNextChunk() = 0;
 };
 

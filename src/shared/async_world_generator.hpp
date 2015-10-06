@@ -22,7 +22,7 @@ public:
 	void doWork() override;
 	
 	// chunks
-	bool requestChunk(Chunk *chunk);
+	bool generateChunk(Chunk *chunk);
 	Chunk *getNextChunk();
 };
 

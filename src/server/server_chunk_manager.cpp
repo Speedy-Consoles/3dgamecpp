@@ -72,7 +72,7 @@ void ServerChunkManager::tick() {
 
 	while(!toGenerateQueue.empty()) {
 		Chunk *chunk = toGenerateQueue.front();
-		if (!asyncWorldGenerator.requestChunk(chunk))
+		if (!asyncWorldGenerator.generateChunk(chunk))
 			break;
 		toGenerateQueue.pop();
 	}

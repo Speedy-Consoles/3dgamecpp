@@ -46,6 +46,12 @@ void LocalServerInterface::setConf(const GraphicsConf &conf, const GraphicsConf 
 }
 
 void LocalServerInterface::tick() {
+	while (!toGenerateQueue.empty()) {
+		Chunk* chunk = toGenerateQueue.front();
+		if (!asyncWorldGenerator.generateChunk(chunk))
+			break;
+		toGenerateQueue.pop();
+	}
 	client->getWorld()->tick();
 }
 
@@ -110,12 +116,11 @@ void LocalServerInterface::toggleFly() {
 	character->setFly(!character->getFly());
 }
 
-bool LocalServerInterface::requestChunk(Chunk *chunk, bool cached, uint32) {
-	if (cached) {
+void LocalServerInterface::requestChunk(Chunk *chunk, bool cached, uint32) {
+	if (cached)
 		cachedChunksQueue.push(chunk);
-		return true;
-	}
-	return asyncWorldGenerator.requestChunk(chunk);
+	else
+		toGenerateQueue.push(chunk);
 }
 
 Chunk *LocalServerInterface::getNextChunk() {

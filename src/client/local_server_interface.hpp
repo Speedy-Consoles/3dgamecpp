@@ -17,6 +17,7 @@ class LocalServerInterface : public ServerInterface {
 	Character *character;
 
 	std::queue<Chunk *> cachedChunksQueue;
+	std::queue<Chunk *> toGenerateQueue;
 
 	std::unique_ptr<WorldGenerator> worldGenerator;
 	AsyncWorldGenerator asyncWorldGenerator;
@@ -43,7 +44,7 @@ public:
 	void toggleFly() override;
 	
 	// chunks
-	bool requestChunk(Chunk *chunk, bool cached, uint32 cachedRevision) override;
+	void requestChunk(Chunk *chunk, bool cached, uint32 cachedRevision) override;
 	Chunk *getNextChunk() override;
 };
 
