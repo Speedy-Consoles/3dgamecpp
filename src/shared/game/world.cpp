@@ -52,7 +52,7 @@ void World::requestChunks() {
 				vec3i64 cc = pc + LOADING_ORDER[checkChunkIndex].cast<int64>();
 				auto it = neededChunks.find(cc);
 				if (it == neededChunks.end()) {
-					chunkManager->requestChunk(cc);
+					chunkManager->requireChunk(cc);
 					neededChunks.insert(cc);
 				}
 				checkChunkIndex++;

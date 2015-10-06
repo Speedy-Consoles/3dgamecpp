@@ -91,7 +91,7 @@ void ChunkRenderer::tick() {
 					inBuildQueue.insert(cc);
 					buildQueue.push_back(cc);
 					for (size_t i = 0; i < 27; ++i) {
-						client->getChunkManager()->requestChunk(cc + BIG_CUBE_CYCLE[i].cast<int64>());
+						client->getChunkManager()->requireChunk(cc + BIG_CUBE_CYCLE[i].cast<int64>());
 					}
 				}
 			}
@@ -206,7 +206,7 @@ void ChunkRenderer::rebuildChunk(vec3i64 chunkCoords) {
 		inBuildQueue.insert(chunkCoords);
 		buildQueue.push_front(chunkCoords);
 		for (size_t i = 0; i < 27; ++i) {
-			client->getChunkManager()->requestChunk(chunkCoords + BIG_CUBE_CYCLE[i].cast<int64>());
+			client->getChunkManager()->requireChunk(chunkCoords + BIG_CUBE_CYCLE[i].cast<int64>());
 		}
 		return;
 	}

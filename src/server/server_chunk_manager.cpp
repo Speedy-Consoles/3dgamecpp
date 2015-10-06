@@ -149,7 +149,7 @@ const Chunk *ServerChunkManager::getChunk(vec3i64 chunkCoords) const {
 	return nullptr;
 }
 
-void ServerChunkManager::requestChunk(vec3i64 chunkCoords) {
+void ServerChunkManager::requireChunk(vec3i64 chunkCoords) {
 	auto it = needCounter.find(chunkCoords);
 	if (it == needCounter.end()) {
 		requestedQueue.push(chunkCoords);

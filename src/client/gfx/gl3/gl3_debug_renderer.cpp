@@ -203,7 +203,7 @@ void GL3DebugRenderer::renderDebug() {
 	RENDER_LINE("needed chunks: %d", chunkManager->getNumNeededChunks());
 	RENDER_LINE("allocated chunks: %d", chunkManager->getNumAllocatedChunks());
 	RENDER_LINE("loaded chunks: %d", chunkManager->getNumLoadedChunks());
-	RENDER_LINE("requested queue size: %d", chunkManager->getRequestedQueueSize());
+	RENDER_LINE("requested queue size: %d", chunkManager->getRequiredQueueSize());
 	RENDER_LINE("not-in-cache queue size: %d", chunkManager->getNotInCacheQueueSize());
 	RENDER_LINE("total chunk loads this session: %d", chunkManager->getNumSessionChunkLoads());
 	RENDER_LINE("total chunk gens this session: %d", chunkManager->getNumSessionChunkGens());

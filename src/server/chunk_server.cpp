@@ -51,6 +51,6 @@ void ChunkServer::onClientLeave(int id) {
 void ChunkServer::onChunkRequest(ChunkRequest request, int clientId) {
 	// TODO check for revision first
 	// TODO request compressed blocks instead of whole chunk
-	chunkManager->requestChunk(request.coords);
+	chunkManager->requireChunk(request.coords);
 	requestedQueue.push(TaggedChunkRequest{clientId, request});
 }

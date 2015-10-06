@@ -295,6 +295,7 @@ void RemoteServerInterface::handlePacket(const enet_uint8 *data, size_t size, si
 				LOG_WARNING(logger) << "Received malformed message";
 				break;
 			}
+			// TODO check answer for consistency
 			auto it = requestedChunks.find(msg.chunkCoords);
 			if (it == requestedChunks.end())
 				break;

@@ -26,6 +26,7 @@ private:
 	enum ArchiveOperationType {
 		LOAD = 0,
 		STORE,
+		STORE_SILENTLY,
 	};
 
 	struct ArchiveOperation {
@@ -36,13 +37,13 @@ private:
 	Chunk *chunkPool[CHUNK_POOL_SIZE];
 	std::stack<Chunk *> unusedChunks;
 
-	std::queue<vec3i64> requestedQueue;
+	std::queue<vec3i64> requiredQueue;
 	std::queue<Chunk *> notInCacheQueue;
 	std::queue<ArchiveOperation> preThreadInQueue;
 	ProducerQueue<ArchiveOperation> threadOutQueue;
 	ProducerQueue<ArchiveOperation> threadInQueue;
 	std::unordered_map<vec3i64, Chunk *, size_t(*)(vec3i64)> chunks;
-	std::unordered_map<vec3i64, uint32, size_t(*)(vec3i64)> cacheRevisions;
+	std::unordered_map<vec3i64, uint32, size_t(*)(vec3i64)> cachedRevisions;
 	std::unordered_map<vec3i64, int, size_t(*)(vec3i64)> needCounter;
 
 	int numSessionChunkLoads = 0;
@@ -64,14 +65,14 @@ public:
 			uint blockType, uint32 revision);
 
 	virtual const Chunk *getChunk(vec3i64 chunkCoords) const override;
-	virtual void requestChunk(vec3i64 chunkCoords) override;
+	virtual void requireChunk(vec3i64 chunkCoords) override;
 	virtual void releaseChunk(vec3i64 chunkCoords) override;
 
 	int getNumNeededChunks() const;
 	int getNumAllocatedChunks() const;
 	int getNumLoadedChunks() const;
 
-	int getRequestedQueueSize() const;
+	int getRequiredQueueSize() const;
 	int getNotInCacheQueueSize() const;
 
 	int getNumSessionChunkLoads() const { return numSessionChunkLoads; }

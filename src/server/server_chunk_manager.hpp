@@ -67,7 +67,7 @@ public:
 			uint blockType, uint32 revision);
 
 	virtual const Chunk *getChunk(vec3i64 chunkCoords) const override;
-	virtual void requestChunk(vec3i64 chunkCoords) override;
+	virtual void requireChunk(vec3i64 chunkCoords) override;
 	virtual void releaseChunk(vec3i64 chunkCoords) override;
 
 	int getNumNeededChunks() const;

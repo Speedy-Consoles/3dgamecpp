@@ -22,7 +22,7 @@ public:
 	~ChunkManager() = default;
 
 	virtual const Chunk *getChunk(vec3i64 chunkCoords) const = 0;
-	virtual void requestChunk(vec3i64 chunkCoords) = 0;
+	virtual void requireChunk(vec3i64 chunkCoords) = 0;
 	virtual void releaseChunk(vec3i64 chunkCoords) = 0;
 };
 
