@@ -149,8 +149,6 @@ void ClientChunkManager::placeBlock(vec3i64 chunkCoords, size_t intraChunkIndex,
 	if (it != chunks.end()) {
 		if (it->second->getRevision() == revision) {
 			it->second->setBlock(intraChunkIndex, blockType);
-			vec3i64 block_center = chunkCoords * RESOLUTION + vec3i64(1, 1, 1) * (RESOLUTION / 2);
-			client->getSounds()->play(block_center);
 		} else {
 			LOG_WARNING(logger) << "Couldn't apply chunk patch";
 		}

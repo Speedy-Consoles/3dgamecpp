@@ -5,6 +5,7 @@
 
 #include "shared/engine/logging.hpp"
 #include "shared/saves.hpp"
+#include "client/sounds.hpp"
 #include "client/gfx/graphics.hpp"
 #include "client_chunk_manager.hpp"
 
@@ -82,6 +83,8 @@ void LocalServerInterface::placeBlock(vec3i64 blockCoords, uint8 blockType) {
 			blockType,
 			chunk->getRevision()
 		);
+		vec3i64 block_center = blockCoords * RESOLUTION + vec3i64(1, 1, 1) * (RESOLUTION / 2);
+		client->getSounds()->play(block_center);
 	}
 	// TODO tell world
 	// TODO maybe move this to graphics or something

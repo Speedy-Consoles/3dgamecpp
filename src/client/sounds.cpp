@@ -115,7 +115,7 @@ void Sounds::play(vec3i64 v, EffectState state) {
 		updateChannelPosition(channel, character.getPos(), character.getYaw());
 	}
 
-	if (Mix_PlayChannel(-1, sample, 0) == -1) {
+	if (Mix_PlayChannel(channel, sample, 0) == -1) {
 		LOG_ERROR(logger) << "Could not play sample: ";
 		LOG_ERROR(logger) << Mix_GetError();
 	}
