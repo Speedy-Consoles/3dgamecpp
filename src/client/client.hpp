@@ -15,6 +15,7 @@ class World;
 class Character;
 class Menu;
 class Graphics;
+class Sounds;
 struct GraphicsConf;
 class Stopwatch;
 class BlockManager;
@@ -26,7 +27,6 @@ class States;
 class StateMachine;
 
 class State;
-
 class SystemInitState;
 class PlayingState;
 class LocalPlayingState;
@@ -50,6 +50,7 @@ public:
 	// access
 	Stopwatch *getStopwatch() { return stopwatch.get(); }
 	Graphics *getGraphics() { return graphics.get(); }
+	Sounds *getSounds() { return sounds.get(); }
 	Menu *getMenu() { return menu.get(); }
 	Save *getSave() { return save.get(); }
 	BlockManager *getBlockManager() { return blockManager.get(); }
@@ -80,6 +81,7 @@ private:
 	std::unique_ptr<Stopwatch> stopwatch;
 	std::unique_ptr<GraphicsConf> conf;
 	std::unique_ptr<Graphics> graphics;
+	std::unique_ptr<Sounds> sounds;
 	std::unique_ptr<Menu> menu;
 	std::unique_ptr<Save> save; 
 	std::unique_ptr<BlockManager> blockManager;

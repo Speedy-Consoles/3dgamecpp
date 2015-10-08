@@ -3,6 +3,7 @@
 #include "client/client.hpp"
 #include "client/config.hpp"
 #include "client/events.hpp"
+#include "client/sounds.hpp"
 #include "client/gfx/graphics.hpp"
 #include "client/gui/widget.hpp"
 #include "shared/block_manager.hpp"
@@ -19,6 +20,8 @@ void SystemInitState::onPush(State *old_top) {
 
 	client->conf = std::unique_ptr<GraphicsConf>(new GraphicsConf());
 	load("graphics-default.profile", client->conf.get());
+
+	client->sounds = std::unique_ptr<Sounds>(new Sounds(client));
 
 	client->graphics = std::unique_ptr<Graphics>(new Graphics(client));
 	client->graphics->createContext();

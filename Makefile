@@ -7,6 +7,7 @@ CLIENT_OBJECT_FILES = \
 	client/local_server_interface.cpp.o\
 	client/menu.cpp.o\
 	client/remote_server_interface.cpp.o\
+	client/sounds.cpp.o\
 	client/client_chunk_manager.cpp.o\
 	client/gfx/font.cpp.o\
 	client/gfx/graphics.cpp.o\
@@ -111,7 +112,7 @@ SERVER_LIBS_LD_FLAGS = $(LIBS_LD_FLAGS)
 TEST_LIBS_LD_FLAGS = $(LIBS_LD_FLAGS)
 
 TEST_LIBS_LD_FLAGS += -lgtest -lgtest_main
-CLIENT_LIBS_LD_FLAGS += -lGL -lGLU -lGLEW -lftgl -lSDL2 -lSDL2_image
+CLIENT_LIBS_LD_FLAGS += -lGL -lGLU -lGLEW -lftgl -lSDL2 -lSDL2_image -lSDL2_mixer
 
 # target specific flags
 DEBUG ?= 1

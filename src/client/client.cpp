@@ -2,6 +2,8 @@
 
 #include <random>
 
+#include <SDL2/SDL.h>
+
 #include "shared/engine/logging.hpp"
 #include "shared/engine/stopwatch.hpp"
 #include "shared/game/world.hpp"
@@ -16,6 +18,7 @@
 #include "states/remote_playing_state.hpp"
 #include "states/menu_state.hpp"
 #include "states/connecting_state.hpp"
+#include "sounds.hpp"
 
 #include "client_chunk_manager.hpp"
 #include "config.hpp"
@@ -27,11 +30,21 @@
 
 static logging::Logger logger("client");
 
+template <void (*FUNC)(void)>
+struct Guard { ~Guard() { FUNC(); } };
+
 int main(int argc, char *argv[]) {
 	logging::init("logging.conf");
 
 	LOG_INFO(logger) << "Starting client";
 	LOG_TRACE(logger) << "Trace enabled";
+
+	if (SDL_Init(0)) {
+		LOG_FATAL(logger) << SDL_GetError();
+		return -1;
+	}
+
+	Guard<&SDL_Quit> sdl_guard;
 
 	const char *worldId = "region";
 	const char *serverAddress = nullptr;

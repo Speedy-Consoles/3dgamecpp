@@ -4,6 +4,7 @@
 #include "shared/engine/time.hpp"
 #include "shared/game/world.hpp"
 #include "client/client.hpp"
+#include "client/sounds.hpp"
 #include "client/server_interface.hpp"
 
 using namespace std;
@@ -146,10 +147,13 @@ void ClientChunkManager::placeBlock(vec3i64 chunkCoords, size_t intraChunkIndex,
 		uint blockType, uint32 revision) {
 	auto it = chunks.find(chunkCoords);
 	if (it != chunks.end()) {
-		if (it->second->getRevision() == revision)
+		if (it->second->getRevision() == revision) {
 			it->second->setBlock(intraChunkIndex, blockType);
-		else
+			vec3i64 block_center = chunkCoords * RESOLUTION + vec3i64(1, 1, 1) * (RESOLUTION / 2);
+			client->getSounds()->play(block_center);
+		} else {
 			LOG_WARNING(logger) << "Couldn't apply chunk patch";
+		}
 	}
 	// TODO operate on cache if chunk is not loaded
 }

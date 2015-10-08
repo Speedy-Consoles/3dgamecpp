@@ -15,26 +15,26 @@ Graphics::Graphics(Client *client) : client(client) {
 	LOG_DEBUG(logger) << "Constructing Graphics";
 
 	LOG_DEBUG(logger) << "Initializing SDL";
-	if (SDL_Init(SDL_INIT_VIDEO))
+	if (SDL_InitSubSystem(SDL_INIT_VIDEO | SDL_INIT_AUDIO))
 		LOG_FATAL(logger) << SDL_GetError();
 	int img_init_flags = IMG_INIT_JPG | IMG_INIT_PNG | IMG_INIT_TIF;
 	int img_init_result = IMG_Init(img_init_flags);
-	if (!(img_init_flags & img_init_result & IMG_INIT_JPG)) {
+	if ((img_init_flags & IMG_INIT_JPG) != 0 && (img_init_result & IMG_INIT_JPG) == 0) {
 		LOG_ERROR(logger) << "SDL_Image JPEG Plugin could not be initialized";
 	}
-	if (!(img_init_flags & img_init_result & IMG_INIT_PNG)) {
+	if ((img_init_flags & IMG_INIT_PNG) != 0 && (img_init_result & IMG_INIT_PNG) == 0) {
 		LOG_ERROR(logger) << "SDL_Image PNG Plugin could not be initialized";
 	}
-	if (!(img_init_flags & img_init_result & IMG_INIT_TIF)) {
+	if ((img_init_flags & IMG_INIT_TIF) != 0 && (img_init_result & IMG_INIT_TIF) == 0) {
 		LOG_ERROR(logger) << "SDL_Image TIFF Plugin could not be initialized";
 	}
 }
 
 Graphics::~Graphics() {
 	LOG_TRACE(logger) << "Destroying Graphics";
+	IMG_Quit();
 	SDL_DestroyWindow(window);
 	SDL_GL_DeleteContext(glContext);
-	SDL_Quit();
 }
 
 bool Graphics::createContext() {

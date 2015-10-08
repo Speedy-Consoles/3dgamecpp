@@ -8,6 +8,7 @@
 #include "client/client_chunk_manager.hpp"
 #include "client/states.hpp"
 #include "client/state_machine.hpp"
+#include "client/sounds.hpp"
 #include "client/gfx/graphics.hpp"
 #include "client/gfx/gl2/gl2_renderer.hpp"
 #include "client/gfx/gl3/gl3_renderer.hpp"
@@ -79,6 +80,8 @@ void PlayingState::update() {
 
 	client->getChunkManager()->tick();
 	serverInterface->tick();
+
+	client->getSounds()->tick();
 
 #ifndef NO_GRAPHICS
 	if (getCurrentTime() < client->time + client->timeShift + seconds(1) / TICK_SPEED) {
