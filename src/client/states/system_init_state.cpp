@@ -34,7 +34,7 @@ void SystemInitState::onPush(State *old_top) {
 	ResourceLoader rcl(client);
 	rcl.load("sounds_mc.yml");
 
-	const char *block_ids_file = "block_ids.txt";
+	const char *block_ids_file = "block_ids.yml";
 	rcl.load(block_ids_file);
 	int num_blocks = client->blockManager->getNumberOfBlocks();
 	LOG_INFO(logger) << num_blocks << " blocks were loaded from '" << block_ids_file << "'";
