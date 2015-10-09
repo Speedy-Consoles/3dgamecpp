@@ -46,12 +46,6 @@ Sounds::Sounds(Client *client) : client(client) {
 		LOG_ERROR(logger) << Mix_GetError();
 	}
 
-	sample = Mix_LoadWAV("sounds/grass2.ogg");
-	if (!sample) {
-		LOG_ERROR(logger) << "Music could not be loaded: ";
-		LOG_ERROR(logger) << Mix_GetError();
-	}
-
 	effects.resize(num_channels_actual);
 	for (int channel = num_channels_actual - 1; channel >= 0; --channel) {
 		free_channels.push(channel);
@@ -60,7 +54,6 @@ Sounds::Sounds(Client *client) : client(client) {
 
 Sounds::~Sounds() {
 	LOG_DEBUG(logger) << "Destroying Sounds";
-	Mix_FreeChunk(sample);
 	Mix_HaltMusic();
 	Mix_HaltChannel(-1);
 	Mix_CloseAudio();
@@ -82,37 +75,150 @@ void Sounds::tick() {
 	}
 }
 
-void Sounds::play(vec3i64 pos) {
-	play(pos, SFX_LOCALIZED);
+void Sounds::play(int i, vec3i64 pos) {
+	play(i, pos, SFX_LOCALIZED);
 }
 
-void Sounds::play() {
-	play(vec3i64(0, 0, 0), SFX_OMNIPRESENT);
+void Sounds::play(int i) {
+	play(i, vec3i64(0, 0, 0), SFX_OMNIPRESENT);
 }
 
-void Sounds::play(vec3i64 v, EffectState state) {
+int Sounds::load(const char *name, const char *path) {
+	Mix_Chunk *chunk = Mix_LoadWAV(path);
+	if (!chunk) {
+		LOG_ERROR(logger) << "File '" << path << "' could not be loaded: ";
+		LOG_ERROR(logger) << Mix_GetError();
+		return -1;
+	}
+	int index;
+	int i = get(name);
+	if (i < 0) {
+		index = (int) samples.size();
+		samples.push_back(Sample{ SAMPLE_STANDARD, name, path });
+		samples[index].chunk = chunk;
+		sample_map.insert({name, index});
+	} else {
+		LOG_WARNING(logger) << "Sample '" << samples[i].name << "' is overwritten";
+		index = i;
+		samples[i].free();
+		samples[i] = Sample{ SAMPLE_STANDARD, name, path };
+		samples[index].chunk = chunk;
+	}
+	return index;
+}
+
+int Sounds::createRandomized(const char *name) {
+	int index;
+	int i = get(name);
+	if (i < 0) {
+		index = (int) samples.size();
+		samples.push_back(Sample{ SAMPLE_RANDOMIZED, name, "" });
+		sample_map.insert({name, index});
+	} else {
+		LOG_WARNING(logger) << "Sample '" << samples[i].name << "' is overwritten";
+		index = i;
+		samples[i].free();
+		samples[i] = Sample{ SAMPLE_RANDOMIZED, name, "" };
+	}
+	samples[index].sample_set = new std::vector<int>;
+	return index;
+}
+
+void Sounds::addToRandomized(int randomized_sample, int other_sample) {
+	if (randomized_sample < 0 || other_sample < 0)
+		return;
+	Sample &sample = samples[randomized_sample];
+	if (sample.type != SAMPLE_RANDOMIZED) {
+		LOG_WARNING(logger) << "Tried to add to " << sample.name
+			<< ", which is not a randomized sample";
+		return;
+	}
+	sample.sample_set->push_back(other_sample);
+
+}
+
+void Sounds::addToRandomized(const char *randomized_sample, const char *other_sample) {
+	addToRandomized(get(randomized_sample), get(other_sample));
+}
+
+int Sounds::get(const char *name) {
+	auto iter = sample_map.find(name);
+	if (iter == sample_map.end()) {
+		return -1;
+	} else {
+		return iter->second;
+	}
+}
+
+void Sounds::Sample::free() {
+	switch (type) {
+	default:
+	case SAMPLE_NONE:
+		break;
+	case SAMPLE_STANDARD:
+		if (chunk) {
+			Mix_FreeChunk(chunk);
+			chunk = nullptr;
+		}
+		break;
+	case SAMPLE_RANDOMIZED:
+		if (sample_set) {
+			delete sample_set;
+			sample_set = nullptr;
+		}
+		break;
+	}
+}
+
+void Sounds::play(int i, vec3i64 v, EffectState state) {
 	if (free_channels.size() <= 0) {
 		LOG_DEBUG(logger) << "No free channels for sound effect";
+		return;
+	}
+	if (i < 0) {
+		LOG_DEBUG(logger) << "Sound effect does not exist";
+		return;
+	}
+
+	const Sample *sample = &samples[i];
+
+	while (sample->type != SAMPLE_STANDARD) {
+		switch (sample->type) {
+		default:
+			LOG_DEBUG(logger) << "Problem while resolving sample";
+			return;
+		case SAMPLE_RANDOMIZED:
+			{
+				int num = (int) sample->sample_set->size();
+				uniform_int_distribution<int> distr(0, num - 1);
+				int i = distr(rng);
+				sample = &samples[(*sample->sample_set)[i]];
+			}
+		}
+	}
+	Mix_Chunk *chunk = sample->chunk;
+
+	if (!chunk) {
+		LOG_DEBUG(logger) << "Sound effect does not exist";
 		return;
 	}
 
 	int channel = free_channels.top();
 	free_channels.pop();
-
 	auto &effect = effects[channel];
 
 	effect.state = state;
 	effect.v = v;
 
-	Character &character = client->getLocalCharacter();
 	if (state == SFX_OMNIPRESENT) {
 		Mix_SetPosition(channel, 0, 0);
 	} else {
+		Character &character = client->getLocalCharacter();
 		updateChannelPosition(channel, character.getPos(), character.getYaw());
 	}
 
-	if (Mix_PlayChannel(channel, sample, 0) == -1) {
-		LOG_ERROR(logger) << "Could not play sample: ";
+	if (Mix_PlayChannel(channel, chunk, 0) == -1) {
+		LOG_ERROR(logger) << "Could not play sample " << sample->name << ": ";
 		LOG_ERROR(logger) << Mix_GetError();
 	}
 }
