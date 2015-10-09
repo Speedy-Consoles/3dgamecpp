@@ -30,7 +30,7 @@ blocks:
     planks.jungle: 43
     planks.spruce: 44
 
-    cubble:        8
+    cobble:        8
     cobble.mossy:  9
     bricks:       10
 
