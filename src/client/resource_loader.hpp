@@ -24,6 +24,8 @@ private:
 	
 	void loadSounds(const YAML::Node &node);
 	void loadSound(const YAML::Node &node);
+
+	void loadBlocks(const YAML::Node &node);
 };
 
 #endif // RESOURCE_LOADER_HPP_

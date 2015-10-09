@@ -30,15 +30,14 @@ void SystemInitState::onPush(State *old_top) {
 	client->menu = std::unique_ptr<Menu>(new Menu(client));
 
 	client->blockManager = std::unique_ptr<BlockManager>(new BlockManager());
-	const char *block_ids_file = "block_ids.txt";
-	if (client->blockManager->load(block_ids_file)) {
-		LOG_ERROR(logger) << "Problem loading '" << block_ids_file << "'";
-	}
-	int num_blocks = client->blockManager->getNumberOfBlocks();
-	LOG_INFO(logger) << num_blocks << " blocks were loaded from '" << block_ids_file << "'";
 
 	ResourceLoader rcl(client);
 	rcl.load("sounds_mc.yml");
+
+	const char *block_ids_file = "block_ids.txt";
+	rcl.load(block_ids_file);
+	int num_blocks = client->blockManager->getNumberOfBlocks();
+	LOG_INFO(logger) << num_blocks << " blocks were loaded from '" << block_ids_file << "'";
 }
 
 void SystemInitState::onPop() {

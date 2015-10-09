@@ -8,6 +8,7 @@
 #include "client/client.hpp"
 #include "client/sounds.hpp"
 #include "shared/engine/logging.hpp"
+#include "shared/block_loader.hpp"
 
 logging::Logger logger("res");
 
@@ -55,6 +56,9 @@ void ResourceLoader::loadMap(const YAML::Node &node) {
 		std::string key = iter->first.as<std::string>();
 		if (key == "sounds") {
 			loadSounds(iter->second);
+		} else 
+		if (key == "blocks") {
+			loadBlocks(iter->second);
 		}
 	}
 }
@@ -97,5 +101,18 @@ void ResourceLoader::loadSound(const YAML::Node &node) {
 				client->getSounds()->addToRandomized(name.c_str(), entry.c_str());
 			}
 		}
+	}
+}
+
+void ResourceLoader::loadBlocks(const YAML::Node &node) {
+	if (!node.IsMap())
+		return;
+
+	BlockLoader bl(client);
+
+	for (auto iter = node.begin(); iter != node.end(); ++iter) {
+		std::string key = iter->first.as<std::string>();
+		int value = iter->second.as<int>();
+		bl.add(key, value);
 	}
 }

@@ -3,15 +3,16 @@
 
 #include <string>
 
-class BlockLoader;
+class Client;
 
-class AbstractBlockManager {
+class BlockLoader {
+	Client *client = nullptr;
+
 public:
-	int load(const char *);
+	BlockLoader(Client *client) : client(client) {}
+	~BlockLoader() = default;
 
-protected:
-	friend BlockLoader;
-	virtual void add(std::string key, int value) = 0;
+	void add(std::string key, int value);
 };
 
 #endif //BLOCK_LOADER_HPP_
