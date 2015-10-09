@@ -17,6 +17,7 @@
 
 class RemoteServerInterface : public ServerInterface {
 private:
+	static const int MAX_CHUNK_REQUESTS_PER_TICK = 10;
 
 	struct RequestedChunk {
 		Chunk *chunk;
@@ -28,6 +29,7 @@ private:
 	Client *client = nullptr;
 
 	std::unordered_map<vec3i64, RequestedChunk, size_t(*)(vec3i64)> requestedChunks;
+	std::queue<RequestedChunk> toRequestQueue;
 	std::queue<Chunk *> receivedChunks;
 
 	std::unique_ptr<WorldGenerator> worldGenerator;

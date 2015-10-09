@@ -122,6 +122,20 @@ void RemoteServerInterface::tick() {
 	if (status != CONNECTED)
 		return;
 
+	// send chunk requests
+	int numRequestedChunks = 0;
+	while (!toRequestQueue.empty() && numRequestedChunks < MAX_CHUNK_REQUESTS_PER_TICK) {
+		RequestedChunk rc = toRequestQueue.front();
+		ChunkRequest msg;
+		msg.coords = rc.chunk->getCC();
+		msg.cached = rc.cached;
+		msg.cachedRevision = rc.cachedRevision;
+		send(msg, CHANNEL_BLOCK_DATA, true);
+		requestedChunks.insert({rc.chunk->getCC(), rc});
+		toRequestQueue.pop();
+		numRequestedChunks++;
+	}
+
 	// send input
 	PlayerInput input;
 	input.yaw = yaw;
@@ -142,12 +156,7 @@ int RemoteServerInterface::getLocalClientId() {
 }
 
 void RemoteServerInterface::requestChunk(Chunk *chunk, bool cached, uint32 cachedRevision) {
-	ChunkRequest msg;
-	msg.coords = chunk->getCC();
-	msg.cached = cached;
-	msg.cachedRevision = cachedRevision;
-	send(msg, CHANNEL_BLOCK_DATA, true);
-	requestedChunks.insert({chunk->getCC(), RequestedChunk{chunk, cached, cachedRevision}});
+	toRequestQueue.push(RequestedChunk{chunk, cached, cachedRevision});
 }
 
 Chunk *RemoteServerInterface::getNextChunk() {
