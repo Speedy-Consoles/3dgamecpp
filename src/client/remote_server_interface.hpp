@@ -17,10 +17,17 @@
 
 class RemoteServerInterface : public ServerInterface {
 private:
+
+	struct RequestedChunk {
+		Chunk *chunk;
+		bool cached;
+		uint32 cachedRevision;
+	};
+
 	uint8 localCharacterId = -1;
 	Client *client = nullptr;
 
-	std::unordered_map<vec3i64, Chunk *, size_t(*)(vec3i64)> requestedChunks;
+	std::unordered_map<vec3i64, RequestedChunk, size_t(*)(vec3i64)> requestedChunks;
 	std::queue<Chunk *> receivedChunks;
 
 	std::unique_ptr<WorldGenerator> worldGenerator;

@@ -147,7 +147,7 @@ void RemoteServerInterface::requestChunk(Chunk *chunk, bool cached, uint32 cache
 	msg.cached = cached;
 	msg.cachedRevision = cachedRevision;
 	send(msg, CHANNEL_BLOCK_DATA, true);
-	requestedChunks.insert({chunk->getCC(), chunk});
+	requestedChunks.insert({chunk->getCC(), RequestedChunk{chunk, cached, cachedRevision}});
 }
 
 Chunk *RemoteServerInterface::getNextChunk() {
@@ -294,12 +294,19 @@ void RemoteServerInterface::handlePacket(const enet_uint8 *data, size_t size, si
 				LOG_WARNING(logger) << "Received malformed message";
 				break;
 			}
-			// TODO check answer for consistency
 			auto it = requestedChunks.find(msg.chunkCoords);
 			if (it == requestedChunks.end())
 				break;
-			Chunk *chunk = it->second;
-			if (msg.encodedLength != 0) {
+			Chunk *chunk = it->second.chunk;
+			bool cached = it->second.cached;
+			uint32 cachedRevision = it->second.cachedRevision;
+			if (cached && msg.revision == cachedRevision && msg.encodedLength != 0) {
+				LOG_WARNING(logger) << "Up-to-date chunk message has block data";
+			} else if (!cached || msg.revision != cachedRevision) {
+				if (msg.encodedLength == 0) {
+					LOG_WARNING(logger) << "Chunk message is missing block data";
+					break;
+				}
 				decodeBlocks_RLE(msg.encodedBlocks, msg.encodedLength, chunk->getBlocksForInit());
 				chunk->initRevision(msg.revision);
 				chunk->finishInitialization();
