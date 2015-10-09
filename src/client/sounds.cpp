@@ -121,13 +121,29 @@ void Sounds::updateChannelPosition(int channel, vec3i64 player_pos, int player_y
 	if (effects[channel].state == SFX_OMNIPRESENT || effects[channel].state == SFX_NOT_PLAYING)
 		return;
 
-	vec3i64 rel = effects[channel].v - player_pos;
-	int distance = (int)(clamp(rel.norm() / (RESOLUTION * 100.0), 0.0, 1.0) * 255.0);
-	int angle;
-	double angle_world = atan2(rel[1], rel[0]) * (36000.0 / TAU);
-	double angle_rel = angle_world - player_yaw;
-	angle_rel = cycle(angle_rel, 36000.0);
-	angle = (int)floor(angle_rel) / 100;
+	// where is the sound relative to us in world coordinates?
+	vec3d rel_pos_world = (effects[channel].v - player_pos).cast<double>();
 
-	Mix_SetPosition(channel, 360 - angle, distance);
+	// where is the sound relative to us in our own local coordinates? (+x in front of us)
+	vec3d rel_pos_player;
+	{
+		double phi = player_yaw * (TAU / 36000.0);
+		rel_pos_player[0] = + cos(phi) * rel_pos_world[0] + sin(phi) * rel_pos_world[1];
+		rel_pos_player[1] = - sin(phi) * rel_pos_world[0] + cos(phi) * rel_pos_world[1];
+		rel_pos_player[2] = rel_pos_world[2];
+	}
+
+	// next we use spherical coordinates, but with the main axis going along y, so theta will
+	// indicate which ear hears what and phi indicates whether something is in front or behind us
+	double rho, phi, theta;
+	rho = rel_pos_world.norm();
+	phi = atan2(rel_pos_player[2], rel_pos_player[0]);
+	// center theta around equator
+	theta = acos(rel_pos_player[1] / rho) - TAU / 4;
+
+	int distance = (int)(clamp(rho / (RESOLUTION * 40.0), 0.0, 1.0) * 255.0);
+	int angle = (int)floor(theta  * (36000.0 / TAU)) / 100;
+	angle = cycle(angle, 360);
+
+	Mix_SetPosition(channel, angle, distance);
 }
