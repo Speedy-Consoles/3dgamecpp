@@ -95,7 +95,8 @@ std::unique_ptr<logging::Log> &&operator << (std::unique_ptr<logging::Log> &&log
 	return std::move(log);
 }
 
-inline static std::ostream &operator << (std::ostream &os, vec3i64 v) {
+template <typename T>
+inline static std::ostream &operator << (std::ostream &os, vec3<T> v) {
 	os << v[0] << "," << v[1] << "," << v[2];
 	return os;
 }
