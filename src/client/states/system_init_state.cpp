@@ -22,15 +22,11 @@ void SystemInitState::onPush(State *old_top) {
 	load("graphics-default.profile", client->conf.get());
 
 	client->sounds = std::unique_ptr<Sounds>(new Sounds(client));
-	client->sounds->load("place1", "sounds/grass1.ogg");
-	client->sounds->load("place2", "sounds/grass2.ogg");
-	client->sounds->load("place3", "sounds/grass3.ogg");
-	client->sounds->load("place4", "sounds/grass4.ogg");
 	client->sounds->createRandomized("place");
-	client->sounds->addToRandomized("place", "place1");
-	client->sounds->addToRandomized("place", "place2");
-	client->sounds->addToRandomized("place", "place3");
-	client->sounds->addToRandomized("place", "place4");
+	client->sounds->addToRandomized("place", "place1", "sounds/grass1.ogg");
+	client->sounds->addToRandomized("place", "place2", "sounds/grass2.ogg");
+	client->sounds->addToRandomized("place", "place3", "sounds/grass3.ogg");
+	client->sounds->addToRandomized("place", "place4", "sounds/grass4.ogg");
 
 	client->graphics = std::unique_ptr<Graphics>(new Graphics(client));
 	client->graphics->createContext();

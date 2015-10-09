@@ -65,8 +65,13 @@ public:
 	int load(const char *name, const char *path);
 	int createRandomized(const char *name);
 	void addToRandomized(int randomized_sample, int other_sample);
-	void addToRandomized(const char *randomized_sample, const char *other_sample);
 	int get(const char *name);
+
+	// shortcuts
+	void addToRandomized(const char *rand_sample, const char *other_sample);
+	int addToRandomized(const char *rand_sample, const char *other_sample, const char *path);
+	void play(const char *name, vec3i64 pos);
+	void play(const char *name);
 
 private:
 	void play(int i, vec3i64 v, EffectState state);

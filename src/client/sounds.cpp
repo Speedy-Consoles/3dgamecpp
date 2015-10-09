@@ -137,10 +137,6 @@ void Sounds::addToRandomized(int randomized_sample, int other_sample) {
 
 }
 
-void Sounds::addToRandomized(const char *randomized_sample, const char *other_sample) {
-	addToRandomized(get(randomized_sample), get(other_sample));
-}
-
 int Sounds::get(const char *name) {
 	auto iter = sample_map.find(name);
 	if (iter == sample_map.end()) {
@@ -148,6 +144,27 @@ int Sounds::get(const char *name) {
 	} else {
 		return iter->second;
 	}
+}
+
+void Sounds::addToRandomized(const char *rand_sample, const char *other_sample) {
+	int rand_index = get(rand_sample);
+	int other_index = get(other_sample);
+	addToRandomized(rand_index, other_index);
+}
+
+int Sounds::addToRandomized(const char *rand_sample, const char *other_sample, const char *path) {
+	int rand_index = get(rand_sample);
+	int other_index = load(other_sample, path);
+	addToRandomized(rand_index, other_index);
+	return other_index;
+}
+
+void Sounds::play(const char *name, vec3i64 pos) {
+	play(get(name), pos);
+}
+
+void Sounds::play(const char *name) {
+	play(get(name));
 }
 
 void Sounds::Sample::free() {

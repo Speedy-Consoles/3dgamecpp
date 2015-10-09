@@ -84,8 +84,7 @@ void LocalServerInterface::placeBlock(vec3i64 blockCoords, uint8 blockType) {
 			chunk->getRevision()
 		);
 		vec3i64 block_center = blockCoords * RESOLUTION + vec3i64(1, 1, 1) * (RESOLUTION / 2);
-		int sample_index = client->getSounds()->get("place");
-		client->getSounds()->play(sample_index, block_center);
+		client->getSounds()->play("place", block_center);
 	}
 	// TODO tell world
 	// TODO maybe move this to graphics or something
