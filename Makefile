@@ -7,6 +7,7 @@ CLIENT_OBJECT_FILES = \
 	client/local_server_interface.cpp.o\
 	client/menu.cpp.o\
 	client/remote_server_interface.cpp.o\
+	client/resource_loader.cpp.o\
 	client/sounds.cpp.o\
 	client/client_chunk_manager.cpp.o\
 	client/gfx/font.cpp.o\
@@ -99,7 +100,7 @@ AR = ar crs
 # general flags
 CXXFLAGS = -Wall -Wextra -std=c++11 `freetype-config --cflags` -pthread -Isrc
 LDFLAGS = -pthread
-LIBS_LD_FLAGS = -llog4cxx -lboost_system -lboost_filesystem -lenet
+LIBS_LD_FLAGS = -llog4cxx -lboost_system -lboost_filesystem -lenet -lyaml-cpp
 
 #CXXFLAGS += -DNO_GRAPHICS
 

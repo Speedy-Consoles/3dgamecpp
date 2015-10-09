@@ -1,0 +1,22 @@
+sounds: [
+    {
+        name: place1,
+        path: "sounds/grass1.ogg"
+    },
+    {
+        name: place2,
+        path: "sounds/grass2.ogg"
+    },
+    {
+        name: place3,
+        path: "sounds/grass3.ogg"
+    },
+    {
+        name: place4,
+        path: "sounds/grass4.ogg"
+    },
+    {
+        name: place,
+        list: [place1, place2, place3, place4]
+    }
+]

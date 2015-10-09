@@ -4,6 +4,7 @@
 #include "client/config.hpp"
 #include "client/events.hpp"
 #include "client/sounds.hpp"
+#include "client/resource_loader.hpp"
 #include "client/gfx/graphics.hpp"
 #include "client/gui/widget.hpp"
 #include "shared/block_manager.hpp"
@@ -22,11 +23,6 @@ void SystemInitState::onPush(State *old_top) {
 	load("graphics-default.profile", client->conf.get());
 
 	client->sounds = std::unique_ptr<Sounds>(new Sounds(client));
-	client->sounds->createRandomized("place");
-	client->sounds->addToRandomized("place", "place1", "sounds/grass1.ogg");
-	client->sounds->addToRandomized("place", "place2", "sounds/grass2.ogg");
-	client->sounds->addToRandomized("place", "place3", "sounds/grass3.ogg");
-	client->sounds->addToRandomized("place", "place4", "sounds/grass4.ogg");
 
 	client->graphics = std::unique_ptr<Graphics>(new Graphics(client));
 	client->graphics->createContext();
@@ -40,6 +36,9 @@ void SystemInitState::onPush(State *old_top) {
 	}
 	int num_blocks = client->blockManager->getNumberOfBlocks();
 	LOG_INFO(logger) << num_blocks << " blocks were loaded from '" << block_ids_file << "'";
+
+	ResourceLoader rcl(client);
+	rcl.load("sounds_mc.yml");
 }
 
 void SystemInitState::onPop() {
