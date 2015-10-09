@@ -19,7 +19,6 @@ class Sounds {
 	enum EffectState {
 		SFX_NOT_PLAYING,
 		SFX_LOCALIZED,
-		SFX_DIRECTIONAL,
 		SFX_OMNIPRESENT,
 	};
 	struct Effect {
@@ -37,7 +36,6 @@ public:
 	void tick();
 	
 	void play(vec3i64 pos);
-	void playDirectional(vec3i64 dir);
 	void play();
 
 private:

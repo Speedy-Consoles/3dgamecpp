@@ -86,10 +86,6 @@ void Sounds::play(vec3i64 pos) {
 	play(pos, SFX_LOCALIZED);
 }
 
-void Sounds::playDirectional(vec3i64 dir) {
-	play(dir, SFX_DIRECTIONAL);
-}
-
 void Sounds::play() {
 	play(vec3i64(0, 0, 0), SFX_OMNIPRESENT);
 }
@@ -125,16 +121,8 @@ void Sounds::updateChannelPosition(int channel, vec3i64 player_pos, int player_y
 	if (effects[channel].state == SFX_OMNIPRESENT || effects[channel].state == SFX_NOT_PLAYING)
 		return;
 
-	vec3i64 rel;
-	int distance;
-	if (effects[channel].state == SFX_DIRECTIONAL) {
-		rel = effects[channel].v;
-		distance = 0;
-	} else {
-		rel = effects[channel].v - player_pos;
-		distance = (int)(clamp(rel.norm() / (RESOLUTION * 100.0), 0.0, 1.0) * 255.0);
-	}
-
+	vec3i64 rel = effects[channel].v - player_pos;
+	int distance = (int)(clamp(rel.norm() / (RESOLUTION * 100.0), 0.0, 1.0) * 255.0);
 	int angle;
 	double angle_world = atan2(rel[1], rel[0]) * (36000.0 / TAU);
 	double angle_rel = angle_world - player_yaw;
