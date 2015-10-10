@@ -5,6 +5,7 @@
 #include "client/config.hpp"
 #include "client/menu.hpp"
 #include "client/state_machine.hpp"
+#include "client/sounds.hpp"
 #include "client/gfx/graphics.hpp"
 #include "client/gui/widget.hpp"
 
@@ -18,6 +19,7 @@ void MenuState::onPush(State *old_top) {
 
 void MenuState::onPop() {
 	menu->apply();
+	client->getSounds()->play("menu_close");
 	State::onPop();
 }
 

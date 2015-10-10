@@ -5,6 +5,7 @@
 #include "client/states/text_input_state.hpp"
 #include "client/state_machine.hpp"
 #include "client/states.hpp"
+#include "client/sounds.hpp"
 
 #include "gui/widget.hpp"
 #include "gui/label.hpp"
@@ -24,7 +25,7 @@ Menu::~Menu() {
 }
 
 Menu::Menu(Client *client) :
-		_client(client)
+		client(client)
 {
 	int yIncr = 20;
 	int y = yIncr;
@@ -34,7 +35,10 @@ Menu::Menu(Client *client) :
 
 	auto *applyButton = new Button(0, (float) y, 100, 20);
 	applyButton->text() = string("Apply");
-	applyButton->setOnClick([this](){ apply(); });
+	applyButton->setOnClick([this](){
+		apply();
+		this->client->getSounds()->play("button");
+	});
 	frame->add(applyButton);
 	y += yIncr * 2;
 
@@ -44,6 +48,7 @@ Menu::Menu(Client *client) :
 	fsButton->add(true, "On");
 	fsButton->setOnDataChange([this](bool b){
 		this->setFullscreen(b);
+		this->client->getSounds()->play("button");
 	});
 	frame->add(fsButton);
 	y += yIncr;
@@ -57,6 +62,7 @@ Menu::Menu(Client *client) :
 	aaButton->add(AntiAliasing::MSAA_16, "MSAA x16");
 	aaButton->setOnDataChange([this](AntiAliasing aa){
 		this->setAntiAliasing(aa);
+		this->client->getSounds()->play("button");
 	});
 	frame->add(aaButton);
 	y += yIncr;
@@ -68,6 +74,7 @@ Menu::Menu(Client *client) :
 	fogButton->add(Fog::FANCY, "Fancy");
 	fogButton->setOnDataChange([this](Fog fog){
 		this->setFog(fog);
+		this->client->getSounds()->play("button");
 	});
 	frame->add(fogButton);
 	y += yIncr;
@@ -84,6 +91,7 @@ Menu::Menu(Client *client) :
 	rdButton->add(64, "64");
 	rdButton->setOnDataChange([this](int d){
 		this->setRenderDistance(d);
+		this->client->getSounds()->play("button");
 	});
 	frame->add(rdButton);
 	y += yIncr;
@@ -94,6 +102,7 @@ Menu::Menu(Client *client) :
 	mipButton->add(1000, "Max");
 	mipButton->setOnDataChange([this](uint level){
 		this->setMipmapping(level);
+		this->client->getSounds()->play("button");
 	});
 	frame->add(mipButton);
 	y += yIncr;
@@ -104,6 +113,7 @@ Menu::Menu(Client *client) :
 	filtButton->add(TexFiltering::LINEAR, "Linear");
 	filtButton->setOnDataChange([this](TexFiltering filt){
 		this->setTextureFiltering(filt);
+		this->client->getSounds()->play("button");
 	});
 	frame->add(filtButton);
 	y += 2 * yIncr;
@@ -122,7 +132,7 @@ Menu::Menu(Client *client) :
 }
 
 void Menu::update() {
-	const GraphicsConf &conf = _client->getConf();
+	const GraphicsConf &conf = client->getConf();
 	fsButton->set(conf.fullscreen);
 	aaButton->set(conf.aa);
 	fogButton->set(conf.fog);
@@ -137,7 +147,7 @@ void Menu::update() {
 
 void Menu::apply() {
 	if (_dirty) {
-		_client->setConf(bufferConf);
+		client->setConf(bufferConf);
 		_dirty = false;
 	}
 }
@@ -148,15 +158,15 @@ void Menu::setFullscreen(bool b) {
 }
 
 void Menu::setAntiAliasing(AntiAliasing aa) {
-	GraphicsConf conf = _client->getConf();
+	GraphicsConf conf = client->getConf();
 	conf.aa = bufferConf.aa = aa;
-	_client->setConf(conf);
+	client->setConf(conf);
 }
 
 void Menu::setFog(Fog fog) {
-	GraphicsConf conf = _client->getConf();
+	GraphicsConf conf = client->getConf();
 	conf.fog = bufferConf.fog = fog;
-	_client->setConf(conf);
+	client->setConf(conf);
 }
 
 void Menu::setRenderDistance(int d) {
@@ -165,13 +175,13 @@ void Menu::setRenderDistance(int d) {
 }
 
 void Menu::setMipmapping(uint level) {
-	GraphicsConf conf = _client->getConf();
+	GraphicsConf conf = client->getConf();
 	conf.tex_mipmapping = bufferConf.tex_mipmapping = level;
-	_client->setConf(conf);
+	client->setConf(conf);
 }
 
 void Menu::setTextureFiltering(TexFiltering filt) {
-	GraphicsConf conf = _client->getConf();
+	GraphicsConf conf = client->getConf();
 	conf.tex_filtering = bufferConf.tex_filtering = filt;
-	_client->setConf(conf);
+	client->setConf(conf);
 }

@@ -141,6 +141,7 @@ void PlayingState::handle(const Event &e) {
 	case EventType::KEYBOARD_PRESSED:
 		switch (e.event.key.keysym.scancode) {
 		case SDL_SCANCODE_ESCAPE:
+			client->getSounds()->play("menu_open");
 			client->getStateMachine()->push(client->getStates()->getMenu());
 			client->getGraphics()->grabMouse(false);
 			break;

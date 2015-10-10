@@ -13,7 +13,7 @@ namespace gui {
 #include <string>
 
 class Menu {
-	Client *_client = nullptr;
+	Client *client = nullptr;
 	GraphicsConf bufferConf;
 	bool _dirty = false;
 

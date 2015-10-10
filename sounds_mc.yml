@@ -18,5 +18,17 @@ sounds: [
     {
         name: place,
         list: [place1, place2, place3, place4]
+    },
+    {
+        name: menu_open,
+        path: "sounds/chestopen.ogg"
+    },
+    {
+        name: menu_close,
+        path: "sounds/chestclosed.ogg"
+    },
+    {
+        name: button,
+        path: "sounds/click.ogg"
     }
 ]
