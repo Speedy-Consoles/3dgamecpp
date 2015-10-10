@@ -199,24 +199,24 @@ struct convert<vec3<T>> {
 
 template <typename T>
 YAML::Emitter& operator << (YAML::Emitter& out, const vec2<T>& v) {
-    out << YAML::Flow;
-    out << YAML::BeginSeq << v[0] << v[1] << YAML::EndSeq;
-    return out;
+	out << YAML::Flow;
+	out << YAML::BeginSeq << v[0] << v[1] << YAML::EndSeq;
+	return out;
 }
 
 template <typename T>
 YAML::Emitter& operator << (YAML::Emitter& out, const vec3<T>& v) {
-    out << YAML::Flow;
-    out << YAML::BeginSeq << v[0] << v[1] << v[2] << YAML::EndSeq;
-    return out;
+	out << YAML::Flow;
+	out << YAML::BeginSeq << v[0] << v[1] << v[2] << YAML::EndSeq;
+	return out;
 }
 
 template <typename T>
 YAML::Emitter& operator << (YAML::Emitter& out, const T& t) {
 	YAML::Node node;
 	node = t;
-    out << node;
-    return out;
+	out << node;
+	return out;
 }
 
 void store(const char *filename, const GraphicsConf &conf) {
@@ -254,49 +254,49 @@ void store(const char *filename, const GraphicsConf &conf) {
 }
 
 void load(const char *filename, GraphicsConf *conf) {
-	YAML::Node root, *node;
+	YAML::Node root, node;
 	try {
 		root = YAML::LoadFile(filename);
 	} catch (...) {
 		root.reset();
 	}
 
-	node = &root["config"]["last_world_id"];
-	conf->last_world_id = *node ? node->as<std::string>() : DEFAULT_LAST_WORLD_ID;
+	node = root["config"]["last_world_id"];
+	conf->last_world_id = node ? node.as<std::string>() : DEFAULT_LAST_WORLD_ID;
+
+	node = root["config"]["graphics"]["render_backend"];
+	conf->render_backend = node ? node.as<RenderBackend>() : DEFAULT_RENDER_BACKEND;
 	
-	node = &root["config"]["graphics"]["render_backend"];
-	conf->render_backend = *node ? node->as<RenderBackend>() : DEFAULT_RENDER_BACKEND;
+	node = root["config"]["graphics"]["fullscreen"];
+	conf->fullscreen = node ? node.as<bool>() : DEFAULT_FULLSCREEN;
+
+	node = root["config"]["graphics"]["windowed_res"];
+	conf->windowed_res = node ? node.as<vec2i>() : DEFAULT_WINDOWED_RES;
 	
-	node = &root["config"]["graphics"]["fullscreen"];
-	conf->fullscreen = *node ? node->as<bool>() : DEFAULT_FULLSCREEN;
-	
-	node = &root["config"]["graphics"]["windowed_res"];
-	conf->windowed_res = *node ? node->as<vec2i>() : DEFAULT_WINDOWED_RES;
-	
-	node = &root["config"]["graphics"]["fullscreen_res"];
-	conf->fullscreen_res = *node ? node->as<vec2i>() : DEFAULT_FULLSCREEN_RES;
-	
-	node = &root["config"]["graphics"]["aa"];
-	conf->aa = *node ? node->as<AntiAliasing>() : DEFAULT_ANTI_ALIASING;
-	
-	node = &root["config"]["graphics"]["fog"];
-	conf->fog = *node ? node->as<Fog>() : DEFAULT_FOG;
-	
-	node = &root["config"]["graphics"]["render_distance"];
-	conf->render_distance = *node ? node->as<uint>() : DEFAULT_RENDER_DISTANCE;
-	
-	node = &root["config"]["graphics"]["fov"];
-	conf->fov = *node ? node->as<float>() : DEFAULT_FOV;
-	
-	node = &root["config"]["graphics"]["mipmapping"];
-	conf->tex_mipmapping = *node ? node->as<uint>() : DEFAULT_TEX_MIPMAPPING;
-	
-	node = &root["config"]["graphics"]["textures"]["filtering"];
-	conf->tex_filtering = *node ? node->as<TexFiltering>() : DEFAULT_TEX_FILTERING;
-	
-	node = &root["config"]["graphics"]["textures"]["use_atlas"];
-	conf->tex_atlas = *node ? node->as<bool>() : DEFAULT_TEX_ATLAS;
-	
-	node = &root["config"]["graphics"]["textures"]["textures_file"];
-	conf->textures_file = *node ? node->as<std::string>() : DEFAULT_TEXTURES_FILE;
+	node = root["config"]["graphics"]["fullscreen_res"];
+	conf->fullscreen_res = node ? node.as<vec2i>() : DEFAULT_FULLSCREEN_RES;
+
+	node = root["config"]["graphics"]["aa"];
+	conf->aa = node ? node.as<AntiAliasing>() : DEFAULT_ANTI_ALIASING;
+
+	node = root["config"]["graphics"]["fog"];
+	conf->fog = node ? node.as<Fog>() : DEFAULT_FOG;
+
+	node = root["config"]["graphics"]["render_distance"];
+	conf->render_distance = node ? node.as<uint>() : DEFAULT_RENDER_DISTANCE;
+
+	node = root["config"]["graphics"]["fov"];
+	conf->fov = node ? node.as<float>() : DEFAULT_FOV;
+
+	node = root["config"]["graphics"]["mipmapping"];
+	conf->tex_mipmapping = node ? node.as<uint>() : DEFAULT_TEX_MIPMAPPING;
+
+	node = root["config"]["graphics"]["textures"]["filtering"];
+	conf->tex_filtering = node ? node.as<TexFiltering>() : DEFAULT_TEX_FILTERING;
+
+	node = root["config"]["graphics"]["textures"]["use_atlas"];
+	conf->tex_atlas = node ? node.as<bool>() : DEFAULT_TEX_ATLAS;
+
+	node = root["config"]["graphics"]["textures"]["textures_file"];
+	conf->textures_file = node ? node.as<std::string>() : DEFAULT_TEXTURES_FILE;
 }
