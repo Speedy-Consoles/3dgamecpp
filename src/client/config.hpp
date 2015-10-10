@@ -6,7 +6,6 @@
 #include "shared/engine/vmath.hpp"
 
 enum class RenderBackend {
-	UNSUPPORTED = -1,
 	OGL_2,
 	OGL_3,
 };

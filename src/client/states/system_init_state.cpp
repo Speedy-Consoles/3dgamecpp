@@ -20,7 +20,7 @@ void SystemInitState::onPush(State *old_top) {
 	client->stopwatch->start(CLOCK_ALL);
 
 	client->conf = std::unique_ptr<GraphicsConf>(new GraphicsConf());
-	load("graphics-default.profile", client->conf.get());
+	load("client_config.yml", client->conf.get());
 
 	client->sounds = std::unique_ptr<Sounds>(new Sounds(client));
 
@@ -41,7 +41,7 @@ void SystemInitState::onPush(State *old_top) {
 }
 
 void SystemInitState::onPop() {
-	store("graphics-default.profile", *client->conf);
+	store("client_config.yml", *client->conf);
 	State::onPop();
 }
 

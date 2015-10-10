@@ -3,7 +3,7 @@
 #include <fstream>
 #include <string>
 
-#include "yaml-cpp/yaml.h"
+#include <yaml-cpp/yaml.h>
 
 #include "client/client.hpp"
 #include "client/sounds.hpp"
