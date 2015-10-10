@@ -19,7 +19,6 @@ void MenuState::onPush(State *old_top) {
 
 void MenuState::onPop() {
 	menu->apply();
-	client->getSounds()->play("menu_close");
 	State::onPop();
 }
 
@@ -52,6 +51,7 @@ void MenuState::handle(const Event &e) {
 	case EventType::KEYBOARD_PRESSED: {
 		switch (e.event.key.keysym.scancode) {
 		case SDL_SCANCODE_ESCAPE:
+			client->getSounds()->play("menu_close");
 			client->getStateMachine()->pop();
 			break;
 		default:
