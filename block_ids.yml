@@ -14,54 +14,60 @@ blocks:
 
     sand:   4
     gravel: 5
+    
+    wood:
+        oak:     6
+        birch:  39
+        jungle: 40
+        spruce: 41
 
-    wood.oak:     6
-    wood.birch:  39
-    wood.jungle: 40
-    wood.spruce: 41
+    leaves:
+        oak:    58
+        birch:  59
+        jungle: 60
+        spruce: 61
 
-    leaves.oak:    58
-    leaves.birch:  59
-    leaves.jungle: 60
-    leaves.spruce: 61
-
-    planks.oak:     7
-    planks.birch:  42
-    planks.jungle: 43
-    planks.spruce: 44
+    planks:
+        oak:     7
+        birch:  42
+        jungle: 43
+        spruce: 44
 
     cobble:        8
     cobble.mossy:  9
     bricks:       10
 
-    ore.coal:    11
-    ore.iron:    12
-    ore.gold:    13
-    ore.diamond: 14
-    ore.lapis:   15
-    ore.emerald: 16
+    ore:
+        coal:    11
+        iron:    12
+        gold:    13
+        diamond: 14
+        lapis:   15
+        emerald: 16
 
-    wool.white:      17
-    wool.orange:     18
-    wool.magenta:    19
-    wool.azure:      20
-    wool.yellow:     21
-    wool.lime:       22
-    wool.pink:       23
-    wool.dark_gray:  24
-    wool.light_gray: 25
-    wool.cyan:       26
-    wool.purple:     27
-    wool.blue:       28
-    wool.brown:      29
-    wool.green:      30
-    wool.red:        31
-    wool.black:      32
-
-    test.orient: 33
-    test.multi4: 34
-    test.wang:   35
-    test.sides:  37
+    wool:
+        white:      17
+        orange:     18
+        magenta:    19
+        azure:      20
+        yellow:     21
+        lime:       22
+        pink:       23
+        dark_gray:  24
+        light_gray: 25
+        cyan:       26
+        purple:     27
+        blue:       28
+        brown:      29
+        green:      30
+        red:        31
+        black:      32
+    
+    test:
+        orient: 33
+        multi4: 34
+        wang:   35
+        sides:  37
 
     tnt:       47
     melon:     48
@@ -69,11 +75,12 @@ blocks:
     bedrock:   50
     sponge:    51
     sandstone: 52
-
-    block.iron:    53
-    block.gold:    54
-    block.diamond: 55
-    block.lapis:   56
-    block.emerald: 57
+    
+    block:
+        iron:    53
+        gold:    54
+        diamond: 55
+        lapis:   56
+        emerald: 57
 
     water: 62

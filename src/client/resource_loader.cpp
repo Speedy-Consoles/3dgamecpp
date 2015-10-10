@@ -2,6 +2,8 @@
 
 #include <fstream>
 #include <string>
+#include <stack>
+#include <vector>
 
 #include <yaml-cpp/yaml.h>
 
@@ -110,9 +112,40 @@ void ResourceLoader::loadBlocks(const YAML::Node &node) {
 
 	BlockLoader bl(client);
 
-	for (auto iter = node.begin(); iter != node.end(); ++iter) {
-		std::string key = iter->first.as<std::string>();
-		int value = iter->second.as<int>();
-		bl.add(key, value);
+	struct TreeTraversalState {
+		YAML::Node node;
+		YAML::Node::const_iterator iter;
+	};
+	std::stack<TreeTraversalState> stack;
+	std::vector<std::string> names;
+	std::string prefix = "";
+	stack.push(TreeTraversalState{ node, node.begin() });
+
+	while (stack.size() > 0) {
+		if (stack.top().iter != stack.top().node.end()) {
+			if (stack.empty()) break;
+			const YAML::Node &key_node = stack.top().iter->first;
+			const YAML::Node &value_node = stack.top().iter->second;
+			++stack.top().iter;
+			std::string key = key_node.as<std::string>();
+			if (value_node.IsScalar()) {
+				int value = value_node.as<int>();
+				bl.add(prefix + key, value);
+			} else if (value_node.IsMap()) {
+				stack.push(TreeTraversalState{ value_node, value_node.begin() });
+				names.push_back(key);
+				prefix = "";
+				for (auto str : names)
+					prefix += str + ".";
+			}
+		} else if (stack.size() == 1) {
+			break;
+		} else {
+			stack.pop();
+			names.pop_back();
+			prefix = "";
+			for (auto str : names)
+				prefix += str + ".";
+		}
 	}
 }
