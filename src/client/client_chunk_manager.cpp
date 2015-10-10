@@ -195,23 +195,23 @@ void ClientChunkManager::releaseChunk(vec3i64 chunkCoords) {
 }
 
 int ClientChunkManager::getNumNeededChunks() const {
-	return needCounter.size();
+	return (int)needCounter.size();
 }
 
 int ClientChunkManager::getNumAllocatedChunks() const {
-	return CHUNK_POOL_SIZE - unusedChunks.size();
+	return (int)(CHUNK_POOL_SIZE - unusedChunks.size());
 }
 
 int ClientChunkManager::getNumLoadedChunks() const {
-	return chunks.size();
+	return (int)chunks.size();
 }
 
 int ClientChunkManager::getRequiredQueueSize() const {
-	return requiredQueue.size();
+	return (int)requiredQueue.size();
 }
 
 int ClientChunkManager::getNotInCacheQueueSize() const {
-	return notInCacheQueue.size();
+	return (int)notInCacheQueue.size();
 }
 
 void ClientChunkManager::insertLoadedChunk(Chunk *chunk) {

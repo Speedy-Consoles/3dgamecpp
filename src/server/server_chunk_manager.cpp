@@ -181,23 +181,23 @@ void ServerChunkManager::releaseChunk(vec3i64 chunkCoords) {
 }
 
 int ServerChunkManager::getNumNeededChunks() const {
-	return needCounter.size();
+	return (int)needCounter.size();
 }
 
 int ServerChunkManager::getNumAllocatedChunks() const {
-	return CHUNK_POOL_SIZE - unusedChunks.size();
+	return (int)(CHUNK_POOL_SIZE - unusedChunks.size());
 }
 
 int ServerChunkManager::getNumLoadedChunks() const {
-	return chunks.size();
+	return (int)chunks.size();
 }
 
 int ServerChunkManager::getRequestedQueueSize() const {
-	return requestedQueue.size();
+	return (int)requestedQueue.size();
 }
 
 int ServerChunkManager::getNotInCacheQueueSize() const {
-	return toGenerateQueue.size();
+	return (int)toGenerateQueue.size();
 }
 
 void ServerChunkManager::insertLoadedChunk(Chunk *chunk) {

@@ -229,7 +229,7 @@ ChunkRendererDebugInfo ChunkRenderer::getDebugInfo() {
 	info.totalFaces = numFaces;
 	info.visibleChunks = visibleChunks;
 	info.visibleFaces = visibleFaces;
-	info.buildQueueSize = buildQueue.size();
+	info.buildQueueSize = (int)buildQueue.size();
 
 	return info;
 }
@@ -349,7 +349,7 @@ void ChunkRenderer::finishChunk(ChunkVisuals cv) {
 	applyChunkVisuals(cv);
 	newChunks++;
 
-	it->second.numFaces = cv.quads.size() * 2;
+	it->second.numFaces = (int)cv.quads.size() * 2;
 	it->second.revision = cv.revision;
 	const Chunk *chunk = client->getChunkManager()->getChunk(cv.cc);
 	if (!chunk) {

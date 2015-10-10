@@ -156,7 +156,7 @@ int BMFont::load(const char *fontFile) {
 	float *head = vboBuffer;
 
 	auto buildCharVBOLambda = [&] (CharDesc *desc) {
-		desc->vboOffset = (head - vboBuffer) * sizeof(float);
+		desc->vboOffset = (uint)(head - vboBuffer) * sizeof(float);
 
 		*head++ = 0.0f;
 		*head++ = 0.0f;

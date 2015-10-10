@@ -137,7 +137,7 @@ void GL3ChunkRenderer::applyChunkVisuals(ChunkVisuals chunkVisuals) {
 		}
 		auto size = sizeof(BlockVertexData) * bufferSize;
 		GL(BufferData(GL_ARRAY_BUFFER, size, blockVertexBuffer, GL_STATIC_DRAW));
-		it->second.numFaces = bufferSize / 3;
+		it->second.numFaces = (int)(bufferSize / 3);
 	} else if (it != renderInfos.end()) {
 		if (it->second.vao != 0) {
 			GL(DeleteVertexArrays(1, &it->second.vao));

@@ -18,7 +18,7 @@ public:
 
 	void add(T val, std::string desc);
 
-	void setIndex(int index);
+	void setIndex(size_t index);
 	void set(T val);
 
 	T get(int index) const;
@@ -52,7 +52,7 @@ void CycleButton<T>::add(T val, std::string desc) {
 }
 
 template <typename T>
-void CycleButton<T>::setIndex(int index) {
+void CycleButton<T>::setIndex(size_t index) {
 	_current = index;
 	text() = _entries[_current].desc;
 }

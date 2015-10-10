@@ -3,6 +3,8 @@
 
 #include <vector>
 
+#include "shared/engine/std_types.hpp"
+
 class State;
 
 class StateMachine {
@@ -17,7 +19,7 @@ public:
 	/// gets the top most state
 	State *top();
 	/// gets the number of states on the stack
-	int size();
+	size_t size();
 
 	void update();
 

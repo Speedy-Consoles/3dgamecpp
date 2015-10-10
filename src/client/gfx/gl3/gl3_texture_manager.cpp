@@ -85,7 +85,7 @@ void GL3TextureManager::add(SDL_Surface *img, const std::vector<TextureLoadEntry
 
 	int xTiles = 16;
 	int yTiles = 16;
-	GLsizei layerCount = entries.size();
+	GLsizei layerCount = (GLsizei)entries.size();
 	GLsizei mipLevelCount = 7;
 
 	GLint maxLayerCount;

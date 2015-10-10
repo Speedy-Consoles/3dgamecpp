@@ -36,7 +36,7 @@ State *StateMachine::top() {
 	return stack.back();
 }
 
-int StateMachine::size() {
+size_t StateMachine::size() {
 	return stack.size();
 }
 

@@ -138,7 +138,7 @@ int encodeBlocks_RLE(const uint8 *blocks, uint8 *buffer, size_t size) {
 			if (cur_run_length < 0x80) {
 				if ((uint) (head - buffer) + 3u <= size) {
 					*head++ = ESCAPE_CHAR;
-					*head++ = cur_run_length;
+					*head++ = cur_run_length & 0xFF;
 					*head++ = cur_run_type;
 				} else {
 					return -1;
@@ -148,7 +148,7 @@ int encodeBlocks_RLE(const uint8 *blocks, uint8 *buffer, size_t size) {
 				size_t encoded_run_length = cur_run_length - 1;
 				if ((uint) (head - buffer) + 4u <= size) {
 					*head++ = ESCAPE_CHAR;
-					*head++ = 0x80 | (encoded_run_length >> 8);
+					*head++ = (encoded_run_length >> 8) & 0xFF | 0x80;
 					*head++ = encoded_run_length & 0xFF;
 					*head++ = cur_run_type;
 				} else {
@@ -170,21 +170,21 @@ int encodeBlocks_RLE(const uint8 *blocks, uint8 *buffer, size_t size) {
 		uint8 next_block = blocks[i];
 		if (cur_run_length >= 0x8000) {
 			if (finishRun() != 0)
-				return head - buffer;
+				return (int)(head - buffer);
 			cur_run_length = 0;
 		}
 		if (cur_run_type == next_block) {
 			cur_run_length++;
 		} else {
 			if (finishRun() != 0)
-				return head - buffer;
+				return (int)(head - buffer);
 			cur_run_type = next_block;
 			cur_run_length = 1;
 		}
 	}
 
 	finishRun();
-	return head - buffer;
+	return (int)(head - buffer);
 }
 
 void decodeBlocks_PLAIN(std::istream *is, uint8 *blocks) {
