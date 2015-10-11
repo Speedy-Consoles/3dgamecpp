@@ -22,11 +22,10 @@ client_config.yml
 # linux build system
 /bin/
 /obj/
-*.bat
 
 # windows build system
 /deps/
-/package/
+/package*/
 /msvc/bin/
 /msvc/obj/
 /msvc/**/*.sdf
