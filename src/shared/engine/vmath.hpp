@@ -94,48 +94,48 @@ public:
 
 // methods
 
-template <typename T, size_t N, template <typename T> class Derived>
+template <typename T, size_t N, template <typename> class Derived>
 vec<T, N, Derived>::vec(T t) {
 	for (size_t i = 0; i < N; ++i) {
 		_t[i] = t;
 	}
 }
 
-template <typename T, size_t N, template <typename T> class Derived>
+template <typename T, size_t N, template <typename> class Derived>
 void vec<T, N, Derived>::applyPW(T(*cb)(T)) {
 	for (size_t i = 0; i < N; i++) {
 		_t[i] = cb(_t[i]);
 	}
 }
 
-template <typename T, size_t N, template <typename T> class Derived>
+template <typename T, size_t N, template <typename> class Derived>
 T & vec<T, N, Derived>::operator [] (size_t i) {
 	return _t[i];
 }
 
-template <typename T, size_t N, template <typename T> class Derived>
+template <typename T, size_t N, template <typename> class Derived>
 T vec<T, N, Derived>::operator [] (size_t i) const {
 	return _t[i];
 }
 
-template <typename T, size_t N, template <typename T> class Derived>
+template <typename T, size_t N, template <typename> class Derived>
 bool vec<T, N, Derived>::operator == (vec<T, N, Derived> const &rhs) const {
 	for (size_t i = 0; i < N; ++i)
 		if (this->_t[i] != rhs._t[i]) return false;
 	return true;
 }
 
-template <typename T, size_t N, template <typename T> class Derived>
+template <typename T, size_t N, template <typename> class Derived>
 bool vec<T, N, Derived>::operator != (vec<T, N, Derived> const &rhs) const {
 	return !this->operator==(rhs);
 }
 
-template <typename T, size_t N, template <typename T> class Derived>
+template <typename T, size_t N, template <typename> class Derived>
 Derived<T> vec<T, N, Derived>::operator + () const {
 	return *static_cast<Derived<T> *>(this);
 }
 
-template <typename T, size_t N, template <typename T> class Derived>
+template <typename T, size_t N, template <typename> class Derived>
 Derived<T> vec<T, N, Derived>::operator - () const {
 	Derived<T> result;
 	for (size_t i = 0; i < N; ++i)
@@ -143,21 +143,21 @@ Derived<T> vec<T, N, Derived>::operator - () const {
 	return result;
 }
 
-template <typename T, size_t N, template <typename T> class Derived>
+template <typename T, size_t N, template <typename> class Derived>
 Derived<T> & vec<T, N, Derived>::operator += (vec<T, N, Derived> const &rhs) {
 	for (size_t i = 0; i < N; ++i)
 		this->_t[i] += rhs._t[i];
 	return *static_cast<Derived<T> *>(this);
 }
 
-template <typename T, size_t N, template <typename T> class Derived>
+template <typename T, size_t N, template <typename> class Derived>
 Derived<T> & vec<T, N, Derived>::operator -= (vec<T, N, Derived> const &rhs) {
 	for (size_t i = 0; i < N; ++i)
 		this->_t[i] -= rhs._t[i];
 	return *static_cast<Derived<T> *>(this);
 }
 
-template <typename T, size_t N, template <typename T> class Derived>
+template <typename T, size_t N, template <typename> class Derived>
 Derived<T> vec<T, N, Derived>::operator + (vec<T, N, Derived> const &rhs) const {
 	Derived<T> result;
 	for (size_t i = 0; i < N; ++i)
@@ -165,7 +165,7 @@ Derived<T> vec<T, N, Derived>::operator + (vec<T, N, Derived> const &rhs) const 
 	return result;
 }
 
-template <typename T, size_t N, template <typename T> class Derived>
+template <typename T, size_t N, template <typename> class Derived>
 Derived<T> vec<T, N, Derived>::operator - (vec<T, N, Derived> const &rhs) const {
 	Derived<T> result;
 	for (size_t i = 0; i < N; ++i)
@@ -173,21 +173,21 @@ Derived<T> vec<T, N, Derived>::operator - (vec<T, N, Derived> const &rhs) const 
 	return result;
 }
 
-template <typename T, size_t N, template <typename T> class Derived>
+template <typename T, size_t N, template <typename> class Derived>
 Derived<T> & vec<T, N, Derived>::operator *= (T rhs) {
 	for (size_t i = 0; i < N; ++i)
 		this->_t[i] *= rhs;
 	return *static_cast<Derived<T> *>(this);
 }
 
-template <typename T, size_t N, template <typename T> class Derived>
+template <typename T, size_t N, template <typename> class Derived>
 Derived<T> & vec<T, N, Derived>::operator /= (T rhs) {
 	for (size_t i = 0; i < N; ++i)
 		this->_t[i] /= rhs;
 	return *static_cast<Derived<T> *>(this);
 }
 
-template <typename T, size_t N, template <typename T> class Derived>
+template <typename T, size_t N, template <typename> class Derived>
 Derived<T> vec<T, N, Derived>::operator * (T rhs) const {
 	Derived<T> result;
 	for (size_t i = 0; i < N; ++i)
@@ -195,7 +195,7 @@ Derived<T> vec<T, N, Derived>::operator * (T rhs) const {
 	return result;
 }
 
-template <typename T, size_t N, template <typename T> class Derived>
+template <typename T, size_t N, template <typename> class Derived>
 Derived<T> vec<T, N, Derived>::operator / (T rhs) const {
 	Derived<T> result;
 	for (size_t i = 0; i < N; ++i)
@@ -203,7 +203,7 @@ Derived<T> vec<T, N, Derived>::operator / (T rhs) const {
 	return result;
 }
 
-template <typename T, size_t N, template <typename T> class Derived>
+template <typename T, size_t N, template <typename> class Derived>
 auto vec<T, N, Derived>::operator * (vec<T, N, Derived> const &rhs) const -> dotp_t {
 	dotp_t result = 0;
 
@@ -213,17 +213,17 @@ auto vec<T, N, Derived>::operator * (vec<T, N, Derived> const &rhs) const -> dot
 	return result;
 }
 
-template <typename T, size_t N, template <typename T> class Derived>
+template <typename T, size_t N, template <typename> class Derived>
 auto vec<T, N, Derived>::norm2() const -> dotp_t {
 	return this->operator*(*this);
 }
 
-template <typename T, size_t N, template <typename T> class Derived>
+template <typename T, size_t N, template <typename> class Derived>
 double vec<T, N, Derived>::norm() const {
 	return sqrt(norm2());
 }
 
-template <typename T, size_t N, template <typename T> class Derived>
+template <typename T, size_t N, template <typename> class Derived>
 T vec<T, N, Derived>::maxAbs() const {
 	auto result = std::abs(_t[0]);
 	for (size_t i = 1; i < N; i++) {
@@ -232,7 +232,7 @@ T vec<T, N, Derived>::maxAbs() const {
 	return result;
 }
 
-template <typename T, size_t N, template <typename T> class Derived>
+template <typename T, size_t N, template <typename> class Derived>
 template <typename S>
 Derived<S> vec<T, N, Derived>::cast() const {
 	Derived<S> result;
