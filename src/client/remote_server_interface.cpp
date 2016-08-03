@@ -124,6 +124,8 @@ void RemoteServerInterface::tick() {
 
 	// send chunk requests
 	int numRequestedChunks = 0;
+	ChunkRequest msg;
+	int msgChunks = 0;
 	while (!toRequestQueue.empty() && numRequestedChunks < MAX_CHUNK_REQUESTS_PER_TICK) {
 		RequestedChunk rc = toRequestQueue.front();
 		vec3i64 coords = rc.chunk->getCC();
@@ -136,20 +138,28 @@ void RemoteServerInterface::tick() {
 				break;
 			}
 		}
-		if (!smallEnough) {
-			ChunkAnchorSet msg;
-			msg.coords = coords;
+		if ((!smallEnough && msgChunks > 0) || msgChunks >= MAX_CHUNKS_PER_REQUEST) {
+			msg.numChunks = msgChunks;
 			send(msg, CHANNEL_BLOCK_DATA, true);
+			msgChunks = 0;
+		}
+		if (!smallEnough) {
+			ChunkAnchorSet anchorset;
+			anchorset.coords = coords;
+			send(anchorset, CHANNEL_BLOCK_DATA, true);
 			chunkAnchor = coords;
 		}
-		ChunkRequest msg;
-		msg.relCoords = coords - chunkAnchor;
-		msg.cached = rc.cached;
-		msg.cachedRevision = rc.cachedRevision;
-		send(msg, CHANNEL_BLOCK_DATA, true);
+		msg.chunkRequestData[msgChunks].relCoords = coords - chunkAnchor;
+		msg.chunkRequestData[msgChunks].cached = rc.cached;
+		msg.chunkRequestData[msgChunks].cachedRevision = rc.cachedRevision;
+		msgChunks++;
 		requestedChunks.insert({rc.chunk->getCC(), rc});
 		toRequestQueue.pop();
 		numRequestedChunks++;
+	}
+	if (msgChunks > 0) {
+		msg.numChunks = msgChunks;
+		send(msg, CHANNEL_BLOCK_DATA, true);
 	}
 
 	// send input

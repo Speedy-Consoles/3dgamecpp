@@ -97,10 +97,16 @@ struct PlayerInput {
 	bool flying;
 };
 
-struct ChunkRequest {
+struct ChunkRequestData {
 	vec3i64 relCoords;
 	bool cached;
 	uint32 cachedRevision;
+};
+
+const size_t MAX_CHUNKS_PER_REQUEST = 256;
+struct ChunkRequest {
+	uint numChunks;
+	ChunkRequestData chunkRequestData[MAX_CHUNKS_PER_REQUEST];
 };
 
 struct ChunkAnchorSet {

@@ -196,13 +196,18 @@ PLAIN_MSG_END
 
 // CHUNK_REQUEST
 size_t getMessageSize(const ChunkRequest &msg) {
-	if (!msg.cached || !(msg.cachedRevision >> 3))
-		return HEADER_SIZE + 2;
-	size_t size = HEADER_SIZE + 3;
-	for (int shift = 8; shift < 32; shift += 8) {
-		if (msg.cachedRevision >> shift)
-			break;
-		size++;
+	size_t size = HEADER_SIZE + 1;
+	for (uint i = 0; i < msg.numChunks; i++) {
+		size += 2;
+		const ChunkRequestData &crd = msg.chunkRequestData[i];
+		if (crd.cached && (crd.cachedRevision >> 3)) {
+			size++;
+			for (int shift = 8; shift < 32; shift += 8) {
+				if (crd.cachedRevision >> shift)
+					break;
+				size++;
+			}
+		}
 	}
 	return size;
 }
@@ -213,28 +218,38 @@ BufferError writeMessage(const ChunkRequest &msg, char *data, size_t size) {
 	writeHeader(CHUNK_REQUEST, data);
 	data += HEADER_SIZE;
 	size -= HEADER_SIZE;
-	uint8 byte = msg.relCoords[0] & 0xF;
-	byte |= (msg.relCoords[1] & 0xF) << 4;
-	WRITE_TYPE(byte, uint8)
-	byte = msg.relCoords[2] & 0xF;
-	if (msg.cached) {
-		if (size == 1) {
-			byte |= msg.cachedRevision << 5;
-			WRITE_TYPE(byte, uint8)
-		} else {
-			byte |= 0x10;
-			byte |= (size - 1) << 5;
-			WRITE_TYPE(byte, uint8)
-			int shift = 0;
-			while (size > 0) {
-				byte = (msg.cachedRevision >> shift) & 0xFF;
-				WRITE_TYPE(byte, uint8)
-				shift += 8;
-			}
-		}
-	} else {
-		byte |= 0xF0;
+	WRITE_TYPE(msg.numChunks - 1, uint8)
+	for(uint i = 0; i < msg.numChunks; i++) {
+		const ChunkRequestData &crd = msg.chunkRequestData[i];
+		const vec3i64 &rc = crd.relCoords;
+		uint32 rev = crd.cachedRevision;
+		bool cached = crd.cached;
+
+		uint8 byte = rc[0] & 0xF;
+		byte |= (rc[1] & 0xF) << 4;
 		WRITE_TYPE(byte, uint8)
+		byte = rc[2] & 0xF;
+		if (cached) {
+			if (!(rev >> 3)) {
+				byte |= rev << 5;
+				WRITE_TYPE(byte, uint8)
+			} else {
+				byte |= 0x10;
+				char *infoByte = data;
+				uint8 bytes = 0;
+				uint32 shifted = rev;
+				while(shifted) {
+					WRITE_TYPE(rev & 0xFF, uint8)
+					shifted = shifted >> 8;
+					bytes++;
+				}
+				byte |= (bytes - 1) << 5;
+				*reinterpret_cast<uint8 *>(infoByte) = byte;
+			}
+		} else {
+			byte |= 0xF0;
+			WRITE_TYPE(byte, uint8)
+		}
 	}
 	return BUFFER_OK;
 }
@@ -243,32 +258,43 @@ MessageError readMessageBody(const char *data, size_t size, ChunkRequest *msg) {
 		return ABRUPT_MESSAGE_END;
 	data += HEADER_SIZE;
 	size -= HEADER_SIZE;
-	uint8 byte;
-	READ_TYPE(byte, uint8)
-	msg->relCoords[0] = extendFourBit(byte);
-	msg->relCoords[1] = extendFourBit(byte >> 4);
-	READ_TYPE(byte, uint8)
-	msg->relCoords[2] = extendFourBit(byte);
-	uint8 revInfo = byte >> 4;
-	if ((revInfo & 0xF) == 0xF)
-		msg->cached = false;
-	else if (!(revInfo & 1)) {
-		msg->cached = true;
-		msg->cachedRevision = revInfo >> 1;
-	} else {
-		msg->cached = true;
-		msg->cachedRevision = 0;
-		size_t numBytes = revInfo >> 1;
-		if (numBytes > 4) return MALFORMED_MESSAGE;
-		if (size < numBytes) return ABRUPT_MESSAGE_END;
-		if (size > numBytes) return MESSAGE_TOO_LONG;
-		int shift = 0;
-		while (size > 0) {
-			READ_TYPE(byte, uint8)
-			msg->cachedRevision |= ((uint32) byte) << shift;
-			shift += 8;
+	int numChunksMinusOne;
+	READ_TYPE(numChunksMinusOne, uint8)
+	msg->numChunks = numChunksMinusOne + 1;
+	for (uint i = 0; i < msg->numChunks; i++) {
+		ChunkRequestData &crd = msg->chunkRequestData[i];
+		vec3i64 &rc = crd.relCoords;
+		uint32 &rev = crd.cachedRevision;
+		bool &cached = crd.cached;
+
+		uint8 byte;
+		READ_TYPE(byte, uint8)
+		rc[0] = extendFourBit(byte);
+		rc[1] = extendFourBit(byte >> 4);
+		READ_TYPE(byte, uint8)
+		rc[2] = extendFourBit(byte);
+		uint8 revInfo = byte >> 4;
+		if ((revInfo & 0xF) == 0xF)
+			cached = false;
+		else if (!(revInfo & 1)) {
+			cached = true;
+			rev = revInfo >> 1;
+		} else {
+			cached = true;
+			rev = 0;
+			size_t numBytes = revInfo >> 1;
+			if (numBytes > 4) return MALFORMED_MESSAGE;
+			if (size < numBytes) return ABRUPT_MESSAGE_END;
+			int shift = 0;
+			for (int j = 0; j < numBytes; j++) {
+				READ_TYPE(byte, uint8)
+				rev |= ((uint32) byte) << shift;
+				shift += 8;
+			}
 		}
 	}
+	if (size)
+		return MESSAGE_TOO_LONG;
 
 	return MESSAGE_OK;
 }

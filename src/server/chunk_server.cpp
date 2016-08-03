@@ -55,14 +55,17 @@ void ChunkServer::onClientLeave(int id) {
 void ChunkServer::onChunkRequest(ChunkRequest request, int clientId) {
 	// TODO check for revision first
 	// TODO request compressed blocks instead of whole chunk
-	vec3i64 coords = request.relCoords + anchors[clientId];
-	chunkManager->requireChunk(coords);
-	requestedQueue.push(TaggedChunkRequest{
-			clientId,
-			coords,
-			request.cached,
-			request.cachedRevision,
-	});
+	for (uint i = 0; i < request.numChunks; i++) {
+		ChunkRequestData &crd = request.chunkRequestData[i];
+		vec3i64 coords = crd.relCoords + anchors[clientId];
+		chunkManager->requireChunk(coords);
+		requestedQueue.push(TaggedChunkRequest{
+				clientId,
+				coords,
+				crd.cached,
+				crd.cachedRevision,
+		});
+	}
 }
 
 void ChunkServer::onAnchorSet(ChunkAnchorSet anchorSet, int clientId) {
