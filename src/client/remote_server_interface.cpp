@@ -126,8 +126,24 @@ void RemoteServerInterface::tick() {
 	int numRequestedChunks = 0;
 	while (!toRequestQueue.empty() && numRequestedChunks < MAX_CHUNK_REQUESTS_PER_TICK) {
 		RequestedChunk rc = toRequestQueue.front();
+		vec3i64 coords = rc.chunk->getCC();
+		vec3i64 anchorDiff = coords - chunkAnchor;
+		bool smallEnough = true;
+		int64 limit = 1 << 3;
+		for (int i = 0; i < 3; i++) {
+			if (anchorDiff[i] >= limit or anchorDiff[i] < -limit) {
+				smallEnough = false;
+				break;
+			}
+		}
+		if (!smallEnough) {
+			ChunkAnchorSet msg;
+			msg.coords = coords;
+			send(msg, CHANNEL_BLOCK_DATA, true);
+			chunkAnchor = coords;
+		}
 		ChunkRequest msg;
-		msg.coords = rc.chunk->getCC();
+		msg.relCoords = coords - chunkAnchor;
 		msg.cached = rc.cached;
 		msg.cachedRevision = rc.cachedRevision;
 		send(msg, CHANNEL_BLOCK_DATA, true);

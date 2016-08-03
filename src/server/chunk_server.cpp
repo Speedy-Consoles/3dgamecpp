@@ -7,6 +7,8 @@ static logging::Logger logger("cserver");
 ChunkServer::ChunkServer(Server *server) : server(server) {
 	LOG_INFO(logger) << "Creating chunk server";
 	chunkManager = server->getChunkManager();
+	for (int i = 0; i < MAX_CLIENTS; i++)
+		anchors[i] = vec3i64(0, 0, 0);
 }
 
 ChunkServer::~ChunkServer() {
@@ -16,14 +18,14 @@ ChunkServer::~ChunkServer() {
 void ChunkServer::tick() {
 	while(!requestedQueue.empty()) {
 		TaggedChunkRequest tcr = requestedQueue.front();
-		const Chunk *chunk = chunkManager->getChunk(tcr.request.coords);
+		const Chunk *chunk = chunkManager->getChunk(tcr.coords);
 		if (!chunk)
 			break;
 		requestedQueue.pop();
 		ChunkMessage message;
-		message.chunkCoords = tcr.request.coords;
+		message.chunkCoords = tcr.coords;
 		message.revision = chunk->getRevision();
-		if (!tcr.request.cached || chunk->getRevision() != tcr.request.cachedRevision) {
+		if (!tcr.cached || chunk->getRevision() != tcr.cachedRevision) {
 			// TODO allocation should happen in chunk manager
 			message.encodedBlocks = new uint8[Chunk::SIZE];
 			message.encodedLength = encodeBlocks_RLE(chunk->getBlocks(), message.encodedBlocks, Chunk::SIZE);
@@ -34,7 +36,7 @@ void ChunkServer::tick() {
 			message.encodedLength = 0;
 			server->send(message, tcr.clientId, CHANNEL_BLOCK_DATA, true);
 		}
-		chunkManager->releaseChunk(tcr.request.coords);
+		chunkManager->releaseChunk(tcr.coords);
 	}
 }
 
@@ -51,6 +53,16 @@ void ChunkServer::onClientLeave(int id) {
 void ChunkServer::onChunkRequest(ChunkRequest request, int clientId) {
 	// TODO check for revision first
 	// TODO request compressed blocks instead of whole chunk
-	chunkManager->requireChunk(request.coords);
-	requestedQueue.push(TaggedChunkRequest{clientId, request});
+	vec3i64 coords = request.relCoords + anchors[clientId];
+	chunkManager->requireChunk(coords);
+	requestedQueue.push(TaggedChunkRequest{
+			clientId,
+			coords,
+			request.cached,
+			request.cachedRevision,
+	});
+}
+
+void ChunkServer::onAnchorSet(ChunkAnchorSet anchorSet, int clientId) {
+	anchors[clientId] = anchorSet.coords;
 }

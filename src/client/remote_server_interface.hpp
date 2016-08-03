@@ -17,13 +17,15 @@
 
 class RemoteServerInterface : public ServerInterface {
 private:
-	static const int MAX_CHUNK_REQUESTS_PER_TICK = 10;
+	static const int MAX_CHUNK_REQUESTS_PER_TICK = 100;
 
 	struct RequestedChunk {
 		Chunk *chunk;
 		bool cached;
 		uint32 cachedRevision;
 	};
+
+	vec3i64 chunkAnchor = vec3i64(0, 0, 0);
 
 	uint8 localCharacterId = -1;
 	Client *client = nullptr;

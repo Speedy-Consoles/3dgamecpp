@@ -10,8 +10,6 @@
 #include "engine/vmath.hpp"
 #include "engine/std_types.hpp"
 
-static const uint8 MAGIC[4] = {0xaa, 0x0d, 0xbe, 0x15};
-
 enum ChannelNames {
 	CHANNEL_STATE = 0,
 	CHANNEL_BLOCK_DATA,
@@ -30,7 +28,7 @@ enum MessageError : uint8 {
 	MESSAGE_OK = 0,
 	ABRUPT_MESSAGE_END,
 	MESSAGE_TOO_LONG,
-	WRONG_MAGIC,
+	MALFORMED_MESSAGE,
 };
 
 enum BufferError : uint8 {
@@ -51,6 +49,9 @@ enum MessageType : uint8 {
 	PLAYER_INFO,
 	PLAYER_INPUT,
 	CHUNK_REQUEST,
+
+	// Client/Server
+	CHUNK_ANCHOR_SET,
 };
 
 struct PlayerJoinEvent {
@@ -97,9 +98,13 @@ struct PlayerInput {
 };
 
 struct ChunkRequest {
-	vec3i64 coords;
+	vec3i64 relCoords;
 	bool cached;
 	uint32 cachedRevision;
+};
+
+struct ChunkAnchorSet {
+	vec3i64 coords;
 };
 
 MessageError readMessageHeader(const char *data, size_t size, MessageType *type);
@@ -116,5 +121,6 @@ MSG_FUNCS(PlayerInfo)
 MSG_FUNCS(PlayerInput)
 MSG_FUNCS(ChunkRequest)
 MSG_FUNCS(ChunkMessage)
+MSG_FUNCS(ChunkAnchorSet)
 
 #endif // NET_HPP

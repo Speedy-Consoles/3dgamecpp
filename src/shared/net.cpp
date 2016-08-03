@@ -6,20 +6,24 @@
 
 static logging::Logger logger("net");
 
-static const size_t HEADER_SIZE = sizeof(MAGIC) + sizeof(MessageType);
+static const size_t HEADER_SIZE = sizeof(MessageType);
+
+static int8 extendFourBit(uint8 src) {
+	int8 sign = (src & 0x8) >> 3;
+	int8 value = (src & 0x7);
+	if (sign)
+		value = -8 + value;
+	return value;
+}
 
 static void writeHeader(MessageType type, char *data) {
-	memcpy(data, MAGIC, sizeof(MAGIC));
-	data += sizeof(MAGIC);
 	*reinterpret_cast<MessageType *>(data) = type;
 }
 
 MessageError readMessageHeader(const char *data, size_t size, MessageType *type) {
-	if (size < sizeof(MAGIC) + sizeof(MessageType))
+	if (size < sizeof(MessageType))
 		return ABRUPT_MESSAGE_END;
-	else if (memcmp(data, MAGIC, sizeof(MAGIC)) != 0)
-		return WRONG_MAGIC;
-	*type = *reinterpret_cast<const MessageType *>(data + sizeof(MAGIC));
+	*type = *reinterpret_cast<const MessageType *>(data);
 	return MESSAGE_OK;
 }
 
@@ -191,28 +195,83 @@ PLAIN_MSG_MIDDLE(PlayerInput, PLAYER_INPUT_SIZE)
 PLAIN_MSG_END
 
 // CHUNK_REQUEST
-static const size_t CHUNK_REQUEST_SIZE =
-		3 * sizeof(int64)
-		+ sizeof(uint32);
-PLAIN_MSG_START(ChunkRequest, CHUNK_REQUEST, CHUNK_REQUEST_SIZE)
-	for (int i = 0; i < 3; i++)
-		WRITE_TYPE(msg.coords[i], int64)
-	if (msg.cached)
-		WRITE_TYPE(msg.cachedRevision, uint32)
-	else
-		WRITE_TYPE((uint32) -1, uint32)
-PLAIN_MSG_MIDDLE(ChunkRequest, CHUNK_REQUEST_SIZE)
-	for (int i = 0; i < 3; i++)
-		READ_TYPE(msg->coords[i], int64)
-	uint32 rev;
-	READ_TYPE(rev, uint32)
-	if (rev != (uint32) -1) {
-		msg->cached = true;
-		msg->cachedRevision = rev;
-	} else {
-		msg->cached = false;
+size_t getMessageSize(const ChunkRequest &msg) {
+	if (!msg.cached || !(msg.cachedRevision >> 3))
+		return HEADER_SIZE + 2;
+	size_t size = HEADER_SIZE + 3;
+	for (int shift = 8; shift < 32; shift += 8) {
+		if (msg.cachedRevision >> shift)
+			break;
+		size++;
 	}
-PLAIN_MSG_END
+	return size;
+}
+MessageType getMessageType(const ChunkRequest &) { return CHUNK_REQUEST; }
+BufferError writeMessage(const ChunkRequest &msg, char *data, size_t size) {
+	if (size != getMessageSize(msg))
+		return WRONG_BUFFER_LENGTH;
+	writeHeader(CHUNK_REQUEST, data);
+	data += HEADER_SIZE;
+	size -= HEADER_SIZE;
+	uint8 byte = msg.relCoords[0] & 0xF;
+	byte |= (msg.relCoords[1] & 0xF) << 4;
+	WRITE_TYPE(byte, uint8)
+	byte = msg.relCoords[2] & 0xF;
+	if (msg.cached) {
+		if (size == 1) {
+			byte |= msg.cachedRevision << 5;
+			WRITE_TYPE(byte, uint8)
+		} else {
+			byte |= 0x10;
+			byte |= (size - 1) << 5;
+			WRITE_TYPE(byte, uint8)
+			int shift = 0;
+			while (size > 0) {
+				byte = (msg.cachedRevision >> shift) & 0xFF;
+				WRITE_TYPE(byte, uint8)
+				shift += 8;
+			}
+		}
+	} else {
+		byte |= 0xF0;
+		WRITE_TYPE(byte, uint8)
+	}
+	return BUFFER_OK;
+}
+MessageError readMessageBody(const char *data, size_t size, ChunkRequest *msg) {
+	if (size < HEADER_SIZE + 2)
+		return ABRUPT_MESSAGE_END;
+	data += HEADER_SIZE;
+	size -= HEADER_SIZE;
+	uint8 byte;
+	READ_TYPE(byte, uint8)
+	msg->relCoords[0] = extendFourBit(byte);
+	msg->relCoords[1] = extendFourBit(byte >> 4);
+	READ_TYPE(byte, uint8)
+	msg->relCoords[2] = extendFourBit(byte);
+	uint8 revInfo = byte >> 4;
+	if ((revInfo & 0xF) == 0xF)
+		msg->cached = false;
+	else if (!(revInfo & 1)) {
+		msg->cached = true;
+		msg->cachedRevision = revInfo >> 1;
+	} else {
+		msg->cached = true;
+		msg->cachedRevision = 0;
+		size_t numBytes = revInfo >> 1;
+		if (numBytes > 4) return MALFORMED_MESSAGE;
+		if (size < numBytes) return ABRUPT_MESSAGE_END;
+		if (size > numBytes) return MESSAGE_TOO_LONG;
+		int shift = 0;
+		while (size > 0) {
+			READ_TYPE(byte, uint8)
+			msg->cachedRevision |= ((uint32) byte) << shift;
+			shift += 8;
+		}
+	}
+
+	return MESSAGE_OK;
+}
 
 // CHUNK_MESSAGE
 static const size_t CHUNK_MESSAGE_META_SIZE =
@@ -254,3 +313,15 @@ MessageError readMessageBody(const char *data, size_t size, ChunkMessage *msg) {
 	size -= msg->encodedLength;
 	return MESSAGE_OK;
 }
+
+// CHUNK_ANCHOR_SET
+static const size_t CHUNK_ANCHOR_SET_SIZE = sizeof(int64) * 3;
+PLAIN_MSG_START(ChunkAnchorSet, CHUNK_ANCHOR_SET, CHUNK_ANCHOR_SET_SIZE)
+	WRITE_TYPE(msg.coords[0], int64)
+	WRITE_TYPE(msg.coords[1], int64)
+	WRITE_TYPE(msg.coords[2], int64)
+PLAIN_MSG_MIDDLE(ChunkAnchorSet, CHUNK_ANCHOR_SET_SIZE)
+	READ_TYPE(msg->coords[0], int64)
+	READ_TYPE(msg->coords[1], int64)
+	READ_TYPE(msg->coords[2], int64)
+PLAIN_MSG_END

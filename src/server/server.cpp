@@ -271,6 +271,16 @@ void Server::handlePacket(const enet_uint8 *data, size_t size, size_t channel, E
 				chunkServer->onChunkRequest(request, id);
 			}
 			break;
+		case CHUNK_ANCHOR_SET:
+			{
+				ChunkAnchorSet anchorSet;
+				if (readMessageBody((const char *) data, size, &anchorSet)) {
+					LOG_WARNING(logger) << "Received malformed message";
+					break;
+				}
+				chunkServer->onAnchorSet(anchorSet, id);
+			}
+			break;
 		default:
 			LOG_WARNING(logger) << "Received message of unknown type " << type;
 			break;

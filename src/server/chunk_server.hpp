@@ -5,7 +5,9 @@
 
 struct TaggedChunkRequest {
 	int clientId;
-	ChunkRequest request;
+	vec3i64 coords;
+	bool cached;
+	uint32 cachedRevision;
 };
 
 class ChunkServer {
@@ -14,6 +16,7 @@ private:
 	ServerChunkManager *chunkManager;
 
 	std::queue<TaggedChunkRequest> requestedQueue;
+	vec3i64 anchors[MAX_CLIENTS];
 
 public:
 	ChunkServer(Server *server);
@@ -23,6 +26,7 @@ public:
 
 	void onClientLeave(int id);
 	void onChunkRequest(ChunkRequest request, int clientId);
+	void onAnchorSet(ChunkAnchorSet anchorSet, int clientId);
 };
 
 #endif // CHUNK_SERVER_HPP
