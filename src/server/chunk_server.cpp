@@ -41,6 +41,7 @@ void ChunkServer::tick() {
 }
 
 void ChunkServer::onClientLeave(int id) {
+	anchors[id] = vec3i64(0, 0, 0);
 	std::queue<TaggedChunkRequest> newQueue;
 	while(!requestedQueue.empty()) {
 		TaggedChunkRequest tcr = requestedQueue.front();
@@ -48,6 +49,7 @@ void ChunkServer::onClientLeave(int id) {
 			newQueue.push(tcr);
 		requestedQueue.pop();
 	}
+	requestedQueue = newQueue;
 }
 
 void ChunkServer::onChunkRequest(ChunkRequest request, int clientId) {
