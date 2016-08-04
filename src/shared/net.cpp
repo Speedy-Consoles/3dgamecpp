@@ -254,7 +254,7 @@ BufferError writeMessage(const ChunkRequest &msg, char *data, size_t size) {
 	return BUFFER_OK;
 }
 MessageError readMessageBody(const char *data, size_t size, ChunkRequest *msg) {
-	if (size < HEADER_SIZE + 2)
+	if (size < HEADER_SIZE + 1)
 		return ABRUPT_MESSAGE_END;
 	data += HEADER_SIZE;
 	size -= HEADER_SIZE;
@@ -267,6 +267,8 @@ MessageError readMessageBody(const char *data, size_t size, ChunkRequest *msg) {
 		uint32 &rev = crd.cachedRevision;
 		bool &cached = crd.cached;
 
+		if (size < 2)
+			return ABRUPT_MESSAGE_END;
 		uint8 byte;
 		READ_TYPE(byte, uint8)
 		rc[0] = extendFourBit(byte);
@@ -293,19 +295,28 @@ MessageError readMessageBody(const char *data, size_t size, ChunkRequest *msg) {
 			}
 		}
 	}
-	if (size)
+	if (size > 0)
 		return MESSAGE_TOO_LONG;
 
 	return MESSAGE_OK;
 }
 
 // CHUNK_MESSAGE
-static const size_t CHUNK_MESSAGE_META_SIZE =
-		sizeof(int64) * 3
-		+ sizeof(uint32)
-		+ sizeof(uint16);
 size_t getMessageSize(const ChunkMessage &msg) {
-	return HEADER_SIZE + CHUNK_MESSAGE_META_SIZE + msg.encodedLength;
+	size_t size = HEADER_SIZE + 1;
+	for (uint i = 0; i < msg.numChunks; i++) {
+		const ChunkMessageData &cmd = msg.chunkMessageData[i];
+		size += 4 + cmd.encodedLength;
+		if (cmd.revision >> 3) {
+			size++;
+			for (int shift = 8; shift < 32; shift += 8) {
+				if (cmd.revision >> shift)
+					break;
+				size++;
+			}
+		}
+	}
+	return size;
 }
 MessageType getMessageType(const ChunkMessage &) { return CHUNK_MESSAGE; }
 BufferError writeMessage(const ChunkMessage &msg, char *data, size_t size) {
@@ -314,29 +325,92 @@ BufferError writeMessage(const ChunkMessage &msg, char *data, size_t size) {
 	writeHeader(CHUNK_MESSAGE, data);
 	data += HEADER_SIZE;
 	size -= HEADER_SIZE;
-	for (int i = 0; i < 3; i++)
-		WRITE_TYPE(msg.chunkCoords[i], int64)
-	WRITE_TYPE(msg.revision, uint32)
-	WRITE_TYPE(msg.encodedLength, uint16)
-	memcpy(data, msg.encodedBlocks, msg.encodedLength);
-	data += msg.encodedLength;
-	size -= msg.encodedLength;
+	uint8 *eb = msg.encodedBuffer;
+	WRITE_TYPE(msg.numChunks - 1, uint8)
+	for(uint i = 0; i < msg.numChunks; i++) {
+		const ChunkMessageData &cmd = msg.chunkMessageData[i];
+		const vec3i64 &rc = cmd.relCoords;
+		uint32 rev = cmd.revision;
+		size_t el = cmd.encodedLength;
+
+		uint8 byte = rc[0] & 0xF;
+		byte |= (rc[1] & 0xF) << 4;
+		WRITE_TYPE(byte, uint8)
+		byte = rc[2] & 0xF;
+		if (!(rev >> 3)) {
+			byte |= rev << 5;
+			WRITE_TYPE(byte, uint8)
+		} else {
+			byte |= 0x10;
+			char *infoByte = data;
+			uint8 bytes = 0;
+			uint32 shifted = rev;
+			while(shifted) {
+				WRITE_TYPE(rev & 0xFF, uint8)
+				shifted = shifted >> 8;
+				bytes++;
+			}
+			byte |= (bytes - 1) << 5;
+			*reinterpret_cast<uint8 *>(infoByte) = byte;
+		}
+		WRITE_TYPE(el, uint16)
+		memcpy(data, eb, el);
+		eb += el;
+		data += el;
+		size -= el;
+	}
 	return BUFFER_OK;
 }
 MessageError readMessageBody(const char *data, size_t size, ChunkMessage *msg) {
-	if (size < HEADER_SIZE + CHUNK_MESSAGE_META_SIZE)
+	if (size < HEADER_SIZE + 1)
 		return ABRUPT_MESSAGE_END;
 	data += HEADER_SIZE;
 	size -= HEADER_SIZE;
-	for (int i = 0; i < 3; i++)
-		READ_TYPE(msg->chunkCoords[i], int64)
-	READ_TYPE(msg->revision, uint32)
-	READ_TYPE(msg->encodedLength, uint16)
-	if (size < msg->encodedLength)
-		return ABRUPT_MESSAGE_END;
-	memcpy(msg->encodedBlocks, data, msg->encodedLength);
-	data += msg->encodedLength;
-	size -= msg->encodedLength;
+	uint8 *eb = msg->encodedBuffer;
+	int numChunksMinusOne;
+	READ_TYPE(numChunksMinusOne, uint8)
+	msg->numChunks = numChunksMinusOne + 1;
+	for (uint i = 0; i < msg->numChunks; i++) {
+		ChunkMessageData &cmd = msg->chunkMessageData[i];
+		vec3i64 &rc = cmd.relCoords;
+		uint32 &rev = cmd.revision;
+		size_t &el = cmd.encodedLength;
+
+		if (size < 2)
+			return ABRUPT_MESSAGE_END;
+		uint8 byte;
+		READ_TYPE(byte, uint8)
+		rc[0] = extendFourBit(byte);
+		rc[1] = extendFourBit(byte >> 4);
+		READ_TYPE(byte, uint8)
+		rc[2] = extendFourBit(byte);
+		uint8 revInfo = byte >> 4;
+		if (!(revInfo & 1)) {
+			rev = revInfo >> 1;
+		} else {
+			rev = 0;
+			size_t numBytes = revInfo >> 1;
+			if (numBytes > 4) return MALFORMED_MESSAGE;
+			if (size < numBytes) return ABRUPT_MESSAGE_END;
+			int shift = 0;
+			for (uint j = 0; j < numBytes; j++) {
+				READ_TYPE(byte, uint8)
+				rev |= ((uint32) byte) << shift;
+				shift += 8;
+			}
+		}
+		if (size < 2)
+			return ABRUPT_MESSAGE_END;
+		READ_TYPE(el, uint16)
+		if (size < el)
+			return ABRUPT_MESSAGE_END;
+		memcpy(eb, data, el);
+		eb += el;
+		data += el;
+		size -= el;
+	}
+	if (size > 0)
+		return MESSAGE_TOO_LONG;
 	return MESSAGE_OK;
 }
 

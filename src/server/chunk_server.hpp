@@ -1,10 +1,11 @@
 #ifndef CHUNK_SERVER_HPP
 #define CHUNK_SERVER_HPP
 
+#include <deque>
+
 #include "server.hpp"
 
-struct TaggedChunkRequest {
-	int clientId;
+struct SingleChunkRequest {
 	vec3i64 coords;
 	bool cached;
 	uint32 cachedRevision;
@@ -15,8 +16,11 @@ private:
 	Server *server;
 	ServerChunkManager *chunkManager;
 
-	std::queue<TaggedChunkRequest> requestedQueue;
-	vec3i64 anchors[MAX_CLIENTS];
+	std::deque<SingleChunkRequest> requestedQueue[MAX_CLIENTS];
+	vec3i64 requestAnchors[MAX_CLIENTS];
+	vec3i64 messageAnchors[MAX_CLIENTS];
+
+	std::unique_ptr<uint8> encodedBuffer; // TODO make this obsolete
 
 public:
 	ChunkServer(Server *server);

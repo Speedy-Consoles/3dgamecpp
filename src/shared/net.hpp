@@ -79,11 +79,17 @@ struct Snapshot {
 	int localId;
 };
 
-struct ChunkMessage {
-	vec3i64 chunkCoords;
+struct ChunkMessageData {
+	vec3i64 relCoords;
 	uint32 revision;
 	size_t encodedLength;
-	uint8 *encodedBlocks;
+};
+
+const size_t MAX_CHUNKS_PER_MESSAGE = 256;
+struct ChunkMessage {
+	uint numChunks;
+	ChunkMessageData chunkMessageData[MAX_CHUNKS_PER_MESSAGE];
+	uint8 *encodedBuffer;
 };
 
 struct PlayerInfo {

@@ -25,7 +25,8 @@ private:
 		uint32 cachedRevision;
 	};
 
-	vec3i64 chunkAnchor = vec3i64(0, 0, 0);
+	vec3i64 chunkRequestAnchor = vec3i64(0, 0, 0);
+	vec3i64 chunkMessageAnchor = vec3i64(0, 0, 0);
 
 	uint8 localCharacterId = -1;
 	Client *client = nullptr;
@@ -39,7 +40,7 @@ private:
 
 	Status status = NOT_CONNECTED;
 
-	std::unique_ptr<uint8> encodedBuffer;
+	std::unique_ptr<uint8> encodedBuffer; // TODO make this obsolete
 
 	ENetHost *host = nullptr;
 	ENetPeer *peer = nullptr;
@@ -79,6 +80,8 @@ private:
 	void updateNetDisconnecting();
 
 	void handlePacket(const enet_uint8 *data, size_t size, size_t channel);
+
+	void reset();
 
 	// TODO think about channels
 	// maybe chat and events in different channels

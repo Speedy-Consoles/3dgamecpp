@@ -18,7 +18,7 @@ RemoteServerInterface::RemoteServerInterface(Client *client, std::string address
 		requestedChunks(0, vec3i64HashFunc),
 		worldGenerator(new WorldGenerator(42, WorldParams())),
 		asyncWorldGenerator(worldGenerator.get()),
-		encodedBuffer(new uint8[Chunk::SIZE])
+		encodedBuffer(new uint8[Chunk::SIZE * MAX_CHUNKS_PER_MESSAGE])
 {
 	if (enet_initialize() != 0) {
 		LOG_FATAL(logger) << "An error occurred while initializing ENet.";
@@ -125,11 +125,11 @@ void RemoteServerInterface::tick() {
 	// send chunk requests
 	int numRequestedChunks = 0;
 	ChunkRequest msg;
-	int msgChunks = 0;
+	uint msgChunks = 0;
 	while (!toRequestQueue.empty() && numRequestedChunks < MAX_CHUNK_REQUESTS_PER_TICK) {
 		RequestedChunk rc = toRequestQueue.front();
 		vec3i64 coords = rc.chunk->getCC();
-		vec3i64 anchorDiff = coords - chunkAnchor;
+		vec3i64 anchorDiff = coords - chunkRequestAnchor;
 		bool smallEnough = true;
 		int64 limit = 1 << 3;
 		for (int i = 0; i < 3; i++) {
@@ -147,9 +147,9 @@ void RemoteServerInterface::tick() {
 			ChunkAnchorSet anchorset;
 			anchorset.coords = coords;
 			send(anchorset, CHANNEL_BLOCK_DATA, true);
-			chunkAnchor = coords;
+			chunkRequestAnchor = coords;
 		}
-		msg.chunkRequestData[msgChunks].relCoords = coords - chunkAnchor;
+		msg.chunkRequestData[msgChunks].relCoords = coords - chunkRequestAnchor;
 		msg.chunkRequestData[msgChunks].cached = rc.cached;
 		msg.chunkRequestData[msgChunks].cachedRevision = rc.cachedRevision;
 		msgChunks++;
@@ -236,6 +236,7 @@ void RemoteServerInterface::updateNetConnecting() {
 		switch(event.type) {
 		case ENET_EVENT_TYPE_CONNECT:
 			LOG_INFO(logger) << "Connected to server";
+			reset();
 			status = WAITING_FOR_SNAPSHOT;
 			{
 				PlayerInfo info;
@@ -324,34 +325,55 @@ void RemoteServerInterface::handlePacket(const enet_uint8 *data, size_t size, si
 	case CHUNK_MESSAGE:
 		{
 			ChunkMessage msg;
-			msg.encodedBlocks = encodedBuffer.get();
+			msg.encodedBuffer = encodedBuffer.get();
 			if (readMessageBody((const char *) data, size, &msg)) {
 				LOG_WARNING(logger) << "Received malformed message";
 				break;
 			}
-			auto it = requestedChunks.find(msg.chunkCoords);
-			if (it == requestedChunks.end())
-				break;
-			Chunk *chunk = it->second.chunk;
-			bool cached = it->second.cached;
-			uint32 cachedRevision = it->second.cachedRevision;
-			if (cached && msg.revision == cachedRevision && msg.encodedLength != 0) {
-				LOG_WARNING(logger) << "Up-to-date chunk message has block data";
-			} else if (!cached || msg.revision != cachedRevision) {
-				if (msg.encodedLength == 0) {
-					LOG_WARNING(logger) << "Chunk message is missing block data";
+			uint8 *eb = encodedBuffer.get();
+			for (uint i = 0; i < msg.numChunks; i++) {
+				ChunkMessageData cmd = msg.chunkMessageData[i];
+				vec3i64 coords = chunkMessageAnchor + cmd.relCoords;
+				auto it = requestedChunks.find(coords);
+				if (it == requestedChunks.end())
 					break;
+				Chunk *chunk = it->second.chunk;
+				bool cached = it->second.cached;
+				uint32 cachedRevision = it->second.cachedRevision;
+				if (cached && cmd.revision == cachedRevision && cmd.encodedLength != 0) {
+					LOG_WARNING(logger) << "Up-to-date chunk message has block data";
+				} else if (!cached || cmd.revision != cachedRevision) {
+					if (cmd.encodedLength == 0) {
+						LOG_WARNING(logger) << "Chunk message is missing block data";
+						break;
+					}
+					decodeBlocks_RLE(eb, cmd.encodedLength, chunk->getBlocksForInit());
+					eb += cmd.encodedLength;
+					chunk->initRevision(cmd.revision);
+					chunk->finishInitialization();
 				}
-				decodeBlocks_RLE(msg.encodedBlocks, msg.encodedLength, chunk->getBlocksForInit());
-				chunk->initRevision(msg.revision);
-				chunk->finishInitialization();
+				requestedChunks.erase(it);
+				receivedChunks.push(chunk);
 			}
-			requestedChunks.erase(it);
-			receivedChunks.push(chunk);
+		}
+		break;
+	case CHUNK_ANCHOR_SET:
+		{
+			ChunkAnchorSet msg;
+			if (readMessageBody((const char *) data, size, &msg)) {
+				LOG_WARNING(logger) << "Received malformed message";
+				break;
+			}
+			chunkMessageAnchor = msg.coords;
 		}
 		break;
 	default:
 		LOG_WARNING(logger) << "Received message of unknown type " << type;
 		break;
 	}
+}
+
+void RemoteServerInterface::reset() {
+	chunkRequestAnchor = vec3i64(0, 0, 0);
+	chunkMessageAnchor = vec3i64(0, 0, 0);
 }
